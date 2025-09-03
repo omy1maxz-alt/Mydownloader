@@ -1,0 +1,20 @@
+{
+  "allFiles": [
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/menu/main_menu.xml",
+      "selection": {
+        "end": {
+          "column": 7,
+          "index": 943,
+          "line": 34
+        },
+        "start": {
+          "column": 7,
+          "index": 943,
+          "line": 34
+        }
+      }
+    }
+  ],
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/menu/main_menu.xml"
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#009688</color>
+    <color name="colorPrimaryDark">#00796B</color>
+    <color name="colorAccent">#4CAF50</color>
+    <color name="teal_200">#80CBC4</color>
+    <color name="teal_700">#00796B</color>
+    <color name="purple_500">#6200EE</color>
+    <color name="red">#FF0000</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="media_video_main_bg">#C8E6C9</color>
+    <color name="media_video_clip_bg">#E8F5E9</color>
+    <color name="media_subtitle_bg">#FFF3E0</color>
+    <color name="media_ad_bg">#FFCDD2</color>
+    <color name="media_other_bg">#F5F5F5</color>
+
+    <color name="active_tab_bg">#D1E4F6</color>
+</resources>

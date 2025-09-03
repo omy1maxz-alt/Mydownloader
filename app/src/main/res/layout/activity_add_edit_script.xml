@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".AddEditScriptActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:title="Add Script"
+        app:titleTextColor="@android:color/white"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Script Name Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editScriptName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Script Name"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Apply to All Checkbox -->
+            <CheckBox
+                android:id="@+id/applyToAllCheckbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Apply to all websites" />
+
+            <!-- Target URL Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/editScriptUrlLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editScriptUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Target URL (e.g., youtube.com)"
+                    android:inputType="textUri" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Script Code Input - Modified for large text -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="JavaScript Code:"
+                android:textAppearance="?attr/textAppearanceBody1" />
+
+            <!-- Using a standard EditText with vertical scrolling inside the main ScrollView -->
+            <EditText
+                android:id="@+id/editScriptCode"
+                android:layout_width="match_parent"
+                android:layout_height="300dp" 
+                android:background="@drawable/edit_text_border" 
+                android:fontFamily="monospace"
+                android:gravity="top|start"
+                android:hint="Paste your JavaScript code here..."
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:padding="8dp"
+                android:scrollbars="vertical"
+                android:textSize="12sp" />
+
+            <!-- Save Button -->
+            <Button
+                android:id="@+id/saveScriptButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Save Script"
+                android:layout_marginTop="16dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

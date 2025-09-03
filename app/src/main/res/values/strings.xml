@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">My Downloader</string>
+    <string name="enter_url">Enter URL or search term</string>
+    <string name="go">GO</string>
+    <string name="history">HISTORY</string>
+    <string name="download">Download</string>
+    <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
+    <string name="media_detected">Media files detected</string>
+    <string name="no_media_found">No media files detected</string>
+    <string name="ad_blocked">Advertisement blocked</string>
+    <string name="popup_blocked">Popup blocked</string>
+    <string name="redirect_blocked">Redirect blocked</string>
+</resources>
