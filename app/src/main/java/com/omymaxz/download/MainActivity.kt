@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
     // Properties for enhanced userscript support
     internal var isPageLoading = false
     internal var pendingScriptsToInject = mutableListOf<UserScript>()
-    private val userscriptInterface = UserscriptInterface(this)
+    private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -1404,45 +1404,25 @@ class MainActivity : AppCompatActivity() {
     // New method to inject scripts that need to run early (e.g., @run-at document-start)
     internal fun injectEarlyUserscripts(url: String?) {
         if (url == null) return
-        val matchingScripts = enabledUserScripts.filter { 
-            it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START 
+        val matchingScripts = enabledUserScripts.filter {
+            it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
         }
         for (script in matchingScripts) {
-            // For document-start, we might need a different injection mechanism
-            // For now, we'll add them to pending list to be injected onProgressChanged
             if (!pendingScriptsToInject.contains(script)) {
                 pendingScriptsToInject.add(script)
-                // Wrap script to run in page context
-                val wrappedScript = """
-                    (function() {
-                        try {
-                            ${script.script}
-                        } catch (e) {
-                            console.error('Userscript error in ${script.name}:', e);
-                        }
-                    })();
-                """.trimIndent()
+                val wrappedScript = GreasemonkeyApiPolyfill.getPolyfill(script)
                 binding.webView.evaluateJavascript(wrappedScript, null)
             }
         }
     }
-    
+
     // New method to inject scripts that should run after page load
     internal fun injectPendingUserscripts() {
-        val matchingScripts = pendingScriptsToInject.filter { 
+        val matchingScripts = pendingScriptsToInject.filter {
             it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE
         }
         for (script in matchingScripts) {
-            // Wrap script to run in page context
-            val wrappedScript = """
-                (function() {
-                    try {
-                        ${script.script}
-                    } catch (e) {
-                        console.error('Userscript error in ${script.name}:', e);
-                    }
-                })();
-            """.trimIndent()
+            val wrappedScript = GreasemonkeyApiPolyfill.getPolyfill(script)
             binding.webView.evaluateJavascript(wrappedScript, null)
         }
         pendingScriptsToInject.clear()
@@ -1464,19 +1444,4 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
     }
-}
-
-// New data class for Userscript Interface
-class UserscriptInterface(private val context: Context) {
-    @JavascriptInterface
-    fun log(message: String) {
-        android.util.Log.d("Userscript", message)
-    }
-    
-    @JavascriptInterface
-    fun showToast(message: String) {
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-    }
-    
-    // Add more methods as needed for userscript interaction
 }
