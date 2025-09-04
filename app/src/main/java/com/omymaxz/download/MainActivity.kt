@@ -553,7 +553,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            webViewClient = MyWebViewClient(this)
+            webViewClient = MyWebViewClient(this@MainActivity)
             webChromeClient = object : WebChromeClient() {
                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
                     super.onProgressChanged(view, newProgress)
