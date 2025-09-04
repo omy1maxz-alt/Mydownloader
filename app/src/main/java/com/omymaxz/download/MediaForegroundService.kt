@@ -6,6 +6,7 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -27,6 +28,7 @@ class MediaForegroundService : Service() {
     private lateinit var notificationManager: NotificationManager
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
+    private var mediaPlayer: MediaPlayer? = null
 
     private var isPlaying = false
     private var currentTitle: String = "Media Player"
@@ -35,17 +37,6 @@ class MediaForegroundService : Service() {
 
     inner class LocalBinder : Binder() {
         fun getService(): MediaForegroundService = this@MediaForegroundService
-    }
-
-    private var mediaControlCallback: MediaControlCallback? = null
-
-    interface MediaControlCallback {
-        fun onPlayPause()
-        fun onStop()
-    }
-
-    fun setMediaControlCallback(callback: MediaControlCallback?) {
-        this.mediaControlCallback = callback
     }
 
     override fun onCreate() {
@@ -68,10 +59,15 @@ class MediaForegroundService : Service() {
     }
 
     private fun handleIntent(intent: Intent?) {
+        val url = intent?.getStringExtra("url")
         when (intent?.action) {
             ACTION_PLAY -> {
                 currentTitle = intent.getStringExtra("title") ?: "Media Player"
-                play()
+                if (url != null) {
+                    play(url)
+                } else {
+                    resume()
+                }
             }
             ACTION_PAUSE -> pause()
             ACTION_STOP -> stop()
@@ -97,7 +93,7 @@ class MediaForegroundService : Service() {
             setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
 
             setCallback(object : MediaSessionCompat.Callback() {
-                override fun onPlay() = play()
+                override fun onPlay() = resume()
                 override fun onPause() = pause()
                 override fun onStop() = stop()
             })
@@ -134,27 +130,60 @@ class MediaForegroundService : Service() {
         }
     }
 
-    private fun play() {
-        if (requestAudioFocus()) {
-            isPlaying = true
-            updatePlaybackState()
-            startForeground(NOTIFICATION_ID, buildNotification())
-            mediaControlCallback?.onPlayPause()
+    private fun play(url: String) {
+        if (!requestAudioFocus()) return
+
+        mediaPlayer?.release()
+        mediaPlayer = MediaPlayer().apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build()
+            )
+            setDataSource(url)
+            setOnPreparedListener {
+                isPlaying = true
+                start()
+                updatePlaybackState()
+                startForeground(NOTIFICATION_ID, buildNotification())
+            }
+            setOnCompletionListener {
+                stop()
+            }
+            setOnErrorListener { _, _, _ ->
+                stop()
+                true
+            }
+            prepareAsync()
         }
     }
 
     private fun pause() {
-        isPlaying = false
-        updatePlaybackState()
-        notificationManager.notify(NOTIFICATION_ID, buildNotification())
-        stopForeground(false)
-        mediaControlCallback?.onPlayPause()
+        if (isPlaying) {
+            mediaPlayer?.pause()
+            isPlaying = false
+            updatePlaybackState()
+            notificationManager.notify(NOTIFICATION_ID, buildNotification())
+            stopForeground(false)
+        }
+    }
+
+    private fun resume() {
+        if (!isPlaying) {
+            mediaPlayer?.start()
+            isPlaying = true
+            updatePlaybackState()
+            startForeground(NOTIFICATION_ID, buildNotification())
+        }
     }
 
     private fun stop() {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
         isPlaying = false
         updatePlaybackState()
-        mediaControlCallback?.onStop()
         stopSelf()
     }
 
@@ -185,9 +214,10 @@ class MediaForegroundService : Service() {
             .setStyle(
                 androidx.media.app.NotificationCompat.MediaStyle()
                     .setMediaSession(mediaSession.sessionToken)
-                    .setShowActionsInCompactView(0)
+                    .setShowActionsInCompactView(0, 1)
             )
             .addAction(playPauseIcon, playPauseActionTitle, createPendingIntent(playPauseAction))
+            .addAction(android.R.drawable.ic_media_next, "Stop", createPendingIntent(ACTION_STOP))
             .setOngoing(isPlaying)
             .setContentIntent(createMainActivityIntent())
             .build()
@@ -223,6 +253,8 @@ class MediaForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        mediaPlayer?.release()
+        mediaPlayer = null
         mediaSession.release()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioFocusRequest != null) {
             audioManager.abandonAudioFocusRequest(audioFocusRequest!!)

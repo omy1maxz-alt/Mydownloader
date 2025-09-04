@@ -184,9 +184,6 @@ class MainActivity : AppCompatActivity() {
         if (!isMediaPlaying && currentVideoUrl == null) {
             binding.webView.onPause()
         }
-        if (isMediaPlaying || currentVideoUrl != null) {
-            startMediaKeepAlive()
-        }
         maintainBackgroundConnection()
         saveTabsState()
     }
@@ -195,7 +192,6 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         isAppInBackground = false
         binding.webView.onResume()
-        stopMediaKeepAlive()
         if (isMediaPlaying || currentVideoUrl != null) {
             handler.postDelayed({
                 resumeMediaPlayback()
@@ -225,7 +221,6 @@ class MainActivity : AppCompatActivity() {
         }
         if ((isMediaPlaying || currentVideoUrl != null) && !isChangingConfigurations) {
             startBackgroundService()
-            injectBackgroundPlaybackScript()
         }
     }
 
@@ -751,6 +746,7 @@ class MainActivity : AppCompatActivity() {
         if (!isServiceRunning && currentVideoUrl != null) {
             val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
                 putExtra("title", binding.webView.title ?: "Web Video")
+                putExtra("url", currentVideoUrl)
                 action = MediaForegroundService.ACTION_PLAY
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -786,55 +782,6 @@ class MainActivity : AppCompatActivity() {
         binding.webView.loadUrl(script)
         currentVideoUrl = null
         stopPlaybackService()
-    }
-
-    internal fun startMediaKeepAlive() {
-        stopMediaKeepAlive()
-        mediaKeepAliveTimer = Timer()
-        mediaKeepAliveTimer?.scheduleAtFixedRate(object : TimerTask() {
-            override fun run() {
-                runOnUiThread {
-                    keepMediaAlive()
-                }
-            }
-        }, 1000, 2000)
-    }
-
-    internal fun stopMediaKeepAlive() {
-        mediaKeepAliveTimer?.cancel()
-        mediaKeepAliveTimer = null
-    }
-
-    internal fun keepMediaAlive() {
-        val keepAliveScript = """
-            javascript:(function() {
-                try {
-                    var videos = document.getElementsByTagName('video');
-                    for (var media of videos) {
-                        if (media.paused && media.readyState >= 2) {
-                            if (media.hasAttribute('data-was-playing')) {
-                                media.play().catch(function(e) {});
-                            }
-                        } else if (!media.paused) {
-                            media.setAttribute('data-was-playing', 'true');
-                        }
-                    }
-                } catch (e) {}
-            })();
-        """.trimIndent()
-        binding.webView.loadUrl(keepAliveScript)
-    }
-
-    internal fun injectBackgroundPlaybackScript() {
-        val backgroundScript = """
-            javascript:(function() {
-                try {
-                    Object.defineProperty(document, 'visibilityState', { get: function() { return 'visible'; } });
-                    Object.defineProperty(document, 'hidden', { get: function() { return false; } });
-                } catch (e) {}
-            })();
-        """.trimIndent()
-        binding.webView.loadUrl(backgroundScript)
     }
 
     internal fun resumeMediaPlayback() {
