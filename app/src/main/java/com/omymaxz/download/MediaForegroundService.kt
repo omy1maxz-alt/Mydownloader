@@ -7,6 +7,7 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -60,11 +61,17 @@ class MediaForegroundService : Service() {
 
     private fun handleIntent(intent: Intent?) {
         val url = intent?.getStringExtra("url")
+        val userAgent = intent?.getStringExtra("userAgent")
+        val cookie = intent?.getStringExtra("cookie")
+
         when (intent?.action) {
             ACTION_PLAY -> {
                 currentTitle = intent.getStringExtra("title") ?: "Media Player"
                 if (url != null) {
-                    play(url)
+                    val headers = mutableMapOf<String, String>()
+                    if (userAgent != null) headers["User-Agent"] = userAgent
+                    if (cookie != null) headers["Cookie"] = cookie
+                    play(url, headers)
                 } else {
                     resume()
                 }
@@ -129,7 +136,7 @@ class MediaForegroundService : Service() {
         }
     }
 
-    private fun play(url: String) {
+    private fun play(url: String, headers: Map<String, String>) {
         if (!requestAudioFocus()) return
 
         mediaPlayer?.release()
@@ -140,7 +147,7 @@ class MediaForegroundService : Service() {
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .build()
             )
-            setDataSource(url)
+            setDataSource(this@MediaForegroundService, Uri.parse(url), headers)
             setOnPreparedListener {
                 isPlaying = true
                 start()
