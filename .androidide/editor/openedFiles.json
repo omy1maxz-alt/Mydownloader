@@ -1,80 +1,35 @@
 {
   "allFiles": [
     {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 65212,
+          "line": 1519
+        },
+        "start": {
+          "column": 0,
+          "index": 65212,
+          "line": 1519
+        }
+      }
+    },
+    {
       "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MediaForegroundService.kt",
       "selection": {
         "end": {
-          "column": 0,
-          "index": 6126,
-          "line": 167
+          "column": 1,
+          "index": 9887,
+          "line": 271
         },
         "start": {
-          "column": 0,
-          "index": 6126,
-          "line": 167
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/test/java/com/omymaxz/download/RedirectLogicTest.kt",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 0,
-          "line": 0
-        },
-        "start": {
-          "column": 0,
-          "index": 0,
-          "line": 0
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/drawable/ic_play_arrow.xml",
-      "selection": {
-        "end": {
-          "column": 9,
-          "index": 332,
-          "line": 9
-        },
-        "start": {
-          "column": 9,
-          "index": 332,
-          "line": 9
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/drawable/ic_pause.xml",
-      "selection": {
-        "end": {
-          "column": 9,
-          "index": 349,
-          "line": 9
-        },
-        "start": {
-          "column": 9,
-          "index": 349,
-          "line": 9
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/drawable/ic_notification.xml",
-      "selection": {
-        "end": {
-          "column": 9,
-          "index": 453,
-          "line": 9
-        },
-        "start": {
-          "column": 9,
-          "index": 453,
-          "line": 9
+          "column": 1,
+          "index": 9887,
+          "line": 271
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/drawable/ic_notification.xml"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MediaForegroundService.kt"
 }

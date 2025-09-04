@@ -54,8 +54,8 @@ import java.util.TimerTask
 import java.util.regex.Pattern
 
 class MainActivity : AppCompatActivity() {
-    internal lateinit var binding: ActivityMainBinding
-    internal val detectedMediaFiles = Collections.synchronizedList(mutableListOf<MediaFile>())
+    private lateinit var binding: ActivityMainBinding
+    private val detectedMediaFiles = Collections.synchronizedList(mutableListOf<MediaFile>())
     private var lastUsedName: String = "Video"
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
@@ -71,11 +71,11 @@ class MainActivity : AppCompatActivity() {
     private var sessionBlockCount = 0
     private lateinit var db: AppDatabase
     private lateinit var bookmarkAdapter: BookmarkAdapter
-    internal var tabs = mutableListOf<Tab>()
-    internal var currentTabIndex = -1
+    private var tabs = mutableListOf<Tab>()
+    private var currentTabIndex = -1
     private var tabsDialog: AlertDialog? = null
     private var isAppInBackground = false
-    internal var enabledUserScripts = listOf<UserScript>()
+    private var enabledUserScripts = listOf<UserScript>()
     private val suspiciousDomains = setOf(
         "googleads.com", "doubleclick.net", "googlesyndication.com",
         "facebook.com/tr", "amazon-adsystem.com", "adsystem.amazon.com",
@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         "profitableratecpm.com", "popunder.net", "pop-ads.com", "adcash.com",
         "propellerads.com", "revcontent.com", "mgid.com"
     )
-    internal var filePathCallback: ValueCallback<Array<Uri>>? = null
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private val fileChooserLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (filePathCallback == null) return@registerForActivityResult
         var results: Array<Uri>? = null
@@ -96,8 +96,8 @@ class MainActivity : AppCompatActivity() {
         filePathCallback?.onReceiveValue(results)
         filePathCallback = null
     }
-    internal var mediaService: MediaForegroundService? = null
-    internal var serviceBound = false
+    private var mediaService: MediaForegroundService? = null
+    private var serviceBound = false
     var isMediaPlaying = false
     private val historyResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -138,9 +138,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Properties for enhanced userscript support
-    internal var isPageLoading = false
-    internal var pendingScriptsToInject = mutableListOf<UserScript>()
-    private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
+    private var isPageLoading = false
+    private var pendingScriptsToInject = mutableListOf<UserScript>()
+    private val userscriptInterface = UserscriptInterface(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -178,7 +178,6 @@ class MainActivity : AppCompatActivity() {
         if (!isMediaPlaying && currentVideoUrl == null) {
             binding.webView.onPause()
         }
-        maintainBackgroundConnection()
         saveTabsState()
     }
 
@@ -186,6 +185,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         isAppInBackground = false
         binding.webView.onResume()
+        stopMediaKeepAlive()
         if (isMediaPlaying || currentVideoUrl != null) {
             handler.postDelayed({
                 resumeMediaPlayback()
@@ -240,7 +240,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    internal fun updateToolbarNavButtonState() {
+    private fun updateToolbarNavButtonState() {
         val canGoBack = binding.webView.canGoBack()
         binding.backButton.isEnabled = canGoBack
         binding.backButton.alpha = if (canGoBack) 1.0f else 0.5f
@@ -305,7 +305,7 @@ class MainActivity : AppCompatActivity() {
         switchTab(tabs.size - 1)
     }
 
-    internal fun openInNewTab(url: String, inBackground: Boolean) {
+    private fun openInNewTab(url: String, inBackground: Boolean) {
         saveCurrentTabState()
         val newTab = Tab(url = url, title = "Loading...")
         tabs.add(newTab)
@@ -356,22 +356,28 @@ class MainActivity : AppCompatActivity() {
         if (tabIndex !in tabs.indices) return
         val tab = tabs[tabIndex]
         binding.urlEditTextToolbar.setText(tab.url)
-        if (tab.state != null) {
-            try {
+        
+        // If a URL exists, always load it. This is the most reliable way to restore the page.
+        if (tab.url != null) {
+            binding.webView.loadUrl(tab.url!!)
+            showWebView()
+            // Try to restore the back-forward list history as well.
+            if (tab.state != null) {
+                try {
+                    binding.webView.restoreState(tab.state!!)
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Failed to restore WebView state: ${e.message}")
+                }
+            }
+        } else if (tab.state != null) {
+            // Fallback for tabs that might only have state (less common)
+             try {
                 binding.webView.restoreState(tab.state!!)
                 showWebView()
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed to restore WebView state: ${e.message}")
-                if (tab.url != null) {
-                    binding.webView.loadUrl(tab.url!!)
-                    showWebView()
-                } else {
-                    showStartPage()
-                }
+                showStartPage()
             }
-        } else if (tab.url != null) {
-            binding.webView.loadUrl(tab.url!!)
-            showWebView()
         } else {
             showStartPage()
         }
@@ -553,7 +559,118 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            webViewClient = MyWebViewClient(this@MainActivity)
+            webViewClient = object : WebViewClient() {
+                private var lastNavigationTime = 0L
+                private var navigationCount = 0
+                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    super.onPageStarted(view, url, favicon)
+                    isPageLoading = true
+                    pendingScriptsToInject.clear() // Clear pending scripts for new page
+                    binding.progressBar.visibility = View.VISIBLE
+                    binding.urlEditTextToolbar.setText(url)
+                    synchronized(detectedMediaFiles) {
+                        detectedMediaFiles.clear()
+                    }
+                    runOnUiThread { updateFabVisibility() }
+                    if (url?.contains("perchance.org") == true) {
+                        injectPerchanceFixes(view)
+                    }
+                }
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    isPageLoading = false
+                    binding.progressBar.visibility = View.GONE
+                    updateToolbarNavButtonState()
+                    if (url?.contains("perchance.org") == true) {
+                        injectPerchanceFixes(view)
+                    }
+                    // Inject pending scripts that were waiting for page finish
+                    injectPendingUserscripts()
+                    url?.let {
+                        addToHistory(it)
+                        if (currentTabIndex in tabs.indices) {
+                            tabs[currentTabIndex].url = it
+                            tabs[currentTabIndex].title = view?.title ?: "No Title"
+                        }
+                    }
+                }
+                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                    val url = request?.url?.toString() ?: return false
+                    if (isUrlWhitelisted(url)) {
+                        return false 
+                    }
+                    if (url.contains("perchance.org")) {
+                        openInCustomTab(url)
+                        return true 
+                    }
+                    val currentTime = System.currentTimeMillis()
+                    if (isAdDomain(url) || isInBlockedList(url) || isSuspiciousRedirectPattern(url, currentTime, view?.url)) {
+                        showBlockedNavigationDialog(url)
+                        return true
+                    }
+                    lastNavigationTime = currentTime
+                    navigationCount++
+                    return false
+                }
+                private fun isSuspiciousRedirectPattern(url: String, currentTime: Long, previousUrl: String?): Boolean {
+                    val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
+                    if (!settingsPrefs.getBoolean("BLOCK_REDIRECTS", true)) return false
+                    val timeSinceLastNav = currentTime - lastNavigationTime
+                    val isDifferentHost = Uri.parse(url).host != Uri.parse(previousUrl ?: "").host
+                    return isDifferentHost && (timeSinceLastNav < 1000 && navigationCount > 0)
+                }
+                override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+                    val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
+                    if (isUrlWhitelisted(url)) {
+                        return super.shouldInterceptRequest(view, request)
+                    }
+                    if (isAdDomain(url)) {
+                        return createEmptyResponse()
+                    }
+                    if (isMediaUrl(url)) {
+                        try {
+                            val category = MediaCategory.fromUrl(url)
+                            val isMainContent = isMainVideoContent(url)
+                            if (category == MediaCategory.VIDEO && isMainContent) {
+                                currentVideoUrl = url
+                                if(serviceBound){
+                                    mediaService?.updateMediaInfo(binding.webView.title ?: "Web Video")
+                                }
+                            }
+                            val detectedFormat = detectVideoFormat(url)
+                            val quality = extractQualityFromUrl(url)
+                            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
+                            val fileSize = estimateFileSize(url, category)
+                            val language = extractLanguageFromUrl(url)
+                            val mediaFile = MediaFile(
+                                url = url,
+                                title = enhancedTitle,
+                                mimeType = detectedFormat.mimeType,
+                                quality = quality,
+                                category = category,
+                                fileSize = fileSize,
+                                language = language,
+                                isMainContent = isMainContent
+                            )
+                            val existsAlready = synchronized(detectedMediaFiles) {
+                                detectedMediaFiles.any { it.url == url }
+                            }
+                            if (!existsAlready) {
+                                synchronized(detectedMediaFiles) {
+                                    detectedMediaFiles.add(mediaFile)
+                                }
+                                runOnUiThread { updateFabVisibility() }
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
+                        }
+                    }
+                    return super.shouldInterceptRequest(view, request)
+                }
+                private fun createEmptyResponse(): WebResourceResponse {
+                    return WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
+                }
+            }
             webChromeClient = object : WebChromeClient() {
                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
                     super.onProgressChanged(view, newProgress)
@@ -663,7 +780,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    internal fun openInCustomTab(url: String) {
+    private fun openInCustomTab(url: String) {
         try {
             val builder = CustomTabsIntent.Builder()
             val color = ContextCompat.getColor(this, R.color.purple_500)
@@ -675,17 +792,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun maintainBackgroundConnection() {
-        val script = """
-            javascript:(function() {
-                if (window.backgroundKeepAlive) { clearInterval(window.backgroundKeepAlive); }
-                window.backgroundKeepAlive = setInterval(function() {
-                    fetch(location.origin + '/favicon.ico', {mode: 'no-cors'}).catch(function() {});
-                }, 30000);
-            })();
-        """
-        binding.webView.loadUrl(script)
-    }
 
     inner class WebAPIPolyfill(private val context: Context) {
         private var tts: TextToSpeech? = null
@@ -706,7 +812,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    internal fun injectPerchanceFixes(webView: WebView?) {
+    private fun injectPerchanceFixes(webView: WebView?) {
         val polyfillScript = """
             javascript:(function() {
                 'use strict';
@@ -730,15 +836,21 @@ class MainActivity : AppCompatActivity() {
                     };
                 }
             })();
-        """
+        """.trimIndent()
         webView?.loadUrl(polyfillScript)
     }
 
     private fun startBackgroundService() {
         if (!isServiceRunning && currentVideoUrl != null) {
+            val url = currentVideoUrl!!
+            val cookie = CookieManager.getInstance().getCookie(url)
+            val userAgent = binding.webView.settings.userAgentString
+
             val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
                 putExtra("title", binding.webView.title ?: "Web Video")
-                putExtra("url", currentVideoUrl)
+                putExtra("url", url)
+                putExtra("cookie", cookie)
+                putExtra("userAgent", userAgent)
                 action = MediaForegroundService.ACTION_PLAY
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -762,31 +874,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun handleMediaPlayPause() {
-        if (currentVideoUrl != null) {
-            val script = "javascript:(function() { var video = document.querySelector('video'); if (video.paused) { video.play(); } else { video.pause(); } })();"
-            binding.webView.loadUrl(script)
-        }
-    }
 
-    private fun handleMediaStop() {
-        val script = "javascript:(function() { var video = document.querySelector('video'); video.pause(); video.currentTime = 0; })();"
-        binding.webView.loadUrl(script)
-        currentVideoUrl = null
-        stopPlaybackService()
-    }
 
-    internal fun resumeMediaPlayback() {
+    private fun resumeMediaPlayback() {
         val resumeScript = "javascript:(function() { var video = document.querySelector('video'); if (video && video.paused && video.hasAttribute('data-was-playing')) { video.play().catch(function(e) {}); } })();"
         binding.webView.loadUrl(resumeScript)
     }
 
     inner class MediaStateInterface(private val activity: MainActivity) {
         @JavascriptInterface
-        fun onMediaPlay(url: String) {
+        fun onMediaPlay() {
             activity.runOnUiThread {
                 activity.isMediaPlaying = true
-                activity.currentVideoUrl = url
                 activity.startBackgroundService()
             }
         }
@@ -799,7 +898,6 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun onMediaEnded() {
             activity.runOnUiThread {
-                activity.currentVideoUrl = null
                 activity.isMediaPlaying = false
                 activity.stopPlaybackService()
             }
@@ -824,7 +922,7 @@ class MainActivity : AppCompatActivity() {
         sharedPrefs.edit().putString("LAST_FILENAME", name).apply()
     }
 
-    internal fun detectVideoFormat(url: String): VideoFormat {
+    private fun detectVideoFormat(url: String): VideoFormat {
         val lowerUrl = url.lowercase()
         return when {
             lowerUrl.endsWith(".mp4") -> VideoFormat(".mp4", "video/mp4")
@@ -840,7 +938,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    internal fun extractQualityFromUrl(url: String): String {
+    private fun extractQualityFromUrl(url: String): String {
         val lowerUrl = url.lowercase()
         return when {
             lowerUrl.contains("2160p") || lowerUrl.contains("4k") -> "4K (2160p)"
@@ -855,7 +953,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    internal fun generateSmartFileName(url: String, extension: String, quality: String, category: MediaCategory): String {
+    private fun generateSmartFileName(url: String, extension: String, quality: String, category: MediaCategory): String {
         val uri = Uri.parse(url)
         val lowerUrl = url.lowercase()
         val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
@@ -877,8 +975,8 @@ class MainActivity : AppCompatActivity() {
         return "${categoryPrefix}${baseName}${cleanQuality}${extension}"
     }
 
-    internal fun estimateFileSize(url: String, category: MediaCategory): String { return "Unknown" }
-    internal fun extractLanguageFromUrl(url: String): String? { return null }
+    private fun estimateFileSize(url: String, category: MediaCategory): String { return "Unknown" }
+    private fun extractLanguageFromUrl(url: String): String? { return null }
     private fun extractYouTubeVideoId(url: String): String {
         val patterns = listOf("(?<=watch\\?v=)[^&]+", "(?<=youtu.be/)[^?]+", "(?<=embed/)[^?]+", "(?<=v/)[^?]+")
         for (pattern in patterns) {
@@ -895,12 +993,12 @@ class MainActivity : AppCompatActivity() {
         sharedPrefs.edit().putStringSet("BLOCKED_URLS", blockedUrls).apply()
     }
 
-    internal fun isAdDomain(url: String): Boolean {
+    private fun isAdDomain(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         return suspiciousDomains.any { host.contains(it) }
     }
 
-    internal fun isInBlockedList(url: String): Boolean {
+    private fun isInBlockedList(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val blockedUrls = sharedPrefs.getStringSet("BLOCKED_URLS", setOf()) ?: setOf()
@@ -914,7 +1012,7 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "URL copied", Toast.LENGTH_SHORT).show()
     }
 
-    internal fun isMediaUrl(url: String): Boolean {
+    private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
         if (isAdOrTrackingUrl(lower)) return false
         return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
@@ -925,12 +1023,12 @@ class MainActivity : AppCompatActivity() {
         return adIndicators.any { url.contains(it) }
     }
 
-    internal fun isMainVideoContent(url: String): Boolean {
+    private fun isMainVideoContent(url: String): Boolean {
         val lower = url.lowercase()
         return lower.contains("videoplayback") || lower.contains("manifest")
     }
 
-    internal fun updateFabVisibility() {
+    private fun updateFabVisibility() {
         binding.fabShowMedia.visibility = if (detectedMediaFiles.isNotEmpty()) View.VISIBLE else View.GONE
     }
 
@@ -999,7 +1097,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    internal fun addToHistory(url: String) {
+    private fun addToHistory(url: String) {
         val title = binding.webView.title ?: "No Title"
         val newItem = HistoryItem(url = url, title = title)
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
@@ -1314,7 +1412,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    internal fun isUrlWhitelisted(url: String): Boolean {
+    private fun isUrlWhitelisted(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val whitelist = sharedPrefs.getStringSet("WHITELIST_URLS", setOf()) ?: setOf()
@@ -1341,27 +1439,47 @@ class MainActivity : AppCompatActivity() {
     }
 
     // New method to inject scripts that need to run early (e.g., @run-at document-start)
-    internal fun injectEarlyUserscripts(url: String?) {
+    private fun injectEarlyUserscripts(url: String?) {
         if (url == null) return
-        val matchingScripts = enabledUserScripts.filter {
-            it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
+        val matchingScripts = enabledUserScripts.filter { 
+            it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START 
         }
         for (script in matchingScripts) {
+            // For document-start, we might need a different injection mechanism
+            // For now, we'll add them to pending list to be injected onProgressChanged
             if (!pendingScriptsToInject.contains(script)) {
                 pendingScriptsToInject.add(script)
-                val wrappedScript = GreasemonkeyApiPolyfill.getPolyfill(script)
+                // Wrap script to run in page context
+                val wrappedScript = """
+                    (function() {
+                        try {
+                            ${script.script}
+                        } catch (e) {
+                            console.error('Userscript error in ${script.name}:', e);
+                        }
+                    })();
+                """.trimIndent()
                 binding.webView.evaluateJavascript(wrappedScript, null)
             }
         }
     }
-
+    
     // New method to inject scripts that should run after page load
-    internal fun injectPendingUserscripts() {
-        val matchingScripts = pendingScriptsToInject.filter {
+    private fun injectPendingUserscripts() {
+        val matchingScripts = pendingScriptsToInject.filter { 
             it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE
         }
         for (script in matchingScripts) {
-            val wrappedScript = GreasemonkeyApiPolyfill.getPolyfill(script)
+            // Wrap script to run in page context
+            val wrappedScript = """
+                (function() {
+                    try {
+                        ${script.script}
+                    } catch (e) {
+                        console.error('Userscript error in ${script.name}:', e);
+                    }
+                })();
+            """.trimIndent()
             binding.webView.evaluateJavascript(wrappedScript, null)
         }
         pendingScriptsToInject.clear()
@@ -1383,4 +1501,19 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
     }
+}
+
+// New data class for Userscript Interface
+class UserscriptInterface(private val context: Context) {
+    @JavascriptInterface
+    fun log(message: String) {
+        android.util.Log.d("Userscript", message)
+    }
+    
+    @JavascriptInterface
+    fun showToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+    
+    // Add more methods as needed for userscript interaction
 }
