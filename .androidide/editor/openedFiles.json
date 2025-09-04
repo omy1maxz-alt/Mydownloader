@@ -1,12 +1,27 @@
 {
   "allFiles": [
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/.gitignore",
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MediaForegroundService.kt",
       "selection": {
         "end": {
           "column": 0,
-          "index": 1428,
-          "line": 83
+          "index": 6126,
+          "line": 167
+        },
+        "start": {
+          "column": 0,
+          "index": 6126,
+          "line": 167
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/test/java/com/omymaxz/download/RedirectLogicTest.kt",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 0,
+          "line": 0
         },
         "start": {
           "column": 0,
@@ -14,7 +29,52 @@
           "line": 0
         }
       }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/drawable/ic_play_arrow.xml",
+      "selection": {
+        "end": {
+          "column": 9,
+          "index": 332,
+          "line": 9
+        },
+        "start": {
+          "column": 9,
+          "index": 332,
+          "line": 9
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/drawable/ic_pause.xml",
+      "selection": {
+        "end": {
+          "column": 9,
+          "index": 349,
+          "line": 9
+        },
+        "start": {
+          "column": 9,
+          "index": 349,
+          "line": 9
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/drawable/ic_notification.xml",
+      "selection": {
+        "end": {
+          "column": 9,
+          "index": 453,
+          "line": 9
+        },
+        "start": {
+          "column": 9,
+          "index": 453,
+          "line": 9
+        }
+      }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/.gitignore"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/drawable/ic_notification.xml"
 }
