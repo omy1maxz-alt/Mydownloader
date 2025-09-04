@@ -99,7 +99,6 @@ class MainActivity : AppCompatActivity() {
     internal var mediaService: MediaForegroundService? = null
     internal var serviceBound = false
     var isMediaPlaying = false
-    private var mediaKeepAliveTimer: Timer? = null
     private val historyResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val urlToLoad = result.data?.getStringExtra("URL_TO_LOAD")
@@ -114,13 +113,8 @@ class MainActivity : AppCompatActivity() {
             val binder = service as MediaForegroundService.LocalBinder
             mediaService = binder.getService()
             serviceBound = true
-            mediaService?.setMediaControlCallback(object : MediaForegroundService.MediaControlCallback {
-                override fun onPlayPause() = handleMediaPlayPause()
-                override fun onStop() = handleMediaStop()
-            })
         }
         override fun onServiceDisconnected(name: ComponentName?) {
-            mediaService?.setMediaControlCallback(null)
             mediaService = null
             serviceBound = false
         }
@@ -215,7 +209,6 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         if (serviceBound) {
-            mediaService?.setMediaControlCallback(null)
             unbindService(serviceConnection)
             serviceBound = false
         }
@@ -228,7 +221,6 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.unregisterNetworkCallback(networkCallback)
-        stopMediaKeepAlive()
         stopPlaybackService()
     }
 
@@ -691,7 +683,7 @@ class MainActivity : AppCompatActivity() {
                     fetch(location.origin + '/favicon.ico', {mode: 'no-cors'}).catch(function() {});
                 }, 30000);
             })();
-        """.trimIndent()
+        """
         binding.webView.loadUrl(script)
     }
 
@@ -738,7 +730,7 @@ class MainActivity : AppCompatActivity() {
                     };
                 }
             })();
-        """.trimIndent()
+        """
         webView?.loadUrl(polyfillScript)
     }
 
