@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
     // Properties for enhanced userscript support
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
-    private val userscriptInterface = UserscriptInterface(this)
+    private val userscriptInterface = UserscriptInterface(this, binding.webView, lifecycleScope)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -1509,3 +1509,17 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+// New data class for Userscript Interface
+class UserscriptInterface(private val context: Context) {
+    @JavascriptInterface
+    fun log(message: String) {
+        android.util.Log.d("Userscript", message)
+    }
+
+    @JavascriptInterface
+    fun showToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    // Add more methods as needed for userscript interaction
+}
