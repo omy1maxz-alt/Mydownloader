@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
     // Properties for enhanced userscript support
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
-    private val userscriptInterface = UserscriptInterface(this, binding.webView, lifecycleScope)
+    private val userscriptInterface = UserscriptInterface(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -185,7 +185,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         isAppInBackground = false
         binding.webView.onResume()
-        // Media keep-alive handled by service lifecycle
+        stopMediaKeepAlive()
         if (isMediaPlaying || currentVideoUrl != null) {
             handler.postDelayed({
                 resumeMediaPlayback()
@@ -562,10 +562,12 @@ class MainActivity : AppCompatActivity() {
             webViewClient = object : WebViewClient() {
                 private var lastNavigationTime = 0L
                 private var navigationCount = 0
+
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                     super.onPageStarted(view, url, favicon)
+                    navigationCount = 0
                     isPageLoading = true
-                    pendingScriptsToInject.clear() // Clear pending scripts for new page
+                    pendingScriptsToInject.clear()
                     binding.progressBar.visibility = View.VISIBLE
                     binding.urlEditTextToolbar.setText(url)
                     synchronized(detectedMediaFiles) {
@@ -576,6 +578,7 @@ class MainActivity : AppCompatActivity() {
                         injectPerchanceFixes(view)
                     }
                 }
+
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
                     isPageLoading = false
@@ -584,7 +587,6 @@ class MainActivity : AppCompatActivity() {
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
-                    // Inject pending scripts that were waiting for page finish
                     injectPendingUserscripts()
                     url?.let {
                         addToHistory(it)
@@ -594,14 +596,15 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
                     if (isUrlWhitelisted(url)) {
-                        return false 
+                        return false
                     }
                     if (url.contains("perchance.org")) {
                         openInCustomTab(url)
-                        return true 
+                        return true
                     }
                     val currentTime = System.currentTimeMillis()
                     if (isAdDomain(url) || isInBlockedList(url) || isSuspiciousRedirectPattern(url, currentTime, view?.url)) {
@@ -612,6 +615,7 @@ class MainActivity : AppCompatActivity() {
                     navigationCount++
                     return false
                 }
+
                 private fun isSuspiciousRedirectPattern(url: String, currentTime: Long, previousUrl: String?): Boolean {
                     val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
                     if (!settingsPrefs.getBoolean("BLOCK_REDIRECTS", true)) return false
@@ -619,6 +623,7 @@ class MainActivity : AppCompatActivity() {
                     val isDifferentHost = Uri.parse(url).host != Uri.parse(previousUrl ?: "").host
                     return isDifferentHost && (timeSinceLastNav < 1000 && navigationCount > 0)
                 }
+
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                     val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
                     if (isUrlWhitelisted(url)) {
@@ -667,6 +672,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     return super.shouldInterceptRequest(view, request)
                 }
+
                 private fun createEmptyResponse(): WebResourceResponse {
                     return WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
                 }
@@ -1503,3 +1509,17 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+// New data class for Userscript Interface
+class UserscriptInterface(private val context: Context) {
+    @JavascriptInterface
+    fun log(message: String) {
+        android.util.Log.d("Userscript", message)
+    }
+
+    @JavascriptInterface
+    fun showToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    // Add more methods as needed for userscript interaction
+}
