@@ -185,7 +185,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         isAppInBackground = false
         binding.webView.onResume()
-        stopMediaKeepAlive()
+        // Media keep-alive handled by service lifecycle
         if (isMediaPlaying || currentVideoUrl != null) {
             handler.postDelayed({
                 resumeMediaPlayback()
