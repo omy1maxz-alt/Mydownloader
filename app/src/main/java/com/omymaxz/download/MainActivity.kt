@@ -1503,17 +1503,3 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-// New data class for Userscript Interface
-class UserscriptInterface(private val context: Context) {
-    @JavascriptInterface
-    fun log(message: String) {
-        android.util.Log.d("Userscript", message)
-    }
-    
-    @JavascriptInterface
-    fun showToast(message: String) {
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-    }
-    
-    // Add more methods as needed for userscript interaction
-}
