@@ -142,6 +142,7 @@ class MainActivity : AppCompatActivity() {
     private var pendingScriptsToInject = mutableListOf<UserScript>()
     private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
     private val scriptFetcher by lazy { ScriptFetcher(db.scriptCacheDao(), lifecycleScope) }
+    private val greasemonkeyApi by lazy { GreasemonkeyApiPolyfill(this, lifecycleScope) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -533,6 +534,7 @@ class MainActivity : AppCompatActivity() {
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             // Add the userscript interface for better scope access
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
+            addJavascriptInterface(greasemonkeyApi, "GreasemonkeyAPI")
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -1454,13 +1456,28 @@ class MainActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             for (script in matchingScripts) {
-                // Fetch and inject required scripts first
+                val polyfill = """
+                    window.GM_xmlhttpRequest = function(options) {
+                        GreasemonkeyAPI.xmlHttpRequest(JSON.stringify(options));
+                    };
+                    window.GM = {
+                        xmlHttpRequest: window.GM_xmlhttpRequest,
+                        setValue: function(key, value) { GreasemonkeyAPI.setValue(key, JSON.stringify(value)); },
+                        getValue: function(key, defaultValue) {
+                            let result = GreasemonkeyAPI.getValue(key, JSON.stringify(defaultValue));
+                            try { return JSON.parse(result); } catch (e) { return defaultValue; }
+                        }
+                    };
+                """.trimIndent()
+
+                // Inject polyfill first
+                binding.webView.evaluateJavascript(polyfill, null)
+
+                // Fetch and inject required scripts
                 val requiredScriptsContent = scriptFetcher.fetchScripts(script.requires)
                 for (requiredScript in requiredScriptsContent) {
                     binding.webView.evaluateJavascript(requiredScript, null)
                 }
-
-                android.util.Log.d("MainActivity_Debug", "Injecting ${requiredScriptsContent.size} required scripts for '${script.name}'")
 
                 // Now inject the main script
                 val wrappedScript = """
@@ -1486,7 +1503,24 @@ class MainActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             for (script in matchingScripts) {
-                // Fetch and inject required scripts first
+                val polyfill = """
+                    window.GM_xmlhttpRequest = function(options) {
+                        GreasemonkeyAPI.xmlHttpRequest(JSON.stringify(options));
+                    };
+                    window.GM = {
+                        xmlHttpRequest: window.GM_xmlhttpRequest,
+                        setValue: function(key, value) { GreasemonkeyAPI.setValue(key, JSON.stringify(value)); },
+                        getValue: function(key, defaultValue) {
+                            let result = GreasemonkeyAPI.getValue(key, JSON.stringify(defaultValue));
+                            try { return JSON.parse(result); } catch (e) { return defaultValue; }
+                        }
+                    };
+                """.trimIndent()
+
+                // Inject polyfill first
+                binding.webView.evaluateJavascript(polyfill, null)
+
+                // Fetch and inject required scripts
                 val requiredScriptsContent = scriptFetcher.fetchScripts(script.requires)
                 for (requiredScript in requiredScriptsContent) {
                     binding.webView.evaluateJavascript(requiredScript, null)
