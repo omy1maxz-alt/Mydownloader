@@ -19,11 +19,6 @@ class AddEditScriptActivity : AppCompatActivity() {
     private var existingScript: UserScript? = null
     private var scriptId: String? = null
 
-    companion object {
-        // Define a maximum length for the script to prevent OutOfMemoryError
-        private const val MAX_SCRIPT_LENGTH = 600_000 // 600KB
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAddEditScriptBinding.inflate(layoutInflater)
@@ -40,8 +35,6 @@ class AddEditScriptActivity : AppCompatActivity() {
         } else {
             title = "Add Script"
         }
-
-        // Removed InputFilter - validation will be done in UserScript.isValid()
 
         binding.applyToAllCheckbox.setOnCheckedChangeListener { _, isChecked ->
             binding.editScriptUrlLayout.isEnabled = !isChecked
@@ -63,20 +56,19 @@ class AddEditScriptActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 script?.let {
                     existingScript = it
-                    binding.editScriptName.setText(it.name)
+                    // The name in the EditText should be the one the user can edit, not the metadata one.
+                    binding.editScriptName.setText(it.name) 
                     binding.editScriptUrl.setText(it.targetUrl)
 
-                    // Load script code - check size before setting text
                     val scriptByteSize = it.script.toByteArray(Charsets.UTF_8).size
-                    if (scriptByteSize <= MAX_SCRIPT_LENGTH) {
+                    if (scriptByteSize <= UserScript.MAX_SCRIPT_SIZE_BYTES) {
                         binding.editScriptCode.setText(it.script)
                     } else {
-                        // Handle case where existing script is too large for our new limit
-                        binding.editScriptCode.setText("// Script is too large (${scriptByteSize / 1000}KB) to display/edit safely. Max allowed is ${MAX_SCRIPT_LENGTH / 1000}KB.")
-                        Toast.makeText(this@AddEditScriptActivity, "Warning: Existing script is very large (${scriptByteSize / 1000}KB). Display truncated.", Toast.LENGTH_LONG).show()
+                        binding.editScriptCode.setText("// Script is too large (${scriptByteSize / 1000}KB) to display/edit safely. Max allowed is ${UserScript.MAX_SCRIPT_SIZE_BYTES / 1000}KB.")
+                        Toast.makeText(this@AddEditScriptActivity, "Warning: Existing script is very large (${scriptByteSize / 1000}KB).", Toast.LENGTH_LONG).show()
                     }
                     title = "Edit Script"
-
+                    
                     if (it.targetUrl == "*") {
                         binding.applyToAllCheckbox.isChecked = true
                     }
@@ -88,13 +80,12 @@ class AddEditScriptActivity : AppCompatActivity() {
     private fun saveScript() {
         val name = binding.editScriptName.text.toString().trim()
         var urlPattern = binding.editScriptUrl.text.toString().trim()
-        val code = binding.editScriptCode.text.toString() // Don't trim extremely large strings
+        val code = binding.editScriptCode.text.toString()
 
-        // Check byte size before creating UserScript object
         val codeByteSize = code.toByteArray(Charsets.UTF_8).size
-        if (codeByteSize > MAX_SCRIPT_LENGTH) {
-             Toast.makeText(this, "Script file size is too large (max ${MAX_SCRIPT_LENGTH / 1000}KB). Please reduce its size. Current size: ${codeByteSize / 1000}KB", Toast.LENGTH_LONG).show()
-             return
+        if (codeByteSize > UserScript.MAX_SCRIPT_SIZE_BYTES) {
+            Toast.makeText(this, "Script file size is too large (max ${UserScript.MAX_SCRIPT_SIZE_BYTES / 1000}KB). Current size: ${codeByteSize / 1000}KB", Toast.LENGTH_LONG).show()
+            return
         }
 
         if (binding.applyToAllCheckbox.isChecked) {
@@ -106,7 +97,7 @@ class AddEditScriptActivity : AppCompatActivity() {
             return
         }
 
-        val scriptToSave = existingScript?.copy(
+        val initialScript = existingScript?.copy(
             name = name,
             targetUrl = urlPattern,
             script = code
@@ -118,26 +109,23 @@ class AddEditScriptActivity : AppCompatActivity() {
             isEnabled = true
         )
 
-        // The isValid check in UserScript.kt now uses the byte size
+        // **FIX IMPLEMENTED HERE:** Parse metadata from the script's code before saving.
+        // This will update the name, runAt, grants, etc., based on the script's header.
+        val scriptToSave = initialScript.parseMetadata()
+
         if (!scriptToSave.isValid()) {
-            // This check might be redundant now, but good as a final validation
-            Toast.makeText(this, "Script is invalid or too large (max ${MAX_SCRIPT_LENGTH / 1000}KB)", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Script is invalid or too large (max ${UserScript.MAX_SCRIPT_SIZE_BYTES / 1000}KB)", Toast.LENGTH_LONG).show()
             return
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // Saving a large string to Room DB might take time, do it off the main thread
                 db.userScriptDao().insert(scriptToSave)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@AddEditScriptActivity, "Script saved successfully", Toast.LENGTH_SHORT).show()
-                    setResult(RESULT_OK) // Only set RESULT_OK, no data
+                    setResult(RESULT_OK)
                     finish()
                 }
-            } catch (e: OutOfMemoryError) {
-                 withContext(Dispatchers.Main) {
-                     Toast.makeText(this@AddEditScriptActivity, "Error: Not enough memory to save such a large script. Please reduce its size.", Toast.LENGTH_LONG).show()
-                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@AddEditScriptActivity, "Error saving script: ${e.message}", Toast.LENGTH_LONG).show()
