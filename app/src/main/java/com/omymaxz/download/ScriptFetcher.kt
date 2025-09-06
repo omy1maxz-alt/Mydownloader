@@ -39,6 +39,7 @@ class ScriptFetcher(
                             }
                         }
                     } catch (e: Exception) {
+                        android.util.Log.e("ScriptFetcher_Debug", "NETWORK FAILED for $url: ${e.message}", e)
                         android.util.Log.e("ScriptFetcher", "Failed to fetch script from $url: ${e.message}")
                     }
                 }

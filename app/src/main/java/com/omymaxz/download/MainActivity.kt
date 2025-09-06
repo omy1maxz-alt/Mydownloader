@@ -1447,6 +1447,7 @@ class MainActivity : AppCompatActivity() {
 
     // New method to inject scripts that need to run early (e.g., @run-at document-start)
     private fun injectEarlyUserscripts(url: String?) {
+        android.util.Log.d("MainActivity_Debug", "Checking for document-start scripts on URL: $url")
         if (url == null) return
         val matchingScripts = enabledUserScripts.filter {
             it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
@@ -1458,6 +1459,8 @@ class MainActivity : AppCompatActivity() {
                 for (requiredScript in requiredScriptsContent) {
                     binding.webView.evaluateJavascript(requiredScript, null)
                 }
+
+                android.util.Log.d("MainActivity_Debug", "Injecting ${requiredScriptsContent.size} required scripts for '${script.name}'")
 
                 // Now inject the main script
                 val wrappedScript = """
