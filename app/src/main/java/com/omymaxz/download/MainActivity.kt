@@ -141,6 +141,7 @@ class MainActivity : AppCompatActivity() {
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
     private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
+    private val scriptFetcher by lazy { ScriptFetcher(db.scriptCacheDao(), lifecycleScope) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -1447,15 +1448,18 @@ class MainActivity : AppCompatActivity() {
     // New method to inject scripts that need to run early (e.g., @run-at document-start)
     private fun injectEarlyUserscripts(url: String?) {
         if (url == null) return
-        val matchingScripts = enabledUserScripts.filter { 
-            it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START 
+        val matchingScripts = enabledUserScripts.filter {
+            it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
         }
-        for (script in matchingScripts) {
-            // For document-start, we might need a different injection mechanism
-            // For now, we'll add them to pending list to be injected onProgressChanged
-            if (!pendingScriptsToInject.contains(script)) {
-                pendingScriptsToInject.add(script)
-                // Wrap script to run in page context
+        lifecycleScope.launch {
+            for (script in matchingScripts) {
+                // Fetch and inject required scripts first
+                val requiredScriptsContent = scriptFetcher.fetchScripts(script.requires)
+                for (requiredScript in requiredScriptsContent) {
+                    binding.webView.evaluateJavascript(requiredScript, null)
+                }
+
+                // Now inject the main script
                 val wrappedScript = """
                     (function() {
                         try {
@@ -1472,23 +1476,33 @@ class MainActivity : AppCompatActivity() {
     
     // New method to inject scripts that should run after page load
     private fun injectPendingUserscripts() {
-        val matchingScripts = pendingScriptsToInject.filter { 
-            it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE
+        // This function now handles DOCUMENT_END and DOCUMENT_IDLE scripts
+        val url = binding.webView.url ?: return
+        val matchingScripts = enabledUserScripts.filter {
+            it.shouldRunOnUrl(url) && (it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE)
         }
-        for (script in matchingScripts) {
-            // Wrap script to run in page context
-            val wrappedScript = """
-                (function() {
-                    try {
-                        ${script.script}
-                    } catch (e) {
-                        console.error('Userscript error in ${script.name}:', e);
-                    }
-                })();
-            """.trimIndent()
-            binding.webView.evaluateJavascript(wrappedScript, null)
+        lifecycleScope.launch {
+            for (script in matchingScripts) {
+                // Fetch and inject required scripts first
+                val requiredScriptsContent = scriptFetcher.fetchScripts(script.requires)
+                for (requiredScript in requiredScriptsContent) {
+                    binding.webView.evaluateJavascript(requiredScript, null)
+                }
+
+                // Now inject the main script
+                val wrappedScript = """
+                    (function() {
+                        try {
+                            ${script.script}
+                        } catch (e) {
+                            console.error('Userscript error in ${script.name}:', e);
+                        }
+                    })();
+                """.trimIndent()
+                binding.webView.evaluateJavascript(wrappedScript, null)
+            }
         }
-        pendingScriptsToInject.clear()
+        pendingScriptsToInject.clear() // Clear any old pending scripts
     }
     
     fun showBlockedNavigationDialog(url: String) {

@@ -9,12 +9,13 @@ package com.omymaxz.download
     import androidx.sqlite.db.SupportSQLiteDatabase
 
     // Add @TypeConverters annotation here
-    @Database(entities = [Bookmark::class, UserScript::class], version = 3, exportSchema = false)
-    @TypeConverters(Converters::class) // <-- Add this line
+@Database(entities = [Bookmark::class, UserScript::class, ScriptCache::class], version = 4, exportSchema = false)
+@TypeConverters(Converters::class)
     abstract class AppDatabase : RoomDatabase() {
 
         abstract fun bookmarkDao(): BookmarkDao
         abstract fun userScriptDao(): UserScriptDao
+        abstract fun scriptCacheDao(): ScriptCacheDao
 
         companion object {
             @Volatile
