@@ -568,7 +568,8 @@ class MainActivity : AppCompatActivity() {
                                     1 -> copyToClipboard(imageUrl)
                                     2 -> {
                                         try {
-                                            val extension = MimeTypeMap.getSingleton().getFileExtensionFromUrl(imageUrl) ?: "png"
+                                            val guessedName = URLUtil.guessFileName(imageUrl, null, null)
+                                            val extension = guessedName.substringAfterLast('.', "png")
                                             val fileName = "image_${System.currentTimeMillis()}.$extension"
                                             val request = DownloadManager.Request(Uri.parse(imageUrl))
                                                 .setTitle(fileName)
