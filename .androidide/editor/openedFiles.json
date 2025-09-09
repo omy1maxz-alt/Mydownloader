@@ -14,7 +14,67 @@
           "line": 1409
         }
       }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/build.gradle.kts",
+      "selection": {
+        "end": {
+          "column": 23,
+          "index": 758,
+          "line": 34
+        },
+        "start": {
+          "column": 23,
+          "index": 758,
+          "line": 34
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/settings.gradle.kts",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 0,
+          "line": 0
+        },
+        "start": {
+          "column": 0,
+          "index": 0,
+          "line": 0
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/build.gradle.kts",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 0,
+          "line": 0
+        },
+        "start": {
+          "column": 0,
+          "index": 0,
+          "line": 0
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/gradle/wrapper/gradle-wrapper.properties",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 0,
+          "line": 0
+        },
+        "start": {
+          "column": 0,
+          "index": 0,
+          "line": 0
+        }
+      }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/gradle/wrapper/gradle-wrapper.properties"
 }
