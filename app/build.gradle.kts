@@ -1,6 +1,3 @@
-import java.util.Properties
-import java.io.FileInputStream
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -11,18 +8,12 @@ android {
     namespace = "com.omymaxz.download"
     compileSdk = 34
 
-    val keystorePropertiesFile = rootProject.file("app/keystore.properties")
-    val keystoreProperties = java.util.Properties()
-    if (keystorePropertiesFile.exists()) {
-        keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
-    }
-
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
+            keyAlias = "mydownloader"
+            keyPassword = "787299"
             storeFile = file("release-keystore.jks")
-            storePassword = keystoreProperties.getProperty("storePassword")
+            storePassword = "787299"
         }
     }
 
