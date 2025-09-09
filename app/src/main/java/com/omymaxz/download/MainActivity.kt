@@ -141,8 +141,6 @@ class MainActivity : AppCompatActivity() {
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
     private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
-    private val scriptFetcher by lazy { ScriptFetcher(db.scriptCacheDao(), lifecycleScope) }
-    private val greasemonkeyApi by lazy { GreasemonkeyApiPolyfill(this, lifecycleScope) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -529,7 +527,6 @@ class MainActivity : AppCompatActivity() {
             addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
-            addJavascriptInterface(greasemonkeyApi, "GreasemonkeyAPI")
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -1368,45 +1365,28 @@ class MainActivity : AppCompatActivity() {
             enabledUserScripts = db.userScriptDao().getEnabledScripts()
         }
     }
-    private suspend fun injectScriptWithDependencies(script: UserScript) {
-        val polyfill = """
-            window.GM_xmlhttpRequest = function(options) { GreasemonkeyAPI.xmlHttpRequest(JSON.stringify(options)); };
-            window.GM = { 
-                xmlHttpRequest: window.GM_xmlhttpRequest,
-                setValue: function(key, value) {}, 
-                getValue: function(key, defaultValue) { return defaultValue; }
-            };
-        """
-        binding.webView.evaluateJavascript(polyfill, null)
-
-        val requiredScriptsContent = scriptFetcher.fetchScripts(script.requires)
-        for (requiredScript in requiredScriptsContent) {
-            binding.webView.evaluateJavascript(requiredScript, null)
-        }
-
+    private fun injectUserscript(script: UserScript) {
         val wrappedScript = "(function() { try { ${script.script} } catch (e) { console.error('Userscript error in ${script.name}:', e); } })();"
         binding.webView.evaluateJavascript(wrappedScript, null)
     }
+
     private fun injectEarlyUserscripts(url: String?) {
         if (url == null) return
         val matchingScripts = enabledUserScripts.filter {
             it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
         }
-        lifecycleScope.launch {
-            for (script in matchingScripts) {
-                injectScriptWithDependencies(script)
-            }
+        for (script in matchingScripts) {
+            injectUserscript(script)
         }
     }
+
     private fun injectPendingUserscripts() {
         val url = binding.webView.url ?: return
         val matchingScripts = enabledUserScripts.filter {
             it.shouldRunOnUrl(url) && (it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE)
         }
-        lifecycleScope.launch {
-            for (script in matchingScripts) {
-                injectScriptWithDependencies(script)
-            }
+        for (script in matchingScripts) {
+            injectUserscript(script)
         }
         pendingScriptsToInject.clear()
     }
