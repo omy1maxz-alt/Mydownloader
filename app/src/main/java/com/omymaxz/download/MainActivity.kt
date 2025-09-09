@@ -141,6 +141,7 @@ class MainActivity : AppCompatActivity() {
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
     private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
+    private val gmApi by lazy { GMApi(binding.webView) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -527,6 +528,7 @@ class MainActivity : AppCompatActivity() {
             addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
+            addJavascriptInterface(gmApi, "GMApi")
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -548,6 +550,40 @@ class MainActivity : AppCompatActivity() {
                                     1 -> openInNewTab(linkUrl, true)
                                     2 -> openInCustomTab(linkUrl)
                                     3 -> copyToClipboard(linkUrl)
+                                }
+                            }
+                            .show()
+                    }
+                } else if (hitTestResult.type == WebView.HitTestResult.IMAGE_TYPE) {
+                    val imageUrl = hitTestResult.extra
+                    if (imageUrl != null) {
+                        val options = arrayOf(
+                            "Open image in background",
+                            "Copy image link",
+                            "Download image"
+                        )
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle(imageUrl)
+                            .setItems(options) { _, which ->
+                                when (which) {
+                                    0 -> openInNewTab(imageUrl, true)
+                                    1 -> copyToClipboard(imageUrl)
+                                    2 -> {
+                                        try {
+                                            val guessedName = URLUtil.guessFileName(imageUrl, null, null)
+                                            val extension = guessedName.substringAfterLast('.', "png")
+                                            val fileName = "image_${System.currentTimeMillis()}.$extension"
+                                            val request = DownloadManager.Request(Uri.parse(imageUrl))
+                                                .setTitle(fileName)
+                                                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                                            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                                            dm.enqueue(request)
+                                            Toast.makeText(applicationContext, "Downloading image...", Toast.LENGTH_SHORT).show()
+                                        } catch (e: Exception) {
+                                            Toast.makeText(applicationContext, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+                                        }
+                                    }
                                 }
                             }
                             .show()
@@ -1366,6 +1402,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun injectUserscript(script: UserScript) {
+        // Build the polyfill script based on @grant
+        val polyfillBuilder = StringBuilder()
+        if (script.grants.contains("GM_addStyle")) {
+            polyfillBuilder.append("""
+                window.GM_addStyle = function(css) {
+                    GMApi.addStyle(css);
+                };
+            """.trimIndent())
+        }
+        // TODO: Add polyfills for other GM_* functions if needed based on script.grants
+
+        val polyfillScript = polyfillBuilder.toString()
+        if (polyfillScript.isNotEmpty()) {
+            binding.webView.evaluateJavascript(polyfillScript, null)
+        }
+
         val wrappedScript = "(function() { try { ${script.script} } catch (e) { console.error('Userscript error in ${script.name}:', e); } })();"
         binding.webView.evaluateJavascript(wrappedScript, null)
     }
