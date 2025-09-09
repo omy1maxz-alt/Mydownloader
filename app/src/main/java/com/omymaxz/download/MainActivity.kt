@@ -140,7 +140,9 @@ class MainActivity : AppCompatActivity() {
     // Properties for enhanced userscript support
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
-    private val userscriptInterface = UserscriptInterface(this)
+    private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
+    private val scriptFetcher by lazy { ScriptFetcher(db.scriptCacheDao(), lifecycleScope) }
+    private val greasemonkeyApi by lazy { GreasemonkeyApiPolyfill(this, lifecycleScope) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -185,7 +187,6 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         isAppInBackground = false
         binding.webView.onResume()
-        stopMediaKeepAlive()
         if (isMediaPlaying || currentVideoUrl != null) {
             handler.postDelayed({
                 resumeMediaPlayback()
@@ -357,11 +358,9 @@ class MainActivity : AppCompatActivity() {
         val tab = tabs[tabIndex]
         binding.urlEditTextToolbar.setText(tab.url)
         
-        // If a URL exists, always load it. This is the most reliable way to restore the page.
         if (tab.url != null) {
             binding.webView.loadUrl(tab.url!!)
             showWebView()
-            // Try to restore the back-forward list history as well.
             if (tab.state != null) {
                 try {
                     binding.webView.restoreState(tab.state!!)
@@ -370,7 +369,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } else if (tab.state != null) {
-            // Fallback for tabs that might only have state (less common)
              try {
                 binding.webView.restoreState(tab.state!!)
                 showWebView()
@@ -530,8 +528,8 @@ class MainActivity : AppCompatActivity() {
             settings.setSupportMultipleWindows(true)
             addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
-            // Add the userscript interface for better scope access
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
+            addJavascriptInterface(greasemonkeyApi, "GreasemonkeyAPI")
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -560,12 +558,8 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             webViewClient = object : WebViewClient() {
-                private var lastNavigationTime = 0L
-                private var navigationCount = 0
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                     super.onPageStarted(view, url, favicon)
-                    isPageLoading = true
-                    pendingScriptsToInject.clear() // Clear pending scripts for new page
                     binding.progressBar.visibility = View.VISIBLE
                     binding.urlEditTextToolbar.setText(url)
                     synchronized(detectedMediaFiles) {
@@ -578,13 +572,11 @@ class MainActivity : AppCompatActivity() {
                 }
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
-                    isPageLoading = false
                     binding.progressBar.visibility = View.GONE
                     updateToolbarNavButtonState()
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
-                    // Inject pending scripts that were waiting for page finish
                     injectPendingUserscripts()
                     url?.let {
                         addToHistory(it)
@@ -608,8 +600,6 @@ class MainActivity : AppCompatActivity() {
                         showBlockedNavigationDialog(url)
                         return true
                     }
-                    lastNavigationTime = currentTime
-                    navigationCount++
                     return false
                 }
                 private fun isSuspiciousRedirectPattern(url: String, currentTime: Long, previousUrl: String?): Boolean {
@@ -680,9 +670,7 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         binding.progressBar.visibility = View.VISIBLE
                     }
-                    
-                    // Inject scripts that should run early
-                    if (newProgress >= 10 && isPageLoading) { // Check if page is still loading
+                    if (newProgress >= 10 && isPageLoading) {
                          injectEarlyUserscripts(view?.url)
                     }
                 }
@@ -779,7 +767,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     private fun openInCustomTab(url: String) {
         try {
             val builder = CustomTabsIntent.Builder()
@@ -791,8 +778,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "No browser found to open the link.", Toast.LENGTH_LONG).show()
         }
     }
-
-
     inner class WebAPIPolyfill(private val context: Context) {
         private var tts: TextToSpeech? = null
         init {
@@ -811,7 +796,6 @@ class MainActivity : AppCompatActivity() {
             return "[{\"name\":\"Default\",\"lang\":\"en-US\",\"default\":true}]"
         }
     }
-
     private fun injectPerchanceFixes(webView: WebView?) {
         val polyfillScript = """
             javascript:(function() {
@@ -839,13 +823,11 @@ class MainActivity : AppCompatActivity() {
         """.trimIndent()
         webView?.loadUrl(polyfillScript)
     }
-
     private fun startBackgroundService() {
         if (!isServiceRunning && currentVideoUrl != null) {
             val url = currentVideoUrl!!
             val cookie = CookieManager.getInstance().getCookie(url)
             val userAgent = binding.webView.settings.userAgentString
-
             val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
                 putExtra("title", binding.webView.title ?: "Web Video")
                 putExtra("url", url)
@@ -862,7 +844,6 @@ class MainActivity : AppCompatActivity() {
             isServiceRunning = true
         }
     }
-
     private fun stopPlaybackService() {
         if(isServiceRunning) {
             if(serviceBound) {
@@ -873,14 +854,10 @@ class MainActivity : AppCompatActivity() {
             isServiceRunning = false
         }
     }
-
-
-
     private fun resumeMediaPlayback() {
         val resumeScript = "javascript:(function() { var video = document.querySelector('video'); if (video && video.paused && video.hasAttribute('data-was-playing')) { video.play().catch(function(e) {}); } })();"
         binding.webView.loadUrl(resumeScript)
     }
-
     inner class MediaStateInterface(private val activity: MainActivity) {
         @JavascriptInterface
         fun onMediaPlay() {
@@ -903,7 +880,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     private fun askForNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -911,17 +887,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     private fun loadLastUsedName() {
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
         lastUsedName = sharedPrefs.getString("LAST_FILENAME", "Video") ?: "Video"
     }
-
     private fun saveLastUsedName(name: String) {
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
         sharedPrefs.edit().putString("LAST_FILENAME", name).apply()
     }
-
     private fun detectVideoFormat(url: String): VideoFormat {
         val lowerUrl = url.lowercase()
         return when {
@@ -937,7 +910,6 @@ class MainActivity : AppCompatActivity() {
             else -> VideoFormat(".mp4", "video/mp4")
         }
     }
-
     private fun extractQualityFromUrl(url: String): String {
         val lowerUrl = url.lowercase()
         return when {
@@ -952,7 +924,6 @@ class MainActivity : AppCompatActivity() {
             else -> "Unknown Quality"
         }
     }
-
     private fun generateSmartFileName(url: String, extension: String, quality: String, category: MediaCategory): String {
         val uri = Uri.parse(url)
         val lowerUrl = url.lowercase()
@@ -974,7 +945,6 @@ class MainActivity : AppCompatActivity() {
         val cleanQuality = if (category == MediaCategory.VIDEO && quality != "Unknown Quality") "_${quality.replace("[^a-zA-Z0-9]".toRegex(), "_")}" else ""
         return "${categoryPrefix}${baseName}${cleanQuality}${extension}"
     }
-
     private fun estimateFileSize(url: String, category: MediaCategory): String { return "Unknown" }
     private fun extractLanguageFromUrl(url: String): String? { return null }
     private fun extractYouTubeVideoId(url: String): String {
@@ -985,53 +955,44 @@ class MainActivity : AppCompatActivity() {
         }
         return "UnknownVideo"
     }
-
     private fun addToBlockedList(url: String) {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val blockedUrls = sharedPrefs.getStringSet("BLOCKED_URLS", setOf())?.toMutableSet() ?: mutableSetOf()
         Uri.parse(url).host?.let { blockedUrls.add(it) }
         sharedPrefs.edit().putStringSet("BLOCKED_URLS", blockedUrls).apply()
     }
-
     private fun isAdDomain(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         return suspiciousDomains.any { host.contains(it) }
     }
-
     private fun isInBlockedList(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val blockedUrls = sharedPrefs.getStringSet("BLOCKED_URLS", setOf()) ?: setOf()
         return blockedUrls.any { blockedHost -> host == blockedHost || host.endsWith(".$blockedHost") }
     }
-
     private fun copyToClipboard(text: String) {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         val clip = android.content.ClipData.newPlainText("URL", text)
         clipboard.setPrimaryClip(clip)
         Toast.makeText(this, "URL copied", Toast.LENGTH_SHORT).show()
     }
-
     private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
         if (isAdOrTrackingUrl(lower)) return false
         return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
     }
-
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
         return adIndicators.any { url.contains(it) }
     }
-
     private fun isMainVideoContent(url: String): Boolean {
         val lower = url.lowercase()
         return lower.contains("videoplayback") || lower.contains("manifest")
     }
-
     private fun updateFabVisibility() {
         binding.fabShowMedia.visibility = if (detectedMediaFiles.isNotEmpty()) View.VISIBLE else View.GONE
     }
-
     private fun showMediaListDialog() {
         if (detectedMediaFiles.isEmpty()) {
             Toast.makeText(this, "No media files detected.", Toast.LENGTH_SHORT).show()
@@ -1052,7 +1013,6 @@ class MainActivity : AppCompatActivity() {
         dialogBinding.mediaRecyclerView.adapter = adapter
         dialog.show()
     }
-
     private fun openInExternalPlayer(videoUrl: String) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl)).apply {
@@ -1064,7 +1024,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "No video player found", Toast.LENGTH_SHORT).show()
         }
     }
-
     private fun showRenameDialog(mediaFile: MediaFile) {
         val input = EditText(this).apply {
             setText(mediaFile.title.substringBeforeLast('.'))
@@ -1082,7 +1041,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
     private fun downloadMediaFile(mediaFile: MediaFile) {
         try {
             val request = DownloadManager.Request(Uri.parse(mediaFile.url))
@@ -1096,7 +1054,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
-
     private fun addToHistory(url: String) {
         val title = binding.webView.title ?: "No Title"
         val newItem = HistoryItem(url = url, title = title)
@@ -1109,12 +1066,10 @@ class MainActivity : AppCompatActivity() {
         val newHistoryJson = Gson().toJson(history.take(100))
         sharedPrefs.edit().putString("HISTORY_V2", newHistoryJson).apply()
     }
-
     private fun showHistory() {
         val intent = Intent(this, HistoryActivity::class.java)
         historyResultLauncher.launch(intent)
     }
-
     private fun saveTabsState() {
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
         val editor = sharedPrefs.edit()
@@ -1125,7 +1080,6 @@ class MainActivity : AppCompatActivity() {
         editor.putInt("CURRENT_TAB_INDEX", currentTabIndex)
         editor.apply()
     }
-
     private fun loadTabsState(): Boolean {
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
         val tabsJson = sharedPrefs.getString("TABS_LIST", null) ?: return false
@@ -1141,12 +1095,10 @@ class MainActivity : AppCompatActivity() {
             false
         }
     }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
     }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_history -> {
@@ -1177,7 +1129,6 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
     private fun addCurrentPageToBookmarks() {
         if (binding.webView.visibility == View.VISIBLE && !binding.webView.url.isNullOrEmpty()) {
             val url = binding.webView.url!!
@@ -1193,7 +1144,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "No page loaded to bookmark", Toast.LENGTH_SHORT).show()
         }
     }
-
     private fun showMasterSettingsDialog() {
         val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist")
         AlertDialog.Builder(this)
@@ -1207,7 +1157,6 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
     }
-
     private fun showContentBlockingDialog() {
         val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val items = arrayOf("Enable Ad Blocker", "Block Suspicious Redirects", "Block All Popups", "Show pop-up blocked notice")
@@ -1237,7 +1186,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
     private fun showBlockedSitesDialog() {
         val blockedSites = getBlockedSites()
         if (blockedSites.isEmpty()) {
@@ -1255,7 +1203,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Close", null)
             .show()
     }
-
     private fun showUnblockConfirmationDialog(hostname: String) {
         AlertDialog.Builder(this)
             .setTitle("Unblock Site?")
@@ -1267,12 +1214,10 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
     private fun getBlockedSites(): List<String> {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         return (sharedPrefs.getStringSet("BLOCKED_URLS", setOf()) ?: setOf()).sorted()
     }
-
     private fun unblockSite(hostname: String) {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val blockedUrls = sharedPrefs.getStringSet("BLOCKED_URLS", setOf()) ?: setOf()
@@ -1281,7 +1226,6 @@ class MainActivity : AppCompatActivity() {
         sharedPrefs.edit().putStringSet("BLOCKED_URLS", newBlockedUrls).apply()
         Toast.makeText(this, "'$hostname' has been unblocked.", Toast.LENGTH_SHORT).show()
     }
-
     private fun showWhitelistManagementDialog() {
         val whitelistedSites = getWhitelist()
         if (whitelistedSites.isEmpty()){
@@ -1310,12 +1254,10 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Close", null)
             .show()
     }
-
     private fun getWhitelist(): List<String> {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         return (sharedPrefs.getStringSet("WHITELIST_URLS", setOf()) ?: setOf()).sorted()
     }
-
     private fun addToWhitelist(domain: String) {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val whitelist = sharedPrefs.getStringSet("WHITELIST_URLS", setOf())?.toMutableSet() ?: mutableSetOf()
@@ -1323,7 +1265,6 @@ class MainActivity : AppCompatActivity() {
         sharedPrefs.edit().putStringSet("WHITELIST_URLS", whitelist).apply()
         Toast.makeText(this, "'$domain' added to whitelist.", Toast.LENGTH_SHORT).show()
     }
-
     private fun removeFromWhitelist(domain: String) {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val whitelist = sharedPrefs.getStringSet("WHITELIST_URLS", setOf()) ?: setOf()
@@ -1332,7 +1273,6 @@ class MainActivity : AppCompatActivity() {
         sharedPrefs.edit().putStringSet("WHITELIST_URLS", newWhitelist).apply()
         Toast.makeText(this, "'$domain' removed from whitelist.", Toast.LENGTH_SHORT).show()
     }
-
     private fun showWhitelistDialog() {
         val input = EditText(this).apply {
             hint = "e.g., example.com"
@@ -1356,7 +1296,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
     private fun openCurrentPageInExternalBrowser() {
         val currentUrl = binding.webView.url
         if (!currentUrl.isNullOrEmpty()) {
@@ -1368,7 +1307,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     private fun showSiteDebuggingOptions() {
         val options = arrayOf("Change User Agent", "Add to Whitelist", "Enable Remote Debugging", "Clear Cookies")
         AlertDialog.Builder(this)
@@ -1393,7 +1331,6 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
     }
-
     private fun showUserAgentDialog() {
         val userAgents = arrayOf("Default Mobile", "Desktop Chrome", "iPad Safari")
         AlertDialog.Builder(this)
@@ -1411,80 +1348,64 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
     private fun isUrlWhitelisted(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val whitelist = sharedPrefs.getStringSet("WHITELIST_URLS", setOf()) ?: setOf()
         return whitelist.any { whitelistedDomain -> host == whitelistedDomain || host.endsWith(".$whitelistedDomain") }
     }
-
     private fun clearCookies() {
         CookieManager.getInstance().removeAllCookies {
             Toast.makeText(this, "All cookies cleared.", Toast.LENGTH_SHORT).show()
         }
     }
-
     private fun loadEnabledUserScripts() {
         lifecycleScope.launch(Dispatchers.IO) {
             enabledUserScripts = db.userScriptDao().getEnabledScripts()
         }
     }
+    private suspend fun injectScriptWithDependencies(script: UserScript) {
+        val polyfill = """
+            window.GM_xmlhttpRequest = function(options) { GreasemonkeyAPI.xmlHttpRequest(JSON.stringify(options)); };
+            window.GM = {
+                xmlHttpRequest: window.GM_xmlhttpRequest,
+                setValue: function(key, value) {},
+                getValue: function(key, defaultValue) { return defaultValue; }
+            };
+        """
+        binding.webView.evaluateJavascript(polyfill, null)
 
-    // Enhanced user script injection
-    private fun injectUserScripts(webView: WebView?, url: String?) {
-        // This function is now a dispatcher, actual injection logic is in other methods
-        if (webView == null || url == null) return
-        // The new injection methods will be called from webViewClient and webChromeClient
+        val requiredScriptsContent = scriptFetcher.fetchScripts(script.requires)
+        for (requiredScript in requiredScriptsContent) {
+            binding.webView.evaluateJavascript(requiredScript, null)
+        }
+
+        val wrappedScript = "(function() { try { ${script.script} } catch (e) { console.error('Userscript error in ${script.name}:', e); } })();"
+        binding.webView.evaluateJavascript(wrappedScript, null)
     }
-
-    // New method to inject scripts that need to run early (e.g., @run-at document-start)
     private fun injectEarlyUserscripts(url: String?) {
         if (url == null) return
         val matchingScripts = enabledUserScripts.filter {
             it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
         }
-        for (script in matchingScripts) {
-            // For document-start, we might need a different injection mechanism
-            // For now, we'll add them to pending list to be injected onProgressChanged
-            if (!pendingScriptsToInject.contains(script)) {
-                pendingScriptsToInject.add(script)
-                // Wrap script to run in page context
-                val wrappedScript = """
-                    (function() {
-                        try {
-                            ${script.script}
-                        } catch (e) {
-                            console.error('Userscript error in ${script.name}:', e);
-                        }
-                    })();
-                """.trimIndent()
-                binding.webView.evaluateJavascript(wrappedScript, null)
+        lifecycleScope.launch {
+            for (script in matchingScripts) {
+                injectScriptWithDependencies(script)
             }
         }
     }
-    
-    // New method to inject scripts that should run after page load
     private fun injectPendingUserscripts() {
-        val matchingScripts = pendingScriptsToInject.filter {
-            it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE
+        val url = binding.webView.url ?: return
+        val matchingScripts = enabledUserScripts.filter {
+            it.shouldRunOnUrl(url) && (it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE)
         }
-        for (script in matchingScripts) {
-            // Wrap script to run in page context
-            val wrappedScript = """
-                (function() {
-                    try {
-                        ${script.script}
-                    } catch (e) {
-                        console.error('Userscript error in ${script.name}:', e);
-                    }
-                })();
-            """.trimIndent()
-            binding.webView.evaluateJavascript(wrappedScript, null)
+        lifecycleScope.launch {
+            for (script in matchingScripts) {
+                injectScriptWithDependencies(script)
+            }
         }
         pendingScriptsToInject.clear()
     }
-    
     fun showBlockedNavigationDialog(url: String) {
         AlertDialog.Builder(this)
             .setTitle("Link Action")
@@ -1501,19 +1422,4 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
     }
-}
-
-// New data class for Userscript Interface
-class UserscriptInterface(private val context: Context) {
-    @JavascriptInterface
-    fun log(message: String) {
-        android.util.Log.d("Userscript", message)
-    }
-
-    @JavascriptInterface
-    fun showToast(message: String) {
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-    }
-
-    // Add more methods as needed for userscript interaction
 }
