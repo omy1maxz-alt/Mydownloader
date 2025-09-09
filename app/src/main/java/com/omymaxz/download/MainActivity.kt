@@ -140,9 +140,7 @@ class MainActivity : AppCompatActivity() {
     // Properties for enhanced userscript support
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
-    private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
-    private val scriptFetcher by lazy { ScriptFetcher(db.scriptCacheDao(), lifecycleScope) }
-    private val greasemonkeyApi by lazy { GreasemonkeyApiPolyfill(this, lifecycleScope) }
+    private val userscriptInterface = UserscriptInterface(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -529,7 +527,6 @@ class MainActivity : AppCompatActivity() {
             addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
-            addJavascriptInterface(greasemonkeyApi, "GreasemonkeyAPI")
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -558,8 +555,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             webViewClient = object : WebViewClient() {
+                private var lastNavigationTime = 0L
+                private var navigationCount = 0
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                     super.onPageStarted(view, url, favicon)
+                    isPageLoading = true
+                    pendingScriptsToInject.clear() // Clear pending scripts for new page
                     binding.progressBar.visibility = View.VISIBLE
                     binding.urlEditTextToolbar.setText(url)
                     synchronized(detectedMediaFiles) {
@@ -572,6 +573,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
+                    isPageLoading = false
                     binding.progressBar.visibility = View.GONE
                     updateToolbarNavButtonState()
                     if (url?.contains("perchance.org") == true) {
@@ -596,18 +598,20 @@ class MainActivity : AppCompatActivity() {
                         return true
                     }
                     val currentTime = System.currentTimeMillis()
-                    if (isAdDomain(url) || isInBlockedList(url) || isSuspiciousRedirectPattern(url, currentTime, view?.url)) {
+                    if (isAdDomain(url) || isInBlockedList(url) || isSuspiciousRedirectPattern(url, currentTime, view?.url, lastNavigationTime, navigationCount)) {
                         showBlockedNavigationDialog(url)
                         return true
                     }
+                    lastNavigationTime = currentTime
+                    navigationCount++
                     return false
                 }
-                private fun isSuspiciousRedirectPattern(url: String, currentTime: Long, previousUrl: String?): Boolean {
+                private fun isSuspiciousRedirectPattern(url: String, currentTime: Long, previousUrl: String?, lastNavTime: Long, navCount: Int): Boolean {
                     val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
                     if (!settingsPrefs.getBoolean("BLOCK_REDIRECTS", true)) return false
-                    val timeSinceLastNav = currentTime - lastNavigationTime
+                    val timeSinceLastNav = currentTime - lastNavTime
                     val isDifferentHost = Uri.parse(url).host != Uri.parse(previousUrl ?: "").host
-                    return isDifferentHost && (timeSinceLastNav < 1000 && navigationCount > 0)
+                    return isDifferentHost && (timeSinceLastNav < 1000 && navCount > 0)
                 }
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                     val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
@@ -1364,48 +1368,61 @@ class MainActivity : AppCompatActivity() {
             enabledUserScripts = db.userScriptDao().getEnabledScripts()
         }
     }
-    private suspend fun injectScriptWithDependencies(script: UserScript) {
-        val polyfill = """
-            window.GM_xmlhttpRequest = function(options) { GreasemonkeyAPI.xmlHttpRequest(JSON.stringify(options)); };
-            window.GM = {
-                xmlHttpRequest: window.GM_xmlhttpRequest,
-                setValue: function(key, value) {},
-                getValue: function(key, defaultValue) { return defaultValue; }
-            };
-        """
-        binding.webView.evaluateJavascript(polyfill, null)
 
-        val requiredScriptsContent = scriptFetcher.fetchScripts(script.requires)
-        for (requiredScript in requiredScriptsContent) {
-            binding.webView.evaluateJavascript(requiredScript, null)
-        }
-
-        val wrappedScript = "(function() { try { ${script.script} } catch (e) { console.error('Userscript error in ${script.name}:', e); } })();"
-        binding.webView.evaluateJavascript(wrappedScript, null)
+    // Enhanced user script injection
+    private fun injectUserScripts(webView: WebView?, url: String?) {
+        // This function is now a dispatcher, actual injection logic is in other methods
+        if (webView == null || url == null) return
+        // The new injection methods will be called from webViewClient and webChromeClient
     }
+
+    // New method to inject scripts that need to run early (e.g., @run-at document-start)
     private fun injectEarlyUserscripts(url: String?) {
         if (url == null) return
         val matchingScripts = enabledUserScripts.filter {
             it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
         }
-        lifecycleScope.launch {
-            for (script in matchingScripts) {
-                injectScriptWithDependencies(script)
+        for (script in matchingScripts) {
+            // For document-start, we might need a different injection mechanism
+            // For now, we'll add them to pending list to be injected onProgressChanged
+            if (!pendingScriptsToInject.contains(script)) {
+                pendingScriptsToInject.add(script)
+                // Wrap script to run in page context
+                val wrappedScript = """
+                    (function() {
+                        try {
+                            ${script.script}
+                        } catch (e) {
+                            console.error('Userscript error in ${script.name}:', e);
+                        }
+                    })();
+                """.trimIndent()
+                binding.webView.evaluateJavascript(wrappedScript, null)
             }
         }
     }
+
+    // New method to inject scripts that should run after page load
     private fun injectPendingUserscripts() {
-        val url = binding.webView.url ?: return
-        val matchingScripts = enabledUserScripts.filter {
-            it.shouldRunOnUrl(url) && (it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE)
+        val matchingScripts = pendingScriptsToInject.filter {
+            it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE
         }
-        lifecycleScope.launch {
-            for (script in matchingScripts) {
-                injectScriptWithDependencies(script)
-            }
+        for (script in matchingScripts) {
+            // Wrap script to run in page context
+            val wrappedScript = """
+                (function() {
+                    try {
+                        ${script.script}
+                    } catch (e) {
+                        console.error('Userscript error in ${script.name}:', e);
+                    }
+                })();
+            """.trimIndent()
+            binding.webView.evaluateJavascript(wrappedScript, null)
         }
         pendingScriptsToInject.clear()
     }
+
     fun showBlockedNavigationDialog(url: String) {
         AlertDialog.Builder(this)
             .setTitle("Link Action")
