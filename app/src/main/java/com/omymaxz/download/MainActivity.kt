@@ -140,9 +140,7 @@ class MainActivity : AppCompatActivity() {
     // Properties for enhanced userscript support
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
-    private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
-    private val scriptFetcher by lazy { ScriptFetcher(db.scriptCacheDao(), lifecycleScope) }
-    private val greasemonkeyApi by lazy { GreasemonkeyApiPolyfill(this, lifecycleScope) }
+    private val userscriptInterface = UserscriptInterface(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -187,7 +185,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         isAppInBackground = false
         binding.webView.onResume()
-        // Media keep-alive handled by service lifecycle
+        stopMediaKeepAlive()
         if (isMediaPlaying || currentVideoUrl != null) {
             handler.postDelayed({
                 resumeMediaPlayback()
@@ -534,7 +532,6 @@ class MainActivity : AppCompatActivity() {
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             // Add the userscript interface for better scope access
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
-            addJavascriptInterface(greasemonkeyApi, "GreasemonkeyAPI")
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -565,12 +562,10 @@ class MainActivity : AppCompatActivity() {
             webViewClient = object : WebViewClient() {
                 private var lastNavigationTime = 0L
                 private var navigationCount = 0
-
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                     super.onPageStarted(view, url, favicon)
-                    navigationCount = 0
                     isPageLoading = true
-                    pendingScriptsToInject.clear()
+                    pendingScriptsToInject.clear() // Clear pending scripts for new page
                     binding.progressBar.visibility = View.VISIBLE
                     binding.urlEditTextToolbar.setText(url)
                     synchronized(detectedMediaFiles) {
@@ -581,7 +576,6 @@ class MainActivity : AppCompatActivity() {
                         injectPerchanceFixes(view)
                     }
                 }
-
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
                     isPageLoading = false
@@ -590,6 +584,7 @@ class MainActivity : AppCompatActivity() {
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
+                    // Inject pending scripts that were waiting for page finish
                     injectPendingUserscripts()
                     url?.let {
                         addToHistory(it)
@@ -599,7 +594,6 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
                     if (isUrlWhitelisted(url)) {
@@ -618,7 +612,6 @@ class MainActivity : AppCompatActivity() {
                     navigationCount++
                     return false
                 }
-
                 private fun isSuspiciousRedirectPattern(url: String, currentTime: Long, previousUrl: String?): Boolean {
                     val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
                     if (!settingsPrefs.getBoolean("BLOCK_REDIRECTS", true)) return false
@@ -626,7 +619,6 @@ class MainActivity : AppCompatActivity() {
                     val isDifferentHost = Uri.parse(url).host != Uri.parse(previousUrl ?: "").host
                     return isDifferentHost && (timeSinceLastNav < 1000 && navigationCount > 0)
                 }
-
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                     val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
                     if (isUrlWhitelisted(url)) {
@@ -675,7 +667,6 @@ class MainActivity : AppCompatActivity() {
                     }
                     return super.shouldInterceptRequest(view, request)
                 }
-
                 private fun createEmptyResponse(): WebResourceResponse {
                     return WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
                 }
@@ -1449,37 +1440,16 @@ class MainActivity : AppCompatActivity() {
 
     // New method to inject scripts that need to run early (e.g., @run-at document-start)
     private fun injectEarlyUserscripts(url: String?) {
-        android.util.Log.d("MainActivity_Debug", "Checking for document-start scripts on URL: $url")
         if (url == null) return
         val matchingScripts = enabledUserScripts.filter {
             it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
         }
-        lifecycleScope.launch {
-            for (script in matchingScripts) {
-                val polyfill = """
-                    window.GM_xmlhttpRequest = function(options) {
-                        GreasemonkeyAPI.xmlHttpRequest(JSON.stringify(options));
-                    };
-                    window.GM = {
-                        xmlHttpRequest: window.GM_xmlhttpRequest,
-                        setValue: function(key, value) { GreasemonkeyAPI.setValue(key, JSON.stringify(value)); },
-                        getValue: function(key, defaultValue) {
-                            let result = GreasemonkeyAPI.getValue(key, JSON.stringify(defaultValue));
-                            try { return JSON.parse(result); } catch (e) { return defaultValue; }
-                        }
-                    };
-                """.trimIndent()
-
-                // Inject polyfill first
-                binding.webView.evaluateJavascript(polyfill, null)
-
-                // Fetch and inject required scripts
-                val requiredScriptsContent = scriptFetcher.fetchScripts(script.requires)
-                for (requiredScript in requiredScriptsContent) {
-                    binding.webView.evaluateJavascript(requiredScript, null)
-                }
-
-                // Now inject the main script
+        for (script in matchingScripts) {
+            // For document-start, we might need a different injection mechanism
+            // For now, we'll add them to pending list to be injected onProgressChanged
+            if (!pendingScriptsToInject.contains(script)) {
+                pendingScriptsToInject.add(script)
+                // Wrap script to run in page context
                 val wrappedScript = """
                     (function() {
                         try {
@@ -1496,50 +1466,23 @@ class MainActivity : AppCompatActivity() {
     
     // New method to inject scripts that should run after page load
     private fun injectPendingUserscripts() {
-        // This function now handles DOCUMENT_END and DOCUMENT_IDLE scripts
-        val url = binding.webView.url ?: return
-        val matchingScripts = enabledUserScripts.filter {
-            it.shouldRunOnUrl(url) && (it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE)
+        val matchingScripts = pendingScriptsToInject.filter {
+            it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE
         }
-        lifecycleScope.launch {
-            for (script in matchingScripts) {
-                val polyfill = """
-                    window.GM_xmlhttpRequest = function(options) {
-                        GreasemonkeyAPI.xmlHttpRequest(JSON.stringify(options));
-                    };
-                    window.GM = {
-                        xmlHttpRequest: window.GM_xmlhttpRequest,
-                        setValue: function(key, value) { GreasemonkeyAPI.setValue(key, JSON.stringify(value)); },
-                        getValue: function(key, defaultValue) {
-                            let result = GreasemonkeyAPI.getValue(key, JSON.stringify(defaultValue));
-                            try { return JSON.parse(result); } catch (e) { return defaultValue; }
-                        }
-                    };
-                """.trimIndent()
-
-                // Inject polyfill first
-                binding.webView.evaluateJavascript(polyfill, null)
-
-                // Fetch and inject required scripts
-                val requiredScriptsContent = scriptFetcher.fetchScripts(script.requires)
-                for (requiredScript in requiredScriptsContent) {
-                    binding.webView.evaluateJavascript(requiredScript, null)
-                }
-
-                // Now inject the main script
-                val wrappedScript = """
-                    (function() {
-                        try {
-                            ${script.script}
-                        } catch (e) {
-                            console.error('Userscript error in ${script.name}:', e);
-                        }
-                    })();
-                """.trimIndent()
-                binding.webView.evaluateJavascript(wrappedScript, null)
-            }
+        for (script in matchingScripts) {
+            // Wrap script to run in page context
+            val wrappedScript = """
+                (function() {
+                    try {
+                        ${script.script}
+                    } catch (e) {
+                        console.error('Userscript error in ${script.name}:', e);
+                    }
+                })();
+            """.trimIndent()
+            binding.webView.evaluateJavascript(wrappedScript, null)
         }
-        pendingScriptsToInject.clear() // Clear any old pending scripts
+        pendingScriptsToInject.clear()
     }
     
     fun showBlockedNavigationDialog(url: String) {
@@ -1558,4 +1501,19 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
     }
+}
+
+// New data class for Userscript Interface
+class UserscriptInterface(private val context: Context) {
+    @JavascriptInterface
+    fun log(message: String) {
+        android.util.Log.d("Userscript", message)
+    }
+
+    @JavascriptInterface
+    fun showToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    // Add more methods as needed for userscript interaction
 }
