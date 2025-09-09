@@ -141,6 +141,7 @@ class MainActivity : AppCompatActivity() {
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
     private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
+    private val gmApi by lazy { GMApi(binding.webView) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -527,6 +528,7 @@ class MainActivity : AppCompatActivity() {
             addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
+            addJavascriptInterface(gmApi, "GMApi")
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -1400,6 +1402,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun injectUserscript(script: UserScript) {
+        // Build the polyfill script based on @grant
+        val polyfillBuilder = StringBuilder()
+        if (script.grants.contains("GM_addStyle")) {
+            polyfillBuilder.append("""
+                window.GM_addStyle = function(css) {
+                    GMApi.addStyle(css);
+                };
+            """.trimIndent())
+        }
+        // TODO: Add polyfills for other GM_* functions if needed based on script.grants
+
+        val polyfillScript = polyfillBuilder.toString()
+        if (polyfillScript.isNotEmpty()) {
+            binding.webView.evaluateJavascript(polyfillScript, null)
+        }
+
         val wrappedScript = "(function() { try { ${script.script} } catch (e) { console.error('Userscript error in ${script.name}:', e); } })();"
         binding.webView.evaluateJavascript(wrappedScript, null)
     }
