@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
     // Properties for enhanced userscript support
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
-    private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
+    private val userscriptInterface = UserscriptInterface(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
