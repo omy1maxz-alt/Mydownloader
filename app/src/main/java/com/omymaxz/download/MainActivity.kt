@@ -552,6 +552,37 @@ class MainActivity : AppCompatActivity() {
                             }
                             .show()
                     }
+                } else if (hitTestResult.type == WebView.HitTestResult.IMAGE_TYPE) {
+                    val imageUrl = hitTestResult.extra
+                    if (imageUrl != null) {
+                        val options = arrayOf(
+                            "Open image in background",
+                            "Copy image link",
+                            "Download image"
+                        )
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle(imageUrl)
+                            .setItems(options) { _, which ->
+                                when (which) {
+                                    0 -> openInNewTab(imageUrl, true)
+                                    1 -> copyToClipboard(imageUrl)
+                                    2 -> {
+                                        try {
+                                            val request = DownloadManager.Request(Uri.parse(imageUrl))
+                                                .setTitle(URLUtil.guessFileName(imageUrl, null, null))
+                                                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(imageUrl, null, null))
+                                            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                                            dm.enqueue(request)
+                                            Toast.makeText(applicationContext, "Downloading image...", Toast.LENGTH_SHORT).show()
+                                        } catch (e: Exception) {
+                                            Toast.makeText(applicationContext, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                }
+                            }
+                            .show()
+                    }
                 }
             }
             webViewClient = object : WebViewClient() {
