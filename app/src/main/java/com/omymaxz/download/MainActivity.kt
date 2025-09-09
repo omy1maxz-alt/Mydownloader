@@ -568,10 +568,12 @@ class MainActivity : AppCompatActivity() {
                                     1 -> copyToClipboard(imageUrl)
                                     2 -> {
                                         try {
+                                            val extension = MimeTypeMap.getSingleton().getFileExtensionFromUrl(imageUrl) ?: "png"
+                                            val fileName = "image_${System.currentTimeMillis()}.$extension"
                                             val request = DownloadManager.Request(Uri.parse(imageUrl))
-                                                .setTitle(URLUtil.guessFileName(imageUrl, null, null))
+                                                .setTitle(fileName)
                                                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(imageUrl, null, null))
+                                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
                                             val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
                                             dm.enqueue(request)
                                             Toast.makeText(applicationContext, "Downloading image...", Toast.LENGTH_SHORT).show()
