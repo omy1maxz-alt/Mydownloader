@@ -1,80 +1,35 @@
 {
   "allFiles": [
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 62817,
-          "line": 1409
-        },
-        "start": {
-          "column": 0,
-          "index": 62817,
-          "line": 1409
-        }
-      }
-    },
-    {
       "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/build.gradle.kts",
       "selection": {
         "end": {
-          "column": 23,
-          "index": 758,
-          "line": 34
+          "column": 1,
+          "index": 3214,
+          "line": 100
         },
         "start": {
-          "column": 23,
-          "index": 758,
-          "line": 34
+          "column": 1,
+          "index": 3214,
+          "line": 100
         }
       }
     },
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/settings.gradle.kts",
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/keystore.properties",
       "selection": {
         "end": {
-          "column": 0,
-          "index": 0,
-          "line": 0
+          "column": 20,
+          "index": 61,
+          "line": 2
         },
         "start": {
-          "column": 0,
-          "index": 0,
-          "line": 0
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/build.gradle.kts",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 0,
-          "line": 0
-        },
-        "start": {
-          "column": 0,
-          "index": 0,
-          "line": 0
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/gradle/wrapper/gradle-wrapper.properties",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 0,
-          "line": 0
-        },
-        "start": {
-          "column": 0,
-          "index": 0,
-          "line": 0
+          "column": 20,
+          "index": 61,
+          "line": 2
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/gradle/wrapper/gradle-wrapper.properties"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/build.gradle.kts"
 }
