@@ -1,71 +1,98 @@
 package com.omymaxz.download
 
-import android.content.Context
-import android.webkit.JavascriptInterface
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
+object GreasemonkeyApiPolyfill {
+    fun getPolyfill(script: UserScript): String {
+        return """
+        (function() {
+            'use strict';
 
-class GreasemonkeyApiPolyfill(
-    private val context: Context,
-    private val coroutineScope: CoroutineScope
-) {
-    @JavascriptInterface
-    fun xmlHttpRequest(options: String) {
-        coroutineScope.launch(Dispatchers.IO) {
-            try {
-                val json = JSONObject(options)
-                val method = json.optString("method", "GET")
-                val url = json.getString("url")
-                val headers = json.optJSONObject("headers")
-                val data = json.optString("data", null)
+            const GM = {};
+            window.GM = GM;
 
-                val urlConnection = URL(url).openConnection() as HttpURLConnection
-                urlConnection.requestMethod = method
-
-                headers?.keys()?.forEach { key ->
-                    urlConnection.setRequestProperty(key, headers.getString(key))
-                }
-
-                if (method == "POST" && data != null) {
-                    urlConnection.doOutput = true
-                    OutputStreamWriter(urlConnection.outputStream).use { writer ->
-                        writer.write(data)
-                    }
-                }
-
-                val responseCode = urlConnection.responseCode
-                val responseText = if (responseCode in 200..299) {
-                    BufferedReader(InputStreamReader(urlConnection.inputStream)).use { it.readText() }
-                } else {
-                    BufferedReader(InputStreamReader(urlConnection.errorStream)).use { it.readText() }
-                }
-
-                // For simplicity, we are not implementing onload/onerror callbacks back into JS yet.
-                // This implementation simply allows the request to be made.
-                android.util.Log.d("GM_Polyfill", "GM_xmlHttpRequest to $url completed with status $responseCode")
-
-            } catch (e: Exception) {
-                android.util.Log.e("GM_Polyfill", "GM_xmlHttpRequest failed: ${e.message}", e)
+            // Callback handling for xmlHttpRequest
+            if (!window.userscript_callbacks) {
+                window.userscript_callbacks = {};
             }
-        }
-    }
+            let callback_id = 0;
 
-    // Placeholder for future GM_setValue, GM_getValue functions
-    @JavascriptInterface
-    fun setValue(key: String, value: String) {
-        // TODO: Implement using SharedPreferences
-    }
+            // --- Value Storage ---
+            GM.setValue = function(key, value) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        AndroidUserscriptAPI.setValue("${script.name}", key, JSON.stringify(value));
+                        resolve();
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            };
 
-    @JavascriptInterface
-    fun getValue(key: String, defaultValue: String): String {
-        // TODO: Implement using SharedPreferences
-        return defaultValue
+            GM.getValue = function(key, defaultValue) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const valStr = AndroidUserscriptAPI.getValue("${script.name}", key, JSON.stringify(defaultValue));
+                        if (valStr === null) {
+                            resolve(defaultValue);
+                        } else {
+                            resolve(JSON.parse(valStr));
+                        }
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            };
+
+            GM.deleteValue = function(key) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        AndroidUserscriptAPI.deleteValue("${script.name}", key);
+                        resolve();
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            };
+
+            GM.listValues = function() {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const listJson = AndroidUserscriptAPI.listValues("${script.name}");
+                        resolve(JSON.parse(listJson));
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            };
+
+            // --- XML HTTP Request ---
+            GM.xmlHttpRequest = function(details) {
+                const current_callback_id = callback_id++;
+
+                return new Promise((resolve, reject) => {
+                    window.userscript_callbacks[current_callback_id] = {
+                        onload: function(response) {
+                            if(details.onload) details.onload(response);
+                            resolve(response);
+                            delete window.userscript_callbacks[current_callback_id];
+                        },
+                        onerror: function(error) {
+                            if(details.onerror) details.onerror(error);
+                            reject(error);
+                            delete window.userscript_callbacks[current_callback_id];
+                        }
+                    };
+
+                    AndroidUserscriptAPI.xmlHttpRequest(JSON.stringify(details), current_callback_id.toString());
+                });
+            };
+
+            // --- User Script ---
+            try {
+                ${script.script}
+            } catch (e) {
+                console.error('Userscript error in ${script.name}:', e);
+            }
+        })();
+        """
     }
 }
