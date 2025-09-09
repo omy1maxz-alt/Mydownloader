@@ -53,10 +53,6 @@ import java.util.Timer
 import java.util.TimerTask
 import java.util.regex.Pattern
 
-/**
- * The main activity for the web browser application.
- * This class manages the WebView, tabs, bookmarks, history, downloads, and other core functionalities.
- */
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val detectedMediaFiles = Collections.synchronizedList(mutableListOf<MediaFile>())
@@ -145,16 +141,9 @@ class MainActivity : AppCompatActivity() {
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
     private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
+    private val scriptFetcher by lazy { ScriptFetcher(db.scriptCacheDao(), lifecycleScope) }
+    private val greasemonkeyApi by lazy { GreasemonkeyApiPolyfill(this, lifecycleScope) }
 
-    /**
-     * Called when the activity is first created.
-     * This is where you should do all of your normal static set up: create views, bind data to lists, etc.
-     * This method also sets up the toolbar, WebView, tabs, and other initial components.
-     *
-     * @param savedInstanceState If the activity is being re-initialized after previously being shut down
-     * then this Bundle contains the data it most recently supplied in onSaveInstanceState(Bundle).
-     * Otherwise it is null.
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -185,11 +174,6 @@ class MainActivity : AppCompatActivity() {
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
     }
 
-    /**
-     * Called when the activity is going into the background, but has not yet been killed.
-     * The counterpart to onResume().
-     * This method saves the current state of the tabs.
-     */
     override fun onPause() {
         super.onPause()
         isAppInBackground = true
@@ -199,11 +183,6 @@ class MainActivity : AppCompatActivity() {
         saveTabsState()
     }
 
-    /**
-     * Called when the activity will start interacting with the user.
-     * At this point your activity is at the top of the activity stack, with user input going to it.
-     * The counterpart to onPause().
-     */
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
@@ -215,10 +194,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Called when the activity is becoming visible to the user.
-     * Followed by onResume() if the activity comes to the foreground, or onStop() if it becomes hidden.
-     */
     override fun onStart() {
         super.onStart()
         Intent(this, MediaForegroundService::class.java).also { intent ->
@@ -232,10 +207,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Called when the activity is no longer visible to the user.
-     * This may happen because it is being destroyed, or because another activity has been resumed and is covering it.
-     */
     override fun onStop() {
         super.onStop()
         if (serviceBound) {
@@ -247,11 +218,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * The final call you receive before your activity is destroyed.
-     * This can happen either because the activity is finishing (someone called finish() on it),
-     * or because the system is temporarily destroying this instance of the activity to save space.
-     */
     override fun onDestroy() {
         super.onDestroy()
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -259,9 +225,6 @@ class MainActivity : AppCompatActivity() {
         stopPlaybackService()
     }
 
-    /**
-     * Sets up the click listeners for the toolbar navigation buttons (back, forward, refresh).
-     */
     private fun setupToolbarNavButtons() {
         binding.backButton.setOnClickListener {
             if (binding.webView.canGoBack()) {
@@ -278,9 +241,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Updates the enabled state and alpha of the toolbar navigation buttons based on the WebView's history.
-     */
     private fun updateToolbarNavButtonState() {
         val canGoBack = binding.webView.canGoBack()
         binding.backButton.isEnabled = canGoBack
@@ -290,9 +250,6 @@ class MainActivity : AppCompatActivity() {
         binding.forwardButton.alpha = if (canGoForward) 1.0f else 0.5f
     }
 
-    /**
-     * Initializes the tab list. If no saved tabs are found, creates a single new tab.
-     */
     private fun initializeTabs() {
         if (!loadTabsState()) {
             tabs.add(Tab(title = "New Tab"))
@@ -300,9 +257,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Sets up the click listener for the tab button, which shows the tabs dialog.
-     */
     private fun setupTabButton() {
         binding.tabButton.setOnClickListener {
             showTabsDialog()
@@ -310,16 +264,10 @@ class MainActivity : AppCompatActivity() {
         updateTabCount()
     }
 
-    /**
-     * Updates the tab count text view with the current number of open tabs.
-     */
     private fun updateTabCount() {
         binding.tabCount.text = tabs.size.toString()
     }
 
-    /**
-     * Displays a dialog showing the list of open tabs, allowing the user to switch, close, or create new tabs.
-     */
     private fun showTabsDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_tabs, null)
         val tabsRecyclerView = dialogView.findViewById<RecyclerView>(R.id.tabsRecyclerView)
@@ -351,9 +299,6 @@ class MainActivity : AppCompatActivity() {
         tabsDialog?.show()
     }
 
-    /**
-     * Creates a new, blank tab and switches to it.
-     */
     private fun createNewTab() {
         saveCurrentTabState()
         val newTab = Tab(title = "New Tab")
@@ -361,11 +306,6 @@ class MainActivity : AppCompatActivity() {
         switchTab(tabs.size - 1)
     }
 
-    /**
-     * Opens a URL in a new tab.
-     * @param url The URL to open.
-     * @param inBackground If true, the tab is opened in the background without switching to it.
-     */
     private fun openInNewTab(url: String, inBackground: Boolean) {
         saveCurrentTabState()
         val newTab = Tab(url = url, title = "Loading...")
@@ -378,10 +318,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Closes the tab at the specified position.
-     * @param position The index of the tab to close.
-     */
     private fun closeTab(position: Int) {
         if (tabs.size <= 1) {
             Toast.makeText(this, "Cannot close the last tab", Toast.LENGTH_SHORT).show()
@@ -400,9 +336,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Saves the current state (URL, title, history) of the currently active WebView into its corresponding Tab object.
-     */
     private fun saveCurrentTabState() {
         if (currentTabIndex in tabs.indices) {
             val currentTab = tabs[currentTabIndex]
@@ -420,10 +353,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Restores the state of a tab at a given index, loading its URL and history into the main WebView.
-     * @param tabIndex The index of the tab to restore.
-     */
     private fun restoreTabState(tabIndex: Int) {
         if (tabIndex !in tabs.indices) return
         val tab = tabs[tabIndex]
@@ -452,11 +381,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Switches to a different tab.
-     * @param newIndex The index of the tab to switch to.
-     * @param forceReload If true, the tab state is not saved before switching.
-     */
     private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
         if (newIndex !in tabs.indices) return
         if (!forceReload) {
@@ -467,9 +391,6 @@ class MainActivity : AppCompatActivity() {
         updateTabCount()
     }
 
-    /**
-     * Sets up the click listener for the home button, which clears the current tab's state and shows the start page.
-     */
     private fun setupHomeButton() {
         binding.homeButton.setOnClickListener {
             if (currentTabIndex in tabs.indices) {
@@ -480,9 +401,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Hides the WebView and shows the start page content (bookmark grid).
-     */
     private fun showStartPage() {
         binding.webView.visibility = View.GONE
         binding.bookmarkRecyclerView.visibility = View.VISIBLE
@@ -490,18 +408,12 @@ class MainActivity : AppCompatActivity() {
         updateToolbarNavButtonState()
     }
 
-    /**
-     * Hides the start page content and shows the WebView.
-     */
     private fun showWebView() {
         binding.webView.visibility = View.VISIBLE
         binding.bookmarkRecyclerView.visibility = View.GONE
         updateToolbarNavButtonState()
     }
 
-    /**
-     * Sets up the RecyclerView for displaying bookmarks on the start page.
-     */
     private fun setupStartPage() {
         bookmarkAdapter = BookmarkAdapter(
             bookmarks = mutableListOf(),
@@ -519,9 +431,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Asynchronously loads all bookmarks from the database and updates the adapter on the main thread.
-     */
     private fun loadBookmarks() {
         lifecycleScope.launch(Dispatchers.IO) {
             val bookmarks = db.bookmarkDao().getAll()
@@ -531,10 +440,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Shows a confirmation dialog before deleting a bookmark.
-     * @param bookmark The bookmark to be deleted.
-     */
     private fun showDeleteBookmarkDialog(bookmark: Bookmark) {
         AlertDialog.Builder(this)
             .setTitle("Delete Bookmark?")
@@ -546,10 +451,6 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    /**
-     * Deletes a bookmark from the database and reloads the bookmark list.
-     * @param bookmark The bookmark to delete.
-     */
     private fun deleteBookmark(bookmark: Bookmark) {
         lifecycleScope.launch(Dispatchers.IO) {
             db.bookmarkDao().delete(bookmark)
@@ -560,10 +461,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Sets up the listeners for the URL address bar in the toolbar,
-     * handling 'Go' actions and focus changes.
-     */
     private fun setupUrlBarInToolbar() {
         binding.urlEditTextToolbar.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_GO) {
@@ -582,10 +479,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Loads a URL from the text entered in the toolbar's EditText.
-     * If the URL is not a valid web address, it is treated as a search query for Google.
-     */
     private fun loadUrlFromEditTextToolbar() {
         var url = binding.urlEditTextToolbar.text.toString().trim()
         if (url.isEmpty()) return
@@ -599,11 +492,6 @@ class MainActivity : AppCompatActivity() {
         binding.urlEditTextToolbar.clearFocus()
     }
 
-    /**
-     * Handles the back button press.
-     * It navigates back in the WebView's history, hides the custom fullscreen view,
-     * returns to the start page from the WebView, or shows an exit confirmation dialog.
-     */
     override fun onBackPressed() {
         if (fullscreenView != null) {
             (window.decorView as FrameLayout).removeView(fullscreenView)
@@ -624,11 +512,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Configures the main WebView with all necessary settings, clients, and listeners.
-     * This includes enabling JavaScript, setting up a custom WebViewClient and WebChromeClient,
-     * handling downloads, and managing long-press context menus.
-     */
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
         CookieManager.getInstance().setAcceptThirdPartyCookies(binding.webView, true)
@@ -646,6 +529,7 @@ class MainActivity : AppCompatActivity() {
             addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
+            addJavascriptInterface(greasemonkeyApi, "GreasemonkeyAPI")
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -673,22 +557,11 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            /**
-             * A custom WebViewClient to handle page loading, URL interception, and ad-blocking logic.
-             */
             webViewClient = object : WebViewClient() {
                 private var lastNavigationTime = 0L
                 private var navigationCount = 0
-                /**
-                 * Notifies the host application that a page has started loading.
-                 * @param view The WebView that is initiating the callback.
-                 * @param url The url to be loaded.
-                 * @param favicon The favicon for this page if it already exists in the database.
-                 */
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                     super.onPageStarted(view, url, favicon)
-                    isPageLoading = true
-                    pendingScriptsToInject.clear() // Clear pending scripts for new page
                     binding.progressBar.visibility = View.VISIBLE
                     binding.urlEditTextToolbar.setText(url)
                     synchronized(detectedMediaFiles) {
@@ -699,14 +572,8 @@ class MainActivity : AppCompatActivity() {
                         injectPerchanceFixes(view)
                     }
                 }
-                /**
-                 * Notifies the host application that a page has finished loading.
-                 * @param view The WebView that is initiating the callback.
-                 * @param url The url of the page.
-                 */
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
-                    isPageLoading = false
                     binding.progressBar.visibility = View.GONE
                     updateToolbarNavButtonState()
                     if (url?.contains("perchance.org") == true) {
@@ -721,13 +588,6 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-                /**
-                 * Give the host application a chance to take over the control when a new url is about to be loaded in the current WebView.
-                 * This is used for ad-blocking and handling special URL cases.
-                 * @param view The WebView that is initiating the callback.
-                 * @param request Object containing the details of the request.
-                 * @return True if the host application wants to leave the current WebView and handle the url itself, otherwise return false.
-                 */
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
                     if (isUrlWhitelisted(url)) {
@@ -746,15 +606,6 @@ class MainActivity : AppCompatActivity() {
                     navigationCount++
                     return false
                 }
-                /**
-                 * Checks if a URL navigation pattern is suspicious (e.g., a rapid redirect).
-                 * @param url The URL being navigated to.
-                 * @param currentTime The current system time in milliseconds.
-                 * @param previousUrl The previous URL.
-                 * @param lastNavTime The timestamp of the last navigation.
-                 * @param navCount The number of navigations in the current session.
-                 * @return True if the pattern is suspicious, false otherwise.
-                 */
                 private fun isSuspiciousRedirectPattern(url: String, currentTime: Long, previousUrl: String?, lastNavTime: Long, navCount: Int): Boolean {
                     val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
                     if (!settingsPrefs.getBoolean("BLOCK_REDIRECTS", true)) return false
@@ -762,13 +613,6 @@ class MainActivity : AppCompatActivity() {
                     val isDifferentHost = Uri.parse(url).host != Uri.parse(previousUrl ?: "").host
                     return isDifferentHost && (timeSinceLastNav < 1000 && navCount > 0)
                 }
-                /**
-                 * Notify the host application of a resource request and allow the application to return the data.
-                 * This is used to intercept ad and media requests.
-                 * @param view The WebView that is requesting the resource.
-                 * @param request Object containing the details of the request.
-                 * @return A [WebResourceResponse] containing the response information or null if the WebView should load the resource itself.
-                 */
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                     val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
                     if (isUrlWhitelisted(url)) {
@@ -821,16 +665,7 @@ class MainActivity : AppCompatActivity() {
                     return WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
                 }
             }
-            /**
-             * A custom WebChromeClient to handle UI-related browser events like progress changes,
-             * fullscreen requests, and window creation.
-             */
             webChromeClient = object : WebChromeClient() {
-                /**
-                 * Tell the host application the current progress of loading a page.
-                 * @param view The WebView that is initiating the callback.
-                 * @param newProgress Current progress, from 0 to 100.
-                 */
                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
                     super.onProgressChanged(view, newProgress)
                     binding.progressBar.progress = newProgress
@@ -843,31 +678,15 @@ class MainActivity : AppCompatActivity() {
                          injectEarlyUserscripts(view?.url)
                     }
                 }
-                /**
-                 * Notify the host application of a new title for the current page.
-                 * @param view The WebView that is initiating the callback.
-                 * @param title The new title for the current page.
-                 */
                 override fun onReceivedTitle(view: WebView?, title: String?) {
                     super.onReceivedTitle(view, title)
                     if (currentTabIndex in tabs.indices && !title.isNullOrBlank()) {
                         tabs[currentTabIndex].title = title
                     }
                 }
-                /**
-                 * Notify the host application that a web page wants to use a permission-protected resource.
-                 * @param request The PermissionRequest from the web page for access to the resource.
-                 */
                 override fun onPermissionRequest(request: PermissionRequest?) {
                     request?.grant(request.resources)
                 }
-                /**
-                 * Tell the client to show a file chooser.
-                 * @param webView The WebView that is initiating the callback.
-                 * @param filePathCallback The callback to receive the chosen file paths.
-                 * @param fileChooserParams Describes the file chooser request.
-                 * @return boolean True if the client will handle the file chooser.
-                 */
                 override fun onShowFileChooser(
                     webView: WebView?,
                     filePathCallback: ValueCallback<Array<Uri>>?,
@@ -887,11 +706,6 @@ class MainActivity : AppCompatActivity() {
                     }
                     return true
                 }
-                /**
-                 * Notify the host application that a web page would like to enter fullscreen.
-                 * @param view The View that would like to be shown fullscreen.
-                 * @param callback The callback to be invoked when the view is dismissed.
-                 */
                 override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
                     if (fullscreenView != null) {
                         callback?.onCustomViewHidden()
@@ -903,9 +717,6 @@ class MainActivity : AppCompatActivity() {
                     window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
                     binding.mainContent.visibility = View.GONE
                 }
-                /**
-                 * Notify the host application that a web page would like to exit fullscreen.
-                 */
                 override fun onHideCustomView() {
                     if (fullscreenView == null) return
                     (binding.root as FrameLayout).removeView(fullscreenView)
@@ -915,14 +726,6 @@ class MainActivity : AppCompatActivity() {
                     customViewCallback?.onCustomViewHidden()
                     customViewCallback = null
                 }
-                /**
-                 * Request the host application to create a new window.
-                 * @param view The WebView that initiated the request.
-                 * @param isDialog True if the new window should be a dialog, rather than a full-sized window.
-                 * @param isUserGesture True if the request was initiated by a user gesture, such as the user clicking a link.
-                 * @param resultMsg The message to send when a new WebView has been created.
-                 * @return True if the host application will create a new window, in which case resultMsg should be sent to its target.
-                 */
                 override fun onCreateWindow(view: WebView, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message): Boolean {
                     val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
                     val blockPopups = settingsPrefs.getBoolean("BLOCK_ALL_POPUPS", true)
@@ -968,10 +771,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    /**
-     * Opens a given URL in a Chrome Custom Tab for a better external browsing experience.
-     * @param url The URL to open.
-     */
     private fun openInCustomTab(url: String) {
         try {
             val builder = CustomTabsIntent.Builder()
@@ -983,11 +782,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "No browser found to open the link.", Toast.LENGTH_LONG).show()
         }
     }
-    /**
-     * Provides a polyfill for the Web Speech API (Text-to-Speech) for WebViews.
-     * This class is exposed to JavaScript in the WebView.
-     * @param context The application context.
-     */
     inner class WebAPIPolyfill(private val context: Context) {
         private var tts: TextToSpeech? = null
         init {
@@ -997,28 +791,15 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        /**
-         * Speaks the given text using the Android TextToSpeech engine.
-         * @param text The text to speak.
-         * @param voiceName The name of the voice to use (currently ignored).
-         */
         @JavascriptInterface
         fun speak(text: String, voiceName: String = "") {
             tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "utteranceId_${System.currentTimeMillis()}")
         }
-        /**
-         * Returns a JSON string of available voices.
-         * @return A JSON string representing a list of available voices.
-         */
         @JavascriptInterface
         fun getVoices(): String {
             return "[{\"name\":\"Default\",\"lang\":\"en-US\",\"default\":true}]"
         }
     }
-    /**
-     * Injects JavaScript polyfills for websites like Perchance that use unsupported Web APIs.
-     * @param webView The WebView to inject the script into.
-     */
     private fun injectPerchanceFixes(webView: WebView?) {
         val polyfillScript = """
             javascript:(function() {
@@ -1046,9 +827,6 @@ class MainActivity : AppCompatActivity() {
         """.trimIndent()
         webView?.loadUrl(polyfillScript)
     }
-    /**
-     * Starts the background media playback service if a video is playing.
-     */
     private fun startBackgroundService() {
         if (!isServiceRunning && currentVideoUrl != null) {
             val url = currentVideoUrl!!
@@ -1070,9 +848,6 @@ class MainActivity : AppCompatActivity() {
             isServiceRunning = true
         }
     }
-    /**
-     * Stops the background media playback service.
-     */
     private fun stopPlaybackService() {
         if(isServiceRunning) {
             if(serviceBound) {
@@ -1083,21 +858,11 @@ class MainActivity : AppCompatActivity() {
             isServiceRunning = false
         }
     }
-    /**
-     * Injects JavaScript to resume media playback in the WebView.
-     */
     private fun resumeMediaPlayback() {
         val resumeScript = "javascript:(function() { var video = document.querySelector('video'); if (video && video.paused && video.hasAttribute('data-was-playing')) { video.play().catch(function(e) {}); } })();"
         binding.webView.loadUrl(resumeScript)
     }
-    /**
-     * A JavaScript interface to communicate media playback state from the WebView to the native app.
-     * @param activity The MainActivity instance.
-     */
     inner class MediaStateInterface(private val activity: MainActivity) {
-        /**
-         * Called by JavaScript when media starts playing in the WebView.
-         */
         @JavascriptInterface
         fun onMediaPlay() {
             activity.runOnUiThread {
@@ -1105,18 +870,12 @@ class MainActivity : AppCompatActivity() {
                 activity.startBackgroundService()
             }
         }
-        /**
-         * Called by JavaScript when media is paused in the WebView.
-         */
         @JavascriptInterface
         fun onMediaPause() {
              activity.runOnUiThread {
                 activity.isMediaPlaying = false
             }
         }
-        /**
-         * Called by JavaScript when media has finished playing in the WebView.
-         */
         @JavascriptInterface
         fun onMediaEnded() {
             activity.runOnUiThread {
@@ -1125,10 +884,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    /**
-     * Asks for notification permissions on Android 13 (TIRAMISU) and above.
-     * This is required for showing the media playback notification.
-     */
     private fun askForNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -1136,26 +891,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    /**
-     * Loads the last used filename from SharedPreferences.
-     */
     private fun loadLastUsedName() {
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
         lastUsedName = sharedPrefs.getString("LAST_FILENAME", "Video") ?: "Video"
     }
-    /**
-     * Saves the given filename to SharedPreferences as the last used name.
-     * @param name The filename to save.
-     */
     private fun saveLastUsedName(name: String) {
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
         sharedPrefs.edit().putString("LAST_FILENAME", name).apply()
     }
-    /**
-     * Detects the video format based on the URL.
-     * @param url The URL of the media file.
-     * @return A [VideoFormat] object containing the extension and MIME type.
-     */
     private fun detectVideoFormat(url: String): VideoFormat {
         val lowerUrl = url.lowercase()
         return when {
@@ -1171,11 +914,6 @@ class MainActivity : AppCompatActivity() {
             else -> VideoFormat(".mp4", "video/mp4")
         }
     }
-    /**
-     * Extracts a human-readable quality string from a media URL.
-     * @param url The URL of the media file.
-     * @return A string representing the video quality (e.g., "Full HD (1080p)").
-     */
     private fun extractQualityFromUrl(url: String): String {
         val lowerUrl = url.lowercase()
         return when {
@@ -1190,14 +928,6 @@ class MainActivity : AppCompatActivity() {
             else -> "Unknown Quality"
         }
     }
-    /**
-     * Generates a descriptive filename for a media file based on its URL, quality, and category.
-     * @param url The URL of the media file.
-     * @param extension The file extension.
-     * @param quality The quality of the video.
-     * @param category The category of the media.
-     * @return A generated smart filename string.
-     */
     private fun generateSmartFileName(url: String, extension: String, quality: String, category: MediaCategory): String {
         val uri = Uri.parse(url)
         val lowerUrl = url.lowercase()
@@ -1219,24 +949,8 @@ class MainActivity : AppCompatActivity() {
         val cleanQuality = if (category == MediaCategory.VIDEO && quality != "Unknown Quality") "_${quality.replace("[^a-zA-Z0-9]".toRegex(), "_")}" else ""
         return "${categoryPrefix}${baseName}${cleanQuality}${extension}"
     }
-    /**
-     * Estimates the file size of a media file. (Currently a placeholder)
-     * @param url The URL of the media file.
-     * @param category The category of the media.
-     * @return A string representing the estimated file size.
-     */
     private fun estimateFileSize(url: String, category: MediaCategory): String { return "Unknown" }
-    /**
-     * Extracts the language from a media URL. (Currently a placeholder)
-     * @param url The URL of the media file.
-     * @return The language code string, or null if not found.
-     */
     private fun extractLanguageFromUrl(url: String): String? { return null }
-    /**
-     * Extracts the YouTube video ID from a variety of YouTube URL formats.
-     * @param url The YouTube URL.
-     * @return The 11-character YouTube video ID, or "UnknownVideo" if not found.
-     */
     private fun extractYouTubeVideoId(url: String): String {
         val patterns = listOf("(?<=watch\\?v=)[^&]+", "(?<=youtu.be/)[^?]+", "(?<=embed/)[^?]+", "(?<=v/)[^?]+")
         for (pattern in patterns) {
@@ -1245,83 +959,44 @@ class MainActivity : AppCompatActivity() {
         }
         return "UnknownVideo"
     }
-    /**
-     * Adds the host of a given URL to the blocked list in SharedPreferences.
-     * @param url The URL whose host should be blocked.
-     */
     private fun addToBlockedList(url: String) {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val blockedUrls = sharedPrefs.getStringSet("BLOCKED_URLS", setOf())?.toMutableSet() ?: mutableSetOf()
         Uri.parse(url).host?.let { blockedUrls.add(it) }
         sharedPrefs.edit().putStringSet("BLOCKED_URLS", blockedUrls).apply()
     }
-    /**
-     * Checks if a URL belongs to a known ad-serving domain.
-     * @param url The URL to check.
-     * @return True if the URL's host is in the suspicious domains list.
-     */
     private fun isAdDomain(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         return suspiciousDomains.any { host.contains(it) }
     }
-    /**
-     * Checks if a URL's host is in the user-defined blocked list.
-     * @param url The URL to check.
-     * @return True if the URL's host is in the blocked list.
-     */
     private fun isInBlockedList(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val blockedUrls = sharedPrefs.getStringSet("BLOCKED_URLS", setOf()) ?: setOf()
         return blockedUrls.any { blockedHost -> host == blockedHost || host.endsWith(".$blockedHost") }
     }
-    /**
-     * Copies the given text to the system clipboard.
-     * @param text The text to copy.
-     */
     private fun copyToClipboard(text: String) {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         val clip = android.content.ClipData.newPlainText("URL", text)
         clipboard.setPrimaryClip(clip)
         Toast.makeText(this, "URL copied", Toast.LENGTH_SHORT).show()
     }
-    /**
-     * Checks if a URL points to a media file based on its extension or content.
-     * @param url The URL to check.
-     * @return True if the URL is identified as a media URL.
-     */
     private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
         if (isAdOrTrackingUrl(lower)) return false
         return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
     }
-    /**
-     * Checks if a URL is likely an ad or tracking URL.
-     * @param url The URL to check.
-     * @return True if the URL contains common ad-related substrings.
-     */
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
         return adIndicators.any { url.contains(it) }
     }
-    /**
-     * Checks if a URL likely points to the main video content on a page.
-     * @param url The URL to check.
-     * @return True if the URL contains specific keywords indicating main video content.
-     */
     private fun isMainVideoContent(url: String): Boolean {
         val lower = url.lowercase()
         return lower.contains("videoplayback") || lower.contains("manifest")
     }
-    /**
-     * Shows or hides the Floating Action Button for showing media based on whether any media files have been detected.
-     */
     private fun updateFabVisibility() {
         binding.fabShowMedia.visibility = if (detectedMediaFiles.isNotEmpty()) View.VISIBLE else View.GONE
     }
-    /**
-     * Displays a dialog listing all detected media files for the current page.
-     */
     private fun showMediaListDialog() {
         if (detectedMediaFiles.isEmpty()) {
             Toast.makeText(this, "No media files detected.", Toast.LENGTH_SHORT).show()
@@ -1342,10 +1017,6 @@ class MainActivity : AppCompatActivity() {
         dialogBinding.mediaRecyclerView.adapter = adapter
         dialog.show()
     }
-    /**
-     * Opens a given video URL in an external video player application.
-     * @param videoUrl The URL of the video to play.
-     */
     private fun openInExternalPlayer(videoUrl: String) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl)).apply {
@@ -1357,10 +1028,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "No video player found", Toast.LENGTH_SHORT).show()
         }
     }
-    /**
-     * Shows a dialog to allow the user to rename a media file before downloading.
-     * @param mediaFile The [MediaFile] to be renamed and downloaded.
-     */
     private fun showRenameDialog(mediaFile: MediaFile) {
         val input = EditText(this).apply {
             setText(mediaFile.title.substringBeforeLast('.'))
@@ -1378,10 +1045,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-    /**
-     * Enqueues a media file for download using the Android DownloadManager.
-     * @param mediaFile The [MediaFile] to download.
-     */
     private fun downloadMediaFile(mediaFile: MediaFile) {
         try {
             val request = DownloadManager.Request(Uri.parse(mediaFile.url))
@@ -1395,10 +1058,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
-    /**
-     * Adds the current page's URL and title to the browsing history.
-     * @param url The URL of the page to add.
-     */
     private fun addToHistory(url: String) {
         val title = binding.webView.title ?: "No Title"
         val newItem = HistoryItem(url = url, title = title)
@@ -1411,16 +1070,10 @@ class MainActivity : AppCompatActivity() {
         val newHistoryJson = Gson().toJson(history.take(100))
         sharedPrefs.edit().putString("HISTORY_V2", newHistoryJson).apply()
     }
-    /**
-     * Launches the [HistoryActivity] to display the browsing history.
-     */
     private fun showHistory() {
         val intent = Intent(this, HistoryActivity::class.java)
         historyResultLauncher.launch(intent)
     }
-    /**
-     * Saves the current list of tabs and the index of the current tab to SharedPreferences.
-     */
     private fun saveTabsState() {
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
         val editor = sharedPrefs.edit()
@@ -1431,10 +1084,6 @@ class MainActivity : AppCompatActivity() {
         editor.putInt("CURRENT_TAB_INDEX", currentTabIndex)
         editor.apply()
     }
-    /**
-     * Loads the tab list and current tab index from SharedPreferences.
-     * @return True if tabs were successfully loaded, false otherwise.
-     */
     private fun loadTabsState(): Boolean {
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
         val tabsJson = sharedPrefs.getString("TABS_LIST", null) ?: return false
@@ -1450,20 +1099,10 @@ class MainActivity : AppCompatActivity() {
             false
         }
     }
-    /**
-     * Initialize the contents of the Activity's standard options menu.
-     * @param menu The options menu in which you place your items.
-     * @return You must return true for the menu to be displayed; if you return false it will not be shown.
-     */
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
     }
-    /**
-     * This hook is called whenever an item in your options menu is selected.
-     * @param item The menu item that was selected.
-     * @return boolean Return false to allow normal menu processing to proceed, true to consume it here.
-     */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_history -> {
@@ -1494,9 +1133,6 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-    /**
-     * Saves the current page to bookmarks.
-     */
     private fun addCurrentPageToBookmarks() {
         if (binding.webView.visibility == View.VISIBLE && !binding.webView.url.isNullOrEmpty()) {
             val url = binding.webView.url!!
@@ -1512,10 +1148,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "No page loaded to bookmark", Toast.LENGTH_SHORT).show()
         }
     }
-
-    /**
-     * Shows the main settings dialog.
-     */
     private fun showMasterSettingsDialog() {
         val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist")
         AlertDialog.Builder(this)
@@ -1529,10 +1161,6 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
     }
-
-    /**
-     * Shows a dialog for managing content blocking settings.
-     */
     private fun showContentBlockingDialog() {
         val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val items = arrayOf("Enable Ad Blocker", "Block Suspicious Redirects", "Block All Popups", "Show pop-up blocked notice")
@@ -1562,10 +1190,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
-    /**
-     * Shows a dialog listing all user-blocked sites, allowing for removal.
-     */
     private fun showBlockedSitesDialog() {
         val blockedSites = getBlockedSites()
         if (blockedSites.isEmpty()) {
@@ -1583,11 +1207,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Close", null)
             .show()
     }
-
-    /**
-     * Shows a confirmation dialog before unblocking a site.
-     * @param hostname The hostname of the site to unblock.
-     */
     private fun showUnblockConfirmationDialog(hostname: String) {
         AlertDialog.Builder(this)
             .setTitle("Unblock Site?")
@@ -1599,20 +1218,10 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
-    /**
-     * Retrieves the list of user-blocked sites from SharedPreferences.
-     * @return A sorted list of blocked hostnames.
-     */
     private fun getBlockedSites(): List<String> {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         return (sharedPrefs.getStringSet("BLOCKED_URLS", setOf()) ?: setOf()).sorted()
     }
-
-    /**
-     * Removes a hostname from the user's blocked list.
-     * @param hostname The hostname to unblock.
-     */
     private fun unblockSite(hostname: String) {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val blockedUrls = sharedPrefs.getStringSet("BLOCKED_URLS", setOf()) ?: setOf()
@@ -1621,10 +1230,6 @@ class MainActivity : AppCompatActivity() {
         sharedPrefs.edit().putStringSet("BLOCKED_URLS", newBlockedUrls).apply()
         Toast.makeText(this, "'$hostname' has been unblocked.", Toast.LENGTH_SHORT).show()
     }
-
-    /**
-     * Shows a dialog for managing whitelisted sites.
-     */
     private fun showWhitelistManagementDialog() {
         val whitelistedSites = getWhitelist()
         if (whitelistedSites.isEmpty()){
@@ -1653,20 +1258,10 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Close", null)
             .show()
     }
-
-    /**
-     * Retrieves the list of whitelisted sites from SharedPreferences.
-     * @return A sorted list of whitelisted domains.
-     */
     private fun getWhitelist(): List<String> {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         return (sharedPrefs.getStringSet("WHITELIST_URLS", setOf()) ?: setOf()).sorted()
     }
-
-    /**
-     * Adds a domain to the whitelist.
-     * @param domain The domain to add to the whitelist.
-     */
     private fun addToWhitelist(domain: String) {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val whitelist = sharedPrefs.getStringSet("WHITELIST_URLS", setOf())?.toMutableSet() ?: mutableSetOf()
@@ -1674,11 +1269,6 @@ class MainActivity : AppCompatActivity() {
         sharedPrefs.edit().putStringSet("WHITELIST_URLS", whitelist).apply()
         Toast.makeText(this, "'$domain' added to whitelist.", Toast.LENGTH_SHORT).show()
     }
-
-    /**
-     * Removes a domain from the whitelist.
-     * @param domain The domain to remove from the whitelist.
-     */
     private fun removeFromWhitelist(domain: String) {
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val whitelist = sharedPrefs.getStringSet("WHITELIST_URLS", setOf()) ?: setOf()
@@ -1687,10 +1277,6 @@ class MainActivity : AppCompatActivity() {
         sharedPrefs.edit().putStringSet("WHITELIST_URLS", newWhitelist).apply()
         Toast.makeText(this, "'$domain' removed from whitelist.", Toast.LENGTH_SHORT).show()
     }
-
-    /**
-     * Shows a dialog to add a new site to the whitelist.
-     */
     private fun showWhitelistDialog() {
         val input = EditText(this).apply {
             hint = "e.g., example.com"
@@ -1714,10 +1300,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
-    /**
-     * Opens the current page in an external browser application.
-     */
     private fun openCurrentPageInExternalBrowser() {
         val currentUrl = binding.webView.url
         if (!currentUrl.isNullOrEmpty()) {
@@ -1729,10 +1311,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    /**
-     * Shows a dialog with debugging options for the current site.
-     */
     private fun showSiteDebuggingOptions() {
         val options = arrayOf("Change User Agent", "Add to Whitelist", "Enable Remote Debugging", "Clear Cookies")
         AlertDialog.Builder(this)
@@ -1757,10 +1335,6 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
     }
-
-    /**
-     * Shows a dialog to change the WebView's user agent string.
-     */
     private fun showUserAgentDialog() {
         val userAgents = arrayOf("Default Mobile", "Desktop Chrome", "iPad Safari")
         AlertDialog.Builder(this)
@@ -1778,69 +1352,22 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
-    /**
-     * Checks if a URL is whitelisted by the user.
-     * @param url The URL to check.
-     * @return True if the URL's host is on the whitelist.
-     */
     private fun isUrlWhitelisted(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val whitelist = sharedPrefs.getStringSet("WHITELIST_URLS", setOf()) ?: setOf()
         return whitelist.any { whitelistedDomain -> host == whitelistedDomain || host.endsWith(".$whitelistedDomain") }
     }
-
-    /**
-     * Clears all cookies from the WebView.
-     */
     private fun clearCookies() {
         CookieManager.getInstance().removeAllCookies {
             Toast.makeText(this, "All cookies cleared.", Toast.LENGTH_SHORT).show()
         }
     }
-
-    /**
-     * Loads the list of enabled user scripts from the database.
-     */
     private fun loadEnabledUserScripts() {
         lifecycleScope.launch(Dispatchers.IO) {
             enabledUserScripts = db.userScriptDao().getEnabledScripts()
         }
     }
-
-    /**
-     * Injects a user script and its dependencies into the WebView.
-     * This is a placeholder for the actual implementation.
-     * @param webView The WebView to inject the script into.
-     * @param url The URL of the page being loaded.
-     */
-    private fun injectUserScripts(webView: WebView?, url: String?) {
-        // This function is now a dispatcher, actual injection logic is in other methods
-        if (webView == null || url == null) return
-        // The new injection methods will be called from webViewClient and webChromeClient
-    }
-
-    /**
-     * Injects user scripts that are configured to run at the start of the document.
-     * @param url The URL of the page being loaded.
-     */
-    private fun injectEarlyUserscripts(url: String?) {
-        if (url == null) return
-        val matchingScripts = enabledUserScripts.filter {
-            it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
-        }
-        lifecycleScope.launch {
-            for (script in matchingScripts) {
-                injectScriptWithDependencies(script)
-            }
-        }
-    }
-
-    /**
-     * Injects a user script along with its required dependencies.
-     * @param script The user script to inject.
-     */
     private suspend fun injectScriptWithDependencies(script: UserScript) {
         val polyfill = """
             window.GM_xmlhttpRequest = function(options) { GreasemonkeyAPI.xmlHttpRequest(JSON.stringify(options)); };
@@ -1860,10 +1387,17 @@ class MainActivity : AppCompatActivity() {
         val wrappedScript = "(function() { try { ${script.script} } catch (e) { console.error('Userscript error in ${script.name}:', e); } })();"
         binding.webView.evaluateJavascript(wrappedScript, null)
     }
-
-    /**
-     * Injects user scripts that are configured to run at the end of the document or when idle.
-     */
+    private fun injectEarlyUserscripts(url: String?) {
+        if (url == null) return
+        val matchingScripts = enabledUserScripts.filter {
+            it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
+        }
+        lifecycleScope.launch {
+            for (script in matchingScripts) {
+                injectScriptWithDependencies(script)
+            }
+        }
+    }
     private fun injectPendingUserscripts() {
         val url = binding.webView.url ?: return
         val matchingScripts = enabledUserScripts.filter {
@@ -1876,11 +1410,6 @@ class MainActivity : AppCompatActivity() {
         }
         pendingScriptsToInject.clear()
     }
-
-    /**
-     * Shows a dialog to the user when a blocked navigation attempt occurs.
-     * @param url The URL that was blocked.
-     */
     fun showBlockedNavigationDialog(url: String) {
         AlertDialog.Builder(this)
             .setTitle("Link Action")
