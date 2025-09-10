@@ -25,6 +25,7 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
     private val binder = LocalBinder()
     private var mediaPlayer: MediaPlayer? = null
     private lateinit var audioManager: AudioManager
+    private var audioFocusRequest: AudioFocusRequest? = null
     private lateinit var notificationManager: NotificationManager
     private var wakeLock: PowerManager.WakeLock? = null
 
@@ -85,18 +86,17 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
 
     private fun requestAudioFocus(): Boolean {
         val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            audioManager.requestAudioFocus(
-                AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                    .setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                            .build()
-                    )
-                    .setAcceptsDelayedFocusGain(true)
-                    .setOnAudioFocusChangeListener(this)
-                    .build()
-            )
+            audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                .setAcceptsDelayedFocusGain(true)
+                .setOnAudioFocusChangeListener(this)
+                .build()
+            audioManager.requestAudioFocus(audioFocusRequest!!)
         } else {
             @Suppress("DEPRECATION")
             audioManager.requestAudioFocus(
@@ -137,7 +137,9 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
         if (isPlaying) {
             mediaPlayer?.pause()
             isPlaying = false
-            wakeLock?.release() // Release wake lock when paused
+            if (wakeLock?.isHeld == true) {
+                wakeLock?.release() // Release wake lock when paused
+            }
             updateNotification()
             stopForeground(false) // Allow notification to be swiped away when paused
         }
@@ -159,18 +161,18 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
         isPlaying = false
         isPreparing = false
         abandonAudioFocus()
-        wakeLock?.release()
+        if (wakeLock?.isHeld == true) {
+            wakeLock?.release()
+        }
         stopForeground(true)
         stopSelf()
     }
 
     private fun abandonAudioFocus() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            audioManager.abandonAudioFocusRequest(
-                 AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                    .setOnAudioFocusChangeListener(this)
-                    .build()
-            )
+            audioFocusRequest?.let {
+                audioManager.abandonAudioFocusRequest(it)
+            }
         } else {
              @Suppress("DEPRECATION")
             audioManager.abandonAudioFocus(this)
