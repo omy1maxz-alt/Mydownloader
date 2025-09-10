@@ -76,6 +76,7 @@ class MainActivity : AppCompatActivity() {
     private var currentTabIndex = -1
     private var tabsDialog: AlertDialog? = null
     private var isAppInBackground = false
+    private var hasStartedForegroundService = false
     private var enabledUserScripts = listOf<UserScript>()
     private val suspiciousDomains = setOf(
         "googleads.com", "doubleclick.net", "googlesyndication.com",
@@ -214,21 +215,39 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         isAppInBackground = true
-        if (!isMediaPlaying && currentVideoUrl == null) {
+
+        // Crucial: Only pause the WebView if we are NOT playing media.
+        // Pausing the WebView often pauses HTML5 media playback.
+        if (!isMediaPlaying) {
             binding.webView.onPause()
+            // Stop the service if no media is playing
+            if (hasStartedForegroundService) {
+                stopPlaybackService()
+            }
         }
+        // If media IS playing, do NOT pause the WebView or stop the service.
+        // The media should continue in the background.
+
         saveTabsState()
     }
 
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
+
+        // Always resume the WebView when coming back
         binding.webView.onResume()
-        if (isMediaPlaying || currentVideoUrl != null) {
-            handler.postDelayed({
-                resumeMediaPlayback()
-            }, 500)
-        }
+
+        // If we had started a service for background playback, we might want to stop it now
+        // or manage it based on whether media is still playing.
+        // This depends on your desired UX. For now, let's leave the service management
+        // primarily in the JS callbacks.
+
+        // Optional: If you want to stop the service when the app comes back to foreground
+        // and media was paused in the background, you could do it here.
+        // if (!isMediaPlaying && hasStartedForegroundService) {
+        //     stopPlaybackService()
+        // }
     }
 
     override fun onStart() {
@@ -246,20 +265,29 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+
+        // Unbind from the service
         if (serviceBound) {
             unbindService(serviceConnection)
             serviceBound = false
+            mediaService = null
         }
-        if ((isMediaPlaying || currentVideoUrl != null) && !isChangingConfigurations) {
+
+        // Start the foreground service ONLY if we know media is playing
+        // and we are not just rotating the screen (isChangingConfigurations)
+        if (isMediaPlaying && !isChangingConfigurations) {
             startBackgroundService()
+            hasStartedForegroundService = true
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        connectivityManager.unregisterNetworkCallback(networkCallback)
-        stopPlaybackService()
+        // Ensure cleanup
+        if (hasStartedForegroundService) {
+            stopPlaybackService()
+            hasStartedForegroundService = false
+        }
     }
 
     private fun setupToolbarNavButtons() {
@@ -899,14 +927,11 @@ class MainActivity : AppCompatActivity() {
         webView?.loadUrl(polyfillScript)
     }
     private fun startBackgroundService() {
-        if (currentVideoUrl != null) {
-            val url = currentVideoUrl!!
-            val cookie = CookieManager.getInstance().getCookie(url)
-            val userAgent = binding.webView.settings.userAgentString
-
+        // Use the currentVideoUrl or check if media is actually playing
+        if (isMediaPlaying || currentVideoUrl != null) {
             val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
-                putExtra("title", binding.webView.title ?: "Web Video")
-                putExtra("url", url)
+                putExtra("title", binding.webView.title ?: "Web Media")
+                putExtra("url", currentVideoUrl ?: binding.webView.url ?: "")
                 action = MediaForegroundService.ACTION_PLAY
             }
 
@@ -916,53 +941,82 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     startService(serviceIntent)
                 }
-
+                // Bind to the service for communication if needed
                 bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
                 serviceBound = true
             } catch (e: Exception) {
-                android.util.Log.e("MediaService", "Failed to start foreground service", e)
+                android.util.Log.e("MainActivity", "Error starting MediaForegroundService", e)
             }
         }
     }
-    private fun stopPlaybackService() {
-        if(isServiceRunning) {
-            if(serviceBound) {
-                unbindService(serviceConnection)
-                serviceBound = false
-            }
-            stopService(Intent(this, MediaForegroundService::class.java))
-            isServiceRunning = false
+
+    // Update your stopPlaybackService method
+    fun stopPlaybackService() {
+        if (serviceBound) {
+            unbindService(serviceConnection)
+            serviceBound = false
         }
+        val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
+            action = MediaForegroundService.ACTION_STOP
+        }
+        stopService(serviceIntent) // Use stopService instead of starting with STOP action
+        hasStartedForegroundService = false
     }
     private fun resumeMediaPlayback() {
         val resumeScript = "javascript:(function() { var video = document.querySelector('video'); if (video && video.paused && video.hasAttribute('data-was-playing')) { video.play().catch(function(e) {}); } })();"
         binding.webView.loadUrl(resumeScript)
     }
     inner class MediaStateInterface(private val activity: MainActivity) {
+
         @JavascriptInterface
         fun onMediaPlay() {
             activity.runOnUiThread {
+                android.util.Log.d("MediaStateInterface", "onMediaPlay called")
                 activity.isMediaPlaying = true
-                // Update service state
-                mediaService?.setMediaPlaying(true, binding.webView.title ?: "Web Video")
-                activity.startBackgroundService()
+                // Ensure service is started when media starts
+                if (activity.isAppInBackground) {
+                     activity.startBackgroundService()
+                     activity.hasStartedForegroundService = true
+                }
             }
         }
 
         @JavascriptInterface
         fun onMediaPause() {
             activity.runOnUiThread {
+                android.util.Log.d("MediaStateInterface", "onMediaPause called")
                 activity.isMediaPlaying = false
-                // Update service state
-                mediaService?.setMediaPlaying(false)
+                // Optionally stop service if app is in background and media is paused
+                // Decide based on your UX: stop immediately or wait for onStop
+                // if (activity.isAppInBackground && activity.hasStartedForegroundService) {
+                //     activity.stopPlaybackService()
+                // }
             }
         }
 
         @JavascriptInterface
         fun onMediaEnded() {
             activity.runOnUiThread {
+                android.util.Log.d("MediaStateInterface", "onMediaEnded called")
                 activity.isMediaPlaying = false
-                activity.stopPlaybackService()
+                activity.currentVideoUrl = null
+                // Stop the service when media ends
+                if (activity.hasStartedForegroundService) {
+                    activity.stopPlaybackService()
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun onError(error: String) {
+            activity.runOnUiThread {
+                android.util.Log.e("MediaStateInterface", "Media error: $error")
+                activity.isMediaPlaying = false
+                activity.currentVideoUrl = null
+                if (activity.hasStartedForegroundService) {
+                    activity.stopPlaybackService()
+                }
+                Toast.makeText(activity, "Media playback error: $error", Toast.LENGTH_LONG).show()
             }
         }
     }
