@@ -265,10 +265,9 @@ override fun onStop() {
         binding.webView.onPause()
     }
 
-    // **FIX:** Post the slow save operation to the handler.
-    // This allows the lifecycle method to finish quickly, preventing the app from freezing
-    // and giving the service time to take over the media stream.
-    handler.post {
+    // **FIX:** Launch a coroutine to save the state asynchronously.
+    // This ensures the onStop method completes instantly, preventing the app from freezing.
+    lifecycleScope.launch {
         saveTabsState()
     }
 }
