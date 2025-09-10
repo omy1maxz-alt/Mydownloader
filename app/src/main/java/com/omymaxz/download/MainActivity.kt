@@ -21,9 +21,11 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.Message
+import android.os.PowerManager
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.text.InputType
+import android.util.Log
 import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -190,6 +192,7 @@ class MainActivity : AppCompatActivity() {
         }
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
+        requestBatteryOptimizationExemption()
     }
 
     // Add this method to check permissions when app starts
@@ -211,19 +214,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun requestBatteryOptimizationExemption() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                intent.data = Uri.parse("package:$packageName")
+                startActivity(intent)
+            }
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         isAppInBackground = true
+
+        // Don't pause WebView if media is playing
         if (!isMediaPlaying && currentVideoUrl == null) {
             binding.webView.onPause()
         }
+
         saveTabsState()
     }
 
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
+
+        // Resume WebView
         binding.webView.onResume()
+
+        // Resume media playback if needed
         if (isMediaPlaying || currentVideoUrl != null) {
             handler.postDelayed({
                 resumeMediaPlayback()
@@ -246,10 +267,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+
         if (serviceBound) {
             unbindService(serviceConnection)
             serviceBound = false
         }
+
+        // Only start background service if media is actually playing
+        // and we're not just rotating the screen
         if ((isMediaPlaying || currentVideoUrl != null) && !isChangingConfigurations) {
             startBackgroundService()
         }
@@ -898,27 +923,32 @@ class MainActivity : AppCompatActivity() {
         """.trimIndent()
         webView?.loadUrl(polyfillScript)
     }
-    private fun startBackgroundService() {
-        if (!isServiceRunning && currentVideoUrl != null) {
-            val url = currentVideoUrl!!
-            val cookie = CookieManager.getInstance().getCookie(url)
-            val userAgent = binding.webView.settings.userAgentString
-            val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
-                putExtra("title", binding.webView.title ?: "Web Video")
-                putExtra("url", url)
-                putExtra("cookie", cookie)
-                putExtra("userAgent", userAgent)
-                action = MediaForegroundService.ACTION_PLAY
-            }
+private fun startBackgroundService() {
+    if (currentVideoUrl != null) {
+        val url = currentVideoUrl!!
+        val cookie = CookieManager.getInstance().getCookie(url)
+        val userAgent = binding.webView.settings.userAgentString
+
+        val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
+            putExtra("title", binding.webView.title ?: "Web Video")
+            putExtra("url", url)
+            action = MediaForegroundService.ACTION_PLAY
+        }
+
+        try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(serviceIntent)
             } else {
                 startService(serviceIntent)
             }
+
             bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
-            isServiceRunning = true
+            serviceBound = true
+        } catch (e: Exception) {
+            Log.e("MediaService", "Failed to start foreground service", e)
         }
     }
+}
     private fun stopPlaybackService() {
         if(isServiceRunning) {
             if(serviceBound) {
@@ -938,15 +968,21 @@ class MainActivity : AppCompatActivity() {
         fun onMediaPlay() {
             activity.runOnUiThread {
                 activity.isMediaPlaying = true
+                // Update service state
+                mediaService?.setMediaPlaying(true, binding.webView.title ?: "Web Video")
                 activity.startBackgroundService()
             }
         }
+
         @JavascriptInterface
         fun onMediaPause() {
-             activity.runOnUiThread {
+            activity.runOnUiThread {
                 activity.isMediaPlaying = false
+                // Update service state
+                mediaService?.setMediaPlaying(false)
             }
         }
+
         @JavascriptInterface
         fun onMediaEnded() {
             activity.runOnUiThread {
