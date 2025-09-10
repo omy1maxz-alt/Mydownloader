@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.media.AudioAttributes
+import android.net.Uri
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
@@ -33,6 +34,8 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
     private var mediaUrl: String? = null
     private var isPlaying = false
     private var isPreparing = false
+    private var headers: Map<String, String>? = null
+    private var startPosition: Float = 0f
 
     inner class LocalBinder : Binder() {
         fun getService(): MediaForegroundService = this@MediaForegroundService
@@ -71,6 +74,9 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
                 if (!isPreparing && !isPlaying) {
                     mediaTitle = intent?.getStringExtra("title") ?: "Web Video"
                     mediaUrl = intent?.getStringExtra("url")
+                    @Suppress("UNCHECKED_CAST")
+                    headers = intent?.getSerializableExtra("headers") as? Map<String, String>
+                    startPosition = intent?.getFloatExtra("position", 0f) ?: 0f
                     if (mediaUrl == null) {
                         stopSelf()
                         return START_NOT_STICKY
@@ -122,7 +128,13 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .build()
             )
-            setDataSource(mediaUrl)
+            try {
+                setDataSource(applicationContext, Uri.parse(mediaUrl), headers)
+            } catch (e: Exception) {
+                android.util.Log.e("MediaForegroundService", "Error setting data source", e)
+                stopPlayback()
+                return
+            }
             setOnPreparedListener(this@MediaForegroundService)
             setOnErrorListener(this@MediaForegroundService)
             setOnCompletionListener(this@MediaForegroundService)
@@ -182,8 +194,12 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
     override fun onPrepared(mp: MediaPlayer?) {
         isPreparing = false
         isPlaying = true
+        if (startPosition > 0) {
+            mp?.seekTo((startPosition * 1000).toInt())
+        }
         mp?.start()
         updateNotification()
+        android.util.Log.d("MediaForegroundService", "Prepared and started at position: $startPosition")
     }
 
     override fun onCompletion(mp: MediaPlayer?) {
@@ -191,8 +207,7 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
     }
 
     override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
-        // Log error, update notification, stop playback
-        android.util.Log.e("MediaForegroundService", "MediaPlayer Error: What: $what, Extra: $extra")
+        android.util.Log.e("MediaForegroundService", "MediaPlayer Error: What: $what, Extra: $extra, URL: $mediaUrl")
         stopPlayback()
         return true // True indicates we've handled the error
     }

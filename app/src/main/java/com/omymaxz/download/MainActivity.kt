@@ -925,23 +925,34 @@ class MainActivity : AppCompatActivity() {
         webView?.loadUrl(polyfillScript)
     }
     private fun startBackgroundService() {
-        // Use the currentVideoUrl or check if media is actually playing
-        if (isMediaPlaying || currentVideoUrl != null) {
-            val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
-                putExtra("title", binding.webView.title ?: "Web Media")
-                putExtra("url", currentVideoUrl ?: binding.webView.url ?: "")
+        if (currentVideoUrl == null || !isMediaPlaying) return
+
+        // Get current position from WebView video (via JS)
+        binding.webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
+            val position = positionStr.toFloatOrNull() ?: 0f
+
+            // Capture headers
+            val headers = mutableMapOf<String, String>()
+            val cookieManager = CookieManager.getInstance()
+            val cookies = cookieManager.getCookie(currentVideoUrl) ?: ""
+            if (cookies.isNotEmpty()) {
+                headers["Cookie"] = cookies
+            }
+            headers["User-Agent"] = binding.webView.settings.userAgentString
+            binding.webView.url?.let { headers["Referer"] = it }
+
+            // Start service with extras
+            val intent = Intent(this, MediaForegroundService::class.java).apply {
                 action = MediaForegroundService.ACTION_PLAY
+                putExtra("url", currentVideoUrl)
+                putExtra("title", binding.webView.title ?: "Web Media")
+                putExtra("position", position)  // New: seek position
+                putExtra("headers", HashMap(headers))  // Pass map (must be Serializable, HashMap is)
             }
 
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(serviceIntent)
-                } else {
-                    startService(serviceIntent)
-                }
-                // Bind to the service for communication if needed
-                bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
-                serviceBound = true
+                ContextCompat.startForegroundService(this, intent)
+                android.util.Log.d("MainActivity", "Started background service with URL: $currentVideoUrl, position: $position")
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Error starting MediaForegroundService", e)
             }
