@@ -111,6 +111,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+private fun checkBatteryOptimization() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+            AlertDialog.Builder(this)
+                .setTitle("Background Playback")
+                .setMessage("For reliable background playback, please disable battery optimization for this app.")
+                .setPositiveButton("Settings") { _, _ ->
+                    try {
+                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                        intent.data = Uri.parse("package:$packageName")
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        // Fallback to general battery optimization settings
+                        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                        startActivity(intent)
+                    }
+                }
+                .setNegativeButton("Later", null)
+                .show()
+        }
+    }
+}
+
     // Add this method to show the dialog for MANAGE_EXTERNAL_STORAGE permission
     private fun showManageStoragePermissionDialog() {
         AlertDialog.Builder(this)
@@ -191,6 +215,7 @@ class MainActivity : AppCompatActivity() {
         }
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
+        checkBatteryOptimization()
     }
 
     // Add this method to check permissions when app starts
@@ -252,22 +277,32 @@ override fun onStop() {
         mediaService = null
     }
 
-    if (isMediaPlaying && !isChangingConfigurations) {
-        // The service is already running, now we tell it to take over with media details.
-        startOrUpdatePlaybackService(shouldTakeOver = true)
-        // Pause the video in the WebView to prevent double audio.
-        binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-    } else {
-        // If we are stopping and no media is playing, stop the proactive service.
-        if (hasStartedForegroundService) {
-            stopPlaybackService()
-        }
-        binding.webView.onPause()
-    }
+    // Check if there's actually media playing
+    binding.webView.evaluateJavascript(
+        "document.querySelector('video') && !document.querySelector('video').paused",
+        { result ->
+            val hasPlayingVideo = result?.toBoolean() == true
 
-    // **FIX:** Launch a coroutine to save the state asynchronously.
-    // This ensures the onStop method completes instantly, preventing the app from freezing.
-    lifecycleScope.launch {
+            if (hasPlayingVideo && !isChangingConfigurations) {
+                // Get current playback position and start service
+                binding.webView.evaluateJavascript(
+                    "document.querySelector('video')?.currentTime || 0",
+                    { position ->
+                        startOrUpdatePlaybackService(shouldTakeOver = true)
+                        // Pause WebView video to prevent double audio
+                        binding.webView.evaluateJavascript(
+                            "document.querySelector('video')?.pause();", null
+                        )
+                    }
+                )
+            } else if (hasStartedForegroundService) {
+                stopPlaybackService()
+            }
+        }
+    )
+
+    // Save tabs state in background thread
+    lifecycleScope.launch(Dispatchers.IO) {
         saveTabsState()
     }
 }
@@ -669,6 +704,7 @@ override fun onStop() {
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
+                    injectMediaStateDetector()
                     injectPendingUserscripts()
                     url?.let {
                         addToHistory(it)
@@ -916,6 +952,62 @@ override fun onStop() {
         """.trimIndent()
         webView?.loadUrl(polyfillScript)
     }
+private fun injectMediaStateDetector() {
+    val script = """
+        javascript:(function() {
+            function setupVideoMonitoring() {
+                const videos = document.querySelectorAll('video');
+                videos.forEach(function(video, index) {
+                    if (!video.hasAttribute('data-monitored')) {
+                        video.setAttribute('data-monitored', 'true');
+
+                        video.addEventListener('loadstart', function() {
+                            AndroidMediaState.onVideoFound(video.src || video.currentSrc || window.location.href);
+                        });
+
+                        video.addEventListener('play', function() {
+                            AndroidMediaState.onMediaPlay();
+                            video.setAttribute('data-was-playing', 'true');
+                        });
+
+                        video.addEventListener('pause', function() {
+                            AndroidMediaState.onMediaPause();
+                            video.removeAttribute('data-was-playing');
+                        });
+
+                        video.addEventListener('ended', function() {
+                            AndroidMediaState.onMediaEnded();
+                            video.removeAttribute('data-was-playing');
+                        });
+
+                        video.addEventListener('error', function(e) {
+                            AndroidMediaState.onError('Video error: ' + e.message);
+                        });
+                    }
+                });
+            }
+
+            setupVideoMonitoring();
+
+            // Monitor for dynamically added videos
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        setupVideoMonitoring();
+                    }
+                });
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        })();
+    """.trimIndent()
+
+    binding.webView.evaluateJavascript(script, null)
+}
+
 private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false) {
     if (currentVideoUrl == null) return
 
@@ -974,7 +1066,15 @@ private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false) {
         binding.webView.loadUrl(resumeScript)
     }
     inner class MediaStateInterface(private val activity: MainActivity) {
-
+        @JavascriptInterface
+        fun onVideoFound(videoUrl: String) {
+            activity.runOnUiThread {
+                if (videoUrl.isNotEmpty() && videoUrl != "about:blank") {
+                    activity.currentVideoUrl = videoUrl
+                    android.util.Log.d("MediaStateInterface", "Video found: $videoUrl")
+                }
+            }
+        }
         @JavascriptInterface
 fun onMediaPlay() {
     activity.runOnUiThread {

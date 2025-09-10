@@ -116,11 +116,11 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
 
     private fun startPlayback() {
         if (!requestAudioFocus()) {
-            stopSelf() // Failed to get audio focus
-            return
+            android.util.Log.w("MediaForegroundService", "Failed to get audio focus")
+            // Don't stop service immediately, try to continue
         }
 
-        mediaPlayer?.release() // Release any existing player
+        mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -129,19 +129,29 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
                     .build()
             )
             try {
-                setDataSource(applicationContext, Uri.parse(mediaUrl), headers)
+                if (headers?.isNotEmpty() == true) {
+                    setDataSource(applicationContext, Uri.parse(mediaUrl), headers)
+                } else {
+                    setDataSource(mediaUrl)
+                }
             } catch (e: Exception) {
-                android.util.Log.e("MediaForegroundService", "Error setting data source", e)
-                stopPlayback()
-                return
+                android.util.Log.e("MediaForegroundService", "Error setting data source: ${e.message}", e)
+                // Try without headers if it fails
+                try {
+                    setDataSource(mediaUrl)
+                } catch (e2: Exception) {
+                    android.util.Log.e("MediaForegroundService", "Failed to set data source completely", e2)
+                    stopPlayback()
+                    return
+                }
             }
             setOnPreparedListener(this@MediaForegroundService)
             setOnErrorListener(this@MediaForegroundService)
             setOnCompletionListener(this@MediaForegroundService)
-            prepareAsync() // Prepare asynchronously
+            prepareAsync()
         }
         isPreparing = true
-        wakeLock?.acquire(10*60*1000L /*10 minutes*/) // Acquire wake lock
+        wakeLock?.acquire(10*60*1000L)
         startForeground(NOTIFICATION_ID, buildNotification())
     }
 
@@ -207,9 +217,22 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
     }
 
     override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
-        android.util.Log.e("MediaForegroundService", "MediaPlayer Error: What: $what, Extra: $extra, URL: $mediaUrl")
+        val errorMsg = when (what) {
+            MediaPlayer.MEDIA_ERROR_UNKNOWN -> "Unknown error"
+            MediaPlayer.MEDIA_ERROR_SERVER_DIED -> "Server died"
+            else -> "Error code: $what"
+        }
+        android.util.Log.e("MediaForegroundService", "MediaPlayer Error: $errorMsg, Extra: $extra")
+
+        // Try to recover from certain errors
+        if (what == MediaPlayer.MEDIA_ERROR_UNKNOWN && extra == -2147483648) {
+            // This often means network issue, try to restart
+            android.util.Log.d("MediaForegroundService", "Attempting to recover from network error")
+            // Implement retry logic here if needed
+        }
+
         stopPlayback()
-        return true // True indicates we've handled the error
+        return true
     }
 
     override fun onAudioFocusChange(focusChange: Int) {
