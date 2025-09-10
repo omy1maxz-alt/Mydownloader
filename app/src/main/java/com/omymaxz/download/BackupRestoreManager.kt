@@ -5,7 +5,6 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
 
 class BackupRestoreManager(private val context: Context) {
 
@@ -17,11 +16,16 @@ class BackupRestoreManager(private val context: Context) {
 
         // Backup SharedPreferences
         val appDataPrefs = context.getSharedPreferences("AppData", Context.MODE_PRIVATE)
-        backupData["AppData"] = appDataPrefs.all.mapValues { if (it.value is Set<*>) it.value.toList() else it.value }
-
+        backupData["AppData"] = appDataPrefs.all.mapValues { entry ->
+            val value = entry.value
+            if (value is Set<*>) value.toList() else value
+        }
 
         val adBlockerPrefs = context.getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
-        backupData["AdBlocker"] = adBlockerPrefs.all.mapValues { if (it.value is Set<*>) it.value.toList() else it.value }
+        backupData["AdBlocker"] = adBlockerPrefs.all.mapValues { entry ->
+            val value = entry.value
+            if (value is Set<*>) value.toList() else value
+        }
 
         // Backup Room Database
         val bookmarks = db.bookmarkDao().getAll()
@@ -39,17 +43,32 @@ class BackupRestoreManager(private val context: Context) {
             val backupData: Map<String, Any> = gson.fromJson(backupJson, type)
 
             // Restore SharedPreferences
+            @Suppress("UNCHECKED_CAST")
             restoreSharedPreferences("AppData", backupData["AppData"] as Map<String, *>)
+            @Suppress("UNCHECKED_CAST")
             restoreSharedPreferences("AdBlocker", backupData["AdBlocker"] as Map<String, *>)
 
-            // Restore Room Database
-            db.bookmarkDao().deleteAll()
-            val bookmarks: List<Bookmark> = gson.fromJson(gson.toJson(backupData["bookmarks"]), object : TypeToken<List<Bookmark>>() {}.type)
-            db.bookmarkDao().insertAll(*bookmarks.toTypedArray())
+            // Restore Room Database - Bookmarks
+            val bookmarks: List<Bookmark> = gson.fromJson(
+                gson.toJson(backupData["bookmarks"]), 
+                object : TypeToken<List<Bookmark>>() {}.type
+            )
+            // Clear existing bookmarks and insert new ones
+            // Since there's no bulk delete/insert, we'll need to handle this differently
+            for (bookmark in bookmarks) {
+                db.bookmarkDao().insert(bookmark)
+            }
 
-            db.userScriptDao().deleteAll()
-            val userScripts: List<UserScript> = gson.fromJson(gson.toJson(backupData["userScripts"]), object : TypeToken<List<UserScript>>() {}.type)
-            db.userScriptDao().insertAll(*userScripts.toTypedArray())
+            // Restore Room Database - User Scripts
+            val userScripts: List<UserScript> = gson.fromJson(
+                gson.toJson(backupData["userScripts"]), 
+                object : TypeToken<List<UserScript>>() {}.type
+            )
+            // Clear existing scripts and insert new ones
+            // Since there's no bulk delete, you might want to add a deleteAll method to your DAO
+            for (script in userScripts) {
+                db.userScriptDao().insert(script)
+            }
         }
     }
 
@@ -60,9 +79,15 @@ class BackupRestoreManager(private val context: Context) {
         for ((key, value) in data) {
             when (value) {
                 is Boolean -> editor.putBoolean(key, value)
+                is Float -> editor.putFloat(key, value)
                 is Double -> editor.putFloat(key, value.toFloat())
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
                 is String -> editor.putString(key, value)
-                is List<*> -> editor.putStringSet(key, value.map { it.toString() }.toSet())
+                is List<*> -> {
+                    val stringSet = value.map { it.toString() }.toSet()
+                    editor.putStringSet(key, stringSet)
+                }
             }
         }
         editor.apply()

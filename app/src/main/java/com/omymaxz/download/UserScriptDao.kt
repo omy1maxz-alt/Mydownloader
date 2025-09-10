@@ -25,4 +25,11 @@ interface UserScriptDao {
 
     @Query("DELETE FROM user_scripts WHERE id = :scriptId")
     suspend fun deleteById(scriptId: String)
+    
+    // Add these for bulk operations
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(scripts: List<UserScript>)
+    
+    @Query("DELETE FROM user_scripts")
+    suspend fun deleteAll()
 }

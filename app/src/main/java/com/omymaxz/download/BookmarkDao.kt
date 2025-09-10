@@ -16,4 +16,11 @@ interface BookmarkDao {
 
     @Delete
     suspend fun delete(bookmark: Bookmark)
+    
+    // Add these for bulk operations
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(bookmarks: List<Bookmark>)
+    
+    @Query("DELETE FROM bookmarks")
+    suspend fun deleteAll()
 }
