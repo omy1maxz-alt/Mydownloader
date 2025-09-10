@@ -212,24 +212,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        isAppInBackground = true
-
-        // Crucial: Only pause the WebView if we are NOT playing media.
-        // Pausing the WebView often pauses HTML5 media playback.
-        if (!isMediaPlaying) {
-            binding.webView.onPause()
-            // Stop the service if no media is playing
-            if (hasStartedForegroundService) {
-                stopPlaybackService()
-            }
-        }
-        // If media IS playing, do NOT pause the WebView or stop the service.
-        // The media should continue in the background.
-
-        saveTabsState()
-    }
+override fun onPause() {
+    super.onPause()
+    isAppInBackground = true
+    saveTabsState()
+}
 
     override fun onResume() {
         super.onResume()
@@ -256,29 +243,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
+override fun onStop() {
+    super.onStop()
 
-        // Unbind from the service, but only if we are not starting background playback.
-        // If we are starting background playback, we might want to stay bound.
-        // However, the service is started and will run independently.
-        // Let's stick to unbinding here to avoid leaks.
-        if (serviceBound) {
-            unbindService(serviceConnection)
-            serviceBound = false
-            mediaService = null
-        }
-
-        // Start the foreground service ONLY if we know media is playing
-        // and we are not just rotating the screen (isChangingConfigurations)
-        if (isMediaPlaying && !isChangingConfigurations) {
-            startBackgroundService()
-            hasStartedForegroundService = true
-
-            // Pause the video in the WebView to prevent double audio
-            binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-        }
+    // Unbind from the service
+    if (serviceBound) {
+        unbindService(serviceConnection)
+        serviceBound = false
+        mediaService = null
     }
+
+    // Check if media is playing and we are not just changing configuration (e.g., screen rotation)
+    if (isMediaPlaying && !isChangingConfigurations) {
+        // If media is playing, start the background service
+        startBackgroundService()
+        hasStartedForegroundService = true
+
+        // Pause the video element in the WebView to prevent double audio
+        binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+    } else {
+        // If we are stopping and no media is playing, it's now safe to pause the WebView
+        binding.webView.onPause()
+    }
+}
 
     override fun onDestroy() {
         super.onDestroy()
