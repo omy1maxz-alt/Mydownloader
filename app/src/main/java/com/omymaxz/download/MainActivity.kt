@@ -21,6 +21,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.Message
+import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.text.InputType
 import android.view.*
@@ -108,6 +109,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    // Add this method to show the dialog for MANAGE_EXTERNAL_STORAGE permission
+    private fun showManageStoragePermissionDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Storage Permission Required")
+            .setMessage("For Android 11 and above, this app needs special storage access to perform backup and restore operations. Please allow file access in the next screen.")
+            .setPositiveButton("Continue") { _, _ ->
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                intent.data = Uri.parse("package:$packageName")
+                manageExternalStorageLauncher.launch(intent)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as MediaForegroundService.LocalBinder
@@ -147,6 +162,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Add this at the beginning of onCreate to check permissions
+        checkInitialStoragePermissions()
+
         db = AppDatabase.getDatabase(this)
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -171,6 +190,25 @@ class MainActivity : AppCompatActivity() {
         }
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
+    }
+
+    // Add this method to check permissions when app starts
+    private fun checkInitialStoragePermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+            // For Android 11+, show a one-time explanation about storage permission
+            val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
+            val hasShownStorageNotice = sharedPrefs.getBoolean("HAS_SHOWN_STORAGE_NOTICE", false)
+
+            if (!hasShownStorageNotice) {
+                AlertDialog.Builder(this)
+                    .setTitle("Storage Access Notice")
+                    .setMessage("This app may need storage access for backup/restore functionality. You'll be prompted when needed.")
+                    .setPositiveButton("OK") { _, _ ->
+                        sharedPrefs.edit().putBoolean("HAS_SHOWN_STORAGE_NOTICE", true).apply()
+                    }
+                    .show()
+            }
+        }
     }
 
     override fun onPause() {
@@ -1217,19 +1255,74 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Add this for Android 11+ MANAGE_EXTERNAL_STORAGE permission
+    private val manageExternalStorageLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        // We check the permission status after returning from settings
+        checkManageExternalStoragePermission()
+    }
+
+    // Add this method to check if we have MANAGE_EXTERNAL_STORAGE permission
+    private fun checkManageExternalStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) {
+                Toast.makeText(this, "Manage storage permission granted", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Manage storage permission denied. Backup/restore may not work properly.", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     private fun checkStoragePermissionAndBackup() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            backupData()
-        } else {
-            requestStoragePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+                // Android 11+
+                if (Environment.isExternalStorageManager()) {
+                    backupData()
+                } else {
+                    // Request MANAGE_EXTERNAL_STORAGE permission
+                    showManageStoragePermissionDialog()
+                }
+            }
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+                // Android 6.0 to 10
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                    backupData()
+                } else {
+                    requestStoragePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+            }
+            else -> {
+                // Android 5.1 and below
+                backupData()
+            }
         }
     }
 
     private fun checkStoragePermissionAndRestore() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            restoreData()
-        } else {
-            requestStoragePermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+                // Android 11+
+                if (Environment.isExternalStorageManager()) {
+                    restoreData()
+                } else {
+                    // Request MANAGE_EXTERNAL_STORAGE permission
+                    showManageStoragePermissionDialog()
+                }
+            }
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+                // Android 6.0 to 10
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                    restoreData()
+                } else {
+                    requestStoragePermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                }
+            }
+            else -> {
+                // Android 5.1 and below
+                restoreData()
+            }
         }
     }
 

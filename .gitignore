@@ -84,6 +84,8 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 
+android_sdk/
+
 android_sdk/cmdline-tools/latest/NOTICE.txt
 android_sdk/cmdline-tools/latest/bin/apkanalyzer
 android_sdk/cmdline-tools/latest/bin/avdmanager
