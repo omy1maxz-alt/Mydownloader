@@ -1176,6 +1176,8 @@ fun onMediaEnded() {
             lowerUrl.endsWith(".flv") -> VideoFormat(".flv", "video/x-flv")
             lowerUrl.contains(".m3u8") -> VideoFormat(".m3u8", "application/vnd.apple.mpegurl")
             lowerUrl.endsWith(".m4v") -> VideoFormat(".m4v", "video/mp4")
+            lowerUrl.endsWith(".vtt") -> VideoFormat(".vtt", "text/vtt")
+            lowerUrl.endsWith(".srt") -> VideoFormat(".srt", "application/x-subrip")
             lowerUrl.contains("videoplayback") -> VideoFormat(".mp4", "video/mp4")
             else -> VideoFormat(".mp4", "video/mp4")
         }
