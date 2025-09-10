@@ -215,7 +215,6 @@ class MainActivity : AppCompatActivity() {
 override fun onPause() {
     super.onPause()
     isAppInBackground = true
-    saveTabsState()
 }
 
     override fun onResume() {
@@ -264,6 +263,13 @@ override fun onStop() {
             stopPlaybackService()
         }
         binding.webView.onPause()
+    }
+
+    // **FIX:** Post the slow save operation to the handler.
+    // This allows the lifecycle method to finish quickly, preventing the app from freezing
+    // and giving the service time to take over the media stream.
+    handler.post {
+        saveTabsState()
     }
 }
 
