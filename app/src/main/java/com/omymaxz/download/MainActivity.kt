@@ -277,33 +277,58 @@ override fun onStop() {
         mediaService = null
     }
 
-    // Check if there's actually media playing
-    binding.webView.evaluateJavascript(
-        "document.querySelector('video') && !document.querySelector('video').paused",
-        { result ->
-            val hasPlayingVideo = result?.toBoolean() == true
-
-            if (hasPlayingVideo && !isChangingConfigurations) {
-                // Get current playback position and start service
-                binding.webView.evaluateJavascript(
-                    "document.querySelector('video')?.currentTime || 0",
-                    { position ->
-                        startOrUpdatePlaybackService(shouldTakeOver = true)
-                        // Pause WebView video to prevent double audio
-                        binding.webView.evaluateJavascript(
-                            "document.querySelector('video')?.pause();", null
-                        )
-                    }
-                )
-            } else if (hasStartedForegroundService) {
-                stopPlaybackService()
-            }
+    if (isMediaPlaying && !isChangingConfigurations) {
+        // The service is already running, now we tell it to take over with media details.
+        startOrUpdatePlaybackService(shouldTakeOver = true)
+        // Pause the video in the WebView to prevent double audio.
+        binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+    } else {
+        // If we are stopping and no media is playing, stop the proactive service.
+        if (hasStartedForegroundService) {
+            stopPlaybackService()
         }
-    )
+        binding.webView.onPause()
+    }
 
-    // Save tabs state in background thread
+    // **FIXED:** Capture WebView state on main thread, then save on background thread
+    val currentUrl = if (binding.webView.visibility == View.VISIBLE) binding.webView.url else null
+    val currentTitle = if (binding.webView.visibility == View.VISIBLE) binding.webView.title else null
+    var currentState: Bundle? = null
+
+    // Capture WebView state on main thread
+    if (currentTabIndex in tabs.indices && binding.webView.visibility == View.VISIBLE) {
+        currentState = Bundle()
+        try {
+            binding.webView.saveState(currentState)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to save WebView state: ${e.message}")
+            currentState = null
+        }
+    }
+
+    // Now save everything on background thread
     lifecycleScope.launch(Dispatchers.IO) {
-        saveTabsState()
+        try {
+            // Update current tab with captured data
+            if (currentTabIndex in tabs.indices) {
+                tabs[currentTabIndex].apply {
+                    url = currentUrl
+                    title = currentTitle ?: "New Tab"
+                    state = currentState
+                }
+            }
+
+            // Save to SharedPreferences
+            val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
+            val editor = sharedPrefs.edit()
+            val gson = Gson()
+            val tabsJson = gson.toJson(tabs)
+            editor.putString("TABS_LIST", tabsJson)
+            editor.putInt("CURRENT_TAB_INDEX", currentTabIndex)
+            editor.apply()
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to save tabs state: ${e.message}")
+        }
     }
 }
 
