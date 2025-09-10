@@ -1069,27 +1069,47 @@ fun onMediaEnded() {
             else -> "Unknown Quality"
         }
     }
-    private fun generateSmartFileName(url: String, extension: String, quality: String, category: MediaCategory): String {
-        val uri = Uri.parse(url)
-        val lowerUrl = url.lowercase()
-        val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
-        val categoryPrefix = when (category) {
-            MediaCategory.VIDEO -> ""
-            MediaCategory.AUDIO -> "Audio_"
-            MediaCategory.SUBTITLE -> "Subtitle_"
-            MediaCategory.THUMBNAIL -> "Thumb_"
-            else -> "${category.displayName}_"
-        }
-        val baseName = when {
-            lowerUrl.contains("youtube.com") || lowerUrl.contains("youtu.be") -> "YouTube_${extractYouTubeVideoId(url)}"
-            else -> {
-                val host = uri.host?.replace(".", "_")?.replace("www_", "") ?: "Media"
-                "${host}_${timestamp}"
-            }
-        }
-        val cleanQuality = if (category == MediaCategory.VIDEO && quality != "Unknown Quality") "_${quality.replace("[^a-zA-Z0-9]".toRegex(), "_")}" else ""
-        return "${categoryPrefix}${baseName}${cleanQuality}${extension}"
+private fun generateSmartFileName(url: String, extension: String, quality: String, category: MediaCategory): String {
+    val uri = Uri.parse(url)
+    val lowerUrl = url.lowercase()
+    val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+
+    val categoryPrefix = when (category) {
+        MediaCategory.VIDEO -> ""
+        MediaCategory.AUDIO -> "Audio_"
+        // Subtitle files often have the language in their name, so we don't need a prefix.
+        MediaCategory.SUBTITLE -> ""
+        MediaCategory.THUMBNAIL -> "Thumb_"
+        else -> "${category.displayName}_"
     }
+
+    // First, try to get a meaningful filename directly from the URL.
+    val fileNameFromUrl = uri.lastPathSegment?.substringBeforeLast("?")
+
+    val baseName = when {
+        // If the URL contains a filename (like "english_subtitle.vtt"), use it.
+        !fileNameFromUrl.isNullOrBlank() && fileNameFromUrl.contains('.') -> {
+            fileNameFromUrl.substringBeforeLast('.')
+        }
+        // Otherwise, fall back to the old logic for YouTube or generic names.
+        lowerUrl.contains("youtube.com") || lowerUrl.contains("youtu.be") -> {
+            "YouTube_${extractYouTubeVideoId(url)}"
+        }
+        else -> {
+            val host = uri.host?.replace(".", "_")?.replace("www_", "") ?: "Media"
+            "${host}_${timestamp}"
+        }
+    }
+
+    // For subtitles, we don't need to add the quality string.
+    val cleanQuality = if (category == MediaCategory.VIDEO && quality != "Unknown Quality") {
+        "_${quality.replace("[^a-zA-Z0-9]".toRegex(), "_")}"
+    } else {
+        ""
+    }
+
+    return "${categoryPrefix}${baseName}${cleanQuality}${extension}"
+}
     private fun estimateFileSize(url: String, category: MediaCategory): String { return "Unknown" }
     private fun extractLanguageFromUrl(url: String): String? { return null }
     private fun extractYouTubeVideoId(url: String): String {
