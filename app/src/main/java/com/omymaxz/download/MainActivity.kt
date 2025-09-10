@@ -1182,7 +1182,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun showMasterSettingsDialog() {
-        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist")
+        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore")
         AlertDialog.Builder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
@@ -1190,9 +1190,97 @@ class MainActivity : AppCompatActivity() {
                     0 -> showContentBlockingDialog()
                     1 -> showBlockedSitesDialog()
                     2 -> showWhitelistManagementDialog()
+                    3 -> showBackupRestoreDialog()
                 }
             }
             .show()
+    }
+
+    private fun showBackupRestoreDialog() {
+        val items = arrayOf("Backup Data", "Restore Data")
+        AlertDialog.Builder(this)
+            .setTitle("Backup and Restore")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> checkStoragePermissionAndBackup()
+                    1 -> checkStoragePermissionAndRestore()
+                }
+            }
+            .show()
+    }
+
+    private val requestStoragePermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+        if (isGranted) {
+            Toast.makeText(this, "Permission granted. Please try again.", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Storage permission is required for backup and restore.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun checkStoragePermissionAndBackup() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            backupData()
+        } else {
+            requestStoragePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+    }
+
+    private fun checkStoragePermissionAndRestore() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            restoreData()
+        } else {
+            requestStoragePermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+    }
+
+    private val backupLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
+        uri?.let {
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val backupManager = BackupRestoreManager(this@MainActivity)
+                    val backupJson = backupManager.createBackup()
+                    contentResolver.openOutputStream(it)?.use { outputStream ->
+                        outputStream.write(backupJson.toByteArray())
+                    }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Backup successful!", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Backup failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun backupData() {
+        backupLauncher.launch("Mydownloader_backup.json")
+    }
+
+    private val restoreLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val backupJson = contentResolver.openInputStream(it)?.bufferedReader().use { it?.readText() }
+                    if (backupJson != null) {
+                        val backupManager = BackupRestoreManager(this@MainActivity)
+                        backupManager.restoreBackup(backupJson)
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@MainActivity, "Restore successful! Please restart the app.", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Restore failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun restoreData() {
+        restoreLauncher.launch("application/json")
     }
     private fun showContentBlockingDialog() {
         val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
