@@ -11,89 +11,67 @@ import android.graphics.BitmapFactory
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import android.support.v4.media.session.MediaSessionCompat
 import androidx.core.app.NotificationCompat
+import androidx.media.app.NotificationCompat.MediaStyle
 import androidx.media.session.MediaButtonReceiver
 
 class MediaForegroundService : Service() {
 
     private val binder = LocalBinder()
-    private lateinit var mediaSession: MediaSessionCompat
-    private var mediaControlCallback: MediaControlCallback? = null
     private var isPlaying = false
     private var mediaTitle = "Web Video"
-
-    interface MediaControlCallback {
-        fun onPlayPause()
-        fun onStop()
-    }
+    private var mediaUrl: String? = null
 
     inner class LocalBinder : Binder() {
         fun getService(): MediaForegroundService = this@MediaForegroundService
     }
 
     companion object {
-        const val NOTIFICATION_ID = 1
+        const val NOTIFICATION_ID = 1001
         const val CHANNEL_ID = "MediaPlaybackChannel"
-        const val ACTION_PLAY_PAUSE = "com.omymaxz.download.ACTION_PLAY_PAUSE"
-        const val ACTION_STOP = "com.omymaxz.download.ACTION_STOP"
         const val ACTION_PLAY = "com.omymaxz.download.ACTION_PLAY"
+        const val ACTION_PAUSE = "com.omymaxz.download.ACTION_PAUSE"
+        const val ACTION_STOP = "com.omymaxz.download.ACTION_STOP"
     }
 
     override fun onCreate() {
         super.onCreate()
-        mediaSession = MediaSessionCompat(this, "MyDownloaderMediaSession")
-        mediaSession.setCallback(object : MediaSessionCompat.Callback() {
-            override fun onPlay() {
-                super.onPlay()
-                isPlaying = true
-                updateNotification()
-                mediaControlCallback?.onPlayPause()
-            }
-
-            override fun onPause() {
-                super.onPause()
-                isPlaying = false
-                updateNotification()
-                mediaControlCallback?.onPlayPause()
-            }
-
-            override fun onStop() {
-                super.onStop()
-                isPlaying = false
-                mediaControlCallback?.onStop()
-                stopSelf()
-            }
-        })
-        mediaSession.isActive = true
+        createNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_PLAY_PAUSE -> {
-                isPlaying = !isPlaying
-                updateNotification()
-                mediaControlCallback?.onPlayPause()
-            }
-            ACTION_STOP -> {
-                mediaControlCallback?.onStop()
-                stopForeground(true)
-                stopSelf()
-            }
             ACTION_PLAY -> {
                 mediaTitle = intent.getStringExtra("title") ?: "Web Video"
+                mediaUrl = intent.getStringExtra("url")
                 isPlaying = true
                 startForeground(NOTIFICATION_ID, buildNotification())
             }
+            ACTION_PAUSE -> {
+                isPlaying = false
+                updateNotification()
+            }
+            ACTION_STOP -> {
+                stopForeground(true)
+                stopSelf()
+            }
             else -> {
-                 MediaButtonReceiver.handleIntent(mediaSession, intent)
+                // MediaButtonReceiver.handleIntent is removed as we don't use MediaSession
             }
         }
         return START_STICKY
     }
-    
-    fun setMediaControlCallback(callback: MediaControlCallback?) {
-        this.mediaControlCallback = callback
+
+    fun setMediaPlaying(playing: Boolean, title: String? = null) {
+        if (title != null) {
+            mediaTitle = title
+        }
+        isPlaying = playing
+        if (isPlaying) {
+            startForeground(NOTIFICATION_ID, buildNotification())
+        } else {
+            updateNotification()
+        }
     }
 
     fun updateMediaInfo(title: String) {
@@ -102,45 +80,62 @@ class MediaForegroundService : Service() {
     }
 
     private fun updateNotification() {
-        val notification = buildNotification()
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        if (::notificationManager.isInitialized) {
+            notificationManager.notify(NOTIFICATION_ID, buildNotification())
+        }
     }
 
+    private lateinit var notificationManager: NotificationManager
+
     private fun buildNotification(): Notification {
-        createNotificationChannel()
+        if (!::notificationManager.isInitialized) {
+            notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        }
 
         val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow
         val playPauseTitle = if (isPlaying) "Pause" else "Play"
 
         val playPauseIntent = Intent(this, MediaForegroundService::class.java).apply {
-            action = ACTION_PLAY_PAUSE
+            action = if (isPlaying) ACTION_PAUSE else ACTION_PLAY
         }
-        val playPausePendingIntent = PendingIntent.getService(this, 1, playPauseIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val playPausePendingIntent = PendingIntent.getService(
+            this,
+            1,
+            playPauseIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
         val stopIntent = Intent(this, MediaForegroundService::class.java).apply {
             action = ACTION_STOP
         }
-        val stopPendingIntent = PendingIntent.getService(this, 2, stopIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val stopPendingIntent = PendingIntent.getService(
+            this,
+            2,
+            stopIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
         val openAppIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
-        val openAppPendingIntent = PendingIntent.getActivity(this, 0, openAppIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val openAppPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            openAppIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(mediaTitle)
-            .setContentText("Playing in background")
-            .setSmallIcon(R.drawable.ic_notification) // You'll need to create this icon
+            .setContentText(if (isPlaying) "Playing in background" else "Paused")
+            .setSmallIcon(R.drawable.ic_notification) // Make sure this icon exists
             .setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher))
             .setContentIntent(openAppPendingIntent)
             .addAction(playPauseIcon, playPauseTitle, playPausePendingIntent)
             .addAction(R.drawable.ic_close, "Stop", stopPendingIntent)
-            .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(mediaSession.sessionToken)
-                .setShowActionsInCompactView(0, 1))
+            .setStyle(MediaStyle().setShowActionsInCompactView(0, 1))
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
+            .setOngoing(isPlaying) // Only ongoing when playing
             .build()
     }
 
@@ -155,13 +150,13 @@ class MediaForegroundService : Service() {
             manager.createNotificationChannel(serviceChannel)
         }
     }
-    
+
     override fun onBind(intent: Intent): IBinder {
         return binder
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaSession.release()
+        // Don't stop foreground here, let the stop action handle it
     }
 }
