@@ -253,16 +253,16 @@ override fun onStop() {
         mediaService = null
     }
 
-    // Check if media is playing and we are not just changing configuration (e.g., screen rotation)
     if (isMediaPlaying && !isChangingConfigurations) {
-        // If media is playing, start the background service
-        startBackgroundService()
-        hasStartedForegroundService = true
-
-        // Pause the video element in the WebView to prevent double audio
+        // The service is already running, now we tell it to take over with media details.
+        startOrUpdatePlaybackService(shouldTakeOver = true)
+        // Pause the video in the WebView to prevent double audio.
         binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
     } else {
-        // If we are stopping and no media is playing, it's now safe to pause the WebView
+        // If we are stopping and no media is playing, stop the proactive service.
+        if (hasStartedForegroundService) {
+            stopPlaybackService()
+        }
         binding.webView.onPause()
     }
 }
@@ -911,40 +911,46 @@ override fun onStop() {
         """.trimIndent()
         webView?.loadUrl(polyfillScript)
     }
-    private fun startBackgroundService() {
-        if (currentVideoUrl == null || !isMediaPlaying) return
+private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false) {
+    if (currentVideoUrl == null) return
 
-        // Get current position from WebView video (via JS)
-        binding.webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
-            val position = positionStr.toFloatOrNull() ?: 0f
+    // Get current position from WebView video (via JS)
+    binding.webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
+        val position = positionStr.toFloatOrNull() ?: 0f
 
-            // Capture headers
-            val headers = mutableMapOf<String, String>()
-            val cookieManager = CookieManager.getInstance()
-            val cookies = cookieManager.getCookie(currentVideoUrl) ?: ""
-            if (cookies.isNotEmpty()) {
-                headers["Cookie"] = cookies
-            }
-            headers["User-Agent"] = binding.webView.settings.userAgentString
-            binding.webView.url?.let { headers["Referer"] = it }
+        // Capture headers
+        val headers = mutableMapOf<String, String>()
+        val cookieManager = CookieManager.getInstance()
+        val cookies = cookieManager.getCookie(currentVideoUrl) ?: ""
+        if (cookies.isNotEmpty()) {
+            headers["Cookie"] = cookies
+        }
+        headers["User-Agent"] = binding.webView.settings.userAgentString
+        binding.webView.url?.let { headers["Referer"] = it }
 
-            // Start service with extras
-            val intent = Intent(this, MediaForegroundService::class.java).apply {
+        // Start service with extras
+        val intent = Intent(this, MediaForegroundService::class.java)
+
+        // Only add playback details if we are telling it to take over
+        if (shouldTakeOver) {
+            intent.apply {
                 action = MediaForegroundService.ACTION_PLAY
                 putExtra("url", currentVideoUrl)
                 putExtra("title", binding.webView.title ?: "Web Media")
-                putExtra("position", position)  // New: seek position
-                putExtra("headers", HashMap(headers))  // Pass map (must be Serializable, HashMap is)
-            }
-
-            try {
-                ContextCompat.startForegroundService(this, intent)
-                android.util.Log.d("MainActivity", "Started background service with URL: $currentVideoUrl, position: $position")
-            } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Error starting MediaForegroundService", e)
+                putExtra("position", position)
+                putExtra("headers", HashMap(headers))
             }
         }
+
+        try {
+            ContextCompat.startForegroundService(this, intent)
+            hasStartedForegroundService = true
+            android.util.Log.d("MainActivity", "Service started/updated. Takeover: $shouldTakeOver")
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error starting MediaForegroundService", e)
+        }
     }
+}
 
     // Update your stopPlaybackService method
     fun stopPlaybackService() {
@@ -965,43 +971,41 @@ override fun onStop() {
     inner class MediaStateInterface(private val activity: MainActivity) {
 
         @JavascriptInterface
-        fun onMediaPlay() {
-            activity.runOnUiThread {
-                android.util.Log.d("MediaStateInterface", "onMediaPlay called")
-                activity.isMediaPlaying = true
-                // Ensure service is started when media starts
-                if (activity.isAppInBackground) {
-                     activity.startBackgroundService()
-                     activity.hasStartedForegroundService = true
-                }
-            }
+fun onMediaPlay() {
+    activity.runOnUiThread {
+        android.util.Log.d("MediaStateInterface", "onMediaPlay called")
+        activity.isMediaPlaying = true
+        // Proactively start the service in a "waiting" state to elevate process priority.
+        if (!activity.hasStartedForegroundService) {
+            activity.startOrUpdatePlaybackService(shouldTakeOver = false)
         }
+    }
+}
 
-        @JavascriptInterface
-        fun onMediaPause() {
-            activity.runOnUiThread {
-                android.util.Log.d("MediaStateInterface", "onMediaPause called")
-                activity.isMediaPlaying = false
-                // Optionally stop service if app is in background and media is paused
-                // Decide based on your UX: stop immediately or wait for onStop
-                // if (activity.isAppInBackground && activity.hasStartedForegroundService) {
-                //     activity.stopPlaybackService()
-                // }
-            }
+@JavascriptInterface
+fun onMediaPause() {
+    activity.runOnUiThread {
+        android.util.Log.d("MediaStateInterface", "onMediaPause called")
+        activity.isMediaPlaying = false
+        // If user pauses while in the app, we don't need the service running anymore.
+        if (!activity.isAppInBackground && activity.hasStartedForegroundService) {
+            activity.stopPlaybackService()
         }
+    }
+}
 
-        @JavascriptInterface
-        fun onMediaEnded() {
-            activity.runOnUiThread {
-                android.util.Log.d("MediaStateInterface", "onMediaEnded called")
-                activity.isMediaPlaying = false
-                activity.currentVideoUrl = null
-                // Stop the service when media ends
-                if (activity.hasStartedForegroundService) {
-                    activity.stopPlaybackService()
-                }
-            }
+@JavascriptInterface
+fun onMediaEnded() {
+    activity.runOnUiThread {
+        android.util.Log.d("MediaStateInterface", "onMediaEnded called")
+        activity.isMediaPlaying = false
+        activity.currentVideoUrl = null
+        // Stop the service when media ends.
+        if (activity.hasStartedForegroundService) {
+            activity.stopPlaybackService()
         }
+    }
+}
 
         @JavascriptInterface
         fun onError(error: String) {
