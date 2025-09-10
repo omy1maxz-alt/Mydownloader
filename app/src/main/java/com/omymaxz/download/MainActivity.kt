@@ -899,24 +899,29 @@ class MainActivity : AppCompatActivity() {
         webView?.loadUrl(polyfillScript)
     }
     private fun startBackgroundService() {
-        if (!isServiceRunning && currentVideoUrl != null) {
+        if (currentVideoUrl != null) {
             val url = currentVideoUrl!!
             val cookie = CookieManager.getInstance().getCookie(url)
             val userAgent = binding.webView.settings.userAgentString
+
             val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
                 putExtra("title", binding.webView.title ?: "Web Video")
                 putExtra("url", url)
-                putExtra("cookie", cookie)
-                putExtra("userAgent", userAgent)
                 action = MediaForegroundService.ACTION_PLAY
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent)
-            } else {
-                startService(serviceIntent)
+
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent)
+                } else {
+                    startService(serviceIntent)
+                }
+
+                bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+                serviceBound = true
+            } catch (e: Exception) {
+                android.util.Log.e("MediaService", "Failed to start foreground service", e)
             }
-            bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
-            isServiceRunning = true
         }
     }
     private fun stopPlaybackService() {
@@ -938,15 +943,21 @@ class MainActivity : AppCompatActivity() {
         fun onMediaPlay() {
             activity.runOnUiThread {
                 activity.isMediaPlaying = true
+                // Update service state
+                mediaService?.setMediaPlaying(true, binding.webView.title ?: "Web Video")
                 activity.startBackgroundService()
             }
         }
+
         @JavascriptInterface
         fun onMediaPause() {
-             activity.runOnUiThread {
+            activity.runOnUiThread {
                 activity.isMediaPlaying = false
+                // Update service state
+                mediaService?.setMediaPlaying(false)
             }
         }
+
         @JavascriptInterface
         fun onMediaEnded() {
             activity.runOnUiThread {
