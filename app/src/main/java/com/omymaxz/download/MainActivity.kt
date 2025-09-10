@@ -234,20 +234,13 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
-
-        // Always resume the WebView when coming back
         binding.webView.onResume()
 
-        // If we had started a service for background playback, we might want to stop it now
-        // or manage it based on whether media is still playing.
-        // This depends on your desired UX. For now, let's leave the service management
-        // primarily in the JS callbacks.
-
-        // Optional: If you want to stop the service when the app comes back to foreground
-        // and media was paused in the background, you could do it here.
-        // if (!isMediaPlaying && hasStartedForegroundService) {
-        //     stopPlaybackService()
-        // }
+        // If the service was running, stop it as we are returning to the app.
+        // The user can resume playback within the WebView.
+        if (hasStartedForegroundService) {
+            stopPlaybackService()
+        }
     }
 
     override fun onStart() {
@@ -266,7 +259,10 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
 
-        // Unbind from the service
+        // Unbind from the service, but only if we are not starting background playback.
+        // If we are starting background playback, we might want to stay bound.
+        // However, the service is started and will run independently.
+        // Let's stick to unbinding here to avoid leaks.
         if (serviceBound) {
             unbindService(serviceConnection)
             serviceBound = false
@@ -278,6 +274,9 @@ class MainActivity : AppCompatActivity() {
         if (isMediaPlaying && !isChangingConfigurations) {
             startBackgroundService()
             hasStartedForegroundService = true
+
+            // Pause the video in the WebView to prevent double audio
+            binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
         }
     }
 
@@ -726,9 +725,8 @@ class MainActivity : AppCompatActivity() {
                             val isMainContent = isMainVideoContent(url)
                             if (category == MediaCategory.VIDEO && isMainContent) {
                                 currentVideoUrl = url
-                                if(serviceBound){
-                                    mediaService?.updateMediaInfo(binding.webView.title ?: "Web Video")
-                                }
+                                // The service will get the title when it's started.
+                                // No need to update it prematurely.
                             }
                             val detectedFormat = detectVideoFormat(url)
                             val quality = extractQualityFromUrl(url)
