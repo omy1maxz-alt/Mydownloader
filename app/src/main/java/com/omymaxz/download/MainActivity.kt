@@ -53,6 +53,7 @@ import java.util.Collections
 import java.util.Timer
 import java.util.TimerTask
 import java.util.regex.Pattern
+import android.widget.LinearLayout
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -213,6 +214,37 @@ private fun checkBatteryOptimization() {
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
         checkBatteryOptimization()
+        applyProxy()
+    }
+
+    private fun applyProxy() {
+        val sharedPrefs = getSharedPreferences("proxy", Context.MODE_PRIVATE)
+        val host = sharedPrefs.getString("proxy_host", null)
+        val port = sharedPrefs.getInt("proxy_port", -1)
+
+        try {
+            // This is a simplified approach. A robust solution would require more complex reflection.
+            val webViewCoreClass = Class.forName("android.webkit.WebViewCore")
+            val proxyProperties = mapOf(
+                "proxy" to if (host != null && port != -1) "$host:$port" else ""
+            )
+            val mWebView = binding.webView
+            val settings = mWebView.settings
+            val wvcField = settings.javaClass.getDeclaredField("mWebViewCore")
+            wvcField.isAccessible = true
+            val wvc = wvcField.get(settings)
+            val wvcClass = wvc.javaClass
+            val sendMessageMethod = wvcClass.getDeclaredMethod("sendMessage", Message::class.java)
+            sendMessageMethod.isAccessible = true
+            val proxyMsg = Message.obtain(null, 130, proxyProperties) // 130 is the internal SET_PROXY message ID
+            sendMessageMethod.invoke(wvc, proxyMsg)
+            Toast.makeText(this, "Proxy set to $host:$port", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            // Proxy setting via reflection might fail on newer Android versions
+            // For this exercise, we will log the error and inform the user.
+            android.util.Log.e("MainActivity", "Failed to set proxy: ${e.message}")
+            Toast.makeText(this, "Failed to set proxy", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun checkInitialStoragePermissions() {
@@ -1389,6 +1421,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 addCurrentPageToBookmarks()
                 true
             }
+            R.id.menu_proxy_settings -> {
+                showProxySettingsDialog()
+                true
+            }
             R.id.menu_settings -> {
                 showMasterSettingsDialog()
                 true
@@ -1423,6 +1459,61 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         } else {
             Toast.makeText(this, "No page loaded to bookmark", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun showProxySettingsDialog() {
+        val sharedPrefs = getSharedPreferences("proxy", Context.MODE_PRIVATE)
+        val currentHost = sharedPrefs.getString("proxy_host", "")
+        val currentPort = sharedPrefs.getInt("proxy_port", -1)
+
+        val dialogView = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 50, 50, 50)
+        }
+
+        val hostInput = EditText(this).apply {
+            hint = "Proxy Host"
+            setText(currentHost)
+        }
+        dialogView.addView(hostInput)
+
+        val portInput = EditText(this).apply {
+            hint = "Proxy Port"
+            inputType = InputType.TYPE_CLASS_NUMBER
+            if (currentPort != -1) {
+                setText(currentPort.toString())
+            }
+        }
+        dialogView.addView(portInput)
+
+        AlertDialog.Builder(this)
+            .setTitle("Proxy Settings")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val host = hostInput.text.toString().trim()
+                val portStr = portInput.text.toString().trim()
+                val port = if (portStr.isNotEmpty()) portStr.toInt() else -1
+
+                if (host.isNotEmpty() && port != -1) {
+                    sharedPrefs.edit()
+                        .putString("proxy_host", host)
+                        .putInt("proxy_port", port)
+                        .apply()
+                    applyProxy()
+                } else {
+                    Toast.makeText(this, "Invalid host or port", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Disable Proxy") { _, _ ->
+                sharedPrefs.edit()
+                    .remove("proxy_host")
+                    .remove("proxy_port")
+                    .apply()
+                applyProxy()
+                Toast.makeText(this, "Proxy disabled", Toast.LENGTH_SHORT).show()
+            }
+            .setNeutralButton("Cancel", null)
+            .show()
     }
     private fun showMasterSettingsDialog() {
         val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore")

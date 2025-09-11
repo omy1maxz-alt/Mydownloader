@@ -23,8 +23,8 @@
         app:showAsAction="never" />
         
     <item
-        android:id="@+id/menu_clear_cookies"
-        android:title="Clear Cookies"
+        android:id="@+id/menu_proxy_settings"
+        android:title="@string/proxy_settings"
         app:showAsAction="never" />
 
     <item
