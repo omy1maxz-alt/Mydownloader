@@ -269,7 +269,7 @@ private fun checkBatteryOptimization() {
 
         if (isMediaPlaying && !isChangingConfigurations) {
             startOrUpdatePlaybackService(shouldTakeOver = true)
-            binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+            // REMOVED: binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
         } else {
             if (hasStartedForegroundService && !isMediaPlaying) {
                  stopPlaybackService()
@@ -682,21 +682,33 @@ private fun checkBatteryOptimization() {
                 private var navigationCount = 0
 
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                    if (isDesktopMode) {
-                        val desktopOverrideJs = """
-                            javascript:(function() {
-                                var meta = document.createElement('meta');
-                                meta.setAttribute('name', 'viewport');
-                                meta.setAttribute('content', 'width=1280');
-                                var head = document.getElementsByTagName('head')[0];
-                                if (head) head.appendChild(meta);
-                                Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
-                                Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
-                                delete window.ontouchstart;
-                            })();
-                        """.trimIndent()
-                        view?.evaluateJavascript(desktopOverrideJs, null)
+                    val javascript = if (isDesktopMode) {
+                        """
+                        javascript:(function() {
+                            var vpf = document.querySelector('meta[name="viewport"]');
+                            if(vpf){ vpf.remove(); }
+                            var meta = document.createElement('meta');
+                            meta.setAttribute('name', 'viewport');
+                            meta.setAttribute('content', 'width=1280, user-scalable=yes');
+                            document.getElementsByTagName('head')[0].appendChild(meta);
+
+                            Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
+                            Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+                        })();
+                        """
+                    } else {
+                        """
+                        javascript:(function() {
+                            var vpf = document.querySelector('meta[name="viewport"]');
+                            if(vpf){ vpf.remove(); }
+                            var meta = document.createElement('meta');
+                            meta.setAttribute('name', 'viewport');
+                            meta.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=yes');
+                            document.getElementsByTagName('head')[0].appendChild(meta);
+                        })();
+                        """
                     }
+                    view?.evaluateJavascript(javascript.trimIndent(), null)
 
                     super.onPageStarted(view, url, favicon)
                     binding.progressBar.visibility = View.VISIBLE
@@ -1747,7 +1759,7 @@ private fun showUserAgentDialog() {
                     settings.setSupportZoom(true)
                     settings.builtInZoomControls = true
                     settings.displayZoomControls = false
-                    settings.textZoom = 100 // Set text zoom for desktop
+                    settings.textZoom = 100
 
                     newUserAgent = if (which == 1) {
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -1761,7 +1773,7 @@ private fun showUserAgentDialog() {
                     settings.loadWithOverviewMode = false
                     settings.setSupportZoom(false)
                     settings.builtInZoomControls = false
-                    settings.textZoom = 0 // Reset text zoom to system default
+                    settings.textZoom = 0
                     newUserAgent = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 }
             }

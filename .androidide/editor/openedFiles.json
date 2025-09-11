@@ -4,14 +4,14 @@
       "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt",
       "selection": {
         "end": {
-          "column": 1,
-          "index": 81697,
-          "line": 1844
+          "column": 0,
+          "index": 82349,
+          "line": 1857
         },
         "start": {
-          "column": 1,
-          "index": 81697,
-          "line": 1844
+          "column": 0,
+          "index": 82349,
+          "line": 1857
         }
       }
     },
@@ -20,16 +20,16 @@
       "selection": {
         "end": {
           "column": 1,
-          "index": 11820,
-          "line": 304
+          "index": 6715,
+          "line": 165
         },
         "start": {
           "column": 1,
-          "index": 11820,
-          "line": 304
+          "index": 6715,
+          "line": 165
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MediaForegroundService.kt"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt"
 }
