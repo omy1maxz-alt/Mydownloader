@@ -1747,7 +1747,7 @@ private fun showUserAgentDialog() {
                     settings.setSupportZoom(true)
                     settings.builtInZoomControls = true
                     settings.displayZoomControls = false
-                    settings.textZoom = 100
+                    settings.textZoom = 100 // Set text zoom for desktop
 
                     newUserAgent = if (which == 1) {
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -1761,7 +1761,7 @@ private fun showUserAgentDialog() {
                     settings.loadWithOverviewMode = false
                     settings.setSupportZoom(false)
                     settings.builtInZoomControls = false
-                    settings.textZoom = 0
+                    settings.textZoom = 0 // Reset text zoom to system default
                     newUserAgent = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 }
             }
