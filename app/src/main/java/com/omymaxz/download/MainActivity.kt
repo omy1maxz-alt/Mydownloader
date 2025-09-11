@@ -1771,12 +1771,25 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         AlertDialog.Builder(this)
             .setTitle("Change Browser Identity")
             .setItems(userAgents) { _, which ->
+                val settings = binding.webView.settings
                 val newUserAgent = when(which) {
-                    1 -> "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                    2 -> "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
-                    else -> "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                    1 -> { // Desktop Chrome
+                        settings.loadWithOverviewMode = true
+                        settings.useWideViewPort = true
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    }
+                    2 -> { // iPad Safari
+                        settings.loadWithOverviewMode = true
+                        settings.useWideViewPort = true
+                        "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+                    }
+                    else -> { // Default Mobile
+                        settings.loadWithOverviewMode = false
+                        settings.useWideViewPort = false
+                        "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                    }
                 }
-                binding.webView.settings.userAgentString = newUserAgent
+                settings.userAgentString = newUserAgent
                 binding.webView.reload()
                 Toast.makeText(this, "Switched to ${userAgents[which]}", Toast.LENGTH_SHORT).show()
             }
