@@ -12,4 +12,5 @@
     <string name="ad_blocked">Advertisement blocked</string>
     <string name="popup_blocked">Popup blocked</string>
     <string name="redirect_blocked">Redirect blocked</string>
+    <string name="proxy_settings">Proxy Settings</string>
 </resources>
