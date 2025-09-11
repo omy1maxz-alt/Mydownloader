@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     var isServiceRunning = false
     private val handler = Handler(Looper.getMainLooper())
+    private var isDesktopMode: Boolean = false
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (!isGranted) {
@@ -124,7 +125,6 @@ private fun checkBatteryOptimization() {
                         intent.data = Uri.parse("package:$packageName")
                         startActivity(intent)
                     } catch (e: Exception) {
-                        // Fallback to general battery optimization settings
                         val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                         startActivity(intent)
                     }
@@ -135,7 +135,6 @@ private fun checkBatteryOptimization() {
     }
 }
 
-    // Add this method to show the dialog for MANAGE_EXTERNAL_STORAGE permission
     private fun showManageStoragePermissionDialog() {
         AlertDialog.Builder(this)
             .setTitle("Storage Permission Required")
@@ -177,7 +176,6 @@ private fun checkBatteryOptimization() {
         }
     }
 
-    // Properties for enhanced userscript support
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
     private val userscriptInterface by lazy { UserscriptInterface(this, binding.webView, lifecycleScope) }
@@ -188,7 +186,6 @@ private fun checkBatteryOptimization() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Add this at the beginning of onCreate to check permissions
         checkInitialStoragePermissions()
 
         db = AppDatabase.getDatabase(this)
@@ -218,10 +215,8 @@ private fun checkBatteryOptimization() {
         checkBatteryOptimization()
     }
 
-    // Add this method to check permissions when app starts
     private fun checkInitialStoragePermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-            // For Android 11+, show a one-time explanation about storage permission
             val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
             val hasShownStorageNotice = sharedPrefs.getBoolean("HAS_SHOWN_STORAGE_NOTICE", false)
 
@@ -237,18 +232,14 @@ private fun checkBatteryOptimization() {
         }
     }
 
-override fun onPause() {
-    super.onPause()
-    isAppInBackground = true
-}
+    override fun onPause() {
+        super.onPause()
+        isAppInBackground = true
+    }
 
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
-        binding.webView.onResume()
-
-        // If the service was running, stop it as we are returning to the app.
-        // The user can resume playback within the WebView.
         if (hasStartedForegroundService) {
             stopPlaybackService()
         }
@@ -267,74 +258,62 @@ override fun onPause() {
         }
     }
 
-override fun onStop() {
-    super.onStop()
+    override fun onStop() {
+        super.onStop()
 
-    // Unbind from the service
-    if (serviceBound) {
-        unbindService(serviceConnection)
-        serviceBound = false
-        mediaService = null
-    }
-
-    if (isMediaPlaying && !isChangingConfigurations) {
-        // The service is already running, now we tell it to take over with media details.
-        startOrUpdatePlaybackService(shouldTakeOver = true)
-        // Pause the video in the WebView to prevent double audio.
-        binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-    } else {
-        // If we are stopping and no media is playing, stop the proactive service.
-        if (hasStartedForegroundService) {
-            stopPlaybackService()
+        if (serviceBound) {
+            unbindService(serviceConnection)
+            serviceBound = false
+            mediaService = null
         }
-        binding.webView.onPause()
-    }
 
-    // **FIXED:** Capture WebView state on main thread, then save on background thread
-    val currentUrl = if (binding.webView.visibility == View.VISIBLE) binding.webView.url else null
-    val currentTitle = if (binding.webView.visibility == View.VISIBLE) binding.webView.title else null
-    var currentState: Bundle? = null
-
-    // Capture WebView state on main thread
-    if (currentTabIndex in tabs.indices && binding.webView.visibility == View.VISIBLE) {
-        currentState = Bundle()
-        try {
-            binding.webView.saveState(currentState)
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Failed to save WebView state: ${e.message}")
-            currentState = null
-        }
-    }
-
-    // Now save everything on background thread
-    lifecycleScope.launch(Dispatchers.IO) {
-        try {
-            // Update current tab with captured data
-            if (currentTabIndex in tabs.indices) {
-                tabs[currentTabIndex].apply {
-                    url = currentUrl
-                    title = currentTitle ?: "New Tab"
-                    state = currentState
-                }
+        if (isMediaPlaying && !isChangingConfigurations) {
+            startOrUpdatePlaybackService(shouldTakeOver = true)
+            binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+        } else {
+            if (hasStartedForegroundService && !isMediaPlaying) {
+                 stopPlaybackService()
             }
+        }
 
-            // Save to SharedPreferences
-            val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
-            val editor = sharedPrefs.edit()
-            val gson = Gson()
-            val tabsJson = gson.toJson(tabs)
-            editor.putString("TABS_LIST", tabsJson)
-            editor.putInt("CURRENT_TAB_INDEX", currentTabIndex)
-            editor.apply()
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Failed to save tabs state: ${e.message}")
+        val currentUrl = if (binding.webView.visibility == View.VISIBLE) binding.webView.url else null
+        val currentTitle = if (binding.webView.visibility == View.VISIBLE) binding.webView.title else null
+        var currentState: Bundle? = null
+
+        if (currentTabIndex in tabs.indices && binding.webView.visibility == View.VISIBLE) {
+            currentState = Bundle()
+            try {
+                binding.webView.saveState(currentState)
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to save WebView state: ${e.message}")
+                currentState = null
+            }
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                if (currentTabIndex in tabs.indices) {
+                    tabs[currentTabIndex].apply {
+                        url = currentUrl
+                        title = currentTitle ?: "New Tab"
+                        state = currentState
+                    }
+                }
+                val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
+                val editor = sharedPrefs.edit()
+                val gson = Gson()
+                val tabsJson = gson.toJson(tabs)
+                editor.putString("TABS_LIST", tabsJson)
+                editor.putInt("CURRENT_TAB_INDEX", currentTabIndex)
+                editor.apply()
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to save tabs state: ${e.message}")
+            }
         }
     }
-}
 
     override fun onDestroy() {
         super.onDestroy()
-        // Ensure cleanup
         if (hasStartedForegroundService) {
             stopPlaybackService()
             hasStartedForegroundService = false
@@ -636,8 +615,8 @@ override fun onStop() {
             settings.domStorageEnabled = true
             settings.databaseEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
-            settings.loadWithOverviewMode = true
-            settings.useWideViewPort = true
+            settings.useWideViewPort = false
+            settings.loadWithOverviewMode = false
             settings.userAgentString = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
             settings.cacheMode = WebSettings.LOAD_DEFAULT
             settings.javaScriptCanOpenWindowsAutomatically = false
@@ -653,12 +632,7 @@ override fun onStop() {
                     hitTestResult.type == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
                     val linkUrl = hitTestResult.extra
                     if (linkUrl != null) {
-                        val options = arrayOf(
-                            "Open in new tab",
-                            "Open in background tab",
-                            "Open in Custom Tab",
-                            "Copy link URL"
-                        )
+                        val options = arrayOf("Open in new tab", "Open in background tab", "Open in Custom Tab", "Copy link URL")
                         AlertDialog.Builder(this@MainActivity)
                             .setTitle(linkUrl)
                             .setItems(options) { _, which ->
@@ -674,11 +648,7 @@ override fun onStop() {
                 } else if (hitTestResult.type == WebView.HitTestResult.IMAGE_TYPE) {
                     val imageUrl = hitTestResult.extra
                     if (imageUrl != null) {
-                        val options = arrayOf(
-                            "Open image in background",
-                            "Copy image link",
-                            "Download image"
-                        )
+                        val options = arrayOf("Open image in background", "Copy image link", "Download image")
                         AlertDialog.Builder(this@MainActivity)
                             .setTitle(imageUrl)
                             .setItems(options) { _, which ->
@@ -710,7 +680,24 @@ override fun onStop() {
             webViewClient = object : WebViewClient() {
                 private var lastNavigationTime = 0L
                 private var navigationCount = 0
+
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    if (isDesktopMode) {
+                        val desktopOverrideJs = """
+                            javascript:(function() {
+                                var meta = document.createElement('meta');
+                                meta.setAttribute('name', 'viewport');
+                                meta.setAttribute('content', 'width=1280');
+                                var head = document.getElementsByTagName('head')[0];
+                                if (head) head.appendChild(meta);
+                                Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
+                                Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+                                delete window.ontouchstart;
+                            })();
+                        """.trimIndent()
+                        view?.evaluateJavascript(desktopOverrideJs, null)
+                    }
+
                     super.onPageStarted(view, url, favicon)
                     binding.progressBar.visibility = View.VISIBLE
                     binding.urlEditTextToolbar.setText(url)
@@ -722,6 +709,7 @@ override fun onStop() {
                         injectPerchanceFixes(view)
                     }
                 }
+
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
                     binding.progressBar.visibility = View.GONE
@@ -778,8 +766,6 @@ override fun onStop() {
                             val isMainContent = isMainVideoContent(url)
                             if (category == MediaCategory.VIDEO && isMainContent) {
                                 currentVideoUrl = url
-                                // The service will get the title when it's started.
-                                // No need to update it prematurely.
                             }
                             val detectedFormat = detectVideoFormat(url)
                             val quality = extractQualityFromUrl(url)
@@ -1014,7 +1000,6 @@ private fun injectMediaStateDetector() {
 
             setupVideoMonitoring();
 
-            // Monitor for dynamically added videos
             const observer = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
                     if (mutation.type === 'childList') {
@@ -1033,28 +1018,23 @@ private fun injectMediaStateDetector() {
     binding.webView.evaluateJavascript(script, null)
 }
 
-private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false) {
-    if (currentVideoUrl == null) return
+private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProactiveStart: Boolean = false) {
+    if (currentVideoUrl == null && !isProactiveStart) return
 
-    // Get current position from WebView video (via JS)
-    binding.webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
-        val position = positionStr.toFloatOrNull() ?: 0f
+    val intent = Intent(this, MediaForegroundService::class.java)
 
-        // Capture headers
-        val headers = mutableMapOf<String, String>()
-        val cookieManager = CookieManager.getInstance()
-        val cookies = cookieManager.getCookie(currentVideoUrl) ?: ""
-        if (cookies.isNotEmpty()) {
-            headers["Cookie"] = cookies
-        }
-        headers["User-Agent"] = binding.webView.settings.userAgentString
-        binding.webView.url?.let { headers["Referer"] = it }
+    if (shouldTakeOver && currentVideoUrl != null) {
+        binding.webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
+            val position = positionStr.toFloatOrNull() ?: 0f
+            val headers = mutableMapOf<String, String>()
+            val cookieManager = CookieManager.getInstance()
+            val cookies = cookieManager.getCookie(currentVideoUrl) ?: ""
+            if (cookies.isNotEmpty()) {
+                headers["Cookie"] = cookies
+            }
+            headers["User-Agent"] = binding.webView.settings.userAgentString
+            binding.webView.url?.let { headers["Referer"] = it }
 
-        // Start service with extras
-        val intent = Intent(this, MediaForegroundService::class.java)
-
-        // Only add playback details if we are telling it to take over
-        if (shouldTakeOver) {
             intent.apply {
                 action = MediaForegroundService.ACTION_PLAY
                 putExtra("url", currentVideoUrl)
@@ -1062,19 +1042,23 @@ private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false) {
                 putExtra("position", position)
                 putExtra("headers", HashMap(headers))
             }
+            startForegroundServiceWithCatch(intent)
         }
-
-        try {
-            ContextCompat.startForegroundService(this, intent)
-            hasStartedForegroundService = true
-            android.util.Log.d("MainActivity", "Service started/updated. Takeover: $shouldTakeOver")
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Error starting MediaForegroundService", e)
-        }
+    } else if (isProactiveStart) {
+        intent.action = MediaForegroundService.ACTION_START_PROACTIVE
+        startForegroundServiceWithCatch(intent)
     }
 }
 
-    // Update your stopPlaybackService method
+private fun startForegroundServiceWithCatch(intent: Intent) {
+    try {
+        ContextCompat.startForegroundService(this, intent)
+        hasStartedForegroundService = true
+    } catch (e: Exception) {
+        android.util.Log.e("MainActivity", "Error starting MediaForegroundService", e)
+    }
+}
+
     fun stopPlaybackService() {
         if (serviceBound) {
             unbindService(serviceConnection)
@@ -1083,7 +1067,7 @@ private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false) {
         val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
             action = MediaForegroundService.ACTION_STOP
         }
-        stopService(serviceIntent) // Use stopService instead of starting with STOP action
+        stopService(serviceIntent)
         hasStartedForegroundService = false
     }
     private fun resumeMediaPlayback() {
@@ -1101,41 +1085,38 @@ private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false) {
             }
         }
         @JavascriptInterface
-fun onMediaPlay() {
-    activity.runOnUiThread {
-        android.util.Log.d("MediaStateInterface", "onMediaPlay called")
-        activity.isMediaPlaying = true
-        // Proactively start the service in a "waiting" state to elevate process priority.
-        if (!activity.hasStartedForegroundService) {
-            activity.startOrUpdatePlaybackService(shouldTakeOver = false)
+        fun onMediaPlay() {
+            activity.runOnUiThread {
+                android.util.Log.d("MediaStateInterface", "onMediaPlay called")
+                activity.isMediaPlaying = true
+                if (!activity.hasStartedForegroundService) {
+                    activity.startOrUpdatePlaybackService(isProactiveStart = true)
+                }
+            }
         }
-    }
-}
 
-@JavascriptInterface
-fun onMediaPause() {
-    activity.runOnUiThread {
-        android.util.Log.d("MediaStateInterface", "onMediaPause called")
-        activity.isMediaPlaying = false
-        // If user pauses while in the app, we don't need the service running anymore.
-        if (!activity.isAppInBackground && activity.hasStartedForegroundService) {
-            activity.stopPlaybackService()
+        @JavascriptInterface
+        fun onMediaPause() {
+            activity.runOnUiThread {
+                android.util.Log.d("MediaStateInterface", "onMediaPause called")
+                activity.isMediaPlaying = false
+                if (!activity.isAppInBackground && activity.hasStartedForegroundService) {
+                    activity.stopPlaybackService()
+                }
+            }
         }
-    }
-}
 
-@JavascriptInterface
-fun onMediaEnded() {
-    activity.runOnUiThread {
-        android.util.Log.d("MediaStateInterface", "onMediaEnded called")
-        activity.isMediaPlaying = false
-        activity.currentVideoUrl = null
-        // Stop the service when media ends.
-        if (activity.hasStartedForegroundService) {
-            activity.stopPlaybackService()
+        @JavascriptInterface
+        fun onMediaEnded() {
+            activity.runOnUiThread {
+                android.util.Log.d("MediaStateInterface", "onMediaEnded called")
+                activity.isMediaPlaying = false
+                activity.currentVideoUrl = null
+                if (activity.hasStartedForegroundService) {
+                    activity.stopPlaybackService()
+                }
+            }
         }
-    }
-}
 
         @JavascriptInterface
         fun onError(error: String) {
@@ -1204,21 +1185,17 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     val categoryPrefix = when (category) {
         MediaCategory.VIDEO -> ""
         MediaCategory.AUDIO -> "Audio_"
-        // Subtitle files often have the language in their name, so we don't need a prefix.
         MediaCategory.SUBTITLE -> ""
         MediaCategory.THUMBNAIL -> "Thumb_"
         else -> "${category.displayName}_"
     }
 
-    // First, try to get a meaningful filename directly from the URL.
     val fileNameFromUrl = uri.lastPathSegment?.substringBeforeLast("?")
 
     val baseName = when {
-        // If the URL contains a filename (like "english_subtitle.vtt"), use it.
         !fileNameFromUrl.isNullOrBlank() && fileNameFromUrl.contains('.') -> {
             fileNameFromUrl.substringBeforeLast('.')
         }
-        // Otherwise, fall back to the old logic for YouTube or generic names.
         lowerUrl.contains("youtube.com") || lowerUrl.contains("youtu.be") -> {
             "YouTube_${extractYouTubeVideoId(url)}"
         }
@@ -1228,7 +1205,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
     }
 
-    // For subtitles, we don't need to add the quality string.
     val cleanQuality = if (category == MediaCategory.VIDEO && quality != "Unknown Quality") {
         "_${quality.replace("[^a-zA-Z0-9]".toRegex(), "_")}"
     } else {
@@ -1472,15 +1448,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
     }
 
-    // Add this for Android 11+ MANAGE_EXTERNAL_STORAGE permission
     private val manageExternalStorageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        // We check the permission status after returning from settings
+    ) {
         checkManageExternalStoragePermission()
     }
 
-    // Add this method to check if we have MANAGE_EXTERNAL_STORAGE permission
     private fun checkManageExternalStoragePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (Environment.isExternalStorageManager()) {
@@ -1494,16 +1467,13 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun checkStoragePermissionAndBackup() {
         when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
-                // Android 11+
                 if (Environment.isExternalStorageManager()) {
                     backupData()
                 } else {
-                    // Request MANAGE_EXTERNAL_STORAGE permission
                     showManageStoragePermissionDialog()
                 }
             }
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
-                // Android 6.0 to 10
                 if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                     backupData()
                 } else {
@@ -1511,7 +1481,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 }
             }
             else -> {
-                // Android 5.1 and below
                 backupData()
             }
         }
@@ -1520,16 +1489,13 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun checkStoragePermissionAndRestore() {
         when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
-                // Android 11+
                 if (Environment.isExternalStorageManager()) {
                     restoreData()
                 } else {
-                    // Request MANAGE_EXTERNAL_STORAGE permission
                     showManageStoragePermissionDialog()
                 }
             }
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
-                // Android 6.0 to 10
                 if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                     restoreData()
                 } else {
@@ -1537,7 +1503,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 }
             }
             else -> {
-                // Android 5.1 and below
                 restoreData()
             }
         }
@@ -1768,46 +1733,41 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
 private fun showUserAgentDialog() {
     val userAgents = arrayOf("Default Mobile", "Desktop Chrome", "iPad Safari")
+    val settings = binding.webView.settings
+
     AlertDialog.Builder(this)
         .setTitle("Change Browser Identity")
         .setItems(userAgents) { _, which ->
-            val settings = binding.webView.settings
-            val newUserAgent = when(which) {
-                1 -> { // Desktop Chrome - True Desktop Mode
-                    // Enable desktop-like viewport behavior
+            val newUserAgent: String
+            when (which) {
+                1, 2 -> { // Desktop Modes
+                    isDesktopMode = true
                     settings.useWideViewPort = true
-                    // loadWithOverviewMode = true often zooms out to fit the wide viewport,
-                    // which might make it look "compact". Setting it to false and controlling zoom manually
-                    // can sometimes give better control, but true desktop mode usually uses true.
-                    // Let's keep it true for standard desktop mode behavior.
-                    settings.loadWithOverviewMode = true
+                    settings.loadWithOverviewMode = false
+                    settings.setSupportZoom(true)
+                    settings.builtInZoomControls = true
+                    settings.displayZoomControls = false
+                    settings.textZoom = 100
 
-                    // Optional: Increase initial scale for better visibility on mobile screen
-                    // This might help it feel less "compact" initially, but user can pinch zoom.
-                    // binding.webView.setInitialScale(100) // 100% scale (default). Experiment if needed.
-
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                }
-                2 -> { // iPad Safari
-                    settings.useWideViewPort = true
-                    settings.loadWithOverviewMode = true
-                    "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+                    newUserAgent = if (which == 1) {
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    } else {
+                        "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+                    }
                 }
                 else -> { // Default Mobile
-                    // Reset to typical mobile behavior
-                    settings.useWideViewPort = false // Important: Reset for mobile
-                    settings.loadWithOverviewMode = false // Important: Reset for mobile
-                    "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                    isDesktopMode = false
+                    settings.useWideViewPort = false
+                    settings.loadWithOverviewMode = false
+                    settings.setSupportZoom(false)
+                    settings.builtInZoomControls = false
+                    settings.textZoom = 0
+                    newUserAgent = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 }
             }
 
-            // Apply the new User Agent String
             settings.userAgentString = newUserAgent
-
-            // Crucially, reload the page to apply all settings
             binding.webView.reload()
-
-            // Provide user feedback
             Toast.makeText(this, "Switched to ${userAgents[which]}", Toast.LENGTH_SHORT).show()
         }
         .setNegativeButton("Cancel", null)
@@ -1830,7 +1790,6 @@ private fun showUserAgentDialog() {
         }
     }
     private fun injectUserscript(script: UserScript) {
-        // Build the polyfill script based on @grant
         val polyfillBuilder = StringBuilder()
         if (script.grants.contains("GM_addStyle")) {
             polyfillBuilder.append("""
@@ -1839,13 +1798,10 @@ private fun showUserAgentDialog() {
                 };
             """.trimIndent())
         }
-        // TODO: Add polyfills for other GM_* functions if needed based on script.grants
-
         val polyfillScript = polyfillBuilder.toString()
         if (polyfillScript.isNotEmpty()) {
             binding.webView.evaluateJavascript(polyfillScript, null)
         }
-
         val wrappedScript = "(function() { try { ${script.script} } catch (e) { console.error('Userscript error in ${script.name}:', e); } })();"
         binding.webView.evaluateJavascript(wrappedScript, null)
     }

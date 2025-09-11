@@ -47,6 +47,8 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
         const val ACTION_PLAY = "com.omymaxz.download.ACTION_PLAY"
         const val ACTION_PAUSE = "com.omymaxz.download.ACTION_PAUSE"
         const val ACTION_STOP = "com.omymaxz.download.ACTION_STOP"
+        // THIS ACTION IS ADDED TO FIX THE CRASH
+        const val ACTION_START_PROACTIVE = "com.omymaxz.download.ACTION_START_PROACTIVE"
     }
 
     override fun onCreate() {
@@ -55,28 +57,30 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
 
-        // Create a wake lock
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakelockTag")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        createNotificationChannel() // Ensure channel exists
         val action = intent?.action
         when (action) {
+            ACTION_START_PROACTIVE -> {
+                // This is the fix. Just show the notification and wait.
+                startForeground(NOTIFICATION_ID, buildNotification("Background task is running"))
+            }
             ACTION_PLAY -> {
-                // If we are paused, resume playback.
                 if (mediaPlayer != null && !isPlaying && !isPreparing) {
                     resumePlayback()
                     return START_STICKY
                 }
 
-                // If it's a new playback request
                 if (!isPreparing && !isPlaying) {
-                    mediaTitle = intent?.getStringExtra("title") ?: "Web Video"
-                    mediaUrl = intent?.getStringExtra("url")
+                    mediaTitle = intent.getStringExtra("title") ?: "Web Video"
+                    mediaUrl = intent.getStringExtra("url")
                     @Suppress("UNCHECKED_CAST")
-                    headers = intent?.getSerializableExtra("headers") as? Map<String, String>
-                    startPosition = intent?.getFloatExtra("position", 0f) ?: 0f
+                    headers = intent.getSerializableExtra("headers") as? Map<String, String>
+                    startPosition = intent.getFloatExtra("position", 0f)
                     if (mediaUrl == null) {
                         stopSelf()
                         return START_NOT_STICKY
@@ -117,7 +121,6 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
     private fun startPlayback() {
         if (!requestAudioFocus()) {
             android.util.Log.w("MediaForegroundService", "Failed to get audio focus")
-            // Don't stop service immediately, try to continue
         }
 
         mediaPlayer?.release()
@@ -136,7 +139,6 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
                 }
             } catch (e: Exception) {
                 android.util.Log.e("MediaForegroundService", "Error setting data source: ${e.message}", e)
-                // Try without headers if it fails
                 try {
                     setDataSource(mediaUrl)
                 } catch (e2: Exception) {
@@ -160,10 +162,10 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
             mediaPlayer?.pause()
             isPlaying = false
             if (wakeLock?.isHeld == true) {
-                wakeLock?.release() // Release wake lock when paused
+                wakeLock?.release()
             }
             updateNotification()
-            stopForeground(false) // Allow notification to be swiped away when paused
+            stopForeground(false)
         }
     }
 
@@ -173,7 +175,7 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
             isPlaying = true
             wakeLock?.acquire(10*60*1000L)
             updateNotification()
-            startForeground(NOTIFICATION_ID, buildNotification()) // Re-enter foreground state
+            startForeground(NOTIFICATION_ID, buildNotification())
         }
     }
 
@@ -223,14 +225,6 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
             else -> "Error code: $what"
         }
         android.util.Log.e("MediaForegroundService", "MediaPlayer Error: $errorMsg, Extra: $extra")
-
-        // Try to recover from certain errors
-        if (what == MediaPlayer.MEDIA_ERROR_UNKNOWN && extra == -2147483648) {
-            // This often means network issue, try to restart
-            android.util.Log.d("MediaForegroundService", "Attempting to recover from network error")
-            // Implement retry logic here if needed
-        }
-
         stopPlayback()
         return true
     }
@@ -238,25 +232,12 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
     override fun onAudioFocusChange(focusChange: Int) {
         when (focusChange) {
             AudioManager.AUDIOFOCUS_GAIN -> {
-                // Resume playback
                 mediaPlayer?.setVolume(1.0f, 1.0f)
-                resumePlayback()
+                if(!isPlaying) resumePlayback()
             }
-            AudioManager.AUDIOFOCUS_LOSS -> {
-                // Lost focus for an unbounded amount of time: stop playback and release media player
-                stopPlayback()
-            }
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                // Lost focus for a short time, but we have to stop
-                // playback. We don't release the media player because playback
-                // is likely to resume
-                pausePlayback()
-            }
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                // Lost focus for a short time, but it's ok to keep playing
-                // at an attenuated level
-                mediaPlayer?.setVolume(0.1f, 0.1f)
-            }
+            AudioManager.AUDIOFOCUS_LOSS -> stopPlayback()
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> if(isPlaying) pausePlayback()
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> mediaPlayer?.setVolume(0.1f, 0.1f)
         }
     }
 
@@ -264,7 +245,7 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
         notificationManager.notify(NOTIFICATION_ID, buildNotification())
     }
 
-    private fun buildNotification(): Notification {
+    private fun buildNotification(customContentText: String? = null): Notification {
         val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow
         val playPauseTitle = if (isPlaying) "Pause" else "Play"
         val playPauseAction = if (isPlaying) ACTION_PAUSE else ACTION_PLAY
@@ -280,7 +261,7 @@ class MediaForegroundService : Service(), MediaPlayer.OnPreparedListener, MediaP
         }
         val openAppPendingIntent = PendingIntent.getActivity(this, 0, openAppIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
-        val contentText = when {
+        val contentText = customContentText ?: when {
             isPreparing -> "Buffering..."
             isPlaying -> "Playing in background"
             else -> "Paused"

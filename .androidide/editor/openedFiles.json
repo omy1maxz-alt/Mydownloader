@@ -1,95 +1,35 @@
 {
   "allFiles": [
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/README.md",
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt",
       "selection": {
         "end": {
-          "column": 0,
-          "index": 0,
-          "line": 0
+          "column": 1,
+          "index": 81697,
+          "line": 1844
         },
         "start": {
-          "column": 0,
-          "index": 0,
-          "line": 0
+          "column": 1,
+          "index": 81697,
+          "line": 1844
         }
       }
     },
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/build.gradle.kts",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 0,
-          "line": 0
-        },
-        "start": {
-          "column": 0,
-          "index": 0,
-          "line": 0
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/BackupRestoreManager.kt",
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MediaForegroundService.kt",
       "selection": {
         "end": {
           "column": 1,
-          "index": 3747,
-          "line": 94
+          "index": 11820,
+          "line": 304
         },
         "start": {
           "column": 1,
-          "index": 3747,
-          "line": 94
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/BookmarkDao.kt",
-      "selection": {
-        "end": {
-          "column": 1,
-          "index": 675,
-          "line": 25
-        },
-        "start": {
-          "column": 1,
-          "index": 675,
-          "line": 25
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/UserScriptDao.kt",
-      "selection": {
-        "end": {
-          "column": 1,
-          "index": 1047,
-          "line": 34
-        },
-        "start": {
-          "column": 1,
-          "index": 1047,
-          "line": 34
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/AndroidManifest.xml",
-      "selection": {
-        "end": {
-          "column": 11,
-          "index": 3818,
-          "line": 86
-        },
-        "start": {
-          "column": 11,
-          "index": 3818,
-          "line": 86
+          "index": 11820,
+          "line": 304
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/AndroidManifest.xml"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MediaForegroundService.kt"
 }
