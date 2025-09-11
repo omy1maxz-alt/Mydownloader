@@ -1766,36 +1766,53 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             }
             .show()
     }
-    private fun showUserAgentDialog() {
-        val userAgents = arrayOf("Default Mobile", "Desktop Chrome", "iPad Safari")
-        AlertDialog.Builder(this)
-            .setTitle("Change Browser Identity")
-            .setItems(userAgents) { _, which ->
-                val settings = binding.webView.settings
-                val newUserAgent = when(which) {
-                    1 -> { // Desktop Chrome
-                        settings.loadWithOverviewMode = true
-                        settings.useWideViewPort = true
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                    }
-                    2 -> { // iPad Safari
-                        settings.loadWithOverviewMode = true
-                        settings.useWideViewPort = true
-                        "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
-                    }
-                    else -> { // Default Mobile
-                        settings.loadWithOverviewMode = false
-                        settings.useWideViewPort = false
-                        "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-                    }
+private fun showUserAgentDialog() {
+    val userAgents = arrayOf("Default Mobile", "Desktop Chrome", "iPad Safari")
+    AlertDialog.Builder(this)
+        .setTitle("Change Browser Identity")
+        .setItems(userAgents) { _, which ->
+            val settings = binding.webView.settings
+            val newUserAgent = when(which) {
+                1 -> { // Desktop Chrome - True Desktop Mode
+                    // Enable desktop-like viewport behavior
+                    settings.useWideViewPort = true
+                    // loadWithOverviewMode = true often zooms out to fit the wide viewport,
+                    // which might make it look "compact". Setting it to false and controlling zoom manually
+                    // can sometimes give better control, but true desktop mode usually uses true.
+                    // Let's keep it true for standard desktop mode behavior.
+                    settings.loadWithOverviewMode = true
+
+                    // Optional: Increase initial scale for better visibility on mobile screen
+                    // This might help it feel less "compact" initially, but user can pinch zoom.
+                    // binding.webView.setInitialScale(100) // 100% scale (default). Experiment if needed.
+
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                 }
-                settings.userAgentString = newUserAgent
-                binding.webView.reload()
-                Toast.makeText(this, "Switched to ${userAgents[which]}", Toast.LENGTH_SHORT).show()
+                2 -> { // iPad Safari
+                    settings.useWideViewPort = true
+                    settings.loadWithOverviewMode = true
+                    "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+                }
+                else -> { // Default Mobile
+                    // Reset to typical mobile behavior
+                    settings.useWideViewPort = false // Important: Reset for mobile
+                    settings.loadWithOverviewMode = false // Important: Reset for mobile
+                    "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                }
             }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
+
+            // Apply the new User Agent String
+            settings.userAgentString = newUserAgent
+
+            // Crucially, reload the page to apply all settings
+            binding.webView.reload()
+
+            // Provide user feedback
+            Toast.makeText(this, "Switched to ${userAgents[which]}", Toast.LENGTH_SHORT).show()
+        }
+        .setNegativeButton("Cancel", null)
+        .show()
+}
     private fun isUrlWhitelisted(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
