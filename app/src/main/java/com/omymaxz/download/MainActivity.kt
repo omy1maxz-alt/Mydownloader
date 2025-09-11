@@ -1864,7 +1864,15 @@ private fun showUserAgentDialog() {
             }
 
             settings.userAgentString = newUserAgent
+
+            // Clear cache and history to ensure a clean reload
+            binding.webView.clearHistory()
+            binding.webView.clearCache(true)
+            binding.webView.clearFormData()
+
             binding.webView.reload()
+            binding.webView.requestLayout() // Force a re-layout
+
             Toast.makeText(this, "Switched to ${userAgents[which]}", Toast.LENGTH_SHORT).show()
         }
         .setNegativeButton("Cancel", null)
