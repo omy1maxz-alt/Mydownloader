@@ -715,7 +715,7 @@ private fun checkBatteryOptimization() {
                             if(vpf){ vpf.remove(); }
                             var meta = document.createElement('meta');
                             meta.setAttribute('name', 'viewport');
-                            meta.setAttribute('content', 'width=1280, user-scalable=yes');
+                            meta.setAttribute('content', 'width=1920, user-scalable=0.5');
                             document.getElementsByTagName('head')[0].appendChild(meta);
 
                             Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
@@ -1837,15 +1837,15 @@ private fun showUserAgentDialog() {
         .setItems(userAgents) { _, which ->
             val newUserAgent: String
             when (which) {
-                1, 2 -> { // Desktop Modes
-                    isDesktopMode = true
-                    settings.useWideViewPort = true
-                    settings.loadWithOverviewMode = false
-                    settings.setSupportZoom(true)
-                    settings.builtInZoomControls = true
-                    settings.displayZoomControls = false
-                    settings.textZoom = 100
-
+               1, 2 -> { // Desktop Modes
+    isDesktopMode = true
+    settings.useWideViewPort = true
+    settings.loadWithOverviewMode = true  // ENABLE OVERVIEW MODE FOR DESKTOP
+    settings.setSupportZoom(true)
+    settings.builtInZoomControls = true
+    settings.displayZoomControls = false
+    settings.textZoom = 100
+    
                     newUserAgent = if (which == 1) {
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                     } else {
@@ -1858,18 +1858,20 @@ private fun showUserAgentDialog() {
                     settings.loadWithOverviewMode = false
                     settings.setSupportZoom(false)
                     settings.builtInZoomControls = false
-                    settings.textZoom = 0
+                    settings.textZoom = 100
                     newUserAgent = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 }
             }
 
             settings.userAgentString = newUserAgent
-
-            // Clear cache and history to ensure a clean reload
-            binding.webView.clearHistory()
-            binding.webView.clearCache(true)
-            binding.webView.clearFormData()
-
+// After settings.userAgentString = newUserAgent, add:
+if (isDesktopMode) {
+    binding.webView.postDelayed({
+        binding.webView.evaluateJavascript(
+            "document.body.style.zoom = '0.5';", null
+        )
+    }, 100)
+}
             binding.webView.reload()
             binding.webView.requestLayout() // Force a re-layout
 

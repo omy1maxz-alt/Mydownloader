@@ -4,29 +4,14 @@
       "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt",
       "selection": {
         "end": {
-          "column": 0,
-          "index": 82349,
-          "line": 1857
+          "column": 36,
+          "index": 82578,
+          "line": 1874
         },
         "start": {
-          "column": 0,
-          "index": 82349,
-          "line": 1857
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MediaForegroundService.kt",
-      "selection": {
-        "end": {
-          "column": 1,
-          "index": 6715,
-          "line": 165
-        },
-        "start": {
-          "column": 1,
-          "index": 6715,
-          "line": 165
+          "column": 12,
+          "index": 82554,
+          "line": 1874
         }
       }
     }
