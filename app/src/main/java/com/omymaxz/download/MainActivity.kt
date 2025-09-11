@@ -38,7 +38,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
+import androidx.webkit.ProxyConfig
+import androidx.webkit.ProxyController
 import androidx.lifecycle.lifecycleScope
+import java.util.concurrent.Executor
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -222,29 +225,20 @@ private fun checkBatteryOptimization() {
         val host = sharedPrefs.getString("proxy_host", null)
         val port = sharedPrefs.getInt("proxy_port", -1)
 
-        try {
-            // This is a simplified approach. A robust solution would require more complex reflection.
-            val webViewCoreClass = Class.forName("android.webkit.WebViewCore")
-            val proxyProperties = mapOf(
-                "proxy" to if (host != null && port != -1) "$host:$port" else ""
-            )
-            val mWebView = binding.webView
-            val settings = mWebView.settings
-            val wvcField = settings.javaClass.getDeclaredField("mWebViewCore")
-            wvcField.isAccessible = true
-            val wvc = wvcField.get(settings)
-            val wvcClass = wvc.javaClass
-            val sendMessageMethod = wvcClass.getDeclaredMethod("sendMessage", Message::class.java)
-            sendMessageMethod.isAccessible = true
-            val proxyMsg = Message.obtain(null, 130, proxyProperties) // 130 is the internal SET_PROXY message ID
-            sendMessageMethod.invoke(wvc, proxyMsg)
+        val proxyConfig: ProxyConfig
+        if (host != null && port != -1) {
+            proxyConfig = ProxyConfig.Builder()
+                .addProxyRule("$host:$port")
+                .build()
             Toast.makeText(this, "Proxy set to $host:$port", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            // Proxy setting via reflection might fail on newer Android versions
-            // For this exercise, we will log the error and inform the user.
-            android.util.Log.e("MainActivity", "Failed to set proxy: ${e.message}")
-            Toast.makeText(this, "Failed to set proxy", Toast.LENGTH_SHORT).show()
+        } else {
+            proxyConfig = ProxyConfig.Builder().addDirect().build()
         }
+
+        ProxyController.getInstance().setProxyOverride(proxyConfig, ContextCompat.getMainExecutor(this), Runnable {
+            // This runnable is called after the proxy settings have been applied.
+            // You can add any post-proxy-set logic here if needed.
+        })
     }
 
     private fun checkInitialStoragePermissions() {
