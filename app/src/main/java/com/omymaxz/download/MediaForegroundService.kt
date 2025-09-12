@@ -53,6 +53,7 @@ class MediaForegroundService : Service() {
                 startForeground(NOTIFICATION_ID, buildNotification("Background task is running"))
             }
             ACTION_PLAY -> {
+                startForeground(NOTIFICATION_ID, buildNotification("Starting playback..."))
                 mediaTitle = intent.getStringExtra("title") ?: "Web Video"
                 val mediaUrl = intent.getStringExtra("url")
                 @Suppress("UNCHECKED_CAST")
@@ -96,7 +97,7 @@ class MediaForegroundService : Service() {
                 }
             })
         }
-        startForeground(NOTIFICATION_ID, buildNotification())
+        updateNotification()
     }
 
     private fun stopPlayback() {
