@@ -294,7 +294,6 @@ private fun checkBatteryOptimization() {
         }
 
         if (isMediaPlaying && !isChangingConfigurations) {
-            startOrUpdatePlaybackService(shouldTakeOver = true)
             // REMOVED: binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
         } else {
             if (hasStartedForegroundService && !isMediaPlaying) {
@@ -1137,7 +1136,7 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
                 android.util.Log.d("MediaStateInterface", "onMediaPlay called")
                 activity.isMediaPlaying = true
                 if (!activity.hasStartedForegroundService) {
-                    activity.startOrUpdatePlaybackService(isProactiveStart = true)
+                    activity.startOrUpdatePlaybackService(shouldTakeOver = true)
                 }
             }
         }
