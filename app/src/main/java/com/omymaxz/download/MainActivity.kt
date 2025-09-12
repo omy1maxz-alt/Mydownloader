@@ -775,7 +775,7 @@ private fun checkBatteryOptimization() {
                         return true
                     }
                     val currentTime = System.currentTimeMillis()
-                    if (isAdDomain(url) || isInBlockedList(url) || isSuspiciousRedirectPattern(url, currentTime, view?.url, lastNavigationTime, navigationCount)) {
+                    if (isAdDomain(url) || isInBlockedList(url) || (!isUrlWhitelisted(url) && isSuspiciousRedirectPattern(url, currentTime, view?.url, lastNavigationTime, navigationCount))) {
                         showBlockedNavigationDialog(url)
                         return true
                     }
@@ -901,6 +901,15 @@ private fun checkBatteryOptimization() {
                     customViewCallback = null
                 }
                 override fun onCreateWindow(view: WebView, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message): Boolean {
+                    val currentUrl = view.url
+                    if (currentUrl != null && isUrlWhitelisted(currentUrl)) {
+                        // Allow popups for whitelisted sites
+                        val newWebView = WebView(this@MainActivity)
+                        val transport = resultMsg.obj as WebView.WebViewTransport
+                        transport.webView = newWebView
+                        resultMsg.sendToTarget()
+                        return true
+                    }
                     val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
                     val blockPopups = settingsPrefs.getBoolean("BLOCK_ALL_POPUPS", true)
                     if (blockPopups) {
@@ -1268,6 +1277,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         sharedPrefs.edit().putStringSet("BLOCKED_URLS", blockedUrls).apply()
     }
     private fun isAdDomain(url: String): Boolean {
+        if (isUrlWhitelisted(url)) return false
         val host = Uri.parse(url).host?.lowercase() ?: return false
         return suspiciousDomains.any { host.contains(it) }
     }
