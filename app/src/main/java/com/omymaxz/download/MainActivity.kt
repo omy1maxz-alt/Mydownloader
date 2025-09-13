@@ -38,11 +38,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
-import androidx.lifecycle.lifecycleScope
 import java.util.concurrent.Executor
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
@@ -261,13 +261,23 @@ private fun checkBatteryOptimization() {
     override fun onPause() {
         super.onPause()
         isAppInBackground = true
+        if (isMediaPlaying) {
+            startOrUpdatePlaybackService(shouldTakeOver = true)
+        }
     }
 
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
         if (hasStartedForegroundService) {
-            stopPlaybackService()
+            // A bit of a delay to ensure the service is bound and we can get the position
+            handler.postDelayed({
+                if (serviceBound && mediaService != null) {
+                    val position = mediaService!!.getCurrentPosition()
+                    binding.webView.evaluateJavascript("var video = document.querySelector('video'); if(video) { video.currentTime = ${position / 1000}; video.play(); }", null)
+                }
+                stopPlaybackService()
+            }, 500) // 500ms delay
         }
     }
 
@@ -503,6 +513,7 @@ private fun checkBatteryOptimization() {
 
     private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
         if (newIndex !in tabs.indices) return
+        stopPlaybackService()
         if (!forceReload) {
             saveCurrentTabState()
         }
@@ -1012,8 +1023,9 @@ private fun checkBatteryOptimization() {
 private fun injectMediaStateDetector() {
     val script = """
         javascript:(function() {
-            function setupVideoMonitoring() {
-                const videos = document.querySelectorAll('video');
+            function setupVideoMonitoring(context) {
+                if (!context) return;
+                const videos = context.querySelectorAll('video');
                 videos.forEach(function(video, index) {
                     if (!video.hasAttribute('data-monitored')) {
                         video.setAttribute('data-monitored', 'true');
@@ -1038,26 +1050,43 @@ private fun injectMediaStateDetector() {
                         });
 
                         video.addEventListener('error', function(e) {
-                            AndroidMediaState.onError('Video error: ' + e.message);
+                            AndroidMediaState.onError('Video error: ' + (e.message || 'Unknown error'));
                         });
                     }
                 });
             }
 
-            setupVideoMonitoring();
+            function monitorAllFrames() {
+                setupVideoMonitoring(document);
+                try {
+                    for (const frame of window.frames) {
+                        try {
+                            setupVideoMonitoring(frame.document);
+                        } catch (e) {
+                            // Cross-origin frame, cannot access.
+                        }
+                    }
+                } catch (e) {
+                    // Could not access window.frames, possibly due to security restrictions.
+                }
+            }
+
+            monitorAllFrames();
 
             const observer = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
                     if (mutation.type === 'childList') {
-                        setupVideoMonitoring();
+                        monitorAllFrames();
                     }
                 });
             });
 
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
+            if (document.body) {
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+            }
         })();
     """.trimIndent()
 
@@ -1070,6 +1099,7 @@ private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProa
     val intent = Intent(this, MediaForegroundService::class.java)
 
     if (shouldTakeOver && currentVideoUrl != null) {
+        binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
         binding.webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
             val position = positionStr.toFloatOrNull() ?: 0f
             val headers = mutableMapOf<String, String>()
@@ -1135,9 +1165,6 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPlay called")
                 activity.isMediaPlaying = true
-                if (!activity.hasStartedForegroundService) {
-                    activity.startOrUpdatePlaybackService(shouldTakeOver = true)
-                }
             }
         }
 
@@ -1146,9 +1173,6 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPause called")
                 activity.isMediaPlaying = false
-                if (!activity.isAppInBackground && activity.hasStartedForegroundService) {
-                    activity.stopPlaybackService()
-                }
             }
         }
 

@@ -165,6 +165,10 @@ class MediaForegroundService : Service() {
 
     override fun onBind(intent: Intent): IBinder = binder
 
+    fun getCurrentPosition(): Long {
+        return exoPlayer?.currentPosition ?: 0
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         stopPlayback()
