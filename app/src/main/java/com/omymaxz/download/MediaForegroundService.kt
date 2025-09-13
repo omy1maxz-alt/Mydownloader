@@ -53,18 +53,23 @@ class MediaForegroundService : Service() {
                 startForeground(NOTIFICATION_ID, buildNotification("Background task is running"))
             }
             ACTION_PLAY -> {
-                startForeground(NOTIFICATION_ID, buildNotification("Starting playback..."))
-                mediaTitle = intent.getStringExtra("title") ?: "Web Video"
                 val mediaUrl = intent.getStringExtra("url")
-                @Suppress("UNCHECKED_CAST")
-                val headers = intent.getSerializableExtra("headers") as? HashMap<String, String>
-                val startPosition = intent.getFloatExtra("position", 0f)
-
                 if (mediaUrl != null) {
+                    startForeground(NOTIFICATION_ID, buildNotification("Starting playback..."))
+                    mediaTitle = intent.getStringExtra("title") ?: "Web Video"
+                    @Suppress("UNCHECKED_CAST")
+                    val headers = intent.getSerializableExtra("headers") as? HashMap<String, String>
+                    val startPosition = intent.getFloatExtra("position", 0f)
                     startPlayback(mediaUrl, headers, startPosition)
+                } else {
+                    exoPlayer?.play()
+                    updateNotification()
                 }
             }
-            ACTION_PAUSE -> exoPlayer?.pause()
+            ACTION_PAUSE -> {
+                exoPlayer?.pause()
+                updateNotification()
+            }
             ACTION_STOP -> stopPlayback()
         }
         return START_NOT_STICKY
