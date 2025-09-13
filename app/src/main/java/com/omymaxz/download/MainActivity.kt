@@ -60,6 +60,10 @@ import android.widget.LinearLayout
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var webView: WebView
+    private lateinit var userscriptInterface: UserscriptInterface
+    private lateinit var gmApi: GMApi
+
     private val detectedMediaFiles = Collections.synchronizedList(mutableListOf<MediaFile>())
     private var lastUsedName: String = "Video"
     var currentVideoUrl: String? = null
@@ -112,23 +116,11 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             val urlToLoad = result.data?.getStringExtra("URL_TO_LOAD")
             if (urlToLoad != null) {
-                getWebView().loadUrl(urlToLoad)
+                webView.loadUrl(urlToLoad)
                 showWebView()
             }
         }
     }
-
-    private fun getWebView(): WebView {
-        return WebViewManager.webView ?: createAndSetupWebView()
-    }
-
-    private fun createAndSetupWebView(): WebView {
-        val webView = WebView(this)
-        setupWebView(webView)
-        WebViewManager.webView = webView
-        return webView
-    }
-
 
 private fun checkBatteryOptimization() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -192,9 +184,9 @@ private fun checkBatteryOptimization() {
         override fun onAvailable(network: Network) {
             super.onAvailable(network)
             runOnUiThread {
-                if (getWebView().visibility == View.VISIBLE && getWebView().url != null) {
+                if (webView.visibility == View.VISIBLE && webView.url != null) {
                     Toast.makeText(this@MainActivity, "Connection restored, reloading...", Toast.LENGTH_SHORT).show()
-                    getWebView().reload()
+                    webView.reload()
                 }
             }
         }
@@ -208,17 +200,27 @@ private fun checkBatteryOptimization() {
 
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
-    private val userscriptInterface by lazy { UserscriptInterface(this, getWebView(), lifecycleScope) }
-    private val gmApi by lazy { GMApi(getWebView()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if (WebViewManager.webView == null) {
-            createAndSetupWebView()
+        if (WebViewManager.webView != null) {
+            webView = WebViewManager.webView!!
+            WebViewManager.webView = null
+        } else {
+            webView = WebView(this)
         }
+
+        binding.mainContent.addView(webView, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        ))
+
+        userscriptInterface = UserscriptInterface(this, webView, lifecycleScope)
+        gmApi = GMApi(webView)
+        setupWebView(webView)
 
         checkInitialStoragePermissions()
 
@@ -300,7 +302,7 @@ private fun checkBatteryOptimization() {
             handler.postDelayed({
                 if (serviceBound && mediaService != null) {
                     val position = mediaService!!.getCurrentPosition()
-                    getWebView().evaluateJavascript("var video = document.querySelector('video'); if(video) { video.currentTime = ${position / 1000}; video.play(); }", null)
+                    webView.evaluateJavascript("var video = document.querySelector('video'); if(video) { video.currentTime = ${position / 1000}; video.play(); }", null)
                 }
                 stopPlaybackService()
             }, 500)
@@ -310,9 +312,10 @@ private fun checkBatteryOptimization() {
     override fun onStart() {
         super.onStart()
         if (WebViewManager.webView != null) {
-            val webView = getWebView()
+            webView = WebViewManager.webView!!
             (webView.parent as? ViewGroup)?.removeView(webView)
             binding.mainContent.addView(webView)
+            WebViewManager.webView = null
             stopService(Intent(this, WebViewForegroundService::class.java))
         }
 
@@ -322,12 +325,6 @@ private fun checkBatteryOptimization() {
         Intent(this, WebViewForegroundService::class.java).also { intent ->
             bindService(intent, webViewServiceConnection, Context.BIND_AUTO_CREATE)
         }
-        if (currentTabIndex in tabs.indices) {
-            val currentTab = tabs[currentTabIndex]
-            if (currentTab.url != null && getWebView().url != currentTab.url) {
-                restoreTabState(currentTabIndex)
-            }
-        }
     }
 
     override fun onStop() {
@@ -336,8 +333,7 @@ private fun checkBatteryOptimization() {
         val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val backgroundLoadingEnabled = settingsPrefs.getBoolean("background_loading_enabled", false)
 
-        if (backgroundLoadingEnabled && getWebView().url != null) {
-            val webView = getWebView()
+        if (backgroundLoadingEnabled && webView.url != null) {
             (webView.parent as? ViewGroup)?.removeView(webView)
             WebViewManager.webView = webView
             val intent = Intent(this, WebViewForegroundService::class.java).apply {
@@ -363,14 +359,14 @@ private fun checkBatteryOptimization() {
             }
         }
 
-        val currentUrl = if (getWebView().visibility == View.VISIBLE) getWebView().url else null
-        val currentTitle = if (getWebView().visibility == View.VISIBLE) getWebView().title else null
+        val currentUrl = if (webView.visibility == View.VISIBLE) webView.url else null
+        val currentTitle = if (webView.visibility == View.VISIBLE) webView.title else null
         var currentState: Bundle? = null
 
-        if (currentTabIndex in tabs.indices && getWebView().visibility == View.VISIBLE) {
+        if (currentTabIndex in tabs.indices && webView.visibility == View.VISIBLE) {
             currentState = Bundle()
             try {
-                getWebView().saveState(currentState)
+                webView.saveState(currentState)
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed to save WebView state: ${e.message}")
                 currentState = null
@@ -401,9 +397,8 @@ private fun checkBatteryOptimization() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (isFinishing) {
-            getWebView().destroy()
-            WebViewManager.webView = null
+        if (isFinishing && WebViewManager.webView == null) {
+            webView.destroy()
         }
         if (hasStartedForegroundService) {
             stopPlaybackService()
@@ -413,25 +408,25 @@ private fun checkBatteryOptimization() {
 
     private fun setupToolbarNavButtons() {
         binding.backButton.setOnClickListener {
-            if (getWebView().canGoBack()) {
-                getWebView().goBack()
+            if (webView.canGoBack()) {
+                webView.goBack()
             }
         }
         binding.forwardButton.setOnClickListener {
-            if (getWebView().canGoForward()) {
-                getWebView().goForward()
+            if (webView.canGoForward()) {
+                webView.goForward()
             }
         }
         binding.refreshButton.setOnClickListener {
-            getWebView().reload()
+            webView.reload()
         }
     }
 
     private fun updateToolbarNavButtonState() {
-        val canGoBack = getWebView().canGoBack()
+        val canGoBack = webView.canGoBack()
         binding.backButton.isEnabled = canGoBack
         binding.backButton.alpha = if (canGoBack) 1.0f else 0.5f
-        val canGoForward = getWebView().canGoForward()
+        val canGoForward = webView.canGoForward()
         binding.forwardButton.isEnabled = canGoForward
         binding.forwardButton.alpha = if (canGoForward) 1.0f else 0.5f
     }
@@ -525,12 +520,12 @@ private fun checkBatteryOptimization() {
     private fun saveCurrentTabState() {
         if (currentTabIndex in tabs.indices) {
             val currentTab = tabs[currentTabIndex]
-            if (getWebView().visibility == View.VISIBLE) {
-                currentTab.url = getWebView().url
-                currentTab.title = getWebView().title ?: "New Tab"
+            if (webView.visibility == View.VISIBLE) {
+                currentTab.url = webView.url
+                currentTab.title = webView.title ?: "New Tab"
                 val state = Bundle()
                 try {
-                    getWebView().saveState(state)
+                    webView.saveState(state)
                     currentTab.state = state
                 } catch (e: Exception) {
                     android.util.Log.e("MainActivity", "Failed to save WebView state: ${e.message}")
@@ -545,18 +540,18 @@ private fun checkBatteryOptimization() {
         binding.urlEditTextToolbar.setText(tab.url)
         
         if (tab.url != null) {
-            getWebView().loadUrl(tab.url!!)
+            webView.loadUrl(tab.url!!)
             showWebView()
             if (tab.state != null) {
                 try {
-                    getWebView().restoreState(tab.state!!)
+                    webView.restoreState(tab.state!!)
                 } catch (e: Exception) {
                     android.util.Log.e("MainActivity", "Failed to restore WebView state: ${e.message}")
                 }
             }
         } else if (tab.state != null) {
              try {
-                getWebView().restoreState(tab.state!!)
+                webView.restoreState(tab.state!!)
                 showWebView()
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed to restore WebView state: ${e.message}")
@@ -589,14 +584,14 @@ private fun checkBatteryOptimization() {
     }
 
     private fun showStartPage() {
-        getWebView().visibility = View.GONE
+        webView.visibility = View.GONE
         binding.bookmarkRecyclerView.visibility = View.VISIBLE
         binding.urlEditTextToolbar.setText("")
         updateToolbarNavButtonState()
     }
 
     private fun showWebView() {
-        getWebView().visibility = View.VISIBLE
+        webView.visibility = View.VISIBLE
         binding.bookmarkRecyclerView.visibility = View.GONE
         updateToolbarNavButtonState()
     }
@@ -605,7 +600,7 @@ private fun checkBatteryOptimization() {
         bookmarkAdapter = BookmarkAdapter(
             bookmarks = mutableListOf(),
             onItemClick = { bookmark ->
-                getWebView().loadUrl(bookmark.url)
+                webView.loadUrl(bookmark.url)
                 showWebView()
             },
             onItemLongClick = { bookmark ->
@@ -672,7 +667,7 @@ private fun checkBatteryOptimization() {
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "https://www.google.com/search?q=$url"
         }
-        getWebView().loadUrl(url)
+        webView.loadUrl(url)
         showWebView()
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(binding.urlEditTextToolbar.windowToken, 0)
@@ -685,9 +680,9 @@ private fun checkBatteryOptimization() {
             fullscreenView = null
             customViewCallback?.onCustomViewHidden()
             requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-        } else if (getWebView().canGoBack()) {
-            getWebView().goBack()
-        } else if (getWebView().visibility == View.VISIBLE) {
+        } else if (webView.canGoBack()) {
+            webView.goBack()
+        } else if (webView.visibility == View.VISIBLE) {
             showStartPage()
         } else {
             AlertDialog.Builder(this)
@@ -1145,7 +1140,7 @@ private fun injectMediaStateDetector() {
         })();
     """.trimIndent()
 
-    getWebView().evaluateJavascript(script, null)
+    webView.evaluateJavascript(script, null)
 }
 
 private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProactiveStart: Boolean = false) {
@@ -1154,8 +1149,8 @@ private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProa
     val intent = Intent(this, MediaForegroundService::class.java)
 
     if (shouldTakeOver && currentVideoUrl != null) {
-        getWebView().evaluateJavascript("document.querySelector('video')?.pause();", null)
-        getWebView().evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
+        webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+        webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
             val position = positionStr.toFloatOrNull() ?: 0f
             val headers = mutableMapOf<String, String>()
             val cookieManager = CookieManager.getInstance()
@@ -1163,13 +1158,13 @@ private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProa
             if (cookies.isNotEmpty()) {
                 headers["Cookie"] = cookies
             }
-            headers["User-Agent"] = getWebView().settings.userAgentString
-            getWebView().url?.let { headers["Referer"] = it }
+            headers["User-Agent"] = webView.settings.userAgentString
+            webView.url?.let { headers["Referer"] = it }
 
             intent.apply {
                 action = MediaForegroundService.ACTION_PLAY
                 putExtra("url", currentVideoUrl)
-                putExtra("title", getWebView().title ?: "Web Media")
+                putExtra("title", webView.title ?: "Web Media")
                 putExtra("position", position)
                 putExtra("headers", HashMap(headers))
             }
@@ -1203,7 +1198,7 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
     }
     private fun resumeMediaPlayback() {
         val resumeScript = "javascript:(function() { var video = document.querySelector('video'); if (video && video.paused && video.hasAttribute('data-was-playing')) { video.play().catch(function(e) {}); } })();"
-        getWebView().loadUrl(resumeScript)
+        webView.loadUrl(resumeScript)
     }
     inner class MediaStateInterface(private val activity: MainActivity) {
         @JavascriptInterface
@@ -1449,7 +1444,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
     }
     private fun addToHistory(url: String) {
-        val title = getWebView().title ?: "No Title"
+        val title = webView.title ?: "No Title"
         val newItem = HistoryItem(url = url, title = title)
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
         val historyJson = sharedPrefs.getString("HISTORY_V2", "[]")
@@ -1528,9 +1523,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
     }
     private fun addCurrentPageToBookmarks() {
-        if (getWebView().visibility == View.VISIBLE && !getWebView().url.isNullOrEmpty()) {
-            val url = getWebView().url!!
-            val title = getWebView().title ?: "No Title"
+        if (webView.visibility == View.VISIBLE && !webView.url.isNullOrEmpty()) {
+            val url = webView.url!!
+            val title = webView.title ?: "No Title"
             lifecycleScope.launch(Dispatchers.IO) {
                 db.bookmarkDao().insert(Bookmark(title = title, url = url))
                 withContext(Dispatchers.Main) {
@@ -1793,8 +1788,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 editor.putBoolean("SHOW_POPUP_BLOCKED_NOTICE", checkedItems[3])
                 editor.apply()
                 Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show()
-                if (getWebView().visibility == View.VISIBLE) {
-                    getWebView().reload()
+                if (webView.visibility == View.VISIBLE) {
+                    webView.reload()
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -1911,7 +1906,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .show()
     }
     private fun openCurrentPageInExternalBrowser() {
-        val currentUrl = getWebView().url
+        val currentUrl = webView.url
         if (!currentUrl.isNullOrEmpty()) {
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(currentUrl))
@@ -1929,10 +1924,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 when (which) {
                     0 -> showUserAgentDialog()
                     1 -> {
-                        getWebView().url?.let { url ->
+                        webView.url?.let { url ->
                             Uri.parse(url).host?.let { host ->
                                 addToWhitelist(host)
-                                getWebView().reload()
+                                webView.reload()
                             }
                         }
                     }
@@ -1947,7 +1942,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
 private fun showUserAgentDialog() {
     val userAgents = arrayOf("Default Mobile", "Desktop Chrome", "iPad Safari")
-    val settings = getWebView().settings
+    val settings = webView.settings
 
     AlertDialog.Builder(this)
         .setTitle("Change Browser Identity")
@@ -1982,14 +1977,14 @@ private fun showUserAgentDialog() {
 
             settings.userAgentString = newUserAgent
 if (isDesktopMode) {
-    getWebView().postDelayed({
-        getWebView().evaluateJavascript(
+    webView.postDelayed({
+        webView.evaluateJavascript(
             "document.body.style.zoom = '0.5';", null
         )
     }, 100)
 }
-            getWebView().reload()
-            getWebView().requestLayout() // Force a re-layout
+            webView.reload()
+            webView.requestLayout() // Force a re-layout
 
             Toast.makeText(this, "Switched to ${userAgents[which]}", Toast.LENGTH_SHORT).show()
         }
@@ -2023,10 +2018,10 @@ if (isDesktopMode) {
         }
         val polyfillScript = polyfillBuilder.toString()
         if (polyfillScript.isNotEmpty()) {
-            getWebView().evaluateJavascript(polyfillScript, null)
+            webView.evaluateJavascript(polyfillScript, null)
         }
         val wrappedScript = "(function() { try { ${script.script} } catch (e) { console.error('Userscript error in ${script.name}:', e); } })();"
-        getWebView().evaluateJavascript(wrappedScript, null)
+        webView.evaluateJavascript(wrappedScript, null)
     }
 
     private fun injectEarlyUserscripts(url: String?) {
@@ -2040,7 +2035,7 @@ if (isDesktopMode) {
     }
 
     private fun injectPendingUserscripts() {
-        val url = getWebView().url ?: return
+        val url = webView.url ?: return
         val matchingScripts = enabledUserScripts.filter {
             it.shouldRunOnUrl(url) && (it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE)
         }
@@ -2054,7 +2049,7 @@ if (isDesktopMode) {
             .setTitle("Link Action")
             .setMessage("A page is trying to navigate or open a new window:$url")
             .setPositiveButton("Open") { _, _ ->
-                getWebView().loadUrl(url)
+                webView.loadUrl(url)
             }
             .setNeutralButton("Open in Background") { _, _ ->
                 openInNewTab(url, inBackground = true)
