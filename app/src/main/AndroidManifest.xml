@@ -74,6 +74,10 @@
             android:name=".MediaForegroundService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
+
+        <service
+            android:name=".WebViewForegroundService"
+            android:exported="false" />
             
         <receiver android:name="androidx.media.session.MediaButtonReceiver" android:exported="true">
             <intent-filter>
