@@ -77,6 +77,7 @@
 
         <service
             android:name=".WebViewForegroundService"
+            android:foregroundServiceType="dataSync"
             android:exported="false" />
             
         <receiver android:name="androidx.media.session.MediaButtonReceiver" android:exported="true">
