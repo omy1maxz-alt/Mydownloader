@@ -333,7 +333,7 @@ private fun checkBatteryOptimization() {
         val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val backgroundLoadingEnabled = settingsPrefs.getBoolean("background_loading_enabled", false)
 
-        if (backgroundLoadingEnabled && webView.url != null) {
+        if (backgroundLoadingEnabled && webView.url != null && !isMediaPlaying) {
             (webView.parent as? ViewGroup)?.removeView(webView)
             WebViewManager.webView = webView
             val intent = Intent(this, WebViewForegroundService::class.java).apply {
