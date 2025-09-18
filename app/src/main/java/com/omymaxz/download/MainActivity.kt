@@ -60,7 +60,6 @@ class MainActivity : AppCompatActivity() {
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
-    var isServiceRunning = false
     private val handler = Handler(Looper.getMainLooper())
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -825,7 +824,7 @@ class MainActivity : AppCompatActivity() {
         webView?.loadUrl(polyfillScript)
     }
     private fun startBackgroundService() {
-        if (!isServiceRunning && currentVideoUrl != null) {
+        if (mediaService == null && currentVideoUrl != null) {
             val url = currentVideoUrl!!
             val cookie = CookieManager.getInstance().getCookie(url)
             val userAgent = binding.webView.settings.userAgentString
@@ -842,17 +841,13 @@ class MainActivity : AppCompatActivity() {
                 startService(serviceIntent)
             }
             bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
-            isServiceRunning = true
         }
     }
     private fun stopPlaybackService() {
-        if(isServiceRunning) {
-            if(serviceBound) {
-                unbindService(serviceConnection)
-                serviceBound = false
-            }
-            stopService(Intent(this, MediaForegroundService::class.java))
-            isServiceRunning = false
+        mediaService?.stopPlayback()
+        if (serviceBound) {
+            unbindService(serviceConnection)
+            serviceBound = false
         }
     }
     private fun resumeMediaPlayback() {
