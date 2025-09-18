@@ -37,4 +37,9 @@
         android:title="Debug Site"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/menu_enable_media_detection"
+        android:title="Enable Media Detection"
+        app:showAsAction="never" />
+
 </menu>

@@ -52,6 +52,7 @@ class MediaForegroundService : Service() {
                 sendMediaControlBroadcast("stop")
                 stopSelf()
             }
+
             else -> {
                 // This is the case when the service is started from MainActivity
                 val title = intent?.getStringExtra(EXTRA_TITLE) ?: "Web Video"
@@ -60,6 +61,27 @@ class MediaForegroundService : Service() {
                 val hasPrevious = intent?.getBooleanExtra(EXTRA_HAS_PREVIOUS, false) ?: false
                 startForeground(NOTIFICATION_ID, buildNotification(title, isPlaying, hasNext, hasPrevious))
             }
+
+            ACTION_PLAY -> {
+                val mediaUrl = intent.getStringExtra("url")
+                if (mediaUrl != null) {
+                    startForeground(NOTIFICATION_ID, buildNotification("Starting playback..."))
+                    mediaTitle = intent.getStringExtra("title") ?: "Web Video"
+                    @Suppress("UNCHECKED_CAST")
+                    val headers = intent.getSerializableExtra("headers") as? HashMap<String, String>
+                    val startPosition = intent.getFloatExtra("position", 0f)
+                    startPlayback(mediaUrl, headers, startPosition)
+                } else {
+                    exoPlayer?.play()
+                    updateNotification()
+                }
+            }
+            ACTION_PAUSE -> {
+                exoPlayer?.pause()
+                updateNotification()
+            }
+            ACTION_STOP -> stopPlayback()
+
         }
         return START_STICKY
     }
@@ -129,7 +151,19 @@ class MediaForegroundService : Service() {
         }
     }
 
+
     override fun onBind(intent: Intent?): IBinder? {
         return null
+
+    override fun onBind(intent: Intent): IBinder = binder
+
+    fun getCurrentPosition(): Long {
+        return exoPlayer?.currentPosition ?: 0
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopPlayback()
+
     }
 }
