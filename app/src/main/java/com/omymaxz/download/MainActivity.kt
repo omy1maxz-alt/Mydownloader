@@ -116,6 +116,8 @@ class MainActivity : AppCompatActivity() {
     private var webViewService: WebViewForegroundService? = null
     private var webViewServiceBound = false
     var isMediaPlaying = false
+    var currentPosterUrl: String? = null
+    private lateinit var mediaControlReceiver: BroadcastReceiver
     private lateinit var mediaDetectionReceiver: BroadcastReceiver
     private val historyResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -265,6 +267,58 @@ private fun checkBatteryOptimization() {
         }
         LocalBroadcastManager.getInstance(this).registerReceiver(mediaDetectionReceiver, IntentFilter("com.omymaxz.download.MEDIA_DETECTED"))
 
+        mediaControlReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                when (intent?.action) {
+                    MediaForegroundService.ACTION_NEXT -> {
+                        val js = """
+                            (function() {
+                                const nextTexts = ['next', '›', '»', 'skip'];
+                                const allButtonsAndLinks = document.querySelectorAll('button, a');
+                                for (const element of allButtonsAndLinks) {
+                                    if (element.offsetParent === null) continue;
+                                    const text = element.textContent.trim().toLowerCase();
+                                    const ariaLabel = element.getAttribute('aria-label')?.toLowerCase();
+                                    const rel = element.getAttribute('rel')?.toLowerCase();
+                                    if (nextTexts.some(t => text.includes(t))) {
+                                        element.click();
+                                        return;
+                                    }
+                                    if (ariaLabel && nextTexts.some(t => ariaLabel.includes(t))) {
+                                        element.click();
+                                        return;
+                                    }
+                                    if (rel === 'next') {
+                                        element.click();
+                                        return;
+                                    }
+                                }
+                            })();
+                        """.trimIndent()
+                        webView.evaluateJavascript(js, null)
+                    }
+                    MediaForegroundService.ACTION_PREVIOUS -> {
+                        val js = """
+                            (function() {
+                                const prevTexts = ['previous', 'prev', '‹', '«'];
+                                const allButtonsAndLinks = document.querySelectorAll('button, a');
+                                for (const element of allButtonsAndLinks) {
+                                    if (element.offsetParent === null) continue;
+                                    const text = element.textContent.trim().toLowerCase();
+                                    const ariaLabel = element.getAttribute('aria-label')?.toLowerCase();
+                                    const rel = element.getAttribute('rel')?.toLowerCase();
+                                    if (prevTexts.some(t => text.includes(t))) { element.click(); return; }
+                                    if (ariaLabel && prevTexts.some(t => ariaLabel.includes(t))) { element.click(); return; }
+                                    if (rel === 'prev') { element.click(); return; }
+                                }
+                            })();
+                        """.trimIndent()
+                        webView.evaluateJavascript(js, null)
+                    }
+                }
+            }
+        }
+
         applyProxy()
     }
 
@@ -342,10 +396,18 @@ private fun checkBatteryOptimization() {
         Intent(this, WebViewForegroundService::class.java).also { intent ->
             bindService(intent, webViewServiceConnection, Context.BIND_AUTO_CREATE)
         }
+
+        val filter = IntentFilter().apply {
+            addAction(MediaForegroundService.ACTION_NEXT)
+            addAction(MediaForegroundService.ACTION_PREVIOUS)
+        }
+        LocalBroadcastManager.getInstance(this).registerReceiver(mediaControlReceiver, filter)
     }
 
     override fun onStop() {
         super.onStop()
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mediaControlReceiver)
 
         val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val backgroundLoadingEnabled = settingsPrefs.getBoolean("background_loading_enabled", false)
@@ -1101,7 +1163,8 @@ private fun injectMediaStateDetector() {
                         video.setAttribute('data-monitored', 'true');
 
                         video.addEventListener('loadstart', function() {
-                            AndroidMediaState.onVideoFound(video.src || video.currentSrc || window.location.href);
+                            const posterUrl = video.poster;
+                            AndroidMediaState.onVideoFound(video.src || video.currentSrc || window.location.href, posterUrl);
                         });
 
                         video.addEventListener('play', function() {
@@ -1176,8 +1239,8 @@ private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProa
             if (cookies.isNotEmpty()) {
                 headers["Cookie"] = cookies
             }
-            headers["User-Agent"] = webView.settings.userAgentString
-            webView.url?.let { headers["Referer"] = it }
+            headers.put("User-Agent", webView.settings.userAgentString)
+            webView.url?.let { headers.put("Referer", it) }
 
             intent.apply {
                 action = MediaForegroundService.ACTION_PLAY
@@ -1185,6 +1248,7 @@ private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProa
                 putExtra("title", webView.title ?: "Web Media")
                 putExtra("position", position)
                 putExtra("headers", HashMap(headers))
+                putExtra("posterUrl", currentPosterUrl)
             }
             startForegroundServiceWithCatch(intent)
         }
@@ -1220,11 +1284,12 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
     }
     inner class MediaStateInterface(private val activity: MainActivity) {
         @JavascriptInterface
-        fun onVideoFound(videoUrl: String) {
+        fun onVideoFound(videoUrl: String, posterUrl: String?) {
             activity.runOnUiThread {
                 if (videoUrl.isNotEmpty() && videoUrl != "about:blank") {
                     activity.currentVideoUrl = videoUrl
-                    android.util.Log.d("MediaStateInterface", "Video found: $videoUrl")
+                    activity.currentPosterUrl = posterUrl
+                    android.util.Log.d("MediaStateInterface", "Video found: $videoUrl, Poster: $posterUrl")
                 }
             }
         }
