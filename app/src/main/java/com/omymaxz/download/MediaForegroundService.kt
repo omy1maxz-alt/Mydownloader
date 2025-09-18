@@ -14,23 +14,10 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.media.app.NotificationCompat.MediaStyle
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
 
 class MediaForegroundService : Service() {
 
-    private val binder = LocalBinder()
-    private var exoPlayer: ExoPlayer? = null
     private lateinit var notificationManager: NotificationManager
-
-    private var mediaTitle = "Web Video"
-
-    inner class LocalBinder : Binder() {
-        fun getService(): MediaForegroundService = this@MediaForegroundService
-    }
 
     companion object {
         const val NOTIFICATION_ID = 1001
@@ -38,7 +25,15 @@ class MediaForegroundService : Service() {
         const val ACTION_PLAY = "com.omymaxz.download.ACTION_PLAY"
         const val ACTION_PAUSE = "com.omymaxz.download.ACTION_PAUSE"
         const val ACTION_STOP = "com.omymaxz.download.ACTION_STOP"
+        const val ACTION_NEXT = "com.omymaxz.download.ACTION_NEXT"
+        const val ACTION_PREVIOUS = "com.omymaxz.download.ACTION_PREVIOUS"
         const val ACTION_START_PROACTIVE = "com.omymaxz.download.ACTION_START_PROACTIVE"
+        const val ACTION_MEDIA_CONTROL = "com.omymaxz.download.ACTION_MEDIA_CONTROL"
+        const val EXTRA_COMMAND = "com.omymaxz.download.EXTRA_COMMAND"
+        const val EXTRA_HAS_NEXT = "com.omymaxz.download.EXTRA_HAS_NEXT"
+        const val EXTRA_HAS_PREVIOUS = "com.omymaxz.download.EXTRA_HAS_PREVIOUS"
+        const val EXTRA_IS_PLAYING = "com.omymaxz.download.EXTRA_IS_PLAYING"
+        const val EXTRA_TITLE = "com.omymaxz.download.EXTRA_TITLE"
     }
 
     override fun onCreate() {
@@ -49,9 +44,24 @@ class MediaForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START_PROACTIVE -> {
-                startForeground(NOTIFICATION_ID, buildNotification("Background task is running"))
+            ACTION_PLAY -> sendMediaControlBroadcast("play")
+            ACTION_PAUSE -> sendMediaControlBroadcast("pause")
+            ACTION_NEXT -> sendMediaControlBroadcast("next")
+            ACTION_PREVIOUS -> sendMediaControlBroadcast("previous")
+            ACTION_STOP -> {
+                sendMediaControlBroadcast("stop")
+                stopSelf()
             }
+
+            else -> {
+                // This is the case when the service is started from MainActivity
+                val title = intent?.getStringExtra(EXTRA_TITLE) ?: "Web Video"
+                val isPlaying = intent?.getBooleanExtra(EXTRA_IS_PLAYING, false) ?: false
+                val hasNext = intent?.getBooleanExtra(EXTRA_HAS_NEXT, false) ?: false
+                val hasPrevious = intent?.getBooleanExtra(EXTRA_HAS_PREVIOUS, false) ?: false
+                startForeground(NOTIFICATION_ID, buildNotification(title, isPlaying, hasNext, hasPrevious))
+            }
+
             ACTION_PLAY -> {
                 val mediaUrl = intent.getStringExtra("url")
                 if (mediaUrl != null) {
@@ -71,56 +81,19 @@ class MediaForegroundService : Service() {
                 updateNotification()
             }
             ACTION_STOP -> stopPlayback()
+
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
-    private fun startPlayback(url: String, headers: HashMap<String, String>?, position: Float) {
-        exoPlayer?.release() // Release any old player
-
-        exoPlayer = ExoPlayer.Builder(this).build().apply {
-            val dataSourceFactory = DefaultHttpDataSource.Factory()
-            headers?.let { dataSourceFactory.setDefaultRequestProperties(it) }
-
-            val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-                .createMediaSource(MediaItem.fromUri(Uri.parse(url)))
-
-            setMediaSource(mediaSource)
-            seekTo((position * 1000).toLong())
-            playWhenReady = true
-            prepare()
-            addListener(object : Player.Listener {
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    updateNotification()
-                }
-
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (playbackState == Player.STATE_ENDED) {
-                        stopPlayback()
-                    }
-                    updateNotification()
-                }
-            })
+    private fun sendMediaControlBroadcast(command: String) {
+        val intent = Intent(ACTION_MEDIA_CONTROL).apply {
+            putExtra(EXTRA_COMMAND, command)
         }
-        updateNotification()
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 
-    private fun stopPlayback() {
-        exoPlayer?.release()
-        exoPlayer = null
-        stopForeground(true)
-        stopSelf()
-    }
-
-    private fun updateNotification() {
-        if (exoPlayer != null) {
-            notificationManager.notify(NOTIFICATION_ID, buildNotification())
-        }
-    }
-
-    private fun buildNotification(customContentText: String? = null): Notification {
-        val isPlaying = exoPlayer?.isPlaying ?: false
-
+    private fun buildNotification(title: String, isPlaying: Boolean, hasNext: Boolean, hasPrevious: Boolean): Notification {
         val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow
         val playPauseTitle = if (isPlaying) "Pause" else "Play"
         val playPauseAction = if (isPlaying) ACTION_PAUSE else ACTION_PLAY
@@ -136,20 +109,35 @@ class MediaForegroundService : Service() {
         }
         val openAppPendingIntent = PendingIntent.getActivity(this, 0, openAppIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
-        val contentText = customContentText ?: if (isPlaying) "Playing in background" else "Paused"
+        val contentText = if (isPlaying) "Playing in background" else "Paused"
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(mediaTitle)
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(title)
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_notification)
             .setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher))
             .setContentIntent(openAppPendingIntent)
-            .addAction(playPauseIcon, playPauseTitle, playPausePendingIntent)
             .addAction(R.drawable.ic_close, "Stop", stopPendingIntent)
-            .setStyle(MediaStyle().setShowActionsInCompactView(0, 1))
+
+        if (hasPrevious) {
+            val prevIntent = Intent(this, MediaForegroundService::class.java).apply { action = ACTION_PREVIOUS }
+            val prevPendingIntent = PendingIntent.getService(this, 3, prevIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            builder.addAction(R.drawable.ic_skip_previous, "Previous", prevPendingIntent)
+        }
+
+        builder.addAction(playPauseIcon, playPauseTitle, playPausePendingIntent)
+
+        if (hasNext) {
+            val nextIntent = Intent(this, MediaForegroundService::class.java).apply { action = ACTION_NEXT }
+            val nextPendingIntent = PendingIntent.getService(this, 4, nextIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            builder.addAction(R.drawable.ic_skip_next, "Next", nextPendingIntent)
+        }
+
+        builder.setStyle(MediaStyle().setShowActionsInCompactView(0, 1, 2))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(isPlaying)
-            .build()
+
+        return builder.build()
     }
 
     private fun createNotificationChannel() {
@@ -163,6 +151,10 @@ class MediaForegroundService : Service() {
         }
     }
 
+
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+
     override fun onBind(intent: Intent): IBinder = binder
 
     fun getCurrentPosition(): Long {
@@ -172,5 +164,6 @@ class MediaForegroundService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         stopPlayback()
+
     }
 }
