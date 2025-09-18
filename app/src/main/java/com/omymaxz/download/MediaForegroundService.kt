@@ -13,7 +13,6 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media.app.NotificationCompat.MediaStyle
 
 class MediaForegroundService : Service() {

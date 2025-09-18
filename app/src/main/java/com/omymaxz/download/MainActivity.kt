@@ -40,12 +40,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
+import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import java.util.concurrent.Executor
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
@@ -286,6 +286,9 @@ private fun checkBatteryOptimization() {
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
+        if (hasStartedForegroundService) {
+            stopPlaybackService()
+        }
     }
 
     override fun onStart() {
@@ -463,9 +466,6 @@ private fun checkBatteryOptimization() {
             return
         }
         val closingCurrentTab = position == currentTabIndex
-        if (closingCurrentTab && hasStartedForegroundService) {
-            stopPlaybackService()
-        }
         tabs.removeAt(position)
         if (closingCurrentTab) {
             val newIndex = if (position > 0) position - 1 else 0
@@ -1118,14 +1118,36 @@ private fun injectMediaStateDetector() {
     binding.webView.evaluateJavascript(script, null)
 }
 
-private fun startOrUpdatePlaybackService() {
-    val intent = Intent(this, MediaForegroundService::class.java).apply {
-        putExtra(MediaForegroundService.EXTRA_TITLE, binding.webView.title ?: "Web Media")
-        putExtra(MediaForegroundService.EXTRA_IS_PLAYING, isMediaPlaying)
-        putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
-        putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
+private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProactiveStart: Boolean = false) {
+    if (currentVideoUrl == null && !isProactiveStart) return
+
+    val intent = Intent(this, MediaForegroundService::class.java)
+
+    if (shouldTakeOver && currentVideoUrl != null) {
+        binding.webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
+            val position = positionStr.toFloatOrNull() ?: 0f
+            val headers = mutableMapOf<String, String>()
+            val cookieManager = CookieManager.getInstance()
+            val cookies = cookieManager.getCookie(currentVideoUrl) ?: ""
+            if (cookies.isNotEmpty()) {
+                headers["Cookie"] = cookies
+            }
+            headers["User-Agent"] = binding.webView.settings.userAgentString
+            binding.webView.url?.let { headers["Referer"] = it }
+
+            intent.apply {
+                action = MediaForegroundService.ACTION_PLAY
+                putExtra("url", currentVideoUrl)
+                putExtra("title", binding.webView.title ?: "Web Media")
+                putExtra("position", position)
+                putExtra("headers", HashMap(headers))
+            }
+            startForegroundServiceWithCatch(intent)
+        }
+    } else if (isProactiveStart) {
+        intent.action = MediaForegroundService.ACTION_START_PROACTIVE
+        startForegroundServiceWithCatch(intent)
     }
-    startForegroundServiceWithCatch(intent)
 }
 
 private fun startForegroundServiceWithCatch(intent: Intent) {
@@ -1167,7 +1189,9 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPlay called")
                 activity.isMediaPlaying = true
-                activity.startOrUpdatePlaybackService()
+                if (!activity.hasStartedForegroundService) {
+                    activity.startOrUpdatePlaybackService(shouldTakeOver = true)
+                }
             }
         }
 
