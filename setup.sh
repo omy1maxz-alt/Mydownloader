@@ -36,4 +36,4 @@ echo "Android SDK setup complete in $SDK_DIR"
 echo "sdk.dir=$SDK_DIR" > local.properties
 
 # 5. Build the project
-./gradlew -Dorg.gradle.jvmargs=-Xmx4g clean build
+./gradlew -Dorg.gradle.jvmargs=-Xmx4g clean assembleDebug
