@@ -43,12 +43,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.MediaItem
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
 import java.util.concurrent.Executor
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.common.util.concurrent.MoreExecutors
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.omymaxz.download.databinding.ActivityMainBinding
@@ -111,8 +115,6 @@ class MainActivity : AppCompatActivity() {
         filePathCallback?.onReceiveValue(results)
         filePathCallback = null
     }
-    private var mediaService: MediaForegroundService? = null
-    private var serviceBound = false
     private var webViewService: WebViewForegroundService? = null
     private var webViewServiceBound = false
     var isMediaPlaying = false
@@ -126,6 +128,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    private var mediaController: MediaController? = null
 
 private fun checkBatteryOptimization() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -161,17 +164,6 @@ private fun checkBatteryOptimization() {
             }
             .setNegativeButton("Cancel", null)
             .show()
-    }
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as MediaForegroundService.LocalBinder
-            mediaService = binder.getService()
-            serviceBound = true
-        }
-        override fun onServiceDisconnected(name: ComponentName?) {
-            mediaService = null
-            serviceBound = false
-        }
     }
 
     private val webViewServiceConnection = object : ServiceConnection {
@@ -317,8 +309,7 @@ private fun checkBatteryOptimization() {
         isAppInBackground = false
         if (hasStartedForegroundService) {
             handler.postDelayed({
-                if (serviceBound && mediaService != null) {
-                    val position = mediaService!!.getCurrentPosition()
+                mediaController?.currentPosition?.let { position ->
                     webView.evaluateJavascript("var video = document.querySelector('video'); if(video) { video.currentTime = ${position / 1000}; video.play(); }", null)
                 }
                 stopPlaybackService()
@@ -336,9 +327,15 @@ private fun checkBatteryOptimization() {
             stopService(Intent(this, WebViewForegroundService::class.java))
         }
 
-        Intent(this, MediaForegroundService::class.java).also { intent ->
-            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-        }
+        val sessionToken = SessionToken(this, ComponentName(this, MediaForegroundService::class.java))
+        val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+        controllerFuture.addListener(
+            {
+                mediaController = controllerFuture.get()
+            },
+            MoreExecutors.directExecutor()
+        )
+
         Intent(this, WebViewForegroundService::class.java).also { intent ->
             bindService(intent, webViewServiceConnection, Context.BIND_AUTO_CREATE)
         }
@@ -359,11 +356,6 @@ private fun checkBatteryOptimization() {
             startForegroundService(intent)
         }
 
-        if (serviceBound) {
-            unbindService(serviceConnection)
-            serviceBound = false
-            mediaService = null
-        }
         if (webViewServiceBound) {
             unbindService(webViewServiceConnection)
             webViewServiceBound = false
@@ -1164,8 +1156,6 @@ private fun injectMediaStateDetector() {
 private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProactiveStart: Boolean = false) {
     if (currentVideoUrl == null && !isProactiveStart) return
 
-    val intent = Intent(this, MediaForegroundService::class.java)
-
     if (shouldTakeOver && currentVideoUrl != null) {
         webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
         webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
@@ -1179,17 +1169,34 @@ private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProa
             headers["User-Agent"] = webView.settings.userAgentString
             webView.url?.let { headers["Referer"] = it }
 
-            intent.apply {
-                action = MediaForegroundService.ACTION_PLAY
-                putExtra("url", currentVideoUrl)
-                putExtra("title", webView.title ?: "Web Media")
-                putExtra("position", position)
-                putExtra("headers", HashMap(headers))
+            val extras = Bundle().apply {
+                putSerializable("headers", HashMap(headers))
             }
-            startForegroundServiceWithCatch(intent)
+
+            val mediaItem = MediaItem.Builder()
+                .setUri(currentVideoUrl)
+                .setMediaMetadata(
+                    androidx.media3.common.MediaMetadata.Builder()
+                        .setTitle(webView.title ?: "Web Media")
+                        .build()
+                )
+                .setRequestMetadata(
+                    MediaItem.RequestMetadata.Builder()
+                        .setMediaUri(Uri.parse(currentVideoUrl))
+                        .setExtras(extras)
+                        .build()
+                )
+                .build()
+
+            mediaController?.setMediaItem(mediaItem)
+            mediaController?.prepare()
+            mediaController?.play()
+
+            hasStartedForegroundService = true
         }
     } else if (isProactiveStart) {
-        intent.action = MediaForegroundService.ACTION_START_PROACTIVE
+        val intent = Intent(this, MediaForegroundService::class.java)
+        intent.action = "com.omymaxz.download.ACTION_START_PROACTIVE"
         startForegroundServiceWithCatch(intent)
     }
 }
@@ -1204,14 +1211,8 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
 }
 
     fun stopPlaybackService() {
-        if (serviceBound) {
-            unbindService(serviceConnection)
-            serviceBound = false
-        }
-        val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
-            action = MediaForegroundService.ACTION_STOP
-        }
-        stopService(serviceIntent)
+        mediaController?.stop()
+        stopService(Intent(this, MediaForegroundService::class.java))
         hasStartedForegroundService = false
     }
     private fun resumeMediaPlayback() {

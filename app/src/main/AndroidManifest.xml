@@ -76,7 +76,11 @@
         <service
             android:name=".MediaForegroundService"
             android:foregroundServiceType="mediaPlayback"
-            android:exported="false" />
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService"/>
+            </intent-filter>
+        </service>
 
         <service
             android:name=".WebViewForegroundService"
@@ -93,12 +97,6 @@
             </intent-filter>
         </service>
             
-        <receiver android:name="androidx.media.session.MediaButtonReceiver" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
-            </intent-filter>
-        </receiver>
-
     </application>
 
 </manifest>
