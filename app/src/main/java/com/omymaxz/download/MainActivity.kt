@@ -5,9 +5,11 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DownloadManager
 import android.content.ActivityNotFoundException
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -38,11 +40,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
-import androidx.lifecycle.lifecycleScope
 import java.util.concurrent.Executor
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
@@ -106,12 +109,29 @@ class MainActivity : AppCompatActivity() {
     private var mediaService: MediaForegroundService? = null
     private var serviceBound = false
     var isMediaPlaying = false
+    private var hasNextMedia: Boolean = false
+    private var hasPreviousMedia: Boolean = false
     private val historyResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val urlToLoad = result.data?.getStringExtra("URL_TO_LOAD")
             if (urlToLoad != null) {
                 binding.webView.loadUrl(urlToLoad)
                 showWebView()
+            }
+        }
+    }
+
+    private val mediaControlReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.getStringExtra(MediaForegroundService.EXTRA_COMMAND)) {
+                "play" -> binding.webView.evaluateJavascript("document.querySelector('video')?.play();", null)
+                "pause" -> binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+                "next" -> binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button')?.click();", null)
+                "previous" -> binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button')?.click();", null)
+                "stop" -> {
+                    binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+                    stopPlaybackService()
+                }
             }
         }
     }
@@ -266,9 +286,6 @@ private fun checkBatteryOptimization() {
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
-        if (hasStartedForegroundService) {
-            stopPlaybackService()
-        }
     }
 
     override fun onStart() {
@@ -282,6 +299,7 @@ private fun checkBatteryOptimization() {
                 restoreTabState(currentTabIndex)
             }
         }
+        LocalBroadcastManager.getInstance(this).registerReceiver(mediaControlReceiver, IntentFilter(MediaForegroundService.ACTION_MEDIA_CONTROL))
     }
 
     override fun onStop() {
@@ -292,6 +310,7 @@ private fun checkBatteryOptimization() {
             serviceBound = false
             mediaService = null
         }
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mediaControlReceiver)
 
         if (isMediaPlaying && !isChangingConfigurations) {
             // REMOVED: binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
@@ -444,6 +463,9 @@ private fun checkBatteryOptimization() {
             return
         }
         val closingCurrentTab = position == currentTabIndex
+        if (closingCurrentTab && hasStartedForegroundService) {
+            stopPlaybackService()
+        }
         tabs.removeAt(position)
         if (closingCurrentTab) {
             val newIndex = if (position > 0) position - 1 else 0
@@ -1012,8 +1034,9 @@ private fun checkBatteryOptimization() {
 private fun injectMediaStateDetector() {
     val script = """
         javascript:(function() {
-            function setupVideoMonitoring() {
-                const videos = document.querySelectorAll('video');
+            function setupVideoMonitoring(context) {
+                if (!context) return;
+                const videos = context.querySelectorAll('video');
                 videos.forEach(function(video, index) {
                     if (!video.hasAttribute('data-monitored')) {
                         video.setAttribute('data-monitored', 'true');
@@ -1038,62 +1061,71 @@ private fun injectMediaStateDetector() {
                         });
 
                         video.addEventListener('error', function(e) {
-                            AndroidMediaState.onError('Video error: ' + e.message);
+                            AndroidMediaState.onError('Video error: ' + (e.message || 'Unknown error'));
                         });
                     }
                 });
             }
 
-            setupVideoMonitoring();
+            function checkMediaControls() {
+                // These selectors are specific to YouTube's desktop player.
+                // A more robust solution would require different selectors for other sites.
+                const nextButton = document.querySelector('.ytp-next-button');
+                const prevButton = document.querySelector('.ytp-prev-button');
+                const hasNext = nextButton ? !nextButton.disabled : false;
+                const hasPrev = prevButton ? !prevButton.disabled : false;
+                AndroidMediaState.onMediaControlsStateChange(hasNext, hasPrev);
+            }
+
+            function monitorAllFrames() {
+                setupVideoMonitoring(document);
+                try {
+                    for (const frame of window.frames) {
+                        try {
+                            setupVideoMonitoring(frame.document);
+                        } catch (e) {
+                            // Cross-origin frame, cannot access.
+                        }
+                    }
+                } catch (e) {
+                    // Could not access window.frames, possibly due to security restrictions.
+                }
+            }
+
+            monitorAllFrames();
+            checkMediaControls();
 
             const observer = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
                     if (mutation.type === 'childList') {
-                        setupVideoMonitoring();
+                        monitorAllFrames();
+                        checkMediaControls();
                     }
                 });
             });
 
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
+            if (document.body) {
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+
+            setInterval(checkMediaControls, 2000); // Periodically check for control state changes
         })();
     """.trimIndent()
 
     binding.webView.evaluateJavascript(script, null)
 }
 
-private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProactiveStart: Boolean = false) {
-    if (currentVideoUrl == null && !isProactiveStart) return
-
-    val intent = Intent(this, MediaForegroundService::class.java)
-
-    if (shouldTakeOver && currentVideoUrl != null) {
-        binding.webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
-            val position = positionStr.toFloatOrNull() ?: 0f
-            val headers = mutableMapOf<String, String>()
-            val cookieManager = CookieManager.getInstance()
-            val cookies = cookieManager.getCookie(currentVideoUrl) ?: ""
-            if (cookies.isNotEmpty()) {
-                headers["Cookie"] = cookies
-            }
-            headers["User-Agent"] = binding.webView.settings.userAgentString
-            binding.webView.url?.let { headers["Referer"] = it }
-
-            intent.apply {
-                action = MediaForegroundService.ACTION_PLAY
-                putExtra("url", currentVideoUrl)
-                putExtra("title", binding.webView.title ?: "Web Media")
-                putExtra("position", position)
-                putExtra("headers", HashMap(headers))
-            }
-            startForegroundServiceWithCatch(intent)
-        }
-    } else if (isProactiveStart) {
-        intent.action = MediaForegroundService.ACTION_START_PROACTIVE
-        startForegroundServiceWithCatch(intent)
+private fun startOrUpdatePlaybackService() {
+    val intent = Intent(this, MediaForegroundService::class.java).apply {
+        putExtra(MediaForegroundService.EXTRA_TITLE, binding.webView.title ?: "Web Media")
+        putExtra(MediaForegroundService.EXTRA_IS_PLAYING, isMediaPlaying)
+        putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
+        putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
     }
+    startForegroundServiceWithCatch(intent)
 }
 
 private fun startForegroundServiceWithCatch(intent: Intent) {
@@ -1135,9 +1167,7 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPlay called")
                 activity.isMediaPlaying = true
-                if (!activity.hasStartedForegroundService) {
-                    activity.startOrUpdatePlaybackService(shouldTakeOver = true)
-                }
+                activity.startOrUpdatePlaybackService()
             }
         }
 
@@ -1146,8 +1176,17 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPause called")
                 activity.isMediaPlaying = false
-                if (!activity.isAppInBackground && activity.hasStartedForegroundService) {
-                    activity.stopPlaybackService()
+                activity.stopPlaybackService()
+            }
+        }
+
+        @JavascriptInterface
+        fun onMediaControlsStateChange(hasNext: Boolean, hasPrevious: Boolean) {
+            activity.runOnUiThread {
+                activity.hasNextMedia = hasNext
+                activity.hasPreviousMedia = hasPrevious
+                if (activity.hasStartedForegroundService) {
+                    activity.startOrUpdatePlaybackService()
                 }
             }
         }
@@ -1158,9 +1197,7 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
                 android.util.Log.d("MediaStateInterface", "onMediaEnded called")
                 activity.isMediaPlaying = false
                 activity.currentVideoUrl = null
-                if (activity.hasStartedForegroundService) {
-                    activity.stopPlaybackService()
-                }
+                activity.stopPlaybackService()
             }
         }
 
