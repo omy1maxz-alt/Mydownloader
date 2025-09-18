@@ -1,9 +1,5 @@
 package com.omymaxz.download
 
-import com.omymaxz.download.MediaDetectionService
-import android.content.BroadcastReceiver
-import android.content.IntentFilter
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -116,7 +112,6 @@ class MainActivity : AppCompatActivity() {
     private var webViewService: WebViewForegroundService? = null
     private var webViewServiceBound = false
     var isMediaPlaying = false
-    private lateinit var mediaDetectionReceiver: BroadcastReceiver
     private val historyResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val urlToLoad = result.data?.getStringExtra("URL_TO_LOAD")
@@ -253,18 +248,6 @@ private fun checkBatteryOptimization() {
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
         checkBatteryOptimization()
-
-        mediaDetectionReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent != null && intent.action == "com.omymaxz.download.MEDIA_DETECTED") {
-                    val title = intent.getStringExtra("title")
-                    val artist = intent.getStringExtra("artist")
-                    Toast.makeText(this@MainActivity, "Detected: $title - $artist", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-        LocalBroadcastManager.getInstance(this).registerReceiver(mediaDetectionReceiver, IntentFilter("com.omymaxz.download.MEDIA_DETECTED"))
-
         applyProxy()
     }
 
@@ -414,7 +397,6 @@ private fun checkBatteryOptimization() {
 
     override fun onDestroy() {
         super.onDestroy()
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mediaDetectionReceiver)
         if (isFinishing && WebViewManager.webView == null) {
             webView.destroy()
         }
@@ -582,7 +564,9 @@ private fun checkBatteryOptimization() {
 
     private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
         if (newIndex !in tabs.indices) return
-        stopPlaybackService()
+        if (!isMediaPlaying) {
+            stopPlaybackService()
+        }
         if (!forceReload) {
             saveCurrentTabState()
         }
@@ -1537,10 +1521,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 showSiteDebuggingOptions()
                 true
             }
-            R.id.menu_enable_media_detection -> {
-                checkAndRequestNotificationListenerPermission()
-                true
-            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -2013,27 +1993,6 @@ if (isDesktopMode) {
         .setNegativeButton("Cancel", null)
         .show()
 }
-
-    private fun isNotificationServiceEnabled(): Boolean {
-        val cn = ComponentName(this, MediaDetectionService::class.java)
-        val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
-        return flat != null && flat.contains(cn.flattenToString())
-    }
-
-    private fun checkAndRequestNotificationListenerPermission() {
-        if (!isNotificationServiceEnabled()) {
-            AlertDialog.Builder(this)
-                .setTitle("Enable Media Detection")
-                .setMessage("To detect media from other apps, please enable notification access for this app in the system settings.")
-                .setPositiveButton("Open Settings") { _, _ ->
-                    startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
-        } else {
-            Toast.makeText(this, "Media detection is already enabled.", Toast.LENGTH_SHORT).show()
-        }
-    }
     private fun isUrlWhitelisted(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
