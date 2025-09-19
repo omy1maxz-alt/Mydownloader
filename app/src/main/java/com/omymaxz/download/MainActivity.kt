@@ -130,13 +130,14 @@ class MainActivity : AppCompatActivity() {
 
     private val mediaControlReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            val currentWebView = webView
             when (intent?.getStringExtra(MediaForegroundService.EXTRA_COMMAND)) {
-                "play" -> binding.webView.evaluateJavascript("document.querySelector('video')?.play();", null)
-                "pause" -> binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-                "next" -> binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button')?.click();", null)
-                "previous" -> binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button')?.click();", null)
+                "play" -> currentWebView.evaluateJavascript("document.querySelector('video')?.play();", null)
+                "pause" -> currentWebView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+                "next" -> currentWebView.evaluateJavascript("document.querySelector('.ytp-next-button')?.click();", null)
+                "previous" -> currentWebView.evaluateJavascript("document.querySelector('.ytp-prev-button')?.click();", null)
                 "stop" -> {
-                    binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+                    currentWebView.evaluateJavascript("document.querySelector('video')?.pause();", null)
                     stopPlaybackService()
                 }
             }
@@ -227,28 +228,20 @@ private fun checkBatteryOptimization() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if (WebViewManager.webView != null) {
-            webView = WebViewManager.webView!!
-            WebViewManager.webView = null
-        } else {
-            webView = WebView(this)
-        }
-
-        binding.mainContent.addView(webView, FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
-        ))
-
-        userscriptInterface = UserscriptInterface(this, webView, lifecycleScope)
-        gmApi = GMApi(webView)
-        setupWebView(webView)
-
-        checkInitialStoragePermissions()
-
         db = AppDatabase.getDatabase(this)
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
+
         initializeTabs()
+
+        // This is a placeholder, the actual webview will be set in switchTab
+        webView = tabs[currentTabIndex].webView ?: createNewWebView()
+
+        userscriptInterface = UserscriptInterface(this, webView, lifecycleScope)
+        gmApi = GMApi(webView)
+
+        checkInitialStoragePermissions()
+
         setupUrlBarInToolbar()
         loadLastUsedName()
         setupHomeButton()
@@ -261,11 +254,14 @@ private fun checkBatteryOptimization() {
         askForNotificationPermission()
         loadBookmarks()
         loadEnabledUserScripts()
+
         if (currentTabIndex in tabs.indices) {
-            restoreTabState(currentTabIndex)
+            switchTab(currentTabIndex, forceSwitch = true)
         } else {
+            // This case should not happen if initializeTabs works correctly
             showStartPage()
         }
+
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
         checkBatteryOptimization()
@@ -311,23 +307,13 @@ private fun checkBatteryOptimization() {
     override fun onPause() {
         super.onPause()
         isAppInBackground = true
-        if (isMediaPlaying) {
-            startOrUpdatePlaybackService(shouldTakeOver = true)
-        }
+        // The service will continue to run if media is playing.
     }
 
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
-        if (hasStartedForegroundService) {
-            handler.postDelayed({
-                if (serviceBound && mediaService != null) {
-                    val position = mediaService!!.getCurrentPosition()
-                    webView.evaluateJavascript("var video = document.querySelector('video'); if(video) { video.currentTime = ${position / 1000}; video.play(); }", null)
-                }
-                stopPlaybackService()
-            }, 500)
-        }
+        // The service will be stopped by the user from the notification or when media ends.
     }
 
     override fun onStart() {
@@ -423,8 +409,8 @@ private fun checkBatteryOptimization() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (isFinishing && WebViewManager.webView == null) {
-            webView.destroy()
+        for (tab in tabs) {
+            tab.webView?.destroy()
         }
         if (hasStartedForegroundService) {
             stopPlaybackService()
@@ -457,9 +443,18 @@ private fun checkBatteryOptimization() {
         binding.forwardButton.alpha = if (canGoForward) 1.0f else 0.5f
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun createNewWebView(): WebView {
+        val newWebView = WebView(this)
+        setupWebView(newWebView)
+        return newWebView
+    }
+
     private fun initializeTabs() {
         if (!loadTabsState()) {
-            tabs.add(Tab(title = "New Tab"))
+            val newTab = Tab(title = "New Tab")
+            newTab.webView = createNewWebView()
+            tabs.add(newTab)
             currentTabIndex = 0
         }
     }
@@ -509,6 +504,7 @@ private fun checkBatteryOptimization() {
     private fun createNewTab() {
         saveCurrentTabState()
         val newTab = Tab(title = "New Tab")
+        newTab.webView = createNewWebView()
         tabs.add(newTab)
         switchTab(tabs.size - 1)
     }
@@ -516,10 +512,12 @@ private fun checkBatteryOptimization() {
     private fun openInNewTab(url: String, inBackground: Boolean) {
         saveCurrentTabState()
         val newTab = Tab(url = url, title = "Loading...")
+        newTab.webView = createNewWebView()
         tabs.add(newTab)
         updateTabCount()
         if (inBackground) {
             Toast.makeText(this, "Link opened in background tab", Toast.LENGTH_SHORT).show()
+            newTab.webView?.loadUrl(url)
         } else {
             switchTab(tabs.size - 1)
         }
@@ -531,10 +529,16 @@ private fun checkBatteryOptimization() {
             return
         }
         val closingCurrentTab = position == currentTabIndex
+
+        val tabToClose = tabs[position]
+        (tabToClose.webView?.parent as? ViewGroup)?.removeView(tabToClose.webView)
+        tabToClose.webView?.destroy()
+
         tabs.removeAt(position)
+
         if (closingCurrentTab) {
             val newIndex = if (position > 0) position - 1 else 0
-            switchTab(newIndex, forceReload = true)
+            switchTab(newIndex, forceSwitch = true)
         } else {
             if (position < currentTabIndex) {
                 currentTabIndex--
@@ -546,16 +550,12 @@ private fun checkBatteryOptimization() {
     private fun saveCurrentTabState() {
         if (currentTabIndex in tabs.indices) {
             val currentTab = tabs[currentTabIndex]
-            if (webView.visibility == View.VISIBLE) {
-                currentTab.url = webView.url
-                currentTab.title = webView.title ?: "New Tab"
+            currentTab.webView?.let {
+                currentTab.url = it.url
+                currentTab.title = it.title ?: "New Tab"
                 val state = Bundle()
-                try {
-                    webView.saveState(state)
-                    currentTab.state = state
-                } catch (e: Exception) {
-                    android.util.Log.e("MainActivity", "Failed to save WebView state: ${e.message}")
-                }
+                it.saveState(state)
+                currentTab.state = state
             }
         }
     }
@@ -563,41 +563,52 @@ private fun checkBatteryOptimization() {
     private fun restoreTabState(tabIndex: Int) {
         if (tabIndex !in tabs.indices) return
         val tab = tabs[tabIndex]
-        binding.urlEditTextToolbar.setText(tab.url)
-        
-        if (tab.url != null) {
-            webView.loadUrl(tab.url!!)
-            showWebView()
-            if (tab.state != null) {
-                try {
-                    webView.restoreState(tab.state!!)
-                } catch (e: Exception) {
-                    android.util.Log.e("MainActivity", "Failed to restore WebView state: ${e.message}")
+
+        tab.webView?.let { wv ->
+             if (wv.url == null && tab.url != null) {
+                if (tab.state != null) {
+                    wv.restoreState(tab.state!!)
+                } else {
+                    wv.loadUrl(tab.url!!)
                 }
             }
-        } else if (tab.state != null) {
-             try {
-                webView.restoreState(tab.state!!)
-                showWebView()
-            } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Failed to restore WebView state: ${e.message}")
-                showStartPage()
-            }
-        } else {
+            binding.urlEditTextToolbar.setText(wv.url)
+        }
+
+        if (tab.webView?.url == null && tab.url == null) {
             showStartPage()
+        } else {
+            showWebView()
         }
     }
 
-    private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
+    private fun switchTab(newIndex: Int, forceSwitch: Boolean = false) {
         if (newIndex !in tabs.indices) return
-        if (!isMediaPlaying) {
-            stopPlaybackService()
-        }
-        if (!forceReload) {
+        if (!forceSwitch && newIndex == currentTabIndex) return
+
+        if (currentTabIndex in tabs.indices) {
             saveCurrentTabState()
+            tabs[currentTabIndex].webView?.let {
+                binding.mainContent.removeView(it)
+            }
         }
+
         currentTabIndex = newIndex
+        val newTab = tabs[currentTabIndex]
+        webView = newTab.webView!!
+
+        userscriptInterface = UserscriptInterface(this, webView, lifecycleScope)
+        gmApi = GMApi(this.webView)
+        webView.addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
+        webView.addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
+        webView.addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
+        webView.addJavascriptInterface(gmApi, "GMApi")
+
+        binding.mainContent.addView(webView)
+
         restoreTabState(currentTabIndex)
+
+        updateToolbarNavButtonState()
         updateTabCount()
     }
 
@@ -845,9 +856,10 @@ private fun checkBatteryOptimization() {
                     injectPendingUserscripts()
                     url?.let {
                         addToHistory(it)
-                        if (currentTabIndex in tabs.indices) {
-                            tabs[currentTabIndex].url = it
-                            tabs[currentTabIndex].title = view?.title ?: "No Title"
+                        val tab = tabs.find { t -> t.webView == view }
+                        if (tab != null) {
+                            tab.url = it
+                            tab.title = view?.title ?: "No Title"
                         }
                     }
                 }
@@ -1195,37 +1207,18 @@ private fun injectMediaStateDetector() {
     webView.evaluateJavascript(script, null)
 }
 
-private fun startOrUpdatePlaybackService(shouldTakeOver: Boolean = false, isProactiveStart: Boolean = false) {
-    if (currentVideoUrl == null && !isProactiveStart) return
-
-    val intent = Intent(this, MediaForegroundService::class.java)
-
-    if (shouldTakeOver && currentVideoUrl != null) {
-        webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-        webView.evaluateJavascript("document.querySelector('video')?.currentTime || 0;") { positionStr ->
-            val position = positionStr.toFloatOrNull() ?: 0f
-            val headers = mutableMapOf<String, String>()
-            val cookieManager = CookieManager.getInstance()
-            val cookies = cookieManager.getCookie(currentVideoUrl) ?: ""
-            if (cookies.isNotEmpty()) {
-                headers["Cookie"] = cookies
-            }
-            headers["User-Agent"] = webView.settings.userAgentString
-            webView.url?.let { headers["Referer"] = it }
-
-            intent.apply {
-                action = MediaForegroundService.ACTION_PLAY
-                putExtra("url", currentVideoUrl)
-                putExtra("title", webView.title ?: "Web Media")
-                putExtra("position", position)
-                putExtra("headers", HashMap(headers))
-            }
-            startForegroundServiceWithCatch(intent)
-        }
-    } else if (isProactiveStart) {
-        intent.action = MediaForegroundService.ACTION_START_PROACTIVE
-        startForegroundServiceWithCatch(intent)
+private fun startOrUpdateMediaNotification() {
+    if (isFinishing || isDestroyed) return
+    val intent = Intent(this, MediaForegroundService::class.java).apply {
+        action = "com.omymaxz.download.ACTION_SHOW" // Use the string directly for now
+        putExtra("com.omymaxz.download.EXTRA_TITLE", webView.title ?: "Web Media")
+        val artist = webView.url?.let { Uri.parse(it).host } ?: "Browser"
+        putExtra("com.omymaxz.download.EXTRA_ARTIST", artist)
+        putExtra("com.omymaxz.download.EXTRA_IS_PLAYING", isMediaPlaying)
+        putExtra("com.omymaxz.download.EXTRA_HAS_NEXT", hasNextMedia)
+        putExtra("com.omymaxz.download.EXTRA_HAS_PREVIOUS", hasPreviousMedia)
     }
+    startForegroundServiceWithCatch(intent)
 }
 
 private fun startForegroundServiceWithCatch(intent: Intent) {
@@ -1267,6 +1260,7 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPlay called")
                 activity.isMediaPlaying = true
+                activity.startOrUpdateMediaNotification()
             }
         }
 
@@ -1275,8 +1269,9 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPause called")
                 activity.isMediaPlaying = false
-
-                activity.stopPlaybackService()
+                if (activity.hasStartedForegroundService) {
+                    activity.startOrUpdateMediaNotification()
+                }
             }
         }
 
@@ -1286,9 +1281,8 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
                 activity.hasNextMedia = hasNext
                 activity.hasPreviousMedia = hasPrevious
                 if (activity.hasStartedForegroundService) {
-                    activity.startOrUpdatePlaybackService()
+                    activity.startOrUpdateMediaNotification()
                 }
-
             }
         }
 
@@ -1541,6 +1535,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             val loadedTabs: MutableList<Tab> = Gson().fromJson(tabsJson, type)
             if (loadedTabs.isNotEmpty()) {
                 tabs = loadedTabs
+                for (tab in tabs) {
+                    tab.webView = createNewWebView()
+                }
                 currentTabIndex = sharedPrefs.getInt("CURRENT_TAB_INDEX", 0).coerceIn(0, tabs.size - 1)
                 true
             } else false
