@@ -8,16 +8,21 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media.app.NotificationCompat.MediaStyle
 
 class MediaForegroundService : Service() {
 
     private lateinit var notificationManager: NotificationManager
+    private val binder = LocalBinder()
+
+    inner class LocalBinder : Binder() {
+        fun getService(): MediaForegroundService = this@MediaForegroundService
+    }
 
     companion object {
         const val NOTIFICATION_ID = 1001
@@ -52,36 +57,13 @@ class MediaForegroundService : Service() {
                 sendMediaControlBroadcast("stop")
                 stopSelf()
             }
-
             else -> {
-                // This is the case when the service is started from MainActivity
                 val title = intent?.getStringExtra(EXTRA_TITLE) ?: "Web Video"
                 val isPlaying = intent?.getBooleanExtra(EXTRA_IS_PLAYING, false) ?: false
                 val hasNext = intent?.getBooleanExtra(EXTRA_HAS_NEXT, false) ?: false
                 val hasPrevious = intent?.getBooleanExtra(EXTRA_HAS_PREVIOUS, false) ?: false
                 startForeground(NOTIFICATION_ID, buildNotification(title, isPlaying, hasNext, hasPrevious))
             }
-
-            ACTION_PLAY -> {
-                val mediaUrl = intent.getStringExtra("url")
-                if (mediaUrl != null) {
-                    startForeground(NOTIFICATION_ID, buildNotification("Starting playback..."))
-                    mediaTitle = intent.getStringExtra("title") ?: "Web Video"
-                    @Suppress("UNCHECKED_CAST")
-                    val headers = intent.getSerializableExtra("headers") as? HashMap<String, String>
-                    val startPosition = intent.getFloatExtra("position", 0f)
-                    startPlayback(mediaUrl, headers, startPosition)
-                } else {
-                    exoPlayer?.play()
-                    updateNotification()
-                }
-            }
-            ACTION_PAUSE -> {
-                exoPlayer?.pause()
-                updateNotification()
-            }
-            ACTION_STOP -> stopPlayback()
-
         }
         return START_STICKY
     }
@@ -151,19 +133,15 @@ class MediaForegroundService : Service() {
         }
     }
 
-
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-
-    override fun onBind(intent: Intent): IBinder = binder
+    override fun onBind(intent: Intent?): IBinder {
+        return binder
+    }
 
     fun getCurrentPosition(): Long {
-        return exoPlayer?.currentPosition ?: 0
+        return 0
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        stopPlayback()
-
     }
 }

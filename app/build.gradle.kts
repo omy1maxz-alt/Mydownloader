@@ -16,14 +16,6 @@ android {
         keystoreProperties.load(keystorePropertiesFile.inputStream())
     }
 
-    signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties.getProperty("keyAlias") ?: ""
-            keyPassword = keystoreProperties.getProperty("keyPassword") ?: ""
-            storeFile = file("release-keystore.jks")
-            storePassword = keystoreProperties.getProperty("storePassword") ?: ""
-        }
-    }
 
     defaultConfig {
         applicationId = "com.omymaxz.download"
@@ -41,7 +33,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"
