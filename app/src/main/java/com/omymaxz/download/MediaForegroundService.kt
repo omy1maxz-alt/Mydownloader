@@ -66,10 +66,7 @@ class MediaForegroundService : Service() {
     }
 
     private fun sendMediaControlBroadcast(command: String) {
-        val intent = Intent(ACTION_MEDIA_CONTROL).apply {
-            putExtra(EXTRA_COMMAND, command)
-        }
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+        MediaControlEvent.send(command)
     }
 
     private fun buildNotification(title: String, artist: String, isPlaying: Boolean, hasNext: Boolean, hasPrevious: Boolean): Notification {
