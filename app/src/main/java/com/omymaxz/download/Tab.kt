@@ -2,7 +2,6 @@ package com.omymaxz.download
 
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.webkit.WebView
 import java.util.UUID
 
 data class Tab(
@@ -11,8 +10,6 @@ data class Tab(
     var title: String = "New Tab",
     var state: Bundle? = null,
     @Transient var favicon: Bitmap? = null,
-    @Transient var webView: WebView? = null,
-    @Transient var isMediaPlaying: Boolean = false,
     var scrollPosition: Int = 0,
     var lastAccessTime: Long = System.currentTimeMillis(),
     // Add content caching
