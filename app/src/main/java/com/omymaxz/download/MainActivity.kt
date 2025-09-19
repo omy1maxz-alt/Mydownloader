@@ -713,12 +713,7 @@ private fun checkBatteryOptimization() {
         } else if (webView.visibility == View.VISIBLE) {
             showStartPage()
         } else {
-            AlertDialog.Builder(this)
-                .setTitle("Exit App?")
-                .setMessage("Are you sure you want to exit?")
-                .setPositiveButton("Yes") { _, _ -> finish() }
-                .setNegativeButton("No", null)
-                .show()
+            super.onBackPressed()
         }
     }
 
