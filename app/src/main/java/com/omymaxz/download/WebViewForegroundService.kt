@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 class WebViewForegroundService : Service() {
 
     private val binder = WebViewBinder()
+    private var currentTabId: String? = null
 
     companion object {
         const val ACTION_START = "com.omymaxz.download.ACTION_START"
@@ -37,8 +38,13 @@ class WebViewForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
-                val notification = createNotification()
-                startForeground(NOTIFICATION_ID, notification)
+                currentTabId = intent.getStringExtra("TAB_ID")
+                if (currentTabId != null) {
+                    val notification = createNotification()
+                    startForeground(NOTIFICATION_ID, notification)
+                } else {
+                    stopSelf()
+                }
             }
             ACTION_STOP -> {
                 stopSelf()
@@ -49,8 +55,7 @@ class WebViewForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Release the WebView from the manager to prevent leaks
-        WebViewManager.webView = null
+        // The webview is managed by the tab lifecycle now, so we don't release it here.
     }
 
     private fun createNotificationChannel() {
@@ -66,11 +71,13 @@ class WebViewForegroundService : Service() {
     }
 
     private fun createNotification(): Notification {
-        // The notification content can be more generic now
-        val currentUrl = WebViewManager.webView?.url ?: "a page"
+        val url = currentTabId?.let { tabId ->
+            WebViewManager.getWebView(tabId)?.url
+        } ?: "a page"
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Browser is running in background")
-            .setContentText("Loading $currentUrl")
+            .setContentText("Loading $url")
             .setSmallIcon(R.drawable.ic_public)
             .build()
     }

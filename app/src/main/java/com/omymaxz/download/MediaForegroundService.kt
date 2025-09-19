@@ -13,6 +13,7 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media.app.NotificationCompat.MediaStyle
 
 class MediaForegroundService : Service() {
@@ -34,7 +35,6 @@ class MediaForegroundService : Service() {
         const val EXTRA_HAS_PREVIOUS = "com.omymaxz.download.EXTRA_HAS_PREVIOUS"
         const val EXTRA_IS_PLAYING = "com.omymaxz.download.EXTRA_IS_PLAYING"
         const val EXTRA_TITLE = "com.omymaxz.download.EXTRA_TITLE"
-        const val EXTRA_ARTIST = "com.omymaxz.download.EXTRA_ARTIST"
     }
 
     override fun onCreate() {
@@ -55,11 +55,10 @@ class MediaForegroundService : Service() {
             }
             else -> {
                 val title = intent?.getStringExtra(EXTRA_TITLE) ?: "Web Video"
-                val artist = intent?.getStringExtra(EXTRA_ARTIST) ?: "Browser"
                 val isPlaying = intent?.getBooleanExtra(EXTRA_IS_PLAYING, false) ?: false
                 val hasNext = intent?.getBooleanExtra(EXTRA_HAS_NEXT, false) ?: false
                 val hasPrevious = intent?.getBooleanExtra(EXTRA_HAS_PREVIOUS, false) ?: false
-                startForeground(NOTIFICATION_ID, buildNotification(title, artist, isPlaying, hasNext, hasPrevious))
+                startForeground(NOTIFICATION_ID, buildNotification(title, isPlaying, hasNext, hasPrevious))
             }
         }
         return START_STICKY
@@ -72,7 +71,7 @@ class MediaForegroundService : Service() {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 
-    private fun buildNotification(title: String, artist: String, isPlaying: Boolean, hasNext: Boolean, hasPrevious: Boolean): Notification {
+    private fun buildNotification(title: String, isPlaying: Boolean, hasNext: Boolean, hasPrevious: Boolean): Notification {
         val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow
         val playPauseTitle = if (isPlaying) "Pause" else "Play"
         val playPauseAction = if (isPlaying) ACTION_PAUSE else ACTION_PLAY
@@ -88,9 +87,11 @@ class MediaForegroundService : Service() {
         }
         val openAppPendingIntent = PendingIntent.getActivity(this, 0, openAppIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
+        val contentText = if (isPlaying) "Playing in background" else "Paused"
+
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
-            .setContentText(artist)
+            .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_notification)
             .setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher))
             .setContentIntent(openAppPendingIntent)
