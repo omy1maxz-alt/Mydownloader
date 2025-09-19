@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DownloadManager
 import android.content.ActivityNotFoundException
-import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -45,7 +44,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import java.util.concurrent.Executor
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -124,21 +122,6 @@ class MainActivity : AppCompatActivity() {
             if (urlToLoad != null) {
                 webView.loadUrl(urlToLoad)
                 showWebView()
-            }
-        }
-    }
-
-    private val mediaControlReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.getStringExtra(MediaForegroundService.EXTRA_COMMAND)) {
-                "play" -> binding.webView.evaluateJavascript("document.querySelector('video')?.play();", null)
-                "pause" -> binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-                "next" -> binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button')?.click();", null)
-                "previous" -> binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button')?.click();", null)
-                "stop" -> {
-                    binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-                    stopPlaybackService()
-                }
             }
         }
     }
@@ -270,6 +253,19 @@ private fun checkBatteryOptimization() {
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
         checkBatteryOptimization()
         applyProxy()
+
+        MediaControlEvent.events.observe(this) { command ->
+            when (command) {
+                "play" -> binding.webView.evaluateJavascript("document.querySelector('video')?.play();", null)
+                "pause" -> binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+                "next" -> binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button')?.click();", null)
+                "previous" -> binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button')?.click();", null)
+                "stop" -> {
+                    binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+                    stopPlaybackService()
+                }
+            }
+        }
     }
 
     private fun applyProxy() {
@@ -346,7 +342,6 @@ private fun checkBatteryOptimization() {
         Intent(this, WebViewForegroundService::class.java).also { intent ->
             bindService(intent, webViewServiceConnection, Context.BIND_AUTO_CREATE)
         }
-        LocalBroadcastManager.getInstance(this).registerReceiver(mediaControlReceiver, IntentFilter(MediaForegroundService.ACTION_MEDIA_CONTROL))
     }
 
     override fun onStop() {
@@ -369,8 +364,6 @@ private fun checkBatteryOptimization() {
             serviceBound = false
             mediaService = null
         }
-
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mediaControlReceiver)
 
         if (webViewServiceBound) {
             unbindService(webViewServiceConnection)
