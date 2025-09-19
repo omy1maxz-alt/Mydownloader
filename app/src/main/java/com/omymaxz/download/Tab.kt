@@ -12,6 +12,7 @@ data class Tab(
     var state: Bundle? = null,
     @Transient var favicon: Bitmap? = null,
     @Transient var webView: WebView? = null,
+    @Transient var isMediaPlaying: Boolean = false,
     var scrollPosition: Int = 0,
     var lastAccessTime: Long = System.currentTimeMillis(),
     // Add content caching
