@@ -255,7 +255,8 @@ private fun checkBatteryOptimization() {
         loadBookmarks()
         loadEnabledUserScripts()
         if (currentTabIndex in tabs.indices) {
-            switchTab(currentTabIndex, forceReload = true)
+            // Ensure WebView is created and attached before switching
+            initializeFirstTab()
         } else {
             showStartPage()
         }
@@ -263,6 +264,26 @@ private fun checkBatteryOptimization() {
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
         checkBatteryOptimization()
         applyProxy()
+    }
+
+    private fun initializeFirstTab() {
+        // Create and attach the first WebView immediately
+        val firstWebView = WebViewManager.getOrCreateWebView(this, tabs[currentTabIndex].id)
+
+        // Ensure it's attached to the view hierarchy
+        if (firstWebView.parent == null) {
+            binding.mainContent.addView(firstWebView, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            ))
+        }
+
+        // Add a small delay to ensure WebView is ready
+        handler.post {
+            restoreTabState(currentTabIndex)
+            updateTabCount()
+            updateToolbarNavButtonState()
+        }
     }
 
     private fun applyProxy() {
@@ -589,12 +610,12 @@ private fun checkBatteryOptimization() {
 
         // Actions on the outgoing tab
         if (currentTabIndex in tabs.indices) {
-            if (!isMediaPlaying) { // isMediaPlaying refers to the outgoing tab
+            if (!isMediaPlaying) {
                 stopPlaybackService()
             }
             saveCurrentTabState()
-            val oldWebView = webView
-            (oldWebView.parent as? ViewGroup)?.removeView(oldWebView)
+            val oldWebView = WebViewManager.getWebView(tabs[currentTabIndex].id)
+            (oldWebView?.parent as? ViewGroup)?.removeView(oldWebView)
         }
 
         // Switch the index
@@ -608,13 +629,16 @@ private fun checkBatteryOptimization() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             ))
         }
-        restoreTabState(currentTabIndex)
-        if (forceReload) {
-            newWebView.reload()
-        }
 
-        updateTabCount()
-        updateToolbarNavButtonState()
+        // Add small delay to ensure WebView is ready
+        handler.post {
+            restoreTabState(currentTabIndex)
+            if (forceReload) {
+                newWebView.reload()
+            }
+            updateTabCount()
+            updateToolbarNavButtonState()
+        }
     }
 
     private fun setupHomeButton() {
