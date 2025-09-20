@@ -255,7 +255,7 @@ private fun checkBatteryOptimization() {
         loadBookmarks()
         loadEnabledUserScripts()
         if (currentTabIndex in tabs.indices) {
-            restoreTabState(currentTabIndex)
+            switchTab(currentTabIndex, forceReload = true)
         } else {
             showStartPage()
         }
