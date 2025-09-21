@@ -12,11 +12,6 @@ data class Tab(
     @Transient var favicon: Bitmap? = null,
     var scrollPosition: Int = 0,
     var lastAccessTime: Long = System.currentTimeMillis(),
-    var hasActiveMedia: Boolean = false,
-    var isMediaPaused: Boolean = true,
-    var mediaPosition: Double = 0.0,
-    var mediaUrl: String? = null,
-    var mediaTitle: String? = null,
     // Add content caching
     var cachedHtml: String? = null,
     var cacheTimestamp: Long = 0
