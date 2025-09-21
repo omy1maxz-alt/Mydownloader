@@ -14,7 +14,7 @@ data class Tab(
     var lastAccessTime: Long = System.currentTimeMillis(),
     var hasActiveMedia: Boolean = false,
     var isMediaPaused: Boolean = true,
-    var mediaPosition: Float = 0f,
+    var mediaPosition: Double = 0.0,
     var mediaUrl: String? = null,
     var mediaTitle: String? = null,
     // Add content caching

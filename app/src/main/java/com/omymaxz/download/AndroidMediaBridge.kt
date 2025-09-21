@@ -3,28 +3,30 @@ package com.omymaxz.download
 import android.webkit.JavascriptInterface
 import com.google.gson.Gson
 
-class AndroidMediaBridge(private val activity: MainActivity) {
+class AndroidMediaBridge(private val mainActivity: MainActivity) {
+
     @JavascriptInterface
-    fun updateMediaState(jsonState: String) {
-        activity.runOnUiThread {
-            try {
-                val state = Gson().fromJson(jsonState, MediaState::class.java)
-                val currentTab = if (activity.currentTabIndex in activity.tabs.indices) activity.tabs[activity.currentTabIndex] else return@runOnUiThread
+    fun updateMediaState(mediaStateJson: String) {
+        try {
+            val gson = Gson()
+            val mediaState = gson.fromJson(mediaStateJson, MediaState::class.java)
 
-                val mediaIsPlaying = state.isPlaying && state.duration > 0
+            mainActivity.runOnUiThread {
+                // Update the current tab's media state
+                if (mainActivity.currentTabIndex in mainActivity.tabs.indices) {
+                    val currentTab = mainActivity.tabs[mainActivity.currentTabIndex]
+                    currentTab.hasActiveMedia = mediaState.isPlaying || (!mediaState.isPlaying && mediaState.duration > 0)
+                    currentTab.isMediaPaused = !mediaState.isPlaying && mediaState.duration > 0
+                    currentTab.mediaPosition = mediaState.position
+                    currentTab.mediaTitle = mediaState.title
+                    currentTab.mediaUrl = mediaState.source
 
-                currentTab.hasActiveMedia = mediaIsPlaying
-                currentTab.isMediaPaused = !state.isPlaying
-                currentTab.mediaPosition = state.position
-                currentTab.mediaUrl = state.source
-                currentTab.mediaTitle = state.title
-
-                activity.isMediaPlaying = mediaIsPlaying
-                activity.currentVideoUrl = if(mediaIsPlaying) state.source else null
-
-            } catch (e: Exception) {
-                android.util.Log.e("MediaStateInterface", "Error parsing media state from JS: ${e.message}")
+                    // Update global media playing state
+                    mainActivity.isMediaPlaying = mediaState.isPlaying
+                }
             }
+        } catch (e: Exception) {
+            android.util.Log.e("AndroidMediaBridge", "Error updating media state: ${e.message}")
         }
     }
 }

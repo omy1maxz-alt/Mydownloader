@@ -76,32 +76,47 @@ class MediaForegroundService : Service() {
         playerNotificationManager?.setUsePreviousAction(true)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_HANDOFF -> {
-                val url = intent.getStringExtra(EXTRA_URL)
-                val position = intent.getLongExtra(EXTRA_POSITION, 0)
-                val title = intent.getStringExtra(EXTRA_TITLE) ?: "Web Video"
-                if (url != null) {
-                    val mediaItem = MediaItem.Builder()
-                        .setUri(url)
-                        .setMediaMetadata(androidx.media3.common.MediaMetadata.Builder().setTitle(title).build())
-                        .build()
+override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    when (intent?.action) {
+        ACTION_HANDOFF -> {
+            val url = intent.getStringExtra(EXTRA_URL)
+            val position = intent.getLongExtra(EXTRA_POSITION, 0)
+            val title = intent.getStringExtra(EXTRA_TITLE) ?: "Web Video"
 
-                    player?.setMediaItem(mediaItem)
-                    player?.seekTo(position)
-                    player?.prepare()
-                    player?.play()
-                }
+            if (url != null && url.isNotEmpty()) {
+                // Stop any currently playing media first
+                player?.stop()
+
+                val mediaItem = MediaItem.Builder()
+                    .setUri(url)
+                    .setMediaMetadata(
+                        androidx.media3.common.MediaMetadata.Builder()
+                            .setTitle(title)
+                            .build()
+                    )
+                    .build()
+
+                player?.setMediaItem(mediaItem)
+                player?.seekTo(position)
+                player?.prepare()
+
+                // Add a small delay before playing to avoid overlap
+                player?.playWhenReady = true
+
+                android.util.Log.d("MediaForegroundService", "Starting playback: $url at position: $position")
             }
-            ACTION_PLAY -> player?.play()
-            ACTION_PAUSE -> player?.pause()
-            ACTION_STOP -> stopSelf()
-            ACTION_NEXT -> player?.seekToNext()
-            ACTION_PREVIOUS -> player?.seekToPrevious()
         }
-        return START_NOT_STICKY
+        ACTION_PLAY -> player?.play()
+        ACTION_PAUSE -> player?.pause()
+        ACTION_STOP -> {
+            player?.stop()
+            stopSelf()
+        }
+        ACTION_NEXT -> player?.seekToNext()
+        ACTION_PREVIOUS -> player?.seekToPrevious()
     }
+    return START_NOT_STICKY
+}
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
