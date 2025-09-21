@@ -2,7 +2,6 @@ package com.omymaxz.download
 
 import android.webkit.JavascriptInterface
 import com.google.gson.Gson
-import com.omymaxz.download.MediaState
 
 class AndroidMediaBridge(private val activity: MainActivity) {
     @JavascriptInterface

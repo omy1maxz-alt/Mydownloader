@@ -12,16 +12,12 @@ data class Tab(
     @Transient var favicon: Bitmap? = null,
     var scrollPosition: Int = 0,
     var lastAccessTime: Long = System.currentTimeMillis(),
-
-    // Enhanced media state preservation
     var hasActiveMedia: Boolean = false,
-    var mediaUrl: String? = null,
+    var isMediaPaused: Boolean = true,
     var mediaPosition: Float = 0f,
-    var isMediaPaused: Boolean = false,
+    var mediaUrl: String? = null,
     var mediaTitle: String? = null,
-    var mediaType: String = "video", // video, audio
-
-    // Page loading state for background continuation
-    var isPageLoading: Boolean = false,
-    var pageLoadProgress: Int = 0
+    // Add content caching
+    var cachedHtml: String? = null,
+    var cacheTimestamp: Long = 0
 )

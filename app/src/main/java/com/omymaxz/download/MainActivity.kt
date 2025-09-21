@@ -5,11 +5,9 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DownloadManager
 import android.content.ActivityNotFoundException
-import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -120,6 +118,22 @@ class MainActivity : AppCompatActivity() {
                 webView.loadUrl(urlToLoad)
                 showWebView()
             }
+        }
+    }
+
+    private var serviceBound = false
+    private var mediaService: MediaForegroundService? = null
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as? MediaForegroundService.LocalBinder
+            mediaService = binder?.getService()
+            serviceBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            mediaService = null
+            serviceBound = false
         }
     }
 
@@ -286,6 +300,10 @@ private fun checkBatteryOptimization() {
         super.onResume()
         isAppInBackground = false
         if (hasStartedForegroundService) {
+            if (serviceBound && mediaService != null) {
+                val position = mediaService!!.getCurrentPosition()
+                webView.evaluateJavascript("var video = document.querySelector('video'); if(video) { video.currentTime = ${position / 1000}; video.play(); }", null)
+            }
             stopPlaybackService()
             hasStartedForegroundService = false
         }
@@ -293,11 +311,18 @@ private fun checkBatteryOptimization() {
 
     override fun onStart() {
         super.onStart()
+        Intent(this, MediaForegroundService::class.java).also { intent ->
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        }
     }
 
     override fun onStop() {
         super.onStop()
-
+        if (serviceBound) {
+            unbindService(serviceConnection)
+            serviceBound = false
+            mediaService = null
+        }
 
         if (isMediaPlaying && !isChangingConfigurations) {
         } else {
@@ -1130,10 +1155,6 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
 }
 
     fun stopPlaybackService() {
-        if (serviceBound) {
-            unbindService(serviceConnection)
-            serviceBound = false
-        }
         val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
             action = MediaForegroundService.ACTION_STOP
         }
@@ -1329,7 +1350,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 .setTitle(mediaFile.title)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, mediaFile.title)
-            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
             dm.enqueue(request)
             Toast.makeText(this, "Download started: ${mediaFile.title}", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
