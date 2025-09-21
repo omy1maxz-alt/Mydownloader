@@ -277,37 +277,74 @@ private fun checkBatteryOptimization() {
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        isAppInBackground = true
-        if (currentTabIndex in tabs.indices) {
-            val currentTab = tabs[currentTabIndex]
-            if (currentTab.hasActiveMedia && !currentTab.isMediaPaused) {
+override fun onPause() {
+    super.onPause()
+    isAppInBackground = true
+
+    if (currentTabIndex in tabs.indices) {
+        val currentTab = tabs[currentTabIndex]
+
+        // Only handoff if media is actively playing
+        if (currentTab.hasActiveMedia && !currentTab.isMediaPaused && isMediaPlaying) {
+
+            // CRITICAL: First pause the WebView media
+            webView.evaluateJavascript("""
+                (function() {
+                    var video = document.querySelector('video');
+                    if (video && !video.paused) {
+                        video.pause();
+                        video.setAttribute('data-was-playing', 'true');
+                    }
+                })();
+            """.trimIndent(), null)
+
+            // Wait briefly for WebView to pause, then start service
+            handler.postDelayed({
                 val intent = Intent(this, MediaForegroundService::class.java).apply {
                     action = MediaForegroundService.ACTION_HANDOFF
                     putExtra(MediaForegroundService.EXTRA_URL, currentTab.mediaUrl)
                     putExtra(MediaForegroundService.EXTRA_POSITION, (currentTab.mediaPosition * 1000).toLong())
-                    putExtra(MediaForegroundService.EXTRA_TITLE, currentTab.mediaTitle)
+                    putExtra(MediaForegroundService.EXTRA_TITLE, currentTab.mediaTitle ?: "Web Video")
                 }
                 startService(intent)
                 hasStartedForegroundService = true
-                binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-            }
+            }, 200) // 200ms delay to ensure WebView pauses first
         }
     }
+}
 
-    override fun onResume() {
-        super.onResume()
-        isAppInBackground = false
-        if (hasStartedForegroundService) {
-            if (serviceBound && mediaService != null) {
-                val position = mediaService!!.getCurrentPosition()
-                webView.evaluateJavascript("var video = document.querySelector('video'); if(video) { video.currentTime = ${position / 1000}; video.play(); }", null)
-            }
-            stopPlaybackService()
-            hasStartedForegroundService = false
+override fun onResume() {
+    super.onResume()
+    isAppInBackground = false
+
+    if (hasStartedForegroundService) {
+        // Get position from service before stopping it
+        var resumePosition = 0L
+        if (serviceBound && mediaService != null) {
+            resumePosition = mediaService!!.getCurrentPosition()
+        }
+
+        // Stop the service first
+        stopPlaybackService()
+        hasStartedForegroundService = false
+
+        // Then resume WebView playback with correct position
+        if (resumePosition > 0) {
+            webView.evaluateJavascript("""
+                (function() {
+                    var video = document.querySelector('video');
+                    if (video && video.hasAttribute('data-was-playing')) {
+                        video.currentTime = ${resumePosition / 1000.0};
+                        video.play().catch(function(e) {
+                            console.log('Failed to resume playback:', e);
+                        });
+                        video.removeAttribute('data-was-playing');
+                    }
+                })();
+            """.trimIndent(), null)
         }
     }
+}
 
     override fun onStart() {
         super.onStart()
@@ -534,35 +571,46 @@ private fun checkBatteryOptimization() {
         }
     }
 
-    private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
-        if (newIndex !in tabs.indices || (!forceReload && newIndex == currentTabIndex)) return
+private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
+    if (newIndex !in tabs.indices || (!forceReload && newIndex == currentTabIndex)) return
 
-        // Handoff media to service if playing
-        if (currentTabIndex in tabs.indices) {
-            val currentTab = tabs[currentTabIndex]
-            if (currentTab.hasActiveMedia && !currentTab.isMediaPaused) {
-                val intent = Intent(this, MediaForegroundService::class.java).apply {
-                    action = MediaForegroundService.ACTION_HANDOFF
-                    putExtra(MediaForegroundService.EXTRA_URL, currentTab.mediaUrl)
-                    putExtra(MediaForegroundService.EXTRA_POSITION, (currentTab.mediaPosition * 1000).toLong())
-                    putExtra(MediaForegroundService.EXTRA_TITLE, currentTab.mediaTitle)
-                }
-                startService(intent)
-                hasStartedForegroundService = true
-                binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+    // Handle media handoff when switching tabs
+    if (currentTabIndex in tabs.indices) {
+        val currentTab = tabs[currentTabIndex]
+        if (currentTab.hasActiveMedia && !currentTab.isMediaPaused && isMediaPlaying) {
+
+            // Pause current WebView media
+            webView.evaluateJavascript("""
+                (function() {
+                    var video = document.querySelector('video');
+                    if (video && !video.paused) {
+                        video.pause();
+                    }
+                })();
+            """.trimIndent(), null)
+
+            // Start background service for current tab's media
+            val intent = Intent(this, MediaForegroundService::class.java).apply {
+                action = MediaForegroundService.ACTION_HANDOFF
+                putExtra(MediaForegroundService.EXTRA_URL, currentTab.mediaUrl)
+                putExtra(MediaForegroundService.EXTRA_POSITION, (currentTab.mediaPosition * 1000).toLong())
+                putExtra(MediaForegroundService.EXTRA_TITLE, currentTab.mediaTitle ?: "Web Video")
             }
+            startService(intent)
+            hasStartedForegroundService = true
         }
-
-        // Save current tab state (including scroll position, etc.)
-        saveCurrentTabState()
-
-        // Switch to new tab
-        currentTabIndex = newIndex
-        restoreTabState(currentTabIndex)
-
-        updateTabCount()
-        updateToolbarNavButtonState()
     }
+
+    // Save current tab state
+    saveCurrentTabState()
+
+    // Switch to new tab
+    currentTabIndex = newIndex
+    restoreTabState(currentTabIndex)
+
+    updateTabCount()
+    updateToolbarNavButtonState()
+}
 
 
     private fun setupHomeButton() {
@@ -1154,17 +1202,44 @@ private fun startForegroundServiceWithCatch(intent: Intent) {
     }
 }
 
-    fun stopPlaybackService() {
-        val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
-            action = MediaForegroundService.ACTION_STOP
-        }
-        stopService(serviceIntent)
-        hasStartedForegroundService = false
+fun stopPlaybackService() {
+    // Stop the service completely
+    val serviceIntent = Intent(this, MediaForegroundService::class.java).apply {
+        action = MediaForegroundService.ACTION_STOP
     }
+    stopService(serviceIntent)
+
+    // Reset flags
+    hasStartedForegroundService = false
+    isMediaPlaying = false
+}
     private fun resumeMediaPlayback() {
         val resumeScript = "javascript:(function() { var video = document.querySelector('video'); if (video && video.paused && video.hasAttribute('data-was-playing')) { video.play().catch(function(e) {}); } })();"
         webView.loadUrl(resumeScript)
     }
+
+private fun pauseWebViewMedia() {
+    webView.evaluateJavascript("""
+        (function() {
+            var videos = document.querySelectorAll('video');
+            var audios = document.querySelectorAll('audio');
+
+            videos.forEach(function(video) {
+                if (!video.paused) {
+                    video.pause();
+                    video.setAttribute('data-was-playing', 'true');
+                }
+            });
+
+            audios.forEach(function(audio) {
+                if (!audio.paused) {
+                    audio.pause();
+                    audio.setAttribute('data-was-playing', 'true');
+                }
+            });
+        })();
+    """.trimIndent(), null)
+}
     private fun askForNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
