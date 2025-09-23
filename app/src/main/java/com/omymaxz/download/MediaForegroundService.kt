@@ -31,6 +31,13 @@ class MediaForegroundService : Service() {
         const val ACTION_NEXT_FROM_NOTIFICATION = "com.omymaxz.download.ACTION_NEXT_FROM_NOTIFICATION"
         const val ACTION_PREVIOUS_FROM_NOTIFICATION = "com.omymaxz.download.ACTION_PREVIOUS_FROM_NOTIFICATION"
         const val ACTION_STOP_FROM_NOTIFICATION = "com.omymaxz.download.ACTION_STOP_FROM_NOTIFICATION"
+        const val ACTION_PLAY = "com.omymaxz.download.ACTION_PLAY"
+        const val ACTION_PAUSE = "com.omymaxz.download.ACTION_PAUSE"
+        const val ACTION_NEXT = "com.omymaxz.download.ACTION_NEXT"
+        const val ACTION_PREVIOUS = "com.omymaxz.download.ACTION_PREVIOUS"
+        const val ACTION_STOP = "com.omymaxz.download.ACTION_STOP"
+        const val EXTRA_TITLE = "com.omymaxz.download.EXTRA_TITLE"
+        const val EXTRA_IS_PLAYING = "com.omymaxz.download.EXTRA_IS_PLAYING"
     }
 
     inner class LocalBinder : Binder() {
@@ -105,19 +112,18 @@ class MediaForegroundService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
 
         val compactViewActions = mutableListOf<Int>()
-        var actionCount = 0
 
         if (hasPrevious) {
             builder.addAction(R.drawable.ic_skip_previous, "Previous", MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS))
-            compactViewActions.add(actionCount++)
+            compactViewActions.add(compactViewActions.size)
         }
 
         builder.addAction(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow, if (isPlaying) "Pause" else "Play", MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE))
-        compactViewActions.add(actionCount++)
+        compactViewActions.add(compactViewActions.size)
 
         if (hasNext) {
             builder.addAction(R.drawable.ic_skip_next, "Next", MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT))
-            compactViewActions.add(actionCount++)
+            compactViewActions.add(compactViewActions.size)
         }
 
         builder.setStyle(
