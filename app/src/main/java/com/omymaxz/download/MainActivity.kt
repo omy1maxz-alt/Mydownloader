@@ -1196,8 +1196,6 @@ private fun injectMediaStateDetector() {
         val intent = Intent(this, MediaForegroundService::class.java).apply {
             putExtra(MediaForegroundService.EXTRA_TITLE, webView.title ?: "Web Video")
             putExtra(MediaForegroundService.EXTRA_IS_PLAYING, isMediaPlaying)
-            putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
-            putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
         }
         if (isProactiveStart) {
             intent.action = MediaForegroundService.ACTION_PLAY // Or a custom action
