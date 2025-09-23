@@ -10,6 +10,7 @@ import android.content.Intent
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
@@ -29,6 +30,10 @@ class MediaForegroundService : Service() {
         const val ACTION_PREVIOUS = "com.omymaxz.download.ACTION_PREVIOUS"
         const val EXTRA_TITLE = "com.omymaxz.download.EXTRA_TITLE"
         const val EXTRA_IS_PLAYING = "com.omymaxz.download.EXTRA_IS_PLAYING"
+        const val EXTRA_CURRENT_POSITION = "com.omymaxz.download.EXTRA_CURRENT_POSITION"
+        const val EXTRA_DURATION = "com.omymaxz.download.EXTRA_DURATION"
+        const val EXTRA_HAS_NEXT = "com.omymaxz.download.EXTRA_HAS_NEXT"
+        const val EXTRA_HAS_PREVIOUS = "com.omymaxz.download.EXTRA_HAS_PREVIOUS"
     }
 
     override fun onCreate() {
@@ -75,16 +80,34 @@ class MediaForegroundService : Service() {
 
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Web Video"
         val isPlaying = intent.getBooleanExtra(EXTRA_IS_PLAYING, false)
-        
+        val position = intent.getLongExtra(EXTRA_CURRENT_POSITION, 0L)
+        val duration = intent.getLongExtra(EXTRA_DURATION, 0L)
+        val hasNext = intent.getBooleanExtra(EXTRA_HAS_NEXT, false)
+        val hasPrevious = intent.getBooleanExtra(EXTRA_HAS_PREVIOUS, false)
+
         val playbackState = if (isPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
+
+        var actions = PlaybackStateCompat.ACTION_PLAY_PAUSE or PlaybackStateCompat.ACTION_STOP
+        if (hasNext) {
+            actions = actions or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+        }
+        if (hasPrevious) {
+            actions = actions or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+        }
+
+        mediaSession?.setMetadata(MediaMetadataCompat.Builder()
+            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
+            .build())
+
         mediaSession?.setPlaybackState(
             PlaybackStateCompat.Builder()
-                .setState(playbackState, 0L, 1.0f)
-                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE or PlaybackStateCompat.ACTION_STOP or PlaybackStateCompat.ACTION_SKIP_TO_NEXT or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                .setState(playbackState, position, 1.0f)
+                .setActions(actions)
                 .build()
         )
 
-        startForeground(NOTIFICATION_ID, buildNotification(title, isPlaying))
+        startForeground(NOTIFICATION_ID, buildNotification(title, isPlaying, hasNext, hasPrevious))
 
         return START_STICKY
     }
@@ -97,7 +120,7 @@ class MediaForegroundService : Service() {
         sendBroadcast(intent)
     }
 
-    private fun buildNotification(title: String, isPlaying: Boolean): Notification {
+    private fun buildNotification(title: String, isPlaying: Boolean, hasNext: Boolean, hasPrevious: Boolean): Notification {
         val openAppIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -113,28 +136,36 @@ class MediaForegroundService : Service() {
             )
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setSmallIcon(R.drawable.ic_notification)
-            .addAction(
+
+        if (hasPrevious) {
+            builder.addAction(
                 NotificationCompat.Action(
                     R.drawable.ic_skip_previous,
                     "Previous",
                     MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
                 )
             )
-            .addAction(
-                NotificationCompat.Action(
-                    if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow,
-                    if (isPlaying) "Pause" else "Play",
-                    MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)
-                )
+        }
+
+        builder.addAction(
+            NotificationCompat.Action(
+                if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow,
+                if (isPlaying) "Pause" else "Play",
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)
             )
-            .addAction(
+        )
+
+        if (hasNext) {
+            builder.addAction(
                 NotificationCompat.Action(
                     R.drawable.ic_skip_next,
                     "Next",
                     MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
                 )
             )
-            .setStyle(
+        }
+
+        builder.setStyle(
                 androidx.media.app.NotificationCompat.MediaStyle()
                     .setMediaSession(mediaSession?.sessionToken)
                     .setShowActionsInCompactView(0, 1, 2)
