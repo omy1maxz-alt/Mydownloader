@@ -11,7 +11,7 @@ data class UserScript(
     val name: String,
     val script: String,
     var isEnabled: Boolean = true,
-    val targetUrl: String,
+    val targetUrl: String = "*",
     val createdAt: Long = System.currentTimeMillis(),
     // Add metadata fields
     val runAt: RunAt = RunAt.DOCUMENT_END, // Default to document-end
