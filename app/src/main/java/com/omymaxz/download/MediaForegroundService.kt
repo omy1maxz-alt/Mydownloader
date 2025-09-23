@@ -38,6 +38,8 @@ class MediaForegroundService : Service() {
         const val ACTION_STOP = "com.omymaxz.download.ACTION_STOP"
         const val EXTRA_TITLE = "com.omymaxz.download.EXTRA_TITLE"
         const val EXTRA_IS_PLAYING = "com.omymaxz.download.EXTRA_IS_PLAYING"
+        const val EXTRA_HAS_NEXT = "com.omymaxz.download.EXTRA_HAS_NEXT"
+        const val EXTRA_HAS_PREVIOUS = "com.omymaxz.download.EXTRA_HAS_PREVIOUS"
     }
 
     inner class LocalBinder : Binder() {
@@ -53,26 +55,30 @@ class MediaForegroundService : Service() {
         val mediaButtonReceiver = ComponentName(applicationContext, MediaButtonReceiver::class.java)
         mediaSession = MediaSessionCompat(applicationContext, "MediaForegroundServiceSession", mediaButtonReceiver, null).apply {
             setCallback(object : MediaSessionCompat.Callback() {
-                override fun onPlay() { sendLocalBroadcast(ACTION_PLAY_FROM_NOTIFICATION) }
-                override fun onPause() { sendLocalBroadcast(ACTION_PAUSE_FROM_NOTIFICATION) }
-                override fun onSkipToNext() { sendLocalBroadcast(ACTION_NEXT_FROM_NOTIFICATION) }
-                override fun onSkipToPrevious() { sendLocalBroadcast(ACTION_PREVIOUS_FROM_NOTIFICATION) }
-                override fun onStop() { sendLocalBroadcast(ACTION_STOP_FROM_NOTIFICATION) }
+                override fun onPlay() { sendMediaControlBroadcast(ACTION_PLAY) }
+                override fun onPause() { sendMediaControlBroadcast(ACTION_PAUSE) }
+                override fun onSkipToNext() { sendMediaControlBroadcast(ACTION_NEXT) }
+                override fun onSkipToPrevious() { sendMediaControlBroadcast(ACTION_PREVIOUS) }
+                override fun onStop() { sendMediaControlBroadcast(ACTION_STOP) }
             })
             isActive = true
         }
     }
 
-    private fun sendLocalBroadcast(action: String) {
-        val intent = Intent(action)
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+    private fun sendMediaControlBroadcast(command: String) {
+        val intent = Intent(MainActivity.ACTION_MEDIA_CONTROL).apply {
+            putExtra(MainActivity.EXTRA_COMMAND, command)
+        }
+        sendBroadcast(intent)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val title = intent?.getStringExtra(EXTRA_TITLE) ?: "Web Video"
         val isPlaying = intent?.getBooleanExtra(EXTRA_IS_PLAYING, true) ?: true
+        val hasNext = intent?.getBooleanExtra(EXTRA_HAS_NEXT, false) ?: false
+        val hasPrevious = intent?.getBooleanExtra(EXTRA_HAS_PREVIOUS, false) ?: false
 
-        startForeground(NOTIFICATION_ID, buildNotification(title, isPlaying, false, false))
+        startForeground(NOTIFICATION_ID, buildNotification(title, isPlaying, hasNext, hasPrevious))
 
         if (intent != null) {
             MediaButtonReceiver.handleIntent(mediaSession, intent)
