@@ -317,7 +317,7 @@ private fun checkBatteryOptimization() {
         super.onPause()
         isAppInBackground = true
         if (isMediaPlaying) {
-            startOrUpdatePlaybackService()
+            startOrUpdatePlaybackService() 
         }
     }
 
@@ -567,7 +567,7 @@ private fun checkBatteryOptimization() {
         if (tabIndex !in tabs.indices) return
         val tab = tabs[tabIndex]
         binding.urlEditTextToolbar.setText(tab.url)
-
+        
         if (tab.url != null) {
             webView.loadUrl(tab.url!!)
             showWebView()
