@@ -69,6 +69,11 @@ class MediaForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val title = intent?.getStringExtra(EXTRA_TITLE) ?: "Web Video"
+        val isPlaying = intent?.getBooleanExtra(EXTRA_IS_PLAYING, true) ?: true
+
+        startForeground(NOTIFICATION_ID, buildNotification(title, isPlaying, false, false))
+
         if (intent != null) {
             MediaButtonReceiver.handleIntent(mediaSession, intent)
         }
