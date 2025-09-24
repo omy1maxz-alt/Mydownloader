@@ -1127,6 +1127,10 @@ private fun injectMediaStateDetector() {
                         media.removeAttribute('data-was-playing');
                     });
 
+                    media.addEventListener('timeupdate', function() {
+                        AndroidMediaState.updateMediaPlaybackState(media.currentTime, media.duration);
+                    });
+
                     media.addEventListener('error', function(e) {
                         let errorMsg = 'An unknown error occurred.';
                         if (e && e.target && e.target.error) {

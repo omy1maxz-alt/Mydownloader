@@ -123,36 +123,11 @@ class MediaForegroundService : Service() {
 
         // Always update the service's internal state from the intent
         updateStateFromIntent(intent)
-
-        // Update the media session and notification
-        updatePlaybackState()
-        updateMediaMetadata()
+        // Always update the notification display based on current state
         updateNotification()
 
         // Return START_STICKY to keep the service running until explicitly stopped
         return START_STICKY
-    }
-
-    private fun updatePlaybackState() {
-        val stateBuilder = PlaybackStateCompat.Builder()
-            .setActions(
-                PlaybackStateCompat.ACTION_PLAY or
-                PlaybackStateCompat.ACTION_PAUSE or
-                PlaybackStateCompat.ACTION_PLAY_PAUSE or
-                PlaybackStateCompat.ACTION_STOP or
-                (if (hasPrevious) PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS else 0) or
-                (if (hasNext) PlaybackStateCompat.ACTION_SKIP_TO_NEXT else 0)
-            )
-        val state = if (currentPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
-        stateBuilder.setState(state, currentPosition, 1.0f)
-        mediaSession?.setPlaybackState(stateBuilder.build())
-    }
-
-    private fun updateMediaMetadata() {
-        mediaSession?.setMetadata(MediaMetadataCompat.Builder()
-            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentTitle)
-            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentDuration)
-            .build())
     }
 
     private fun updateStateFromIntent(intent: Intent) {
@@ -162,6 +137,34 @@ class MediaForegroundService : Service() {
         currentDuration = intent.getLongExtra(EXTRA_DURATION, currentDuration)
         hasNext = intent.getBooleanExtra(EXTRA_HAS_NEXT, hasNext)
         hasPrevious = intent.getBooleanExtra(EXTRA_HAS_PREVIOUS, hasPrevious)
+
+        // IMPORTANT: Update the MediaSession's PlaybackState and Metadata immediately after updating state
+        updatePlaybackState()
+        updateMediaMetadata()
+    }
+
+    private fun updatePlaybackState() {
+        val stateBuilder = PlaybackStateCompat.Builder()
+            .setActions(
+                PlaybackStateCompat.ACTION_PLAY or
+                        PlaybackStateCompat.ACTION_PAUSE or
+                        PlaybackStateCompat.ACTION_PLAY_PAUSE or
+                        PlaybackStateCompat.ACTION_STOP or
+                        (if (hasPrevious) PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS else 0) or
+                        (if (hasNext) PlaybackStateCompat.ACTION_SKIP_TO_NEXT else 0)
+            )
+
+        val state = if (currentPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
+        stateBuilder.setState(state, currentPosition, 1.0f)
+
+        mediaSession?.setPlaybackState(stateBuilder.build())
+    }
+
+    private fun updateMediaMetadata() {
+        mediaSession?.setMetadata(MediaMetadataCompat.Builder()
+            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentTitle)
+            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentDuration)
+            .build())
     }
 
     private fun updateNotification() {
@@ -176,6 +179,9 @@ class MediaForegroundService : Service() {
         }
         sendBroadcast(intent)
     }
+
+    // ... (keep the existing buildNotification and createNotificationChannel methods as they are,
+    // but ensure they use the internal state variables: currentTitle, currentPlaying, currentPosition, currentDuration, hasNext, hasPrevious)
 
     private fun buildNotification(title: String, isPlaying: Boolean, hasNext: Boolean, hasPrevious: Boolean): Notification {
         val openAppIntent = Intent(this, MainActivity::class.java).apply {
@@ -245,8 +251,6 @@ class MediaForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? {
         return binder
     }
-
-
 
     override fun onDestroy() {
         super.onDestroy()
