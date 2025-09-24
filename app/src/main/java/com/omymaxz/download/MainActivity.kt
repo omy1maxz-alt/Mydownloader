@@ -1190,13 +1190,14 @@ private fun injectMediaStateDetector() {
     webView.evaluateJavascript(script, null)
 }
 
-    private fun startOrUpdatePlaybackService(isProactiveStart: Boolean = false) {
+    private fun startOrUpdatePlaybackService(currentTime: Float? = null, duration: Float? = null) {
         val intent = Intent(this, MediaForegroundService::class.java).apply {
             putExtra(MediaForegroundService.EXTRA_TITLE, webView.title ?: "Web Video")
             putExtra(MediaForegroundService.EXTRA_IS_PLAYING, isMediaPlaying)
-        }
-        if (isProactiveStart) {
-            intent.action = MediaForegroundService.ACTION_PLAY // Or a custom action
+            currentTime?.let { putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, (it * 1000).toLong()) }
+            duration?.let { putExtra(MediaForegroundService.EXTRA_DURATION, (it * 1000).toLong()) }
+            putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
+            putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
         }
         ContextCompat.startForegroundService(this, intent)
         hasStartedForegroundService = true
@@ -1226,25 +1227,8 @@ private fun injectMediaStateDetector() {
         @JavascriptInterface
         fun updateMediaPlaybackState(currentTime: Float, duration: Float) {
             activity.runOnUiThread {
-                // This is the main change:
-                // If the app is in the background and media is playing,
-                // call startOrUpdatePlaybackService to refresh the notification
-                // with the new playback position.
                 if (activity.isAppInBackground && activity.isMediaPlaying) {
-                    activity.startOrUpdatePlaybackService()
-                }
-
-                if (activity.isAppInBackground && activity.isMediaPlaying) {
-                    val intent = Intent(activity, MediaForegroundService::class.java).apply {
-                        putExtra(MediaForegroundService.EXTRA_TITLE, activity.webView.title ?: "Web Video")
-                        putExtra(MediaForegroundService.EXTRA_IS_PLAYING, activity.isMediaPlaying)
-                        putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, (currentTime * 1000).toLong())
-                        putExtra(MediaForegroundService.EXTRA_DURATION, (duration * 1000).toLong())
-                        putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
-                        putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
-                    }
-                    ContextCompat.startForegroundService(activity, intent)
-                    activity.hasStartedForegroundService = true
+                    activity.startOrUpdatePlaybackService(currentTime, duration)
                 }
             }
         }

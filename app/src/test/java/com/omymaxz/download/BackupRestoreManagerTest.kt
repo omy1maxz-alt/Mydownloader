@@ -44,7 +44,7 @@ class BackupRestoreManagerTest {
         val bookmark = Bookmark(title = "Test Bookmark", url = "https://example.com")
         db.bookmarkDao().insert(bookmark)
 
-        val userScript = UserScript(name = "Test Script", script = "alert('hello')", grants = emptyList(), targetUrl = "*")
+        val userScript = UserScript(name = "Test Script", script = "alert('hello')", grants = emptyList(), targetUrl = ".*")
         db.userScriptDao().insert(userScript)
 
         // When: we create a backup
