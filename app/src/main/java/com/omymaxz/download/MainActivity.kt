@@ -1240,8 +1240,8 @@ private fun injectMediaStateDetector() {
                         putExtra(MediaForegroundService.EXTRA_IS_PLAYING, activity.isMediaPlaying)
                         putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, (currentTime * 1000).toLong())
                         putExtra(MediaForegroundService.EXTRA_DURATION, (duration * 1000).toLong())
-                        putExtra(MediaForegroundService.EXTRA_HAS_NEXT, activity.hasNextMedia)
-                        putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, activity.hasPreviousMedia)
+                        putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
+                        putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
                     }
                     ContextCompat.startForegroundService(activity, intent)
                     activity.hasStartedForegroundService = true

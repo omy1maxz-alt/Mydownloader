@@ -67,7 +67,16 @@ class MediaForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // ... (existing code)
+        if (intent == null) {
+            return START_NOT_STICKY
+        }
+
+        if (intent.action == ACTION_STOP) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        mediaSession?.let { MediaButtonReceiver.handleIntent(it, intent) }
 
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Web Video"
         val isPlaying = intent.getBooleanExtra(EXTRA_IS_PLAYING, false)
