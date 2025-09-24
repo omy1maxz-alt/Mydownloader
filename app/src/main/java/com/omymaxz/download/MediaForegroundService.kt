@@ -19,6 +19,13 @@ import androidx.media.session.MediaButtonReceiver
 class MediaForegroundService : Service() {
 
     private var mediaSession: MediaSessionCompat? = null
+    // Add these variables to store state internally
+    private var currentTitle: String = "Web Video"
+    private var currentPlaying: Boolean = false
+    private var currentPosition: Long = 0L
+    private var currentDuration: Long = 0L
+    private var hasNext: Boolean = false
+    private var hasPrevious: Boolean = false
 
     companion object {
         const val NOTIFICATION_ID = 1001
@@ -34,12 +41,21 @@ class MediaForegroundService : Service() {
         const val EXTRA_DURATION = "com.omymaxz.download.EXTRA_DURATION"
         const val EXTRA_HAS_NEXT = "com.omymaxz.download.EXTRA_HAS_NEXT"
         const val EXTRA_HAS_PREVIOUS = "com.omymaxz.download.EXTRA_HAS_PREVIOUS"
+
+        // Define actions for MediaSession callbacks
+        const val ACTION_PLAY_PAUSE = "com.omymaxz.download.ACTION_PLAY_PAUSE"
+        const val ACTION_STOP_SERVICE = "com.omymaxz.download.ACTION_STOP_SERVICE" // For stopping the service
+    }
+
+    private val binder = LocalBinder()
+
+    inner class LocalBinder : Binder() {
+        fun getService(): MediaForegroundService = this@MediaForegroundService
     }
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-
         mediaSession = MediaSessionCompat(this, "MediaForegroundServiceSession").apply {
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onPlay() {
@@ -50,8 +66,9 @@ class MediaForegroundService : Service() {
                     sendMediaControlBroadcast(ACTION_PAUSE)
                 }
 
+                // Handle the stop action from the notification swipe/stop button
                 override fun onStop() {
-                    sendMediaControlBroadcast(ACTION_STOP)
+                    sendMediaControlBroadcast(ACTION_STOP_SERVICE) // Use specific action for service stop
                 }
 
                 override fun onSkipToNext() {
@@ -61,61 +78,76 @@ class MediaForegroundService : Service() {
                 override fun onSkipToPrevious() {
                     sendMediaControlBroadcast(ACTION_PREVIOUS)
                 }
+
+                // Optional: Handle seek if needed
+                // override fun onSeekTo(pos: Long) { ... }
             })
             isActive = true
+            // Set initial PlaybackState
+            setPlaybackState(PlaybackStateCompat.Builder()
+                .setState(PlaybackStateCompat.STATE_NONE, 0L, 1.0f)
+                .build())
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent == null) {
-            return START_NOT_STICKY
-        }
-
-        if (intent.action == ACTION_STOP) {
             stopSelf()
             return START_NOT_STICKY
         }
 
-        mediaSession?.let { MediaButtonReceiver.handleIntent(it, intent) }
-
-        val title = intent.getStringExtra(EXTRA_TITLE) ?: "Web Video"
-        val isPlaying = intent.getBooleanExtra(EXTRA_IS_PLAYING, false)
-        val position = intent.getLongExtra(EXTRA_CURRENT_POSITION, 0L)
-        val duration = intent.getLongExtra(EXTRA_DURATION, 0L)
-        val hasNext = intent.getBooleanExtra(EXTRA_HAS_NEXT, false)
-        val hasPrevious = intent.getBooleanExtra(EXTRA_HAS_PREVIOUS, false)
-
-        val playbackState = if (isPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
-
-        var actions = PlaybackStateCompat.ACTION_PLAY_PAUSE or PlaybackStateCompat.ACTION_STOP
-        if (hasNext) {
-            actions = actions or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+        val action = intent.action
+        // Check if this is a media button intent handled by MediaButtonReceiver
+        if (Intent.ACTION_MEDIA_BUTTON == action) {
+            // Pass the intent to MediaButtonReceiver to handle and route to MediaSession
+            MediaButtonReceiver.handleIntent(mediaSession, intent)
+            // Do NOT return here yet, continue to update state and notification
+        } else if (ACTION_STOP_SERVICE == action) { // Handle our custom stop action
+             stopSelf()
+             return START_NOT_STICKY
         }
-        if (hasPrevious) {
-            actions = actions or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+        // Handle custom actions sent from MainActivity
+        else if (action != null) {
+             when (action) {
+                 ACTION_PLAY, ACTION_PAUSE, ACTION_STOP, ACTION_NEXT, ACTION_PREVIOUS -> {
+                     // Update internal state based on intent extras if needed
+                     updateStateFromIntent(intent)
+                     // Send the command to MainActivity via broadcast
+                     sendMediaControlBroadcast(action)
+                     // Update notification based on new state
+                     updateNotification()
+                 }
+                 // Add other custom actions if needed
+             }
         }
 
-        mediaSession?.setMetadata(MediaMetadataCompat.Builder()
-            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
-            .build())
+        // Always update the service's internal state from the intent
+        updateStateFromIntent(intent)
+        // Always update the notification display based on current state
+        updateNotification()
 
-        mediaSession?.setPlaybackState(
-            PlaybackStateCompat.Builder()
-                .setState(playbackState, position, 1.0f)
-                .setActions(actions)
-                .build()
-        )
-
-        startForeground(NOTIFICATION_ID, buildNotification(title, isPlaying, hasNext, hasPrevious))
-
+        // Return START_STICKY to keep the service running until explicitly stopped
         return START_STICKY
+    }
+
+    private fun updateStateFromIntent(intent: Intent) {
+        currentTitle = intent.getStringExtra(EXTRA_TITLE) ?: currentTitle
+        currentPlaying = intent.getBooleanExtra(EXTRA_IS_PLAYING, currentPlaying)
+        currentPosition = intent.getLongExtra(EXTRA_CURRENT_POSITION, currentPosition)
+        currentDuration = intent.getLongExtra(EXTRA_DURATION, currentDuration)
+        hasNext = intent.getBooleanExtra(EXTRA_HAS_NEXT, hasNext)
+        hasPrevious = intent.getBooleanExtra(EXTRA_HAS_PREVIOUS, hasPrevious)
+    }
+
+    private fun updateNotification() {
+        val notification = buildNotification(currentTitle, currentPlaying, hasNext, hasPrevious)
+        startForeground(NOTIFICATION_ID, notification) // Must be called within 5 seconds of startForegroundService
     }
 
     private fun sendMediaControlBroadcast(action: String) {
         val intent = Intent(MainActivity.ACTION_MEDIA_CONTROL).apply {
             putExtra(MainActivity.EXTRA_COMMAND, action)
-            `package` = this@MediaForegroundService.packageName
+            `package` = this@MediaForegroundService.packageName // Ensure broadcast goes to correct package
         }
         sendBroadcast(intent)
     }
@@ -127,77 +159,73 @@ class MediaForegroundService : Service() {
         val openAppPendingIntent = PendingIntent.getActivity(this, 0, openAppIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-        builder
             .setContentTitle(title)
             .setContentText(if (isPlaying) "Playing" else "Paused")
             .setContentIntent(openAppPendingIntent)
-            .setDeleteIntent(
-                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)
-            )
+            .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)) // Or use ACTION_PAUSE if preferred for swipe
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_notification) // Replace with your icon
 
+        // Add previous action if available
         if (hasPrevious) {
             builder.addAction(
                 NotificationCompat.Action(
-                    R.drawable.ic_skip_previous,
+                    R.drawable.ic_skip_previous, // Replace with your icon
                     "Previous",
                     MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
                 )
             )
         }
 
+        // Add play/pause action
         builder.addAction(
             NotificationCompat.Action(
-                if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow,
+                if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow, // Replace with your icons
                 if (isPlaying) "Pause" else "Play",
                 MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)
             )
         )
 
+        // Add next action if available
         if (hasNext) {
             builder.addAction(
                 NotificationCompat.Action(
-                    R.drawable.ic_skip_next,
+                    R.drawable.ic_skip_next, // Replace with your icon
                     "Next",
                     MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
                 )
             )
         }
 
+        // Set the style using the MediaSession token
         builder.setStyle(
-                androidx.media.app.NotificationCompat.MediaStyle()
-                    .setMediaSession(mediaSession?.sessionToken)
-                    .setShowActionsInCompactView(0, 1, 2)
-            )
+            androidx.media.app.NotificationCompat.MediaStyle()
+                .setMediaSession(mediaSession?.sessionToken)
+                .setShowActionsInCompactView(0, 1, 2) // Adjust indices based on how many actions you add (0-indexed)
+        )
 
         return builder.build()
     }
 
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                CHANNEL_ID, "Media Playback", NotificationManager.IMPORTANCE_LOW
-            ).apply {
+            val serviceChannel = NotificationChannel(CHANNEL_ID, "Media Playback", NotificationManager.IMPORTANCE_LOW).apply {
                 description = "Channel for background media playback"
             }
-            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-                .createNotificationChannel(serviceChannel)
+            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(serviceChannel)
         }
     }
 
-    private val binder = LocalBinder()
-
-    inner class LocalBinder : Binder() {
-        fun getService(): MediaForegroundService = this@MediaForegroundService
-    }
-
-    override fun onBind(intent: Intent?): IBinder {
+    override fun onBind(intent: Intent?): IBinder? {
         return binder
     }
 
+
+
     override fun onDestroy() {
         super.onDestroy()
-        mediaSession?.release()
+        mediaSession?.isActive = false // Deactivate the session
+        mediaSession?.release() // Release the session
     }
 }

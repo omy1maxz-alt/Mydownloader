@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
                 MediaForegroundService.ACTION_PAUSE -> binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
                 MediaForegroundService.ACTION_NEXT -> binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button')?.click();", null)
                 MediaForegroundService.ACTION_PREVIOUS -> binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button')?.click();", null)
-                MediaForegroundService.ACTION_STOP -> {
+                MediaForegroundService.ACTION_STOP, MediaForegroundService.ACTION_STOP_SERVICE -> {
                     binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
                     stopPlaybackService()
                 }
