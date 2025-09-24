@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
                 MediaForegroundService.ACTION_PAUSE -> binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
                 MediaForegroundService.ACTION_NEXT -> binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button')?.click();", null)
                 MediaForegroundService.ACTION_PREVIOUS -> binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button')?.click();", null)
-                MediaForegroundService.ACTION_STOP, MediaForegroundService.ACTION_STOP_SERVICE -> {
+                MediaForegroundService.ACTION_STOP -> {
                     binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
                     stopPlaybackService()
                 }
@@ -1132,14 +1132,14 @@ private fun injectMediaStateDetector() {
                     });
 
                     media.addEventListener('error', function(e) {
-                        let errorMsg = 'An unknown error occurred.';
+                        let errorMsg = 'Media error';
                         if (e && e.target && e.target.error) {
                             switch (e.target.error.code) {
                                 case e.target.error.MEDIA_ERR_ABORTED:
-                                    errorMsg = 'Playback aborted by the user.';
+                                    errorMsg = 'Playback aborted.';
                                     break;
                                 case e.target.error.MEDIA_ERR_NETWORK:
-                                    errorMsg = 'A network error caused the media to fail to load.';
+                                    errorMsg = 'A network error caused playback to fail.';
                                     break;
                                 case e.target.error.MEDIA_ERR_DECODE:
                                     errorMsg = 'The media could not be decoded.';
@@ -1147,9 +1147,11 @@ private fun injectMediaStateDetector() {
                                 case e.target.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
                                     errorMsg = 'The media format is not supported.';
                                     break;
+                                default:
+                                    errorMsg = 'An unknown error occurred.';
+                                    break;
                             }
                         }
-                        // Send the detailed error message to the Android interface
                         AndroidMediaState.onError(errorMsg);
                     });
                 });
@@ -1194,14 +1196,13 @@ private fun injectMediaStateDetector() {
     webView.evaluateJavascript(script, null)
 }
 
-    private fun startOrUpdatePlaybackService(currentTime: Float? = null, duration: Float? = null) {
+    private fun startOrUpdatePlaybackService(isProactiveStart: Boolean = false) {
         val intent = Intent(this, MediaForegroundService::class.java).apply {
             putExtra(MediaForegroundService.EXTRA_TITLE, webView.title ?: "Web Video")
             putExtra(MediaForegroundService.EXTRA_IS_PLAYING, isMediaPlaying)
-            currentTime?.let { putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, (it * 1000).toLong()) }
-            duration?.let { putExtra(MediaForegroundService.EXTRA_DURATION, (it * 1000).toLong()) }
-            putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
-            putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
+        }
+        if (isProactiveStart) {
+            intent.action = MediaForegroundService.ACTION_PLAY // Or a custom action
         }
         ContextCompat.startForegroundService(this, intent)
         hasStartedForegroundService = true
@@ -1229,15 +1230,6 @@ private fun injectMediaStateDetector() {
             }
         }
         @JavascriptInterface
-        fun updateMediaPlaybackState(currentTime: Float, duration: Float) {
-            activity.runOnUiThread {
-                if (activity.isAppInBackground && activity.isMediaPlaying) {
-                    activity.startOrUpdatePlaybackService(currentTime, duration)
-                }
-            }
-        }
-
-        @JavascriptInterface
         fun onMediaPlay() {
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPlay called")
@@ -1258,12 +1250,12 @@ private fun injectMediaStateDetector() {
         @JavascriptInterface
         fun onMediaControlsStateChange(hasNext: Boolean, hasPrevious: Boolean) {
             activity.runOnUiThread {
+                android.util.Log.d("MediaStateInterface", "onMediaControlsStateChange: hasNext=$hasNext, hasPrevious=$hasPrevious")
                 activity.hasNextMedia = hasNext
                 activity.hasPreviousMedia = hasPrevious
                 if (activity.hasStartedForegroundService) {
                     activity.startOrUpdatePlaybackService()
                 }
-
             }
         }
 
@@ -1280,15 +1272,11 @@ private fun injectMediaStateDetector() {
         @JavascriptInterface
         fun onError(error: String) {
             activity.runOnUiThread {
-                // Log the error to the console for debugging
-                android.util.Log.e("MediaStateInterface", "Media playback error: $error")
-
+                android.util.Log.e("MediaStateInterface", "Media error: $error")
                 activity.isMediaPlaying = false
                 activity.currentVideoUrl = null
                 activity.stopPlaybackService()
-
-                // The toast message can be more user-friendly
-                Toast.makeText(activity, "A media playback error occurred.", Toast.LENGTH_LONG).show()
+                Toast.makeText(activity, "Media playback error: $error", Toast.LENGTH_LONG).show()
             }
         }
     }

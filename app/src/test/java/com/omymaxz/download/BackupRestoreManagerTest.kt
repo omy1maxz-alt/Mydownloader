@@ -56,8 +56,8 @@ class BackupRestoreManagerTest {
         // When: we clear the data
         appDataPrefs.edit().clear().apply()
         adBlockerPrefs.edit().clear().apply()
-        db.bookmarkDao().deleteAll()
-        db.userScriptDao().deleteAll()
+        db.bookmarkDao().getAll().forEach { db.bookmarkDao().delete(it) }
+        db.userScriptDao().getAllScripts().forEach { db.userScriptDao().deleteById(it.id) }
 
         // And: we restore the backup
         backupRestoreManager.restoreBackup(backupJson)
