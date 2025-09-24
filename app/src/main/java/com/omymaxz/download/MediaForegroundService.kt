@@ -123,11 +123,36 @@ class MediaForegroundService : Service() {
 
         // Always update the service's internal state from the intent
         updateStateFromIntent(intent)
-        // Always update the notification display based on current state
+
+        // Update the media session and notification
+        updatePlaybackState()
+        updateMediaMetadata()
         updateNotification()
 
         // Return START_STICKY to keep the service running until explicitly stopped
         return START_STICKY
+    }
+
+    private fun updatePlaybackState() {
+        val stateBuilder = PlaybackStateCompat.Builder()
+            .setActions(
+                PlaybackStateCompat.ACTION_PLAY or
+                PlaybackStateCompat.ACTION_PAUSE or
+                PlaybackStateCompat.ACTION_PLAY_PAUSE or
+                PlaybackStateCompat.ACTION_STOP or
+                (if (hasPrevious) PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS else 0) or
+                (if (hasNext) PlaybackStateCompat.ACTION_SKIP_TO_NEXT else 0)
+            )
+        val state = if (currentPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
+        stateBuilder.setState(state, currentPosition, 1.0f)
+        mediaSession?.setPlaybackState(stateBuilder.build())
+    }
+
+    private fun updateMediaMetadata() {
+        mediaSession?.setMetadata(MediaMetadataCompat.Builder()
+            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentTitle)
+            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentDuration)
+            .build())
     }
 
     private fun updateStateFromIntent(intent: Intent) {
