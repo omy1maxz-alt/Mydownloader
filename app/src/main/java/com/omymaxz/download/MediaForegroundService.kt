@@ -59,23 +59,28 @@ class MediaForegroundService : Service() {
         mediaSession = MediaSessionCompat(this, "MediaForegroundServiceSession").apply {
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onPlay() {
+                    android.util.Log.d("MediaForegroundService", "MediaSession Callback: onPlay")
                     sendMediaControlBroadcast(ACTION_PLAY)
                 }
 
                 override fun onPause() {
+                    android.util.Log.d("MediaForegroundService", "MediaSession Callback: onPause")
                     sendMediaControlBroadcast(ACTION_PAUSE)
                 }
 
                 // Handle the stop action from the notification swipe/stop button
                 override fun onStop() {
+                    android.util.Log.d("MediaForegroundService", "MediaSession Callback: onStop")
                     sendMediaControlBroadcast(ACTION_STOP_SERVICE) // Use specific action for service stop
                 }
 
                 override fun onSkipToNext() {
+                    android.util.Log.d("MediaForegroundService", "MediaSession Callback: onSkipToNext")
                     sendMediaControlBroadcast(ACTION_NEXT)
                 }
 
                 override fun onSkipToPrevious() {
+                    android.util.Log.d("MediaForegroundService", "MediaSession Callback: onSkipToPrevious")
                     sendMediaControlBroadcast(ACTION_PREVIOUS)
                 }
 
