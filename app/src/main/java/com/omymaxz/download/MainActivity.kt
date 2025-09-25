@@ -90,6 +90,7 @@ class MainActivity : AppCompatActivity() {
     private var isAppInBackground = false
     private var hasStartedForegroundService = false
     private var enabledUserScripts = listOf<UserScript>()
+    private lateinit var redirectLogic: RedirectLogic
     private val suspiciousDomains = setOf(
         "googleads.com", "doubleclick.net", "googlesyndication.com",
         "facebook.com/tr", "amazon-adsystem.com", "adsystem.amazon.com",
@@ -117,6 +118,8 @@ class MainActivity : AppCompatActivity() {
     var isMediaPlaying = false
     private var hasNextMedia: Boolean = false
     private var hasPreviousMedia: Boolean = false
+    private var duration: Double = 0.0
+    private var currentPosition: Long = 0L
     private val historyResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val urlToLoad = result.data?.getStringExtra("URL_TO_LOAD")
@@ -246,6 +249,7 @@ private fun checkBatteryOptimization() {
 
         userscriptInterface = UserscriptInterface(this, webView, lifecycleScope)
         gmApi = GMApi(webView)
+        redirectLogic = RedirectLogic(getSharedPreferences("AdBlocker", Context.MODE_PRIVATE))
         setupWebView(webView)
 
         checkInitialStoragePermissions()
@@ -856,28 +860,15 @@ private fun checkBatteryOptimization() {
                 }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
-                    if (isUrlWhitelisted(url)) {
-                        return false
-                    }
-                    if (url.contains("perchance.org")) {
-                        openInCustomTab(url)
+                    if (redirectLogic.shouldOverrideUrlLoading(request, view?.url)) {
+                        if (url.contains("perchance.org")) {
+                            openInCustomTab(url)
+                        } else {
+                            showBlockedNavigationDialog(url)
+                        }
                         return true
                     }
-                    val currentTime = System.currentTimeMillis()
-                    if (isAdDomain(url) || isInBlockedList(url) || (!isUrlWhitelisted(url) && isSuspiciousRedirectPattern(url, currentTime, view?.url, lastNavigationTime, navigationCount))) {
-                        showBlockedNavigationDialog(url)
-                        return true
-                    }
-                    lastNavigationTime = currentTime
-                    navigationCount++
                     return false
-                }
-                private fun isSuspiciousRedirectPattern(url: String, currentTime: Long, previousUrl: String?, lastNavTime: Long, navCount: Int): Boolean {
-                    val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
-                    if (!settingsPrefs.getBoolean("BLOCK_REDIRECTS", true)) return false
-                    val timeSinceLastNav = currentTime - lastNavTime
-                    val isDifferentHost = Uri.parse(url).host != Uri.parse(previousUrl ?: "").host
-                    return isDifferentHost && (timeSinceLastNav < 1000 && navCount > 0)
                 }
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                     val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
@@ -1101,111 +1092,138 @@ private fun checkBatteryOptimization() {
 private fun injectMediaStateDetector() {
     val script = """
         javascript:(function() {
-            function setupMediaMonitoring(context) {
-                if (!context) return;
-                const mediaElements = context.querySelectorAll('video, audio');
-                mediaElements.forEach(function(media, index) {
-                    if (media.hasAttribute('data-monitored')) return;
-                    media.setAttribute('data-monitored', 'true');
+            'use strict';
+            let lastInformedState = {
+                title: '',
+                isPlaying: false,
+                currentTime: 0,
+                duration: 0,
+                hasNext: false,
+                hasPrevious: false
+            };
 
-                    media.addEventListener('loadstart', function() {
-                        AndroidMediaState.onVideoFound(media.src || media.currentSrc || window.location.href);
-                    });
-
-                    media.addEventListener('play', function() {
-                        AndroidMediaState.onMediaPlay();
-                        media.setAttribute('data-was-playing', 'true');
-                    });
-
-                    media.addEventListener('pause', function() {
-                        AndroidMediaState.onMediaPause();
-                        media.removeAttribute('data-was-playing');
-                    });
-
-                    media.addEventListener('ended', function() {
-                        AndroidMediaState.onMediaEnded();
-                        media.removeAttribute('data-was-playing');
-                    });
-
-                    media.addEventListener('timeupdate', function() {
-                        AndroidMediaState.updateMediaPlaybackState(media.currentTime, media.duration);
-                    });
-
-                    media.addEventListener('error', function(e) {
-                        let errorMsg = 'Media error';
-                        if (e && e.target && e.target.error) {
-                            switch (e.target.error.code) {
-                                case e.target.error.MEDIA_ERR_ABORTED:
-                                    errorMsg = 'Playback aborted.';
-                                    break;
-                                case e.target.error.MEDIA_ERR_NETWORK:
-                                    errorMsg = 'A network error caused playback to fail.';
-                                    break;
-                                case e.target.error.MEDIA_ERR_DECODE:
-                                    errorMsg = 'The media could not be decoded.';
-                                    break;
-                                case e.target.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                                    errorMsg = 'The media format is not supported.';
-                                    break;
-                                default:
-                                    errorMsg = 'An unknown error occurred.';
-                                    break;
-                            }
-                        }
-                        AndroidMediaState.onError(errorMsg);
-                    });
-                });
+            function findActiveMedia() {
+                let allMedia = Array.from(document.querySelectorAll('video, audio'));
+                // Prioritize media that is not paused and has progressed
+                let activeMedia = allMedia.find(media => !media.paused && media.currentTime > 0);
+                // Fallback to any playing media, or media that was playing, or just the first media element
+                if (!activeMedia) {
+                    activeMedia = allMedia.find(media => !media.paused) || allMedia.find(media => media.hasAttribute('data-was-playing')) || allMedia[0];
+                }
+                return activeMedia;
             }
 
-            function checkMediaControls() {
+            function collectMediaState() {
+                const media = findActiveMedia();
+
+                // If no media is found, and we previously thought something was playing, send a final 'paused' state
+                if (!media) {
+                    if (lastInformedState.isPlaying) {
+                        lastInformedState.isPlaying = false; // Prevent re-sending
+                        AndroidMediaState.updateMediaPlaybackState(
+                            lastInformedState.title, false, lastInformedState.currentTime, lastInformedState.duration, false, false
+                        );
+                    }
+                    return;
+                }
+
                 const nextButton = document.querySelector('.ytp-next-button');
                 const prevButton = document.querySelector('.ytp-prev-button');
                 const hasNext = nextButton ? !nextButton.hasAttribute('disabled') : false;
                 const hasPrev = prevButton ? !prevButton.hasAttribute('disabled') : false;
-                AndroidMediaState.onMediaControlsStateChange(hasNext, hasPrev);
+
+                // Create a snapshot of the current state
+                const currentState = {
+                    title: document.title,
+                    isPlaying: !media.paused,
+                    currentTime: media.currentTime || 0,
+                    duration: media.duration || 0,
+                    hasNext: hasNext,
+                    hasPrevious: hasPrev
+                };
+
+                // Send update only if something has changed
+                if (JSON.stringify(currentState) !== JSON.stringify(lastInformedState)) {
+                    AndroidMediaState.updateMediaPlaybackState(
+                        currentState.title,
+                        currentState.isPlaying,
+                        currentState.currentTime,
+                        currentState.duration,
+                        currentState.hasNext,
+                        currentState.hasPrevious
+                    );
+                    lastInformedState = currentState;
+                }
+
+                // Keep track of which video was playing to resume correctly
+                if (currentState.isPlaying) {
+                     media.setAttribute('data-was-playing', 'true');
+                } else {
+                     media.removeAttribute('data-was-playing');
+                }
             }
 
-            function monitorAllFrames() {
-                setupMediaMonitoring(document);
+            // This function adds listeners to a media element to trigger state collection on events
+            function setupMediaListeners(media) {
+                if (media.hasAttribute('data-listeners-attached')) return;
+                media.setAttribute('data-listeners-attached', 'true');
+
+                ['play', 'pause', 'ended', 'timeupdate', 'loadstart', 'emptied'].forEach(event => {
+                    media.addEventListener(event, collectMediaState, true); // Use capture to get events early
+                });
+            }
+
+            // This function finds all media elements on the page and in iframes
+            function discoverMedia() {
                 try {
+                    document.querySelectorAll('video, audio').forEach(setupMediaListeners);
                     for (const frame of window.frames) {
                         try {
-                            setupMediaMonitoring(frame.document);
-                        } catch (e) { /* Cross-origin frame */ }
+                            frame.document.querySelectorAll('video, audio').forEach(setupMediaListeners);
+                        } catch (e) { /* cross-origin frame, ignore */ }
                     }
-                } catch (e) { /* Error accessing frames */ }
+                } catch (e) { /* general error, ignore */ }
             }
 
-            monitorAllFrames();
-            checkMediaControls();
+            // Run discovery and state collection
+            discoverMedia();
+            setInterval(collectMediaState, 500); // Poll for state changes as a fallback
 
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'childList') {
-                        monitorAllFrames();
-                        checkMediaControls();
-                    }
-                });
-            });
-
+            // Use MutationObserver to detect media elements added to the page later
+            const observer = new MutationObserver(discoverMedia);
             if (document.body) {
                 observer.observe(document.body, { childList: true, subtree: true });
+            } else {
+                // If body is not ready, wait for it
+                window.addEventListener('DOMContentLoaded', () => {
+                    observer.observe(document.body, { childList: true, subtree: true });
+                });
             }
         })();
     """.trimIndent()
     webView.evaluateJavascript(script, null)
 }
 
-    private fun startOrUpdatePlaybackService(isProactiveStart: Boolean = false) {
+    private fun startOrUpdatePlaybackService() {
         val intent = Intent(this, MediaForegroundService::class.java).apply {
-            putExtra(MediaForegroundService.EXTRA_TITLE, webView.title ?: "Web Video")
+            putExtra(MediaForegroundService.EXTRA_TITLE, currentVideoUrl ?: "Web Video")
             putExtra(MediaForegroundService.EXTRA_IS_PLAYING, isMediaPlaying)
+            putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, currentPosition)
+            putExtra(MediaForegroundService.EXTRA_DURATION, (duration * 1000).toLong())
+            putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
+            putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
         }
-        if (isProactiveStart) {
-            intent.action = MediaForegroundService.ACTION_PLAY // Or a custom action
+
+        try {
+            if (!hasStartedForegroundService) {
+                ContextCompat.startForegroundService(this, intent)
+                hasStartedForegroundService = true
+            } else {
+                startService(intent)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error starting foreground service: ${e.message}", e)
         }
-        ContextCompat.startForegroundService(this, intent)
-        hasStartedForegroundService = true
     }
 
     fun stopPlaybackService() {
@@ -1220,6 +1238,29 @@ private fun injectMediaStateDetector() {
         webView.loadUrl(resumeScript)
     }
     inner class MediaStateInterface(private val activity: MainActivity) {
+        @JavascriptInterface
+        fun updateMediaPlaybackState(
+            title: String,
+            isPlaying: Boolean,
+            currentPosition: Double,
+            duration: Double,
+            hasNext: Boolean,
+            hasPrevious: Boolean
+        ) {
+            activity.runOnUiThread {
+                activity.currentVideoUrl = title
+                activity.isMediaPlaying = isPlaying
+                activity.currentPosition = (currentPosition * 1000).toLong()
+                activity.duration = duration
+                activity.hasNextMedia = hasNext
+                activity.hasPreviousMedia = hasPrevious
+
+                if (activity.hasStartedForegroundService || isPlaying) {
+                    activity.startOrUpdatePlaybackService()
+                }
+            }
+        }
+
         @JavascriptInterface
         fun onVideoFound(videoUrl: String) {
             activity.runOnUiThread {
@@ -1244,18 +1285,6 @@ private fun injectMediaStateDetector() {
                 android.util.Log.d("MediaStateInterface", "onMediaPause called")
                 activity.isMediaPlaying = false
                 activity.startOrUpdatePlaybackService()
-            }
-        }
-
-        @JavascriptInterface
-        fun onMediaControlsStateChange(hasNext: Boolean, hasPrevious: Boolean) {
-            activity.runOnUiThread {
-                android.util.Log.d("MediaStateInterface", "onMediaControlsStateChange: hasNext=$hasNext, hasPrevious=$hasPrevious")
-                activity.hasNextMedia = hasNext
-                activity.hasPreviousMedia = hasPrevious
-                if (activity.hasStartedForegroundService) {
-                    activity.startOrUpdatePlaybackService()
-                }
             }
         }
 
