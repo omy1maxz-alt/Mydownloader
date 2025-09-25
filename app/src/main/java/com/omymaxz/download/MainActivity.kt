@@ -131,21 +131,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val ACTION_MEDIA_CONTROL = "com.omymaxz.download.ACTION_MEDIA_CONTROL"
-        const val EXTRA_COMMAND = "com.omymaxz.download.EXTRA_COMMAND"
+        const val ACTION_MEDIA_CONTROL = "com.omymaxz.download.MEDIA_CONTROL"
+        const val EXTRA_COMMAND = "command"
     }
 
     private val mediaControlReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            val command = intent?.getStringExtra(EXTRA_COMMAND)
-            when (command) {
-                MediaForegroundService.ACTION_PLAY -> binding.webView.evaluateJavascript("document.querySelector('video')?.play();", null)
-                MediaForegroundService.ACTION_PAUSE -> binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-                MediaForegroundService.ACTION_NEXT -> binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button')?.click();", null)
-                MediaForegroundService.ACTION_PREVIOUS -> binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button')?.click();", null)
-                MediaForegroundService.ACTION_STOP -> {
-                    binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-                    stopPlaybackService()
+            val action = intent?.getStringExtra(EXTRA_COMMAND)
+            if (action != null) {
+                android.util.Log.d("MainActivity", "Received media control broadcast: $action")
+                when (action) {
+                    MediaForegroundService.ACTION_PLAY -> {
+                        binding.webView.evaluateJavascript("document.querySelector('video')?.play();", null)
+                        isMediaPlaying = true
+                        startOrUpdatePlaybackService() // Update notification state
+                    }
+                    MediaForegroundService.ACTION_PAUSE -> {
+                        binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+                        isMediaPlaying = false
+                        startOrUpdatePlaybackService() // Update notification state
+                    }
+                    MediaForegroundService.ACTION_NEXT -> {
+                        // Example for YouTube-like buttons, adjust selector as needed
+                        binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button')?.click();", null)
+                    }
+                    MediaForegroundService.ACTION_PREVIOUS -> {
+                         // Example for YouTube-like buttons, adjust selector as needed
+                        binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button')?.click();", null)
+                    }
+                    MediaForegroundService.ACTION_STOP_SERVICE -> { // Use the specific stop action
+                        binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+                        stopPlaybackService() // This should stop the service
+                        isMediaPlaying = false // Reset state
+                    }
                 }
             }
         }
@@ -356,6 +374,18 @@ private fun checkBatteryOptimization() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(mediaControlReceiver)
+        if (isFinishing && WebViewManager.webView == null) {
+            webView.destroy()
+        }
+        if (hasStartedForegroundService) {
+            stopPlaybackService()
+            hasStartedForegroundService = false
+        }
+    }
+
     override fun onStop() {
         super.onStop()
 
@@ -376,8 +406,6 @@ private fun checkBatteryOptimization() {
             serviceBound = false
             mediaService = null
         }
-
-        unregisterReceiver(mediaControlReceiver)
 
         if (webViewServiceBound) {
             unbindService(webViewServiceConnection)
@@ -425,17 +453,6 @@ private fun checkBatteryOptimization() {
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed to save tabs state: ${e.message}")
             }
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (isFinishing && WebViewManager.webView == null) {
-            webView.destroy()
-        }
-        if (hasStartedForegroundService) {
-            stopPlaybackService()
-            hasStartedForegroundService = false
         }
     }
 
