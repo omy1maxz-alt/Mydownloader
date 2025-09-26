@@ -14,5 +14,6 @@ data class Tab(
     var lastAccessTime: Long = System.currentTimeMillis(),
     // Add content caching
     var cachedHtml: String? = null,
-    var cacheTimestamp: Long = 0
+    var cacheTimestamp: Long = 0,
+    var historyStack: MutableList<String> = mutableListOf()
 )

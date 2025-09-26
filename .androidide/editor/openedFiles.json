@@ -5,13 +5,13 @@
       "selection": {
         "end": {
           "column": 1,
-          "index": 6553,
-          "line": 171
+          "index": 10064,
+          "line": 262
         },
         "start": {
-          "column": 1,
-          "index": 6553,
-          "line": 171
+          "column": 0,
+          "index": 0,
+          "line": 0
         }
       }
     },
@@ -19,17 +19,47 @@
       "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt",
       "selection": {
         "end": {
-          "column": 0,
-          "index": 91642,
-          "line": 2088
+          "column": 1,
+          "index": 94260,
+          "line": 2164
         },
         "start": {
           "column": 0,
-          "index": 91642,
-          "line": 2088
+          "index": 0,
+          "line": 0
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/AndroidManifest.xml",
+      "selection": {
+        "end": {
+          "column": 11,
+          "index": 4423,
+          "line": 103
+        },
+        "start": {
+          "column": 11,
+          "index": 4423,
+          "line": 103
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/Tab.kt",
+      "selection": {
+        "end": {
+          "column": 1,
+          "index": 565,
+          "line": 18
+        },
+        "start": {
+          "column": 1,
+          "index": 565,
+          "line": 18
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/AndroidManifest.xml"
 }

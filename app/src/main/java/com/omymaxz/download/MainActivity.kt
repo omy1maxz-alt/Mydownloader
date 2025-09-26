@@ -144,25 +144,25 @@ class MainActivity : AppCompatActivity() {
                     MediaForegroundService.ACTION_PLAY -> {
                         binding.webView.evaluateJavascript("document.querySelector('video')?.play();", null)
                         isMediaPlaying = true
-                        startOrUpdatePlaybackService() // Update notification state
+                        startOrUpdatePlaybackService() 
                     }
                     MediaForegroundService.ACTION_PAUSE -> {
                         binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
                         isMediaPlaying = false
-                        startOrUpdatePlaybackService() // Update notification state
+                        startOrUpdatePlaybackService() 
                     }
                     MediaForegroundService.ACTION_NEXT -> {
-                        // Example for YouTube-like buttons, adjust selector as needed
-                        binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button')?.click();", null)
+                        
+                        binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button, [data-player-next-button], [aria-label=\"Next video\"], [aria-label=\"Next\"]')?.click();", null)
                     }
                     MediaForegroundService.ACTION_PREVIOUS -> {
-                         // Example for YouTube-like buttons, adjust selector as needed
-                        binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button')?.click();", null)
+                         
+                        binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button, [data-player-prev-button], [aria-label=\"Previous video\"], [aria-label=\"Previous\"]')?.click();", null)
                     }
-                    MediaForegroundService.ACTION_STOP_SERVICE -> { // Use the specific stop action
+                    MediaForegroundService.ACTION_STOP_SERVICE -> { 
                         binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
-                        stopPlaybackService() // This should stop the service
-                        isMediaPlaying = false // Reset state
+                        stopPlaybackService() 
+                        isMediaPlaying = false 
                     }
                 }
             }
@@ -458,9 +458,17 @@ private fun checkBatteryOptimization() {
 
     private fun setupToolbarNavButtons() {
         binding.backButton.setOnClickListener {
-            if (webView.canGoBack()) {
-                webView.goBack()
+            if (currentTabIndex in tabs.indices) {
+                val tab = tabs[currentTabIndex]
+                if (tab.historyStack.size > 1) {
+                    tab.historyStack.removeAt(tab.historyStack.size - 1)
+                    val prevUrl = tab.historyStack.last()
+                    webView.loadUrl(prevUrl)
+                } else if (webView.canGoBack()) {
+                    webView.goBack()
+                }
             }
+            updateToolbarNavButtonState()
         }
         binding.forwardButton.setOnClickListener {
             if (webView.canGoForward()) {
@@ -473,9 +481,10 @@ private fun checkBatteryOptimization() {
     }
 
     private fun updateToolbarNavButtonState() {
-        val canGoBack = webView.canGoBack()
+        val canGoBack = (currentTabIndex in tabs.indices && tabs[currentTabIndex].historyStack.size > 1) || webView.canGoBack()
         binding.backButton.isEnabled = canGoBack
         binding.backButton.alpha = if (canGoBack) 1.0f else 0.5f
+
         val canGoForward = webView.canGoForward()
         binding.forwardButton.isEnabled = canGoForward
         binding.forwardButton.alpha = if (canGoForward) 1.0f else 0.5f
@@ -590,7 +599,11 @@ private fun checkBatteryOptimization() {
         binding.urlEditTextToolbar.setText(tab.url)
         
         if (tab.url != null) {
-            webView.loadUrl(tab.url!!)
+            if (tab.historyStack.isNotEmpty()) {
+                webView.loadUrl(tab.historyStack.last())
+            } else {
+                webView.loadUrl(tab.url!!)
+            }
             showWebView()
             if (tab.state != null) {
                 try {
@@ -630,6 +643,7 @@ private fun checkBatteryOptimization() {
             if (currentTabIndex in tabs.indices) {
                 tabs[currentTabIndex].url = null
                 tabs[currentTabIndex].state = null
+                tabs[currentTabIndex].historyStack.clear()
             }
             showStartPage()
         }
@@ -732,6 +746,11 @@ private fun checkBatteryOptimization() {
             fullscreenView = null
             customViewCallback?.onCustomViewHidden()
             requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        } else if (currentTabIndex in tabs.indices && tabs[currentTabIndex].historyStack.size > 1) {
+            tabs[currentTabIndex].historyStack.removeAt(tabs[currentTabIndex].historyStack.size - 1)
+            val prevUrl = tabs[currentTabIndex].historyStack.last()
+            webView.loadUrl(prevUrl)
+            updateToolbarNavButtonState()
         } else if (webView.canGoBack()) {
             webView.goBack()
         } else if (webView.visibility == View.VISIBLE) {
@@ -855,6 +874,13 @@ private fun checkBatteryOptimization() {
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
+                    if (currentTabIndex in tabs.indices) {
+                        val tab = tabs[currentTabIndex]
+                        if (tab.historyStack.isEmpty() || tab.historyStack.last() != url) {
+                            tab.historyStack.add(url!!)
+                        }
+                    }
+                    updateToolbarNavButtonState()
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
@@ -1121,9 +1147,9 @@ private fun injectMediaStateDetector() {
 
             function findActiveMedia() {
                 let allMedia = Array.from(document.querySelectorAll('video, audio'));
-                // Prioritize media that is not paused and has progressed
+                
                 let activeMedia = allMedia.find(media => !media.paused && media.currentTime > 0);
-                // Fallback to any playing media, or media that was playing, or just the first media element
+                
                 if (!activeMedia) {
                     activeMedia = allMedia.find(media => !media.paused) || allMedia.find(media => media.hasAttribute('data-was-playing')) || allMedia[0];
                 }
@@ -1133,10 +1159,10 @@ private fun injectMediaStateDetector() {
             function collectMediaState() {
                 const media = findActiveMedia();
 
-                // If no media is found, and we previously thought something was playing, send a final 'paused' state
+                
                 if (!media) {
                     if (lastInformedState.isPlaying) {
-                        lastInformedState.isPlaying = false; // Prevent re-sending
+                        lastInformedState.isPlaying = false; 
                         AndroidMediaState.updateMediaPlaybackState(
                             lastInformedState.title, false, lastInformedState.currentTime, lastInformedState.duration, false, false
                         );
@@ -1144,12 +1170,13 @@ private fun injectMediaStateDetector() {
                     return;
                 }
 
-                const nextButton = document.querySelector('.ytp-next-button');
-                const prevButton = document.querySelector('.ytp-prev-button');
+                const nextButton = document.querySelector('.ytp-next-button, [data-player-next-button], [aria-label="Next video"], [aria-label="Next"]');
+                const prevButton = document.querySelector('.ytp-prev-button, [data-player-prev-button], [aria-label="Previous video"], [aria-label="Previous"]');
                 const hasNext = nextButton ? !nextButton.hasAttribute('disabled') : false;
                 const hasPrev = prevButton ? !prevButton.hasAttribute('disabled') : false;
 
-                // Create a snapshot of the current state
+
+                
                 const currentState = {
                     title: document.title,
                     isPlaying: !media.paused,
@@ -1159,7 +1186,7 @@ private fun injectMediaStateDetector() {
                     hasPrevious: hasPrev
                 };
 
-                // Send update only if something has changed
+                
                 if (JSON.stringify(currentState) !== JSON.stringify(lastInformedState)) {
                     AndroidMediaState.updateMediaPlaybackState(
                         currentState.title,
@@ -1172,7 +1199,7 @@ private fun injectMediaStateDetector() {
                     lastInformedState = currentState;
                 }
 
-                // Keep track of which video was playing to resume correctly
+                
                 if (currentState.isPlaying) {
                      media.setAttribute('data-was-playing', 'true');
                 } else {
@@ -1180,38 +1207,38 @@ private fun injectMediaStateDetector() {
                 }
             }
 
-            // This function adds listeners to a media element to trigger state collection on events
+            
             function setupMediaListeners(media) {
                 if (media.hasAttribute('data-listeners-attached')) return;
                 media.setAttribute('data-listeners-attached', 'true');
 
                 ['play', 'pause', 'ended', 'timeupdate', 'loadstart', 'emptied'].forEach(event => {
-                    media.addEventListener(event, collectMediaState, true); // Use capture to get events early
+                    media.addEventListener(event, collectMediaState, true); 
                 });
             }
 
-            // This function finds all media elements on the page and in iframes
+            
             function discoverMedia() {
                 try {
                     document.querySelectorAll('video, audio').forEach(setupMediaListeners);
                     for (const frame of window.frames) {
                         try {
                             frame.document.querySelectorAll('video, audio').forEach(setupMediaListeners);
-                        } catch (e) { /* cross-origin frame, ignore */ }
+                        } catch (e) { }
                     }
-                } catch (e) { /* general error, ignore */ }
+                } catch (e) { }
             }
 
-            // Run discovery and state collection
+            
             discoverMedia();
-            setInterval(collectMediaState, 500); // Poll for state changes as a fallback
+            setInterval(collectMediaState, 500); 
 
-            // Use MutationObserver to detect media elements added to the page later
+            
             const observer = new MutationObserver(discoverMedia);
             if (document.body) {
                 observer.observe(document.body, { childList: true, subtree: true });
             } else {
-                // If body is not ready, wait for it
+                
                 window.addEventListener('DOMContentLoaded', () => {
                     observer.observe(document.body, { childList: true, subtree: true });
                 });
@@ -1411,7 +1438,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun estimateFileSize(url: String, category: MediaCategory): String { return "Unknown" }
     private fun extractLanguageFromUrl(url: String): String? { return null }
     private fun extractYouTubeVideoId(url: String): String {
-        val patterns = listOf("(?<=watch\\?v=)[^&]+", "(?<=youtu.be/)[^?]+", "(?<=embed/)[^?]+", "(?<=v/)[^?]+")
+        val patterns = listOf("(?<=watch\\?v=)[^&]+", "(?<=youtu.be/)[^?]+", "(?<=embed/)[^?]+", "(?<=v/)[^?]+]")
         for (pattern in patterns) {
             val match = Regex(pattern).find(url)
             if (match != null) return match.value.take(11)
@@ -2024,10 +2051,10 @@ private fun showUserAgentDialog() {
         .setItems(userAgents) { _, which ->
             val newUserAgent: String
             when (which) {
-               1, 2 -> { // Desktop Modes
+               1, 2 -> { 
     isDesktopMode = true
     settings.useWideViewPort = true
-    settings.loadWithOverviewMode = true  // ENABLE OVERVIEW MODE FOR DESKTOP
+    settings.loadWithOverviewMode = true  
     settings.setSupportZoom(true)
     settings.builtInZoomControls = true
     settings.displayZoomControls = false
@@ -2039,7 +2066,7 @@ private fun showUserAgentDialog() {
                         "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
                     }
                 }
-                else -> { // Default Mobile
+                else -> { 
                     isDesktopMode = false
                     settings.useWideViewPort = false
                     settings.loadWithOverviewMode = false
@@ -2059,7 +2086,7 @@ if (isDesktopMode) {
     }, 100)
 }
             webView.reload()
-            webView.requestLayout() // Force a re-layout
+            webView.requestLayout() 
 
             Toast.makeText(this, "Switched to ${userAgents[which]}", Toast.LENGTH_SHORT).show()
         }
