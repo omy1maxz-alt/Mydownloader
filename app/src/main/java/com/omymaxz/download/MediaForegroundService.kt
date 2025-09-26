@@ -103,7 +103,7 @@ class MediaForegroundService : Service() {
                 .build())
 
             // IMPORTANT: Activate the session here
-            isActive = true
+            setActive(true)
         }
     }
 
