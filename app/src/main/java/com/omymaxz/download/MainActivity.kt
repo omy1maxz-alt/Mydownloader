@@ -1188,8 +1188,6 @@ private fun injectMediaStateDetector() {
 
                     const nextSelectors = ['[aria-label*="Next" i]', '[title*="Next" i]', '.next-button', '.skip-button'];
                     const prevSelectors = ['[aria-label*="Previous" i]', '[title*="Previous" i]', '.previous-button', '.back-button'];
-                    const playSelectors = ['[aria-label*="Play" i]', '[title*="Play" i]'];
-                    const pauseSelectors = ['[aria-label*="Pause" i]', '[title*="Pause" i]'];
 
                     const nextButton = this.findButton(nextSelectors);
                     const prevButton = this.findButton(prevSelectors);
@@ -1238,16 +1236,24 @@ private fun injectMediaStateDetector() {
                 },
 
                 init: function() {
-                    this.setupListeners(document);
-                    try {
-                        for (const frame of window.frames) {
-                            if(frame.document) this.setupListeners(frame.document);
-                        }
-                    } catch(e) {}
-
+                    this.discoverMedia(document);
                     setInterval(() => this.collectState(), 500);
 
-                    const observer = new MutationObserver(() => this.init());
+                    const observer = new MutationObserver((mutations) => {
+                        for (const mutation of mutations) {
+                            if (mutation.type === 'childList') {
+                                mutation.addedNodes.forEach(node => {
+                                    if (node.nodeType === Node.ELEMENT_NODE) {
+                                        if (node.matches('video, audio')) {
+                                            this.setupListeners(node);
+                                        }
+                                        node.querySelectorAll('video, audio').forEach(el => this.setupListeners(el));
+                                    }
+                                });
+                            }
+                        }
+                    });
+
                     window.addEventListener('DOMContentLoaded', () => {
                         if (document.body) {
                            observer.observe(document.body, { childList: true, subtree: true });
@@ -1255,9 +1261,22 @@ private fun injectMediaStateDetector() {
                     });
                 },
                 
-                setupListeners: function(doc) {
+                discoverMedia: function(doc) {
+                    try {
+                        doc.querySelectorAll('video, audio').forEach(el => this.setupListeners(el));
+                        for (const frame of window.frames) {
+                            if (frame.document) {
+                                frame.document.querySelectorAll('video, audio').forEach(el => this.setupListeners(el));
+                            }
+                        }
+                    } catch(e) {}
+                },
+
+                setupListeners: function(element) {
+                    if (element.dataset.androidListenersAttached) return;
+                    element.dataset.androidListenersAttached = 'true';
                     ['play', 'pause', 'ended', 'timeupdate', 'loadstart', 'emptied', 'volumechange'].forEach(event => {
-                        doc.addEventListener(event, () => this.collectState(), { capture: true, passive: true });
+                        element.addEventListener(event, () => this.collectState(), { capture: true, passive: true });
                     });
                 }
             };
