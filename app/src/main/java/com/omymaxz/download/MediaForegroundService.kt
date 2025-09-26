@@ -113,6 +113,10 @@ class MediaForegroundService : Service() {
             return START_NOT_STICKY
         }
 
+        // Ensure session exists and show notification immediately to avoid FGS timeout
+        if (mediaSession == null) onCreate()
+        updateNotification()
+
         val action = intent.action
         android.util.Log.d("MediaForegroundService", "onStartCommand called with action: $action")
 
