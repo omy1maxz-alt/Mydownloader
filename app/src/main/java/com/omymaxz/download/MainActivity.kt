@@ -115,6 +115,7 @@ class MainActivity : AppCompatActivity() {
     private var serviceBound = false
     private var webViewService: WebViewForegroundService? = null
     private var webViewServiceBound = false
+    private var currentMediaTitle: String? = null
     var isMediaPlaying = false
     private var hasNextMedia: Boolean = false
     private var hasPreviousMedia: Boolean = false
@@ -142,22 +143,54 @@ class MainActivity : AppCompatActivity() {
                 android.util.Log.d("MainActivity", "Received media control broadcast: $action")
                 when (action) {
                     MediaForegroundService.ACTION_PLAY -> {
-                        binding.webView.evaluateJavascript("document.querySelector('video')?.play();", null)
+                        val script = "document.querySelector('video, audio').play();"
+                        binding.webView.evaluateJavascript(script, null)
                         isMediaPlaying = true
-                        startOrUpdatePlaybackService() 
+                        startOrUpdatePlaybackService()
                     }
                     MediaForegroundService.ACTION_PAUSE -> {
-                        binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
+                        val script = "document.querySelector('video, audio').pause();"
+                        binding.webView.evaluateJavascript(script, null)
                         isMediaPlaying = false
-                        startOrUpdatePlaybackService() 
+                        startOrUpdatePlaybackService()
                     }
                     MediaForegroundService.ACTION_NEXT -> {
-                        
-                        binding.webView.evaluateJavascript("document.querySelector('.ytp-next-button, [data-player-next-button], [aria-label=\"Next video\"], [aria-label=\"Next\"]')?.click();", null)
+                        val script = """
+                            (function() {
+                                const selectors = [
+                                    '[aria-label*="Next"], [aria-label*="next"], [title*="Next"], [title*="next"]',
+                                    '.next-button', '.skip-button', '.player-next', '.media-next',
+                                    'button[class*="next"], div[class*="next"]'
+                                ];
+                                for (const selector of selectors) {
+                                    const button = document.querySelector(selector);
+                                    if (button) {
+                                        button.click();
+                                        return;
+                                    }
+                                }
+                            })();
+                        """
+                        binding.webView.evaluateJavascript(script, null)
                     }
                     MediaForegroundService.ACTION_PREVIOUS -> {
-                         
-                        binding.webView.evaluateJavascript("document.querySelector('.ytp-prev-button, [data-player-prev-button], [aria-label=\"Previous video\"], [aria-label=\"Previous\"]')?.click();", null)
+                        val script = """
+                            (function() {
+                                const selectors = [
+                                    '[aria-label*="Previous"], [aria-label*="previous"], [title*="Previous"], [title*="previous"]',
+                                    '.previous-button', '.back-button', '.player-prev', '.media-prev',
+                                    'button[class*="prev"], div[class*="prev"]'
+                                ];
+                                for (const selector of selectors) {
+                                    const button = document.querySelector(selector);
+                                    if (button) {
+                                        button.click();
+                                        return;
+                                    }
+                                }
+                            })();
+                        """
+                        binding.webView.evaluateJavascript(script, null)
                     }
                     MediaForegroundService.ACTION_STOP_SERVICE -> { 
                         binding.webView.evaluateJavascript("document.querySelector('video')?.pause();", null)
@@ -1136,49 +1169,91 @@ private fun injectMediaStateDetector() {
     val script = """
         javascript:(function() {
             'use strict';
-            let lastInformedState = {
-                title: '',
-                isPlaying: false,
-                currentTime: 0,
-                duration: 0,
-                hasNext: false,
-                hasPrevious: false
-            };
+            if (window.mediaStateDetectorAttached) {
+                return;
+            }
+            window.mediaStateDetectorAttached = true;
+            let lastInformedState = {};
 
-            function findActiveMedia() {
-                let allMedia = Array.from(document.querySelectorAll('video, audio'));
+            function findActiveMedia(doc) {
+                let allMedia = Array.from(doc.querySelectorAll('video, audio'));
+                let activeMedia = allMedia.find(media => !media.paused && media.currentTime > 0 && !media.muted);
+                if (activeMedia) return activeMedia;
+
+                let playingMedia = allMedia.find(media => !media.paused && !media.muted);
+                if (playingMedia) return playingMedia;
                 
-                let activeMedia = allMedia.find(media => !media.paused && media.currentTime > 0);
-                
-                if (!activeMedia) {
-                    activeMedia = allMedia.find(media => !media.paused) || allMedia.find(media => media.hasAttribute('data-was-playing')) || allMedia[0];
+                let longestMedia = allMedia.sort((a, b) => (b.duration || 0) - (a.duration || 0))[0];
+                return longestMedia || null;
+            }
+
+            function isElementVisible(el) {
+                if (!el) return false;
+                const rect = el.getBoundingClientRect();
+                return (
+                    rect.top >= 0 &&
+                    rect.left >= 0 &&
+                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                );
+            }
+
+            function findButton(doc, selectors) {
+                for (const selector of selectors) {
+                    try {
+                        const buttons = doc.querySelectorAll(selector);
+                        for (const button of buttons) {
+                            if (isElementVisible(button)) return button;
+                        }
+                        if (buttons.length > 0) return buttons[0];
+                    } catch (e) {}
                 }
-                return activeMedia;
+                return null;
             }
 
             function collectMediaState() {
-                const media = findActiveMedia();
-
+                let targetDocument = document;
+                let media = findActiveMedia(targetDocument);
                 
                 if (!media) {
+                    try {
+                        for (const frame of window.frames) {
+                            media = findActiveMedia(frame.document);
+                            if (media) {
+                                targetDocument = frame.document;
+                                break;
+                            }
+                        }
+                    } catch(e) {}
+                }
+
+                if (!media) {
                     if (lastInformedState.isPlaying) {
-                        lastInformedState.isPlaying = false; 
-                        AndroidMediaState.updateMediaPlaybackState(
-                            lastInformedState.title, false, lastInformedState.currentTime, lastInformedState.duration, false, false
-                        );
+                        AndroidMediaState.updateMediaPlaybackState(document.title, false, 0, 0, false, false);
+                        lastInformedState = { isPlaying: false };
                     }
                     return;
                 }
 
-                const nextButton = document.querySelector('.ytp-next-button, [data-player-next-button], [aria-label="Next video"], [aria-label="Next"]');
-                const prevButton = document.querySelector('.ytp-prev-button, [data-player-prev-button], [aria-label="Previous video"], [aria-label="Previous"]');
-                const hasNext = nextButton ? !nextButton.hasAttribute('disabled') : false;
-                const hasPrev = prevButton ? !prevButton.hasAttribute('disabled') : false;
+                const commonNextSelectors = [
+                    '[aria-label*="Next"], [aria-label*="next"], [title*="Next"], [title*="next"]',
+                    '.next-button', '.skip-button', '.player-next', '.media-next',
+                    'button[class*="next"], div[class*="next"]'
+                ];
+                const commonPrevSelectors = [
+                    '[aria-label*="Previous"], [aria-label*="previous"], [title*="Previous"], [title*="previous"]',
+                    '.previous-button', '.back-button', '.player-prev', '.media-prev',
+                    'button[class*="prev"], div[class*="prev"]'
+                ];
 
-
+                const nextButton = findButton(targetDocument, commonNextSelectors);
+                const prevButton = findButton(targetDocument, commonPrevSelectors);
                 
+                const hasNext = nextButton ? !nextButton.disabled : false;
+                const hasPrev = prevButton ? !prevButton.disabled : false;
+
                 const currentState = {
-                    title: document.title,
+                    title: targetDocument.title || document.title,
                     isPlaying: !media.paused,
                     currentTime: media.currentTime || 0,
                     duration: media.duration || 0,
@@ -1186,7 +1261,6 @@ private fun injectMediaStateDetector() {
                     hasPrevious: hasPrev
                 };
 
-                
                 if (JSON.stringify(currentState) !== JSON.stringify(lastInformedState)) {
                     AndroidMediaState.updateMediaPlaybackState(
                         currentState.title,
@@ -1198,59 +1272,43 @@ private fun injectMediaStateDetector() {
                     );
                     lastInformedState = currentState;
                 }
-
-                
-                if (currentState.isPlaying) {
-                     media.setAttribute('data-was-playing', 'true');
-                } else {
-                     media.removeAttribute('data-was-playing');
-                }
             }
-
             
-            function setupMediaListeners(media) {
-                if (media.hasAttribute('data-listeners-attached')) return;
-                media.setAttribute('data-listeners-attached', 'true');
-
-                ['play', 'pause', 'ended', 'timeupdate', 'loadstart', 'emptied'].forEach(event => {
-                    media.addEventListener(event, collectMediaState, true); 
+            function setupListeners(doc) {
+                 ['play', 'pause', 'ended', 'timeupdate', 'loadstart', 'emptied'].forEach(event => {
+                    doc.addEventListener(event, collectMediaState, { capture: true, passive: true });
                 });
             }
 
-            
             function discoverMedia() {
                 try {
-                    document.querySelectorAll('video, audio').forEach(setupMediaListeners);
+                    setupListeners(document);
                     for (const frame of window.frames) {
                         try {
-                            frame.document.querySelectorAll('video, audio').forEach(setupMediaListeners);
-                        } catch (e) { }
+                            setupListeners(frame.document);
+                        } catch (e) {}
                     }
-                } catch (e) { }
+                } catch (e) {}
             }
-
             
             discoverMedia();
-            setInterval(collectMediaState, 500); 
+            setInterval(collectMediaState, 750);
 
-            
             const observer = new MutationObserver(discoverMedia);
-            if (document.body) {
-                observer.observe(document.body, { childList: true, subtree: true });
-            } else {
-                
-                window.addEventListener('DOMContentLoaded', () => {
+            window.addEventListener('DOMContentLoaded', () => {
+                 if (document.body) {
                     observer.observe(document.body, { childList: true, subtree: true });
-                });
-            }
+                }
+            });
         })();
     """.trimIndent()
     webView.evaluateJavascript(script, null)
 }
 
     private fun startOrUpdatePlaybackService() {
+        val title = currentMediaTitle.takeIf { !it.isNullOrBlank() } ?: webView.title ?: "Web Media"
         val intent = Intent(this, MediaForegroundService::class.java).apply {
-            putExtra(MediaForegroundService.EXTRA_TITLE, currentVideoUrl ?: "Web Video")
+            putExtra(MediaForegroundService.EXTRA_TITLE, title)
             putExtra(MediaForegroundService.EXTRA_IS_PLAYING, isMediaPlaying)
             putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, currentPosition)
             putExtra(MediaForegroundService.EXTRA_DURATION, (duration * 1000).toLong())
@@ -1292,7 +1350,7 @@ private fun injectMediaStateDetector() {
             hasPrevious: Boolean
         ) {
             activity.runOnUiThread {
-                activity.currentVideoUrl = title
+                activity.currentMediaTitle = title
                 activity.isMediaPlaying = isPlaying
                 activity.currentPosition = (currentPosition * 1000).toLong()
                 activity.duration = duration
