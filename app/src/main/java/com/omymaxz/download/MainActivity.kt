@@ -1140,45 +1140,41 @@ private fun injectMediaStateDetector() {
 
                 findActiveMedia: function(doc) {
                     let allMedia = Array.from(doc.querySelectorAll('video, audio'));
+
+                    // Prioritize media that is actually playing
                     let activeMedia = allMedia.find(m => !m.paused && m.currentTime > 0 && !m.muted && m.volume > 0);
                     if (activeMedia) return { media: activeMedia, doc: doc };
 
-                    let playingMedia = allMedia.find(m => !m.paused && !m.muted && m.volume > 0);
-                    if (playingMedia) return { media: playingMedia, doc: doc };
-
+                    // Fallback to the longest media element if nothing is playing
                     let longestMedia = allMedia.filter(m => m.duration > 0).sort((a, b) => b.duration - a.duration)[0];
                     if (longestMedia) return { media: longestMedia, doc: doc };
 
                     return allMedia.length > 0 ? { media: allMedia[0], doc: doc } : null;
                 },
 
-                findButton: function(selectors) {
-                    for (const selector of selectors) {
-                        try {
-                            const button = this.targetDocument.querySelector(selector);
-                            if (button) return button;
-                        } catch (e) {}
-                    }
+                findMediaElementInFrames: function() {
+                    let mediaInfo = this.findActiveMedia(document);
+                    if (mediaInfo) return mediaInfo;
+
+                    try {
+                        for (const frame of window.frames) {
+                            if (frame.document) {
+                                mediaInfo = this.findActiveMedia(frame.document);
+                                if (mediaInfo) return mediaInfo;
+                            }
+                        }
+                    } catch (e) { /* cross-origin frame error */ }
                     return null;
                 },
 
                 collectState: function() {
-                    let mediaInfo = this.findActiveMedia(document);
-                    if (!mediaInfo) {
-                        try {
-                            for (const frame of window.frames) {
-                                if (frame.document) {
-                                    mediaInfo = this.findActiveMedia(frame.document);
-                                    if (mediaInfo) break;
-                                }
-                            }
-                        } catch (e) {}
-                    }
+                    let mediaInfo = this.findMediaElementInFrames();
 
                     if (mediaInfo) {
                         this.mediaElement = mediaInfo.media;
                         this.targetDocument = mediaInfo.doc;
                     } else {
+                        // If no media is found, but we previously thought it was playing, send a pause state
                         if (this.lastInformedState.isPlaying) {
                              AndroidMediaState.updateMediaPlaybackState(document.title, false, 0, 0, false, false);
                         }
@@ -1186,21 +1182,20 @@ private fun injectMediaStateDetector() {
                         return;
                     }
 
-                    const nextSelectors = ['[aria-label*="Next" i]', '[title*="Next" i]', '.next-button', '.skip-button'];
-                    const prevSelectors = ['[aria-label*="Previous" i]', '[title*="Previous" i]', '.previous-button', '.back-button'];
-
-                    const nextButton = this.findButton(nextSelectors);
-                    const prevButton = this.findButton(prevSelectors);
+                    // Simple check for next/previous buttons for sites that have them
+                    const hasNextButton = !!this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
+                    const hasPreviousButton = !!this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
 
                     const currentState = {
                         title: this.targetDocument.title || document.title,
                         isPlaying: !this.mediaElement.paused,
                         currentTime: this.mediaElement.currentTime || 0,
                         duration: this.mediaElement.duration || 0,
-                        hasNext: nextButton ? !nextButton.disabled : false,
-                        hasPrevious: prevButton ? !prevButton.disabled : false
+                        hasNext: hasNextButton,
+                        hasPrevious: hasPreviousButton
                     };
 
+                    // Only send an update if the state has actually changed
                     if (JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState)) {
                         AndroidMediaState.updateMediaPlaybackState(
                             currentState.title, currentState.isPlaying, currentState.currentTime,
@@ -1210,74 +1205,41 @@ private fun injectMediaStateDetector() {
                     }
                 },
 
+                // --- NEW ROBUST CONTROLS ---
                 play: function() {
-                    const playButton = this.findButton(['[aria-label*="Play" i]', '[title*="Play" i]']);
-                    if (playButton && !this.lastInformedState.isPlaying) {
-                        playButton.click();
-                    } else if (this.mediaElement && this.mediaElement.paused) {
-                        this.mediaElement.play();
+                    if (this.mediaElement && this.mediaElement.paused) {
+                        this.mediaElement.play().catch(e => console.error("Play failed", e));
                     }
                 },
                 pause: function() {
-                    const pauseButton = this.findButton(['[aria-label*="Pause" i]', '[title*="Pause" i]']);
-                    if (pauseButton && this.lastInformedState.isPlaying) {
-                        pauseButton.click();
-                    } else if (this.mediaElement && !this.mediaElement.paused) {
+                    if (this.mediaElement && !this.mediaElement.paused) {
                         this.mediaElement.pause();
                     }
                 },
                 next: function() {
-                    const nextButton = this.findButton(['[aria-label*="Next" i]', '[title*="Next" i]', '.next-button', '.skip-button']);
-                    if (nextButton) nextButton.click();
+                    // First try to click a button if it exists
+                    const nextButton = this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
+                    if (nextButton) {
+                        nextButton.click();
+                    } else if (this.mediaElement) {
+                        // Otherwise, seek forward 10 seconds
+                        this.mediaElement.currentTime = Math.min(this.mediaElement.currentTime + 10, this.mediaElement.duration);
+                    }
                 },
                 previous: function() {
-                    const prevButton = this.findButton(['[aria-label*="Previous" i]', '[title*="Previous" i]', '.previous-button', '.back-button']);
-                    if (prevButton) prevButton.click();
+                    // First try to click a button if it exists
+                    const prevButton = this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
+                    if (prevButton) {
+                        prevButton.click();
+                    } else if (this.mediaElement) {
+                        // Otherwise, seek backward 10 seconds
+                        this.mediaElement.currentTime = Math.max(this.mediaElement.currentTime - 10, 0);
+                    }
                 },
 
                 init: function() {
-                    this.discoverMedia(document);
-                    setInterval(() => this.collectState(), 500);
-
-                    const observer = new MutationObserver((mutations) => {
-                        for (const mutation of mutations) {
-                            if (mutation.type === 'childList') {
-                                mutation.addedNodes.forEach(node => {
-                                    if (node.nodeType === Node.ELEMENT_NODE) {
-                                        if (node.matches('video, audio')) {
-                                            this.setupListeners(node);
-                                        }
-                                        node.querySelectorAll('video, audio').forEach(el => this.setupListeners(el));
-                                    }
-                                });
-                            }
-                        }
-                    });
-
-                    window.addEventListener('DOMContentLoaded', () => {
-                        if (document.body) {
-                           observer.observe(document.body, { childList: true, subtree: true });
-                        }
-                    });
-                },
-                
-                discoverMedia: function(doc) {
-                    try {
-                        doc.querySelectorAll('video, audio').forEach(el => this.setupListeners(el));
-                        for (const frame of window.frames) {
-                            if (frame.document) {
-                                frame.document.querySelectorAll('video, audio').forEach(el => this.setupListeners(el));
-                            }
-                        }
-                    } catch(e) {}
-                },
-
-                setupListeners: function(element) {
-                    if (element.dataset.androidListenersAttached) return;
-                    element.dataset.androidListenersAttached = 'true';
-                    ['play', 'pause', 'ended', 'timeupdate', 'loadstart', 'emptied', 'volumechange'].forEach(event => {
-                        element.addEventListener(event, () => this.collectState(), { capture: true, passive: true });
-                    });
+                    // Run state collection every second
+                    setInterval(() => this.collectState(), 1000);
                 }
             };
 
