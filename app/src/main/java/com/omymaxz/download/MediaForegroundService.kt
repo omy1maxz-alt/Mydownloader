@@ -1,5 +1,3 @@
-// File: MediaForegroundService.kt
-
 package com.omymaxz.download
 
 import android.app.Notification
@@ -87,8 +85,9 @@ class MediaForegroundService : Service() {
                     sendMediaControlBroadcast(ACTION_PREVIOUS)
                 }
 
-                // Optional: Handle seek if needed
-                // override fun onSeekTo(pos: Long) { ... }
+                override fun onMediaButtonEvent(mediaButtonEvent: Intent): Boolean {
+                    return super.onMediaButtonEvent(mediaButtonEvent)
+                }
             })
 
             // IMPORTANT: Set initial PlaybackState *before* activating
@@ -112,48 +111,17 @@ class MediaForegroundService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        
+        MediaButtonReceiver.handleIntent(mediaSession, intent)
 
-        if (mediaSession == null) onCreate()
-        updateNotification()
-
-        val action = intent.action
-        android.util.Log.d("MediaForegroundService", "onStartCommand called with action: $action")
-
-        // Handle MEDIA_BUTTON intent - this is crucial for notification buttons
-        if (Intent.ACTION_MEDIA_BUTTON == action) {
-            android.util.Log.d("MediaForegroundService", "Received MEDIA_BUTTON intent: ${intent.extras}")
-            // Pass the intent to MediaButtonReceiver to handle and route to the active MediaSession
-            MediaButtonReceiver.handleIntent(mediaSession, intent)
-            // After handling, ensure the notification reflects the potentially new state
-            updateStateFromIntent(intent) // This might be redundant if MediaButtonReceiver updates state elsewhere
-            updateNotification()
-            return START_STICKY // Keep service running after handling the intent
+        if (intent.action == ACTION_STOP_SERVICE) {
+            stopSelf()
+            return START_NOT_STICKY
         }
 
-        // Handle custom actions sent from MainActivity
-        when (action) {
-            ACTION_STOP_SERVICE -> {
-                stopSelf()
-                return START_NOT_STICKY
-            }
-            ACTION_PLAY, ACTION_PAUSE, ACTION_STOP, ACTION_NEXT, ACTION_PREVIOUS -> {
-                // Update internal state based on intent extras if needed (might be redundant here)
-                updateStateFromIntent(intent)
-                // Send the command to MainActivity via broadcast
-                sendMediaControlBroadcast(action)
-                // Update notification based on new state (might be redundant here if state update triggers later)
-                updateNotification()
-                return START_STICKY
-            }
-        }
-
-        // Default: Assume it's a state update intent from MainActivity
-        // Always update the service's internal state from the intent
         updateStateFromIntent(intent)
-        // Always update the notification display based on current state
         updateNotification()
 
-        // Return START_STICKY to keep the service running until explicitly stopped
         return START_STICKY
     }
 
@@ -208,9 +176,6 @@ class MediaForegroundService : Service() {
         android.util.Log.d("MediaForegroundService", "Sending media control broadcast: $action")
         sendBroadcast(intent)
     }
-
-    // ... (keep the existing buildNotification and createNotificationChannel methods as they are,
-    // but ensure they use the internal state variables: currentTitle, currentPlaying, currentPosition, currentDuration, hasNext, hasPrevious)
 
     private fun buildNotification(title: String, isPlaying: Boolean, hasNext: Boolean, hasPrevious: Boolean): Notification {
         val openAppIntent = Intent(this, MainActivity::class.java).apply {
