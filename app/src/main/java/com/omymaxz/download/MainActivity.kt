@@ -387,7 +387,12 @@ private fun checkBatteryOptimization() {
         val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val backgroundLoadingEnabled = settingsPrefs.getBoolean("background_loading_enabled", false)
 
-        if (backgroundLoadingEnabled && webView.url != null && !isMediaPlaying) {
+        if (isMediaPlaying && !isChangingConfigurations) {
+            // If media is playing, just detach the WebView. The MediaForegroundService is responsible for keeping the process alive.
+            (webView.parent as? ViewGroup)?.removeView(webView)
+            WebViewManager.webView = webView
+        } else if (backgroundLoadingEnabled && webView.url != null && !isChangingConfigurations) {
+            // If not playing media but background loading is on, detach and start the specific service for that.
             (webView.parent as? ViewGroup)?.removeView(webView)
             WebViewManager.webView = webView
             val intent = Intent(this, WebViewForegroundService::class.java).apply {
@@ -407,12 +412,8 @@ private fun checkBatteryOptimization() {
             webViewServiceBound = false
         }
 
-
-        if (isMediaPlaying && !isChangingConfigurations) {
-        } else {
-            if (hasStartedForegroundService && !isMediaPlaying) {
-                 stopPlaybackService()
-            }
+        if (hasStartedForegroundService && !isMediaPlaying) {
+             stopPlaybackService()
         }
 
         val currentUrl = if (webView.visibility == View.VISIBLE) webView.url else null
@@ -837,7 +838,7 @@ private fun checkBatteryOptimization() {
                             if(vpf){ vpf.remove(); }
                             var meta = document.createElement('meta');
                             meta.setAttribute('name', 'viewport');
-                            meta.setAttribute('content', 'width=1920, user-scalable=0.5');
+                            meta.setAttribute('content', 'width=1920, user-scalable=yes');
                             document.getElementsByTagName('head')[0].appendChild(meta);
 
                             Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
