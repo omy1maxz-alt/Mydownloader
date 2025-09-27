@@ -387,7 +387,13 @@ private fun checkBatteryOptimization() {
         val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val backgroundLoadingEnabled = settingsPrefs.getBoolean("background_loading_enabled", false)
 
-        if (backgroundLoadingEnabled && webView.url != null && !isMediaPlaying) {
+        if (isMediaPlaying && !isChangingConfigurations) {
+            // Media is playing, ensure the WebView is kept alive but don't start the other service.
+            // MediaForegroundService handles the notification and lifecycle.
+            (webView.parent as? ViewGroup)?.removeView(webView)
+            WebViewManager.webView = webView
+        } else if (backgroundLoadingEnabled && webView.url != null && !isChangingConfigurations) {
+            // Background loading is enabled, but media is not playing.
             (webView.parent as? ViewGroup)?.removeView(webView)
             WebViewManager.webView = webView
             val intent = Intent(this, WebViewForegroundService::class.java).apply {
@@ -407,12 +413,9 @@ private fun checkBatteryOptimization() {
             webViewServiceBound = false
         }
 
-
-        if (isMediaPlaying && !isChangingConfigurations) {
-        } else {
-            if (hasStartedForegroundService && !isMediaPlaying) {
-                 stopPlaybackService()
-            }
+        // Stop the playback service if no media is playing when the app is stopped.
+        if (hasStartedForegroundService && !isMediaPlaying) {
+             stopPlaybackService()
         }
 
         val currentUrl = if (webView.visibility == View.VISIBLE) webView.url else null
