@@ -332,18 +332,22 @@ private fun checkBatteryOptimization() {
 
     override fun onPause() {
         super.onPause()
+        webView.onPause()
         isAppInBackground = true
         if (isMediaPlaying) {
-            startOrUpdatePlaybackService() 
+            startOrUpdatePlaybackService()
         }
     }
 
     override fun onResume() {
         super.onResume()
+        webView.onResume()
         isAppInBackground = false
         if (hasStartedForegroundService) {
             stopPlaybackService()
         }
+        // Ensure the webview has focus when returning to the app
+        webView.requestFocus()
     }
 
     override fun onStart() {
