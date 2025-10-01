@@ -729,23 +729,34 @@ private fun checkBatteryOptimization() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView(webView: WebView) {
+        // --- PERFORMANCE OPTIMIZATIONS ---
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null) // Enable hardware acceleration
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
+
         webView.apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.databaseEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
+
+            // --- PERFORMANCE SETTINGS ---
+            settings.allowFileAccess = true
+            settings.cacheMode = WebSettings.LOAD_DEFAULT // Use cache
+            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
+            // Keep these as they are for proper layout handling
             settings.useWideViewPort = false
             settings.loadWithOverviewMode = false
             settings.userAgentString = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-            settings.cacheMode = WebSettings.LOAD_DEFAULT
+
             settings.javaScriptCanOpenWindowsAutomatically = false
             settings.setSupportMultipleWindows(true)
+
             addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
             addJavascriptInterface(gmApi, "GMApi")
-            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
                 if (hitTestResult.type == WebView.HitTestResult.SRC_ANCHOR_TYPE ||
