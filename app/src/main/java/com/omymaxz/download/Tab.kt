@@ -15,5 +15,10 @@ data class Tab(
     // Add content caching
     var cachedHtml: String? = null,
     var cacheTimestamp: Long = 0,
-    var historyStack: MutableList<String> = mutableListOf()
+    var historyStack: MutableList<String> = mutableListOf(),
+    // Media state per tab
+    var isMediaPlaying: Boolean = false,
+    var mediaTitle: String? = null,
+    var hasNextMedia: Boolean = false,
+    var hasPreviousMedia: Boolean = false
 )
