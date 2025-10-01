@@ -115,6 +115,10 @@ class MainActivity : AppCompatActivity() {
     private var serviceBound = false
     private var webViewService: WebViewForegroundService? = null
     private var webViewServiceBound = false
+    private var currentMediaTitle: String? = null
+    var isMediaPlaying = false
+    private var hasNextMedia: Boolean = false
+    private var hasPreviousMedia: Boolean = false
     private var duration: Double = 0.0
     private var currentPosition: Long = 0L
     private val historyResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -153,9 +157,7 @@ class MainActivity : AppCompatActivity() {
                     MediaForegroundService.ACTION_STOP_SERVICE -> {
                         binding.webView.evaluateJavascript("window.AndroidMediaController.pause();", null)
                         stopPlaybackService()
-                        if (currentTabIndex in tabs.indices) {
-                            tabs[currentTabIndex].isMediaPlaying = false
-                        }
+                        isMediaPlaying = false
                     }
                 }
             }
@@ -246,20 +248,10 @@ private fun checkBatteryOptimization() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if (WebViewManager.webView != null) {
-            webView = WebViewManager.webView!!
-            WebViewManager.webView = null
-        } else {
-            webView = WebView(this)
-        }
-
-        binding.mainContent.addView(webView, FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
-        ))
-
+        webView = findViewById(R.id.webView)
         userscriptInterface = UserscriptInterface(this, webView, lifecycleScope)
         gmApi = GMApi(webView)
+
         redirectLogic = RedirectLogic(getSharedPreferences("AdBlocker", Context.MODE_PRIVATE))
         setupWebView(webView)
 
@@ -330,34 +322,22 @@ private fun checkBatteryOptimization() {
 
     override fun onPause() {
         super.onPause()
-        webView.onPause()
         isAppInBackground = true
-        if (currentTabIndex in tabs.indices && tabs[currentTabIndex].isMediaPlaying) {
-            startOrUpdatePlaybackService(tabs[currentTabIndex])
+        if (isMediaPlaying) {
+            startOrUpdatePlaybackService() 
         }
     }
 
     override fun onResume() {
         super.onResume()
-        webView.onResume()
         isAppInBackground = false
         if (hasStartedForegroundService) {
             stopPlaybackService()
         }
-        // Ensure the webview has focus when returning to the app
-        webView.requestFocus()
     }
 
     override fun onStart() {
         super.onStart()
-        if (WebViewManager.webView != null) {
-            webView = WebViewManager.webView!!
-            (webView.parent as? ViewGroup)?.removeView(webView)
-            binding.mainContent.addView(webView)
-            WebViewManager.webView = null
-            stopService(Intent(this, WebViewForegroundService::class.java))
-        }
-
         Intent(this, MediaForegroundService::class.java).also { intent ->
             bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
         }
@@ -374,9 +354,7 @@ private fun checkBatteryOptimization() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(mediaControlReceiver)
-        if (isFinishing && WebViewManager.webView == null && (currentTabIndex !in tabs.indices || !tabs[currentTabIndex].isMediaPlaying)) {
-            webView.destroy()
-        }
+        webView.destroy()
         if (hasStartedForegroundService) {
             stopPlaybackService()
             hasStartedForegroundService = false
@@ -389,22 +367,6 @@ private fun checkBatteryOptimization() {
         val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val backgroundLoadingEnabled = settingsPrefs.getBoolean("background_loading_enabled", false)
 
-        val isMediaPlaying = currentTabIndex in tabs.indices && tabs[currentTabIndex].isMediaPlaying
-
-        if (isMediaPlaying && !isChangingConfigurations) {
-            // If media is playing, just detach the WebView. The MediaForegroundService is responsible for keeping the process alive.
-            (webView.parent as? ViewGroup)?.removeView(webView)
-            WebViewManager.webView = webView
-        } else if (backgroundLoadingEnabled && webView.url != null && !isChangingConfigurations) {
-            // If not playing media but background loading is on, detach and start the specific service for that.
-            (webView.parent as? ViewGroup)?.removeView(webView)
-            WebViewManager.webView = webView
-            val intent = Intent(this, WebViewForegroundService::class.java).apply {
-                action = WebViewForegroundService.ACTION_START
-            }
-            startForegroundService(intent)
-        }
-
         if (serviceBound) {
             unbindService(serviceConnection)
             serviceBound = false
@@ -416,8 +378,12 @@ private fun checkBatteryOptimization() {
             webViewServiceBound = false
         }
 
-        if (hasStartedForegroundService && !isMediaPlaying) {
-             stopPlaybackService()
+
+        if (isMediaPlaying && !isChangingConfigurations) {
+        } else {
+            if (hasStartedForegroundService && !isMediaPlaying) {
+                 stopPlaybackService()
+            }
         }
 
         val currentUrl = if (webView.visibility == View.VISIBLE) webView.url else null
@@ -563,12 +529,6 @@ private fun checkBatteryOptimization() {
             Toast.makeText(this, "Cannot close the last tab", Toast.LENGTH_SHORT).show()
             return
         }
-
-        val closingTab = tabs[position]
-        if (closingTab.isMediaPlaying) {
-            stopPlaybackService()
-        }
-
         val closingCurrentTab = position == currentTabIndex
         tabs.removeAt(position)
         if (closingCurrentTab) {
@@ -633,22 +593,16 @@ private fun checkBatteryOptimization() {
 
     private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
         if (newIndex !in tabs.indices) return
-
+        if (isMediaPlaying) {
+            stopPlaybackService()
+            isMediaPlaying = false
+        }
         if (!forceReload) {
             saveCurrentTabState()
         }
-
         currentTabIndex = newIndex
         restoreTabState(currentTabIndex)
         updateTabCount()
-
-        // Update notification based on the new tab's state
-        val newTab = tabs[currentTabIndex]
-        if (newTab.isMediaPlaying) {
-            startOrUpdatePlaybackService(newTab)
-        } else {
-            stopPlaybackService()
-        }
     }
 
     private fun setupHomeButton() {
@@ -855,7 +809,7 @@ private fun checkBatteryOptimization() {
                             if(vpf){ vpf.remove(); }
                             var meta = document.createElement('meta');
                             meta.setAttribute('name', 'viewport');
-                            meta.setAttribute('content', 'width=1920, user-scalable=yes');
+                            meta.setAttribute('content', 'width=1920, user-scalable=yes, initial-scale=0.5');
                             document.getElementsByTagName('head')[0].appendChild(meta);
 
                             Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
@@ -1158,7 +1112,7 @@ private fun injectMediaStateDetector() {
 
                 findActiveMedia: function(doc) {
                     let allMedia = Array.from(doc.querySelectorAll('video, audio'));
-
+                    
                     // Prioritize media that is actually playing
                     let activeMedia = allMedia.find(m => !m.paused && m.currentTime > 0 && !m.muted && m.volume > 0);
                     if (activeMedia) return { media: activeMedia, doc: doc };
@@ -1184,7 +1138,7 @@ private fun injectMediaStateDetector() {
                     } catch (e) { /* cross-origin frame error */ }
                     return null;
                 },
-
+                
                 collectState: function() {
                     let mediaInfo = this.findMediaElementInFrames();
 
@@ -1212,7 +1166,7 @@ private fun injectMediaStateDetector() {
                         hasNext: hasNextButton,
                         hasPrevious: hasPreviousButton
                     };
-
+                    
                     // Only send an update if the state has actually changed
                     if (JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState)) {
                         AndroidMediaState.updateMediaPlaybackState(
@@ -1268,15 +1222,15 @@ private fun injectMediaStateDetector() {
     webView.evaluateJavascript(script, null)
 }
 
-    private fun startOrUpdatePlaybackService(tab: Tab) {
-        val title = tab.mediaTitle.takeIf { !it.isNullOrBlank() } ?: tab.title
+    private fun startOrUpdatePlaybackService() {
+        val title = currentMediaTitle.takeIf { !it.isNullOrBlank() } ?: webView.title ?: "Web Media"
         val intent = Intent(this, MediaForegroundService::class.java).apply {
             putExtra(MediaForegroundService.EXTRA_TITLE, title)
-            putExtra(MediaForegroundService.EXTRA_IS_PLAYING, tab.isMediaPlaying)
+            putExtra(MediaForegroundService.EXTRA_IS_PLAYING, isMediaPlaying)
             putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, currentPosition)
             putExtra(MediaForegroundService.EXTRA_DURATION, (duration * 1000).toLong())
-            putExtra(MediaForegroundService.EXTRA_HAS_NEXT, tab.hasNextMedia)
-            putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, tab.hasPreviousMedia)
+            putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
+            putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
         }
 
         try {
@@ -1313,19 +1267,15 @@ private fun injectMediaStateDetector() {
             hasPrevious: Boolean
         ) {
             activity.runOnUiThread {
-                if (activity.currentTabIndex !in activity.tabs.indices) return@runOnUiThread
-
-                val currentTab = activity.tabs[activity.currentTabIndex]
-                currentTab.isMediaPlaying = isPlaying
-                currentTab.mediaTitle = title
-                currentTab.hasNextMedia = hasNext
-                currentTab.hasPreviousMedia = hasPrevious
-
+                activity.currentMediaTitle = title
+                activity.isMediaPlaying = isPlaying
                 activity.currentPosition = (currentPosition * 1000).toLong()
                 activity.duration = duration
+                activity.hasNextMedia = hasNext
+                activity.hasPreviousMedia = hasPrevious
 
                 if (activity.hasStartedForegroundService || isPlaying) {
-                    activity.startOrUpdatePlaybackService(currentTab)
+                    activity.startOrUpdatePlaybackService()
                 }
             }
         }
@@ -1342,29 +1292,27 @@ private fun injectMediaStateDetector() {
         @JavascriptInterface
         fun onMediaPlay() {
             activity.runOnUiThread {
-                if (activity.currentTabIndex !in activity.tabs.indices) return@runOnUiThread
-                val currentTab = activity.tabs[activity.currentTabIndex]
-                currentTab.isMediaPlaying = true
-                activity.startOrUpdatePlaybackService(currentTab)
+                android.util.Log.d("MediaStateInterface", "onMediaPlay called")
+                activity.isMediaPlaying = true
+                activity.startOrUpdatePlaybackService()
             }
         }
 
         @JavascriptInterface
         fun onMediaPause() {
             activity.runOnUiThread {
-                if (activity.currentTabIndex !in activity.tabs.indices) return@runOnUiThread
-                val currentTab = activity.tabs[activity.currentTabIndex]
-                currentTab.isMediaPlaying = false
-                activity.startOrUpdatePlaybackService(currentTab)
+                android.util.Log.d("MediaStateInterface", "onMediaPause called")
+                activity.isMediaPlaying = false
+                activity.startOrUpdatePlaybackService()
             }
         }
 
         @JavascriptInterface
         fun onMediaEnded() {
             activity.runOnUiThread {
-                if (activity.currentTabIndex !in activity.tabs.indices) return@runOnUiThread
-                val currentTab = activity.tabs[activity.currentTabIndex]
-                currentTab.isMediaPlaying = false
+                android.util.Log.d("MediaStateInterface", "onMediaEnded called")
+                activity.isMediaPlaying = false
+                activity.currentVideoUrl = null
                 activity.stopPlaybackService()
             }
         }
@@ -1372,9 +1320,9 @@ private fun injectMediaStateDetector() {
         @JavascriptInterface
         fun onError(error: String) {
             activity.runOnUiThread {
-                if (activity.currentTabIndex !in activity.tabs.indices) return@runOnUiThread
-                val currentTab = activity.tabs[activity.currentTabIndex]
-                currentTab.isMediaPlaying = false
+                android.util.Log.e("MediaStateInterface", "Media error: $error")
+                activity.isMediaPlaying = false
+                activity.currentVideoUrl = null
                 activity.stopPlaybackService()
                 Toast.makeText(activity, "Media playback error: $error", Toast.LENGTH_LONG).show()
             }
