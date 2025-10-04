@@ -329,7 +329,7 @@ private fun checkBatteryOptimization() {
         isAppInBackground = true
         if (isMediaPlaying) {
             startOrUpdatePlaybackService()
-            startMediaSyncTimer() // Start timer when going to background
+            startMediaSyncTimer()
         } else {
             webView.onPause()
         }
@@ -337,12 +337,15 @@ private fun checkBatteryOptimization() {
 
     override fun onResume() {
         super.onResume()
-        webView.onResume() // Always resume the webview
+        webView.onResume()
         isAppInBackground = false
-        stopMediaSyncTimer() // Stop timer when app is in foreground
+        stopMediaSyncTimer()
 
-        // Re-inject media detector to refresh JavaScript state
-        reinjectMediaDetectorIfNeeded()
+        if (isMediaPlaying) {
+            handler.postDelayed({
+                injectMediaStateDetector()
+            }, 300)
+        }
 
         if (hasStartedForegroundService) {
             // Force refresh media state when returning to app
@@ -633,6 +636,13 @@ private fun reinjectMediaDetectorIfNeeded() {
                     android.util.Log.e("MainActivity", "Failed to save WebView state: ${e.message}")
                 }
             }
+            // Save media state
+            currentTab.isMediaPlaying = isMediaPlaying
+            currentTab.mediaTitle = currentMediaTitle
+            currentTab.hasNextMedia = hasNextMedia
+            currentTab.hasPreviousMedia = hasPreviousMedia
+            currentTab.mediaPosition = currentPosition
+            currentTab.mediaDuration = duration
         }
     }
 
@@ -666,17 +676,35 @@ private fun reinjectMediaDetectorIfNeeded() {
         } else {
             showStartPage()
         }
+
+        // Restore media state
+        isMediaPlaying = tab.isMediaPlaying
+        currentMediaTitle = tab.mediaTitle
+        hasNextMedia = tab.hasNextMedia
+        hasPreviousMedia = tab.hasPreviousMedia
+        currentPosition = tab.mediaPosition
+        duration = tab.mediaDuration
+
+        // If this tab isn't playing, stop service
+        if (!isMediaPlaying) {
+            stopPlaybackService()
+        } else {
+            startOrUpdatePlaybackService()
+        }
     }
 
     private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
         if (newIndex !in tabs.indices) return
+
+        // Save current tab state (including media)
+        saveCurrentTabState()
+
+        // If current tab was playing, stop service BEFORE switching
         if (isMediaPlaying) {
             stopPlaybackService()
             isMediaPlaying = false
         }
-        if (!forceReload) {
-            saveCurrentTabState()
-        }
+
         currentTabIndex = newIndex
         restoreTabState(currentTabIndex)
         updateTabCount()
@@ -1462,12 +1490,12 @@ private fun injectMediaStateDetector() {
 }
 
     private fun startOrUpdatePlaybackService() {
-        val title = currentMediaTitle.takeIf { !it.isNullOrBlank() } ?: webView.title ?: "Web Media"
+        val title = currentMediaTitle.takeIf { !it.isNullOrBlank() } ?: "Web Media"
         val intent = Intent(this, MediaForegroundService::class.java).apply {
             putExtra(MediaForegroundService.EXTRA_TITLE, title)
             putExtra(MediaForegroundService.EXTRA_IS_PLAYING, isMediaPlaying)
-            putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, currentPosition)
-            putExtra(MediaForegroundService.EXTRA_DURATION, (duration * 1000).toLong())
+            putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, lastKnownPosition)
+            putExtra(MediaForegroundService.EXTRA_DURATION, (lastKnownDuration * 1000).toLong())
             putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
             putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
         }
