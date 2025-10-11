@@ -19,8 +19,6 @@ data class Tab(
     // Media state per tab
     var isMediaPlaying: Boolean = false,
     var mediaTitle: String? = null,
-    var mediaPosition: Long = 0L,
-    var mediaDuration: Double = 0.0,
     var hasNextMedia: Boolean = false,
     var hasPreviousMedia: Boolean = false
 )
