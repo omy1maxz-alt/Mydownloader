@@ -114,26 +114,9 @@ class MediaForegroundService : Service() {
 
         MediaButtonReceiver.handleIntent(mediaSession, intent)
 
-        val action = intent.action
-        android.util.Log.d("MediaForegroundService", "onStartCommand called with action: $action")
-
-        when (action) {
-            ACTION_STOP_SERVICE -> {
-                stopSelf()
-                return START_NOT_STICKY
-            }
-            ACTION_PLAY -> {
-                sendMediaControlBroadcast(ACTION_PLAY)
-            }
-            ACTION_PAUSE -> {
-                sendMediaControlBroadcast(ACTION_PAUSE)
-            }
-            ACTION_NEXT -> {
-                sendMediaControlBroadcast(ACTION_NEXT)
-            }
-            ACTION_PREVIOUS -> {
-                sendMediaControlBroadcast(ACTION_PREVIOUS)
-            }
+        if (intent.action == ACTION_STOP_SERVICE) {
+            stopSelf()
+            return START_NOT_STICKY
         }
 
         updateStateFromIntent(intent)

@@ -121,10 +121,6 @@ class MainActivity : AppCompatActivity() {
     private var hasPreviousMedia: Boolean = false
     private var duration: Double = 0.0
     private var currentPosition: Long = 0L
-private var mediaUpdateTimer: Timer? = null
-private var lastKnownPosition: Long = 0L
-private var lastKnownDuration: Double = 0.0
-private var lastUpdateTime: Long = 0L
     private val historyResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val urlToLoad = result.data?.getStringExtra("URL_TO_LOAD")
@@ -164,6 +160,13 @@ private var lastUpdateTime: Long = 0L
                         isMediaPlaying = false
                     }
                 }
+            }
+        }
+        @JavascriptInterface
+        fun onMediaSourceDetected(url: String) {
+            // This is the new entry point for detected media URLs
+            this@MainActivity.runOnUiThread {
+                processDetectedMediaUrl(url)
             }
         }
     }
@@ -329,41 +332,14 @@ private fun checkBatteryOptimization() {
         isAppInBackground = true
         if (isMediaPlaying) {
             startOrUpdatePlaybackService()
-            startMediaSyncTimer()
-        } else {
-            webView.onPause()
         }
     }
 
     override fun onResume() {
         super.onResume()
-        webView.onResume()
         isAppInBackground = false
-        stopMediaSyncTimer()
-
-        if (isMediaPlaying) {
-            handler.postDelayed({
-                injectMediaStateDetector()
-            }, 300)
-        }
-
         if (hasStartedForegroundService) {
-            // Force refresh media state when returning to app
-            handler.postDelayed({
-                webView.evaluateJavascript("""
-                    (function() {
-                        if (window.AndroidMediaController) {
-                            window.AndroidMediaController.refreshMediaElement();
-                            window.AndroidMediaController.collectState();
-                        }
-                    })();
-                """.trimIndent(), null)
-            }, 300)
-
-            // Delay stopping service to allow state update
-            handler.postDelayed({
-                stopPlaybackService()
-            }, 800)
+            stopPlaybackService()
         }
     }
 
@@ -384,7 +360,6 @@ private fun checkBatteryOptimization() {
 
     override fun onDestroy() {
         super.onDestroy()
-        stopMediaSyncTimer()
         unregisterReceiver(mediaControlReceiver)
         webView.destroy()
         if (hasStartedForegroundService) {
@@ -392,54 +367,6 @@ private fun checkBatteryOptimization() {
             hasStartedForegroundService = false
         }
     }
-private fun startMediaSyncTimer() {
-    stopMediaSyncTimer() // Stop any existing timer
-
-    mediaUpdateTimer = Timer().apply {
-        scheduleAtFixedRate(object : TimerTask() {
-            override fun run() {
-                if (isMediaPlaying && isAppInBackground) {
-                    // Force JavaScript to report current state
-                    runOnUiThread {
-                        webView.evaluateJavascript("""
-                            (function() {
-                                if (window.AndroidMediaController) {
-                                    window.AndroidMediaController.refreshMediaElement();
-                                    window.AndroidMediaController.collectState();
-                                }
-                            })();
-                        """.trimIndent(), null)
-                    }
-                }
-            }
-        }, 0, 1000) // Update every second
-    }
-}
-
-private fun stopMediaSyncTimer() {
-    mediaUpdateTimer?.cancel()
-    mediaUpdateTimer = null
-}
-
-private fun reinjectMediaDetectorIfNeeded() {
-    if (webView.visibility == View.VISIBLE && webView.url != null) {
-        webView.evaluateJavascript("""
-            (function() {
-                // Check if controller exists but might be stale
-                if (window.AndroidMediaController) {
-                    console.log('Re-initializing media controller after resume');
-                    window.AndroidMediaController.destroy();
-                    delete window.AndroidMediaController;
-                }
-            })();
-        """.trimIndent()) {
-            // After cleanup, inject fresh detector
-            handler.postDelayed({
-                injectMediaStateDetector()
-            }, 100)
-        }
-    }
-}
 
     override fun onStop() {
         super.onStop()
@@ -636,13 +563,6 @@ private fun reinjectMediaDetectorIfNeeded() {
                     android.util.Log.e("MainActivity", "Failed to save WebView state: ${e.message}")
                 }
             }
-            // Save media state
-            currentTab.isMediaPlaying = isMediaPlaying
-            currentTab.mediaTitle = currentMediaTitle
-            currentTab.hasNextMedia = hasNextMedia
-            currentTab.hasPreviousMedia = hasPreviousMedia
-            currentTab.mediaPosition = currentPosition
-            currentTab.mediaDuration = duration
         }
     }
 
@@ -676,35 +596,17 @@ private fun reinjectMediaDetectorIfNeeded() {
         } else {
             showStartPage()
         }
-
-        // Restore media state
-        isMediaPlaying = tab.isMediaPlaying
-        currentMediaTitle = tab.mediaTitle
-        hasNextMedia = tab.hasNextMedia
-        hasPreviousMedia = tab.hasPreviousMedia
-        currentPosition = tab.mediaPosition
-        duration = tab.mediaDuration
-
-        // If this tab isn't playing, stop service
-        if (!isMediaPlaying) {
-            stopPlaybackService()
-        } else {
-            startOrUpdatePlaybackService()
-        }
     }
 
     private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
         if (newIndex !in tabs.indices) return
-
-        // Save current tab state (including media)
-        saveCurrentTabState()
-
-        // If current tab was playing, stop service BEFORE switching
         if (isMediaPlaying) {
             stopPlaybackService()
             isMediaPlaying = false
         }
-
+        if (!forceReload) {
+            saveCurrentTabState()
+        }
         currentTabIndex = newIndex
         restoreTabState(currentTabIndex)
         updateTabCount()
@@ -834,34 +736,23 @@ private fun reinjectMediaDetectorIfNeeded() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView(webView: WebView) {
-        // --- PERFORMANCE OPTIMIZATIONS ---
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null) // Enable hardware acceleration
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
-
         webView.apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.databaseEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
-
-            // --- PERFORMANCE SETTINGS ---
-            settings.allowFileAccess = true
-            settings.cacheMode = WebSettings.LOAD_DEFAULT // Use cache
-            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-
-            // Keep these as they are for proper layout handling
             settings.useWideViewPort = false
             settings.loadWithOverviewMode = false
             settings.userAgentString = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-
+            settings.cacheMode = WebSettings.LOAD_DEFAULT
             settings.javaScriptCanOpenWindowsAutomatically = false
             settings.setSupportMultipleWindows(true)
-
             addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
             addJavascriptInterface(gmApi, "GMApi")
-
+            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
                 if (hitTestResult.type == WebView.HitTestResult.SRC_ANCHOR_TYPE ||
@@ -971,23 +862,11 @@ private fun reinjectMediaDetectorIfNeeded() {
                     isPageLoading = false
                     binding.progressBar.visibility = View.GONE
                     updateToolbarNavButtonState()
-
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
-
-                    // IMPORTANT: Always inject media detector on page finish
                     injectMediaStateDetector()
-
-                    // Re-inject after a short delay to catch dynamically loaded media
-                    handler.postDelayed({
-                        if (!isPageLoading) {
-                            injectMediaStateDetector()
-                        }
-                    }, 2000)
-
                     injectPendingUserscripts()
-
                     url?.let {
                         addToHistory(it)
                         if (currentTabIndex in tabs.indices) {
@@ -1016,41 +895,8 @@ private fun reinjectMediaDetectorIfNeeded() {
                     if (isAdDomain(url)) {
                         return createEmptyResponse()
                     }
-                    if (isMediaUrl(url)) {
-                        try {
-                            val category = MediaCategory.fromUrl(url)
-                            val isMainContent = isMainVideoContent(url)
-                            if (category == MediaCategory.VIDEO && isMainContent) {
-                                currentVideoUrl = url
-                            }
-                            val detectedFormat = detectVideoFormat(url)
-                            val quality = extractQualityFromUrl(url)
-                            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
-                            val fileSize = estimateFileSize(url, category)
-                            val language = extractLanguageFromUrl(url)
-                            val mediaFile = MediaFile(
-                                url = url,
-                                title = enhancedTitle,
-                                mimeType = detectedFormat.mimeType,
-                                quality = quality,
-                                category = category,
-                                fileSize = fileSize,
-                                language = language,
-                                isMainContent = isMainContent
-                            )
-                            val existsAlready = synchronized(detectedMediaFiles) {
-                                detectedMediaFiles.any { it.url == url }
-                            }
-                            if (!existsAlready) {
-                                synchronized(detectedMediaFiles) {
-                                    detectedMediaFiles.add(mediaFile)
-                                }
-                                runOnUiThread { updateFabVisibility() }
-                            }
-                        } catch (e: Exception) {
-                            android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
-                        }
-                    }
+                    // The old media detection logic has been removed from here.
+                    // The new primary detection mechanism is the JavaScript interface.
                     return super.shouldInterceptRequest(view, request)
                 }
                 private fun createEmptyResponse(): WebResourceResponse {
@@ -1231,42 +1077,25 @@ private fun injectMediaStateDetector() {
     val script = """
         javascript:(function() {
             'use strict';
-            if (window.AndroidMediaController) {
-                // Already injected, just refresh the media element reference
-                window.AndroidMediaController.refreshMediaElement();
-                return;
-            }
+            if (window.AndroidMediaController) return;
 
             const controller = {
                 lastInformedState: {},
                 mediaElement: null,
                 targetDocument: document,
-                stateCollectionInterval: null,
 
                 findActiveMedia: function(doc) {
-                    try {
-                        let allMedia = Array.from(doc.querySelectorAll('video, audio'));
+                    let allMedia = Array.from(doc.querySelectorAll('video, audio'));
 
-                        // Priority 1: Media that is actually playing
-                        let activeMedia = allMedia.find(m => !m.paused && m.currentTime > 0 && m.duration > 0);
-                        if (activeMedia) return { media: activeMedia, doc: doc };
+                    // Prioritize media that is actually playing
+                    let activeMedia = allMedia.find(m => !m.paused && m.currentTime > 0 && !m.muted && m.volume > 0);
+                    if (activeMedia) return { media: activeMedia, doc: doc };
 
-                        // Priority 2: Media that has been played (has currentTime > 0)
-                        let playedMedia = allMedia.find(m => m.currentTime > 0 && m.duration > 0);
-                        if (playedMedia) return { media: playedMedia, doc: doc };
+                    // Fallback to the longest media element if nothing is playing
+                    let longestMedia = allMedia.filter(m => m.duration > 0).sort((a, b) => b.duration - a.duration)[0];
+                    if (longestMedia) return { media: longestMedia, doc: doc };
 
-                        // Priority 3: Longest media element with valid duration
-                        let longestMedia = allMedia
-                            .filter(m => m.duration > 0 && !isNaN(m.duration))
-                            .sort((a, b) => b.duration - a.duration)[0];
-                        if (longestMedia) return { media: longestMedia, doc: doc };
-
-                        // Fallback: Any media element
-                        return allMedia.length > 0 ? { media: allMedia[0], doc: doc } : null;
-                    } catch (e) {
-                        console.error('Error finding media:', e);
-                        return null;
-                    }
+                    return allMedia.length > 0 ? { media: allMedia[0], doc: doc } : null;
                 },
 
                 findMediaElementInFrames: function() {
@@ -1275,65 +1104,33 @@ private fun injectMediaStateDetector() {
 
                     try {
                         for (const frame of window.frames) {
-                            try {
-                                if (frame.document) {
-                                    mediaInfo = this.findActiveMedia(frame.document);
-                                    if (mediaInfo) return mediaInfo;
-                                }
-                            } catch (e) { /* cross-origin frame */ }
+                            if (frame.document) {
+                                mediaInfo = this.findActiveMedia(frame.document);
+                                if (mediaInfo) return mediaInfo;
+                            }
                         }
-                    } catch (e) { /* error accessing frames */ }
+                    } catch (e) { /* cross-origin frame error */ }
                     return null;
                 },
 
-                refreshMediaElement: function() {
+                collectState: function() {
                     let mediaInfo = this.findMediaElementInFrames();
+
                     if (mediaInfo) {
                         this.mediaElement = mediaInfo.media;
                         this.targetDocument = mediaInfo.doc;
-                        console.log('Media element refreshed:', this.mediaElement.currentTime, '/', this.mediaElement.duration);
-                        return true;
-                    }
-                    return false;
-                },
-
-                collectState: function() {
-                    // Always try to refresh the media element reference
-                    if (!this.mediaElement || this.mediaElement.paused === undefined) {
-                        if (!this.refreshMediaElement()) {
-                            // No media found
-                            if (this.lastInformedState.isPlaying) {
-                                AndroidMediaState.updateMediaPlaybackState(
-                                    document.title, false, 0, 0, false, false
-                                );
-                                this.lastInformedState = { isPlaying: false };
-                            }
-                            return;
+                    } else {
+                        // If no media is found, but we previously thought it was playing, send a pause state
+                        if (this.lastInformedState.isPlaying) {
+                             AndroidMediaState.updateMediaPlaybackState(document.title, false, 0, 0, false, false);
                         }
+                        this.lastInformedState = { isPlaying: false };
+                        return;
                     }
 
-                    // Verify the media element is still valid
-                    try {
-                        const testPaused = this.mediaElement.paused;
-                        if (testPaused === undefined) {
-                            this.refreshMediaElement();
-                        }
-                    } catch (e) {
-                        console.log('Media element invalid, refreshing...');
-                        this.refreshMediaElement();
-                    }
-
-                    if (!this.mediaElement) return;
-
-                    // Find next/previous buttons (YouTube-specific and generic)
-                    const hasNextButton = !!(
-                        this.targetDocument.querySelector('.ytp-next-button:not([aria-disabled="true"])') ||
-                        this.targetDocument.querySelector('[aria-label*="Next" i]:not([disabled])')
-                    );
-                    const hasPreviousButton = !!(
-                        this.targetDocument.querySelector('.ytp-prev-button:not([aria-disabled="true"])') ||
-                        this.targetDocument.querySelector('[aria-label*="Previous" i]:not([disabled])')
-                    );
+                    // Simple check for next/previous buttons for sites that have them
+                    const hasNextButton = !!this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
+                    const hasPreviousButton = !!this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
 
                     const currentState = {
                         title: this.targetDocument.title || document.title,
@@ -1344,158 +1141,73 @@ private fun injectMediaStateDetector() {
                         hasPrevious: hasPreviousButton
                     };
                     
-                    // Only send update if state changed OR every 5 seconds (to keep timer updated)
-                    const now = Date.now();
-                    const timeSinceLastUpdate = now - (this.lastUpdateTime || 0);
-                    const stateChanged = JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState);
-
-                    if (stateChanged || timeSinceLastUpdate > 5000) {
+                    // Only send an update if the state has actually changed
+                    if (JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState)) {
                         AndroidMediaState.updateMediaPlaybackState(
-                            currentState.title,
-                            currentState.isPlaying,
-                            currentState.currentTime,
-                            currentState.duration,
-                            currentState.hasNext,
-                            currentState.hasPrevious
+                            currentState.title, currentState.isPlaying, currentState.currentTime,
+                            currentState.duration, currentState.hasNext, currentState.hasPrevious
                         );
                         this.lastInformedState = currentState;
-                        this.lastUpdateTime = now;
+
+                        // Also report the media source URL
+                        if (this.mediaElement && this.mediaElement.src && !this.mediaElement.src.startsWith('blob:')) {
+                            AndroidMediaState.onMediaSourceDetected(this.mediaElement.src);
+                        }
                     }
                 },
 
+                // --- NEW ROBUST CONTROLS ---
                 play: function() {
-                    console.log('AndroidMediaController.play() called');
-                    if (!this.refreshMediaElement()) {
-                        console.error('No media element found for play');
-                        return;
-                    }
-
                     if (this.mediaElement && this.mediaElement.paused) {
-                        console.log('Attempting to play media...');
-                        this.mediaElement.play()
-                            .then(() => console.log('Play successful'))
-                            .catch(e => console.error('Play failed:', e));
+                        this.mediaElement.play().catch(e => console.error("Play failed", e));
                     }
                 },
-
                 pause: function() {
-                    console.log('AndroidMediaController.pause() called');
-                    if (!this.refreshMediaElement()) {
-                        console.error('No media element found for pause');
-                        return;
-                    }
-
                     if (this.mediaElement && !this.mediaElement.paused) {
-                        console.log('Pausing media...');
                         this.mediaElement.pause();
                     }
                 },
-
                 next: function() {
-                    console.log('AndroidMediaController.next() called');
-                    this.refreshMediaElement();
-
-                    // Try YouTube-specific next button first
-                    const ytNextButton = this.targetDocument.querySelector('.ytp-next-button:not([aria-disabled="true"])');
-                    if (ytNextButton) {
-                        console.log('Clicking YouTube next button');
-                        ytNextButton.click();
-                        return;
-                    }
-
-                    // Try generic next button
-                    const nextButton = this.targetDocument.querySelector('[aria-label*="Next" i]:not([disabled])');
+                    // First try to click a button if it exists
+                    const nextButton = this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
                     if (nextButton) {
-                        console.log('Clicking next button');
                         nextButton.click();
-                        return;
-                    }
-
-                    // Fallback: seek forward 10 seconds
-                    if (this.mediaElement) {
-                        console.log('Seeking forward 10 seconds');
-                        this.mediaElement.currentTime = Math.min(
-                            this.mediaElement.currentTime + 10,
-                            this.mediaElement.duration
-                        );
+                    } else if (this.mediaElement) {
+                        // Otherwise, seek forward 10 seconds
+                        this.mediaElement.currentTime = Math.min(this.mediaElement.currentTime + 10, this.mediaElement.duration);
                     }
                 },
-
                 previous: function() {
-                    console.log('AndroidMediaController.previous() called');
-                    this.refreshMediaElement();
-
-                    // Try YouTube-specific previous button first
-                    const ytPrevButton = this.targetDocument.querySelector('.ytp-prev-button:not([aria-disabled="true"])');
-                    if (ytPrevButton) {
-                        console.log('Clicking YouTube prev button');
-                        ytPrevButton.click();
-                        return;
-                    }
-
-                    // Try generic previous button
-                    const prevButton = this.targetDocument.querySelector('[aria-label*="Previous" i]:not([disabled])');
+                    // First try to click a button if it exists
+                    const prevButton = this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
                     if (prevButton) {
-                        console.log('Clicking previous button');
                         prevButton.click();
-                        return;
-                    }
-
-                    // Fallback: seek backward 10 seconds
-                    if (this.mediaElement) {
-                        console.log('Seeking backward 10 seconds');
+                    } else if (this.mediaElement) {
+                        // Otherwise, seek backward 10 seconds
                         this.mediaElement.currentTime = Math.max(this.mediaElement.currentTime - 10, 0);
                     }
                 },
 
                 init: function() {
-                    console.log('AndroidMediaController initialized');
-                    // Initial media element search
-                    this.refreshMediaElement();
-
-                    // Clear any existing interval
-                    if (this.stateCollectionInterval) {
-                        clearInterval(this.stateCollectionInterval);
-                    }
-
                     // Run state collection every second
-                    this.stateCollectionInterval = setInterval(() => this.collectState(), 1000);
-
-                    // Also collect state immediately
-                    this.collectState();
-                },
-
-                destroy: function() {
-                    if (this.stateCollectionInterval) {
-                        clearInterval(this.stateCollectionInterval);
-                        this.stateCollectionInterval = null;
-                    }
+                    setInterval(() => this.collectState(), 1000);
                 }
             };
 
             window.AndroidMediaController = controller;
             controller.init();
-
-            // Re-initialize when visibility changes (handles app resume)
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden) {
-                    console.log('Page visible again, refreshing media controller');
-                    controller.refreshMediaElement();
-                    controller.collectState();
-                }
-            });
         })();
     """.trimIndent()
     webView.evaluateJavascript(script, null)
 }
 
     private fun startOrUpdatePlaybackService() {
-        val title = currentMediaTitle.takeIf { !it.isNullOrBlank() } ?: "Web Media"
+        val title = currentMediaTitle.takeIf { !it.isNullOrBlank() } ?: webView.title ?: "Web Media"
         val intent = Intent(this, MediaForegroundService::class.java).apply {
             putExtra(MediaForegroundService.EXTRA_TITLE, title)
             putExtra(MediaForegroundService.EXTRA_IS_PLAYING, isMediaPlaying)
-            putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, lastKnownPosition)
-            putExtra(MediaForegroundService.EXTRA_DURATION, (lastKnownDuration * 1000).toLong())
+            putExtra(MediaForegroundService.EXTRA_CURRENT_POSITION, currentPosition)
+            putExtra(MediaForegroundService.EXTRA_DURATION, (duration * 1000).toLong())
             putExtra(MediaForegroundService.EXTRA_HAS_NEXT, hasNextMedia)
             putExtra(MediaForegroundService.EXTRA_HAS_PREVIOUS, hasPreviousMedia)
         }
@@ -1533,89 +1245,74 @@ private fun injectMediaStateDetector() {
             hasNext: Boolean,
             hasPrevious: Boolean
         ) {
-            activity.runOnUiThread {
-                // Store the values
-                activity.currentMediaTitle = title
-                activity.isMediaPlaying = isPlaying
-                activity.currentPosition = (currentPosition * 1000).toLong()
-                activity.duration = duration
-                activity.hasNextMedia = hasNext
-                activity.hasPreviousMedia = hasPrevious
+            this@MainActivity.runOnUiThread {
+                this@MainActivity.currentMediaTitle = title
+                this@MainActivity.isMediaPlaying = isPlaying
+                this@MainActivity.currentPosition = (currentPosition * 1000).toLong()
+                this@MainActivity.duration = duration
+                this@MainActivity.hasNextMedia = hasNext
+                this@MainActivity.hasPreviousMedia = hasPrevious
 
-                // Track last update time
-                activity.lastUpdateTime = System.currentTimeMillis()
-                activity.lastKnownPosition = activity.currentPosition
-                activity.lastKnownDuration = duration
-
-                // Update the service notification
-                if (activity.isAppInBackground || isPlaying) {
-                    activity.startOrUpdatePlaybackService()
-                }
-
-                // Start sync timer if playing
-                if (isPlaying && activity.isAppInBackground) {
-                    activity.startMediaSyncTimer()
-                } else if (!isPlaying) {
-                    activity.stopMediaSyncTimer()
+                if (this@MainActivity.hasStartedForegroundService || isPlaying) {
+                    this@MainActivity.startOrUpdatePlaybackService()
                 }
             }
         }
 
-        // Keep other methods the same...
-    @JavascriptInterface
-    fun onVideoFound(videoUrl: String) {
-        activity.runOnUiThread {
-            if (videoUrl.isNotEmpty() && videoUrl != "about:blank") {
-                activity.currentVideoUrl = videoUrl
-                android.util.Log.d("MediaStateInterface", "Video found: $videoUrl")
+        @JavascriptInterface
+        fun onMediaSourceDetected(url: String) {
+            this@MainActivity.runOnUiThread {
+                processDetectedMediaUrl(url)
             }
         }
-    }
 
-    @JavascriptInterface
-    fun onMediaPlay() {
-        activity.runOnUiThread {
-            android.util.Log.d("MediaStateInterface", "onMediaPlay called")
-            activity.isMediaPlaying = true
-            activity.startOrUpdatePlaybackService()
-            if (activity.isAppInBackground) {
-                activity.startMediaSyncTimer()
+        @JavascriptInterface
+        fun onVideoFound(videoUrl: String) {
+            this@MainActivity.runOnUiThread {
+                if (videoUrl.isNotEmpty() && videoUrl != "about:blank") {
+                    this@MainActivity.currentVideoUrl = videoUrl
+                    android.util.Log.d("MediaStateInterface", "Video found: $videoUrl")
+                }
             }
         }
-    }
-
-    @JavascriptInterface
-    fun onMediaPause() {
-        activity.runOnUiThread {
-            android.util.Log.d("MediaStateInterface", "onMediaPause called")
-            activity.isMediaPlaying = false
-            activity.stopMediaSyncTimer()
-            activity.startOrUpdatePlaybackService()
+        @JavascriptInterface
+        fun onMediaPlay() {
+            this@MainActivity.runOnUiThread {
+                android.util.Log.d("MediaStateInterface", "onMediaPlay called")
+                this@MainActivity.isMediaPlaying = true
+                this@MainActivity.startOrUpdatePlaybackService()
+            }
         }
-    }
 
-    @JavascriptInterface
-    fun onMediaEnded() {
-        activity.runOnUiThread {
-            android.util.Log.d("MediaStateInterface", "onMediaEnded called")
-            activity.isMediaPlaying = false
-            activity.currentVideoUrl = null
-            activity.stopMediaSyncTimer()
-            activity.stopPlaybackService()
+        @JavascriptInterface
+        fun onMediaPause() {
+            this@MainActivity.runOnUiThread {
+                android.util.Log.d("MediaStateInterface", "onMediaPause called")
+                this@MainActivity.isMediaPlaying = false
+                this@MainActivity.startOrUpdatePlaybackService()
+            }
         }
-    }
 
-    @JavascriptInterface
-    fun onError(error: String) {
-        activity.runOnUiThread {
-            android.util.Log.e("MediaStateInterface", "Media error: $error")
-            activity.isMediaPlaying = false
-            activity.currentVideoUrl = null
-            activity.stopMediaSyncTimer()
-            activity.stopPlaybackService()
-            Toast.makeText(activity, "Media playback error: $error", Toast.LENGTH_LONG).show()
+        @JavascriptInterface
+        fun onMediaEnded() {
+            this@MainActivity.runOnUiThread {
+                android.util.Log.d("MediaStateInterface", "onMediaEnded called")
+                this@MainActivity.isMediaPlaying = false
+                this@MainActivity.currentVideoUrl = null
+                this@MainActivity.stopPlaybackService()
+            }
         }
-    }
+
+        @JavascriptInterface
+        fun onError(error: String) {
+            this@MainActivity.runOnUiThread {
+                android.util.Log.e("MediaStateInterface", "Media error: $error")
+                this@MainActivity.isMediaPlaying = false
+                this@MainActivity.currentVideoUrl = null
+                this@MainActivity.stopPlaybackService()
+                Toast.makeText(this@MainActivity, "Media playback error: $error", Toast.LENGTH_LONG).show()
+            }
+        }
     }
     private fun askForNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -1735,7 +1432,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
         if (isAdOrTrackingUrl(lower)) return false
-        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
+        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") ||
+               lower.endsWith(".m3u8") || lower.endsWith(".mpd") ||
+               lower.endsWith(".vtt") || lower.endsWith(".srt") ||
+               lower.contains("videoplayback")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
@@ -2425,5 +2125,47 @@ if (isDesktopMode) {
                 addToBlockedList(Uri.parse(url).host ?: url)
             }
             .show()
+    }
+
+    private fun processDetectedMediaUrl(url: String) {
+        try {
+            if (!isMediaUrl(url)) return
+
+            val absoluteUrl = webView.url?.let { baseUrl ->
+                java.net.URI.create(baseUrl).resolve(url).toString()
+            } ?: url
+
+            val category = MediaCategory.fromUrl(absoluteUrl)
+            val isMainContent = isMainVideoContent(absoluteUrl)
+            if (category == MediaCategory.VIDEO && isMainContent) {
+                currentVideoUrl = absoluteUrl
+            }
+            val detectedFormat = detectVideoFormat(absoluteUrl)
+            val quality = extractQualityFromUrl(absoluteUrl)
+            val enhancedTitle = generateSmartFileName(absoluteUrl, detectedFormat.extension, quality, category)
+            val fileSize = estimateFileSize(absoluteUrl, category)
+            val language = extractLanguageFromUrl(absoluteUrl)
+            val mediaFile = MediaFile(
+                url = absoluteUrl,
+                title = enhancedTitle,
+                mimeType = detectedFormat.mimeType,
+                quality = quality,
+                category = category,
+                fileSize = fileSize,
+                language = language,
+                isMainContent = isMainContent
+            )
+            val existsAlready = synchronized(detectedMediaFiles) {
+                detectedMediaFiles.any { it.url == absoluteUrl }
+            }
+            if (!existsAlready) {
+                synchronized(detectedMediaFiles) {
+                    detectedMediaFiles.add(mediaFile)
+                }
+                runOnUiThread { updateFabVisibility() }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error processing detected media URL: ${e.message}")
+        }
     }
 }
