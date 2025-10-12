@@ -556,27 +556,36 @@ private fun checkBatteryOptimization() {
                     android.util.Log.e("MainActivity", "Failed to save WebView state: ${e.message}")
                 }
             }
-            currentTab.isMediaPlaying = isMediaPlaying
-            currentTab.mediaTitle = currentMediaTitle
-            currentTab.hasNextMedia = hasNextMedia
-            currentTab.hasPreviousMedia = hasPreviousMedia
-            currentTab.mediaPosition = currentPosition
-            currentTab.mediaDuration = (duration * 1000).toLong()
+            // Save media state to the tab
+            currentTab.isMediaPlaying = this.isMediaPlaying
+            currentTab.mediaTitle = this.currentMediaTitle
+            currentTab.mediaPosition = this.currentPosition
+            currentTab.mediaDuration = (this.duration * 1000).toLong()
+            currentTab.hasNextMedia = this.hasNextMedia
+            currentTab.hasPreviousMedia = this.hasPreviousMedia
         }
     }
 
     private fun restoreTabState(tabIndex: Int) {
         if (tabIndex !in tabs.indices) return
         val tab = tabs[tabIndex]
+
+        // Restore media state from the tab
+        this.isMediaPlaying = tab.isMediaPlaying
+        this.currentMediaTitle = tab.mediaTitle
+        this.currentPosition = tab.mediaPosition
+        this.duration = (tab.mediaDuration / 1000).toDouble()
+        this.hasNextMedia = tab.hasNextMedia
+        this.hasPreviousMedia = tab.hasPreviousMedia
+
+        if (isMediaPlaying) {
+            startOrUpdatePlaybackService()
+        } else {
+            stopPlaybackService()
+        }
+
         binding.urlEditTextToolbar.setText(tab.url)
         
-        isMediaPlaying = tab.isMediaPlaying
-        currentMediaTitle = tab.mediaTitle
-        hasNextMedia = tab.hasNextMedia
-        hasPreviousMedia = tab.hasPreviousMedia
-        currentPosition = tab.mediaPosition
-        duration = tab.mediaDuration.toDouble() / 1000
-
         if (tab.url != null) {
             if (tab.historyStack.isNotEmpty()) {
                 webView.loadUrl(tab.historyStack.last())
@@ -602,23 +611,18 @@ private fun checkBatteryOptimization() {
         } else {
             showStartPage()
         }
-
-        if (isMediaPlaying) {
-            startOrUpdatePlaybackService()
-        } else {
-            stopPlaybackService()
-        }
     }
 
     private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
         if (newIndex !in tabs.indices) return
-        if (isMediaPlaying) {
-            stopPlaybackService()
-            isMediaPlaying = false
-        }
+
+        stopPlaybackService()
+        isMediaPlaying = false
+
         if (!forceReload) {
             saveCurrentTabState()
         }
+
         currentTabIndex = newIndex
         restoreTabState(currentTabIndex)
         updateTabCount()
@@ -748,23 +752,34 @@ private fun checkBatteryOptimization() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView(webView: WebView) {
+        // --- PERFORMANCE OPTIMIZATIONS ---
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null) // Enable hardware acceleration
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
+
         webView.apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.databaseEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
+
+            // --- PERFORMANCE SETTINGS ---
+            settings.allowFileAccess = true
+            settings.cacheMode = WebSettings.LOAD_DEFAULT // Use cache
+            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
+            // Keep these as they are for proper layout handling
             settings.useWideViewPort = false
             settings.loadWithOverviewMode = false
             settings.userAgentString = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-            settings.cacheMode = WebSettings.LOAD_DEFAULT
+
             settings.javaScriptCanOpenWindowsAutomatically = false
             settings.setSupportMultipleWindows(true)
+
             addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
             addJavascriptInterface(gmApi, "GMApi")
-            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
                 if (hitTestResult.type == WebView.HitTestResult.SRC_ANCHOR_TYPE ||
@@ -901,30 +916,41 @@ private fun checkBatteryOptimization() {
                 }
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                     val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
-                    if (isMediaUrl(url)) {
-                        val mediaFile = MediaFile(
-                            url = url,
-                            title = URLUtil.guessFileName(url, null, null),
-                            mimeType = "video/mp4",
-                            quality = "Unknown",
-                            category = MediaCategory.VIDEO,
-                            fileSize = "Unknown",
-                            language = null,
-                            isMainContent = false
-                        )
-                        synchronized(detectedMediaFiles) {
-                            if (!detectedMediaFiles.any { it.url == url }) {
-                                detectedMediaFiles.add(mediaFile)
-                                runOnUiThread { updateFabVisibility() }
-                            }
-                        }
-                    }
-
                     if (isUrlWhitelisted(url)) {
                         return super.shouldInterceptRequest(view, request)
                     }
                     if (isAdDomain(url)) {
                         return createEmptyResponse()
+                    }
+                    if (isMediaUrl(url)) {
+                        try {
+                            val category = MediaCategory.fromUrl(url)
+                            val detectedFormat = detectVideoFormat(url)
+                            val quality = extractQualityFromUrl(url)
+                            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
+                            val mediaFile = MediaFile(
+                                url = url,
+                                title = enhancedTitle,
+                                mimeType = detectedFormat.mimeType,
+                                quality = quality,
+                                category = category,
+                                fileSize = estimateFileSize(url, category),
+                                language = extractLanguageFromUrl(url),
+                                isMainContent = isMainVideoContent(url)
+                            )
+
+                            val existsAlready = synchronized(detectedMediaFiles) {
+                                detectedMediaFiles.any { it.url == url }
+                            }
+                            if (!existsAlready) {
+                                synchronized(detectedMediaFiles) {
+                                    detectedMediaFiles.add(mediaFile)
+                                }
+                                runOnUiThread { updateFabVisibility() }
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
+                        }
                     }
                     return super.shouldInterceptRequest(view, request)
                 }
@@ -1192,22 +1218,26 @@ private fun injectMediaStateDetector() {
                     }
                 },
                 next: function() {
-                    // First try to click a button if it exists
-                    const nextButton = this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
+                    let nextButton = this.mediaElement?.parentElement?.querySelector('[aria-label*="Next" i], [title*="Next" i]');
+                    if (!nextButton) {
+                        nextButton = this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
+                    }
+
                     if (nextButton) {
                         nextButton.click();
                     } else if (this.mediaElement) {
-                        // Otherwise, seek forward 10 seconds
                         this.mediaElement.currentTime = Math.min(this.mediaElement.currentTime + 10, this.mediaElement.duration);
                     }
                 },
                 previous: function() {
-                    // First try to click a button if it exists
-                    const prevButton = this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
+                    let prevButton = this.mediaElement?.parentElement?.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
+                    if (!prevButton) {
+                        prevButton = this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
+                    }
+
                     if (prevButton) {
                         prevButton.click();
                     } else if (this.mediaElement) {
-                        // Otherwise, seek backward 10 seconds
                         this.mediaElement.currentTime = Math.max(this.mediaElement.currentTime - 10, 0);
                     }
                 },
@@ -1270,16 +1300,6 @@ private fun injectMediaStateDetector() {
             hasPrevious: Boolean
         ) {
             activity.runOnUiThread {
-                if (activity.currentTabIndex in activity.tabs.indices) {
-                    val tab = activity.tabs[activity.currentTabIndex]
-                    tab.mediaTitle = title
-                    tab.isMediaPlaying = isPlaying
-                    tab.mediaPosition = (currentPosition * 1000).toLong()
-                    tab.mediaDuration = (duration * 1000).toLong()
-                    tab.hasNextMedia = hasNext
-                    tab.hasPreviousMedia = hasPrevious
-                }
-
                 activity.currentMediaTitle = title
                 activity.isMediaPlaying = isPlaying
                 activity.currentPosition = (currentPosition * 1000).toLong()
@@ -1459,7 +1479,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
         if (isAdOrTrackingUrl(lower)) return false
-        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
+        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback") || lower.endsWith(".m3u8") || lower.endsWith(".mpd")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
