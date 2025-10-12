@@ -162,13 +162,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        @JavascriptInterface
-        fun onMediaSourceDetected(url: String) {
-            // This is the new entry point for detected media URLs
-            this@MainActivity.runOnUiThread {
-                processDetectedMediaUrl(url)
-            }
-        }
     }
 
 private fun checkBatteryOptimization() {
@@ -895,8 +888,41 @@ private fun checkBatteryOptimization() {
                     if (isAdDomain(url)) {
                         return createEmptyResponse()
                     }
-                    // The old media detection logic has been removed from here.
-                    // The new primary detection mechanism is the JavaScript interface.
+                    if (isMediaUrl(url)) {
+                        try {
+                            val category = MediaCategory.fromUrl(url)
+                            val isMainContent = isMainVideoContent(url)
+                            if (category == MediaCategory.VIDEO && isMainContent) {
+                                currentVideoUrl = url
+                            }
+                            val detectedFormat = detectVideoFormat(url)
+                            val quality = extractQualityFromUrl(url)
+                            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
+                            val fileSize = estimateFileSize(url, category)
+                            val language = extractLanguageFromUrl(url)
+                            val mediaFile = MediaFile(
+                                url = url,
+                                title = enhancedTitle,
+                                mimeType = detectedFormat.mimeType,
+                                quality = quality,
+                                category = category,
+                                fileSize = fileSize,
+                                language = language,
+                                isMainContent = isMainContent
+                            )
+                            val existsAlready = synchronized(detectedMediaFiles) {
+                                detectedMediaFiles.any { it.url == url }
+                            }
+                            if (!existsAlready) {
+                                synchronized(detectedMediaFiles) {
+                                    detectedMediaFiles.add(mediaFile)
+                                }
+                                runOnUiThread { updateFabVisibility() }
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
+                        }
+                    }
                     return super.shouldInterceptRequest(view, request)
                 }
                 private fun createEmptyResponse(): WebResourceResponse {
@@ -1083,27 +1109,15 @@ private fun injectMediaStateDetector() {
                 lastInformedState: {},
                 mediaElement: null,
                 targetDocument: document,
-                mutationObserver: null,
 
                 findActiveMedia: function(doc) {
                     let allMedia = Array.from(doc.querySelectorAll('video, audio'));
 
                     // Prioritize media that is actually playing
-                    let activeMedia = allMedia.find(m => !m.paused && m.currentTime > 0 && !m.muted && m.volume > 0);
+                    let activeMedia = allMedia.find(m => !m.paused && m.currentTime > 0);
                     if (activeMedia) return { media: activeMedia, doc: doc };
 
-                    // Prioritize visible media
-                    let visibleMedia = allMedia.filter(m => {
-                        const rect = m.getBoundingClientRect();
-                        return rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
-                    });
-
-                    if (visibleMedia.length > 0) {
-                        // If there are visible media, return the one with the largest area
-                        return { media: visibleMedia.sort((a, b) => (b.width * b.height) - (a.width * a.height))[0], doc: doc };
-                    }
-
-                    // Fallback to the longest media element if nothing is playing or visible
+                    // Fallback to the longest media element if nothing is playing
                     let longestMedia = allMedia.filter(m => m.duration > 0).sort((a, b) => b.duration - a.duration)[0];
                     if (longestMedia) return { media: longestMedia, doc: doc };
 
@@ -1116,16 +1130,12 @@ private fun injectMediaStateDetector() {
 
                     try {
                         for (const frame of window.frames) {
-                            try {
-                                if (frame.document) {
-                                    mediaInfo = this.findActiveMedia(frame.document);
-                                    if (mediaInfo) return mediaInfo;
-                                }
-                            } catch (e) {
-                                console.log('Could not access cross-origin frame.');
+                            if (frame.document) {
+                                mediaInfo = this.findActiveMedia(frame.document);
+                                if (mediaInfo) return mediaInfo;
                             }
                         }
-                    } catch (e) { /* error accessing frames */ }
+                    } catch (e) { /* cross-origin frame error */ }
                     return null;
                 },
 
@@ -1157,13 +1167,6 @@ private fun injectMediaStateDetector() {
                         hasPrevious: hasPreviousButton
                     };
                     
-                    // Only send an update if the state has actually changed
-                    // Always report the media source URL if it's new
-                    if (this.mediaElement && this.mediaElement.src && this.mediaElement.src !== this.lastInformedState.src && !this.mediaElement.src.startsWith('blob:')) {
-                        AndroidMediaState.onMediaSourceDetected(this.mediaElement.src);
-                        currentState.src = this.mediaElement.src;
-                    }
-
                     // Only send an update if the state has actually changed
                     if (JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState)) {
                         AndroidMediaState.updateMediaPlaybackState(
@@ -1209,55 +1212,11 @@ private fun injectMediaStateDetector() {
                 init: function() {
                     // Run state collection every second
                     setInterval(() => this.collectState(), 1000);
-                },
-
-                destroy: function() {
-                    if (this.stateCollectionInterval) {
-                        clearInterval(this.stateCollectionInterval);
-                        this.stateCollectionInterval = null;
-                    }
-                    if (this.mutationObserver) {
-                        this.mutationObserver.disconnect();
-                        this.mutationObserver = null;
-                    }
-                },
-
-                setupMutationObserver: function() {
-                    if (this.mutationObserver) return; // Already set up
-                    this.mutationObserver = new MutationObserver((mutations) => {
-                        for (const mutation of mutations) {
-                            if (mutation.addedNodes.length > 0) {
-                                for (const node of mutation.addedNodes) {
-                                    if (node.nodeName === 'VIDEO' || node.nodeName === 'AUDIO' || (node.querySelector && (node.querySelector('video') || node.querySelector('audio')))) {
-                                        console.log('DOM changed, re-scanning for media...');
-                                        this.refreshMediaElement();
-                                        this.collectState();
-                                        return; // No need to check other mutations
-                                    }
-                                }
-                            }
-                        }
-                    });
-
-                    this.mutationObserver.observe(document.body, {
-                        childList: true,
-                        subtree: true
-                    });
                 }
             };
 
             window.AndroidMediaController = controller;
             controller.init();
-            controller.setupMutationObserver();
-
-            // Re-initialize when visibility changes (handles app resume)
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden) {
-                    console.log('Page visible again, refreshing media controller');
-                    controller.refreshMediaElement();
-                    controller.collectState();
-                }
-            });
         })();
     """.trimIndent()
     webView.evaluateJavascript(script, null)
@@ -1307,72 +1266,65 @@ private fun injectMediaStateDetector() {
             hasNext: Boolean,
             hasPrevious: Boolean
         ) {
-            this@MainActivity.runOnUiThread {
-                this@MainActivity.currentMediaTitle = title
-                this@MainActivity.isMediaPlaying = isPlaying
-                this@MainActivity.currentPosition = (currentPosition * 1000).toLong()
-                this@MainActivity.duration = duration
-                this@MainActivity.hasNextMedia = hasNext
-                this@MainActivity.hasPreviousMedia = hasPrevious
+            activity.runOnUiThread {
+                activity.currentMediaTitle = title
+                activity.isMediaPlaying = isPlaying
+                activity.currentPosition = (currentPosition * 1000).toLong()
+                activity.duration = duration
+                activity.hasNextMedia = hasNext
+                activity.hasPreviousMedia = hasPrevious
 
-                if (this@MainActivity.hasStartedForegroundService || isPlaying) {
-                    this@MainActivity.startOrUpdatePlaybackService()
+                if (activity.hasStartedForegroundService || isPlaying) {
+                    activity.startOrUpdatePlaybackService()
                 }
             }
         }
 
         @JavascriptInterface
-        fun onMediaSourceDetected(url: String) {
-            this@MainActivity.runOnUiThread {
-                processDetectedMediaUrl(url)
-            }
-        }
-
-        @JavascriptInterface
         fun onVideoFound(videoUrl: String) {
-            this@MainActivity.runOnUiThread {
+            activity.runOnUiThread {
                 if (videoUrl.isNotEmpty() && videoUrl != "about:blank") {
-                    this@MainActivity.currentVideoUrl = videoUrl
+                    activity.currentVideoUrl = videoUrl
                     android.util.Log.d("MediaStateInterface", "Video found: $videoUrl")
                 }
             }
         }
         @JavascriptInterface
         fun onMediaPlay() {
-            this@MainActivity.runOnUiThread {
+            activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPlay called")
-                this@MainActivity.isMediaPlaying = true
-                this@MainActivity.startOrUpdatePlaybackService()
+                activity.isMediaPlaying = true
+                activity.startOrUpdatePlaybackService()
             }
         }
 
         @JavascriptInterface
         fun onMediaPause() {
-            this@MainActivity.runOnUiThread {
+            activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPause called")
-                this@MainActivity.isMediaPlaying = false
-                this@MainActivity.startOrUpdatePlaybackService()
+                activity.isMediaPlaying = false
+                activity.startOrUpdatePlaybackService()
             }
         }
 
         @JavascriptInterface
         fun onMediaEnded() {
-            this@MainActivity.runOnUiThread {
+            activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaEnded called")
-                this@MainActivity.isMediaPlaying = false
-                this@MainActivity.currentVideoUrl = null
-                this@MainActivity.stopPlaybackService()
+                activity.isMediaPlaying = false
+                activity.currentVideoUrl = null
+                activity.stopPlaybackService()
             }
         }
 
         @JavascriptInterface
         fun onError(error: String) {
-            this@MainActivity.runOnUiThread {
+            activity.runOnUiThread {
                 android.util.Log.e("MediaStateInterface", "Media error: $error")
-                this@MainActivity.isMediaPlaying = false
-                this@MainActivity.currentVideoUrl = null
-                this@MainActivity.stopPlaybackService()
-                Toast.makeText(this@MainActivity, "Media playback error: $error", Toast.LENGTH_LONG).show()
+                activity.isMediaPlaying = false
+                activity.currentVideoUrl = null
+                activity.stopPlaybackService()
+                Toast.makeText(activity, "Media playback error: $error", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -1494,10 +1446,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
         if (isAdOrTrackingUrl(lower)) return false
-        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") ||
-               lower.endsWith(".m3u8") || lower.endsWith(".mpd") ||
-               lower.endsWith(".vtt") || lower.endsWith(".srt") ||
-               lower.contains("videoplayback")
+        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
@@ -2187,47 +2136,5 @@ if (isDesktopMode) {
                 addToBlockedList(Uri.parse(url).host ?: url)
             }
             .show()
-    }
-
-    private fun processDetectedMediaUrl(url: String) {
-        try {
-            if (!isMediaUrl(url)) return
-
-            val absoluteUrl = webView.url?.let { baseUrl ->
-                java.net.URI.create(baseUrl).resolve(url).toString()
-            } ?: url
-
-            val category = MediaCategory.fromUrl(absoluteUrl)
-            val isMainContent = isMainVideoContent(absoluteUrl)
-            if (category == MediaCategory.VIDEO && isMainContent) {
-                currentVideoUrl = absoluteUrl
-            }
-            val detectedFormat = detectVideoFormat(absoluteUrl)
-            val quality = extractQualityFromUrl(absoluteUrl)
-            val enhancedTitle = generateSmartFileName(absoluteUrl, detectedFormat.extension, quality, category)
-            val fileSize = estimateFileSize(absoluteUrl, category)
-            val language = extractLanguageFromUrl(absoluteUrl)
-            val mediaFile = MediaFile(
-                url = absoluteUrl,
-                title = enhancedTitle,
-                mimeType = detectedFormat.mimeType,
-                quality = quality,
-                category = category,
-                fileSize = fileSize,
-                language = language,
-                isMainContent = isMainContent
-            )
-            val existsAlready = synchronized(detectedMediaFiles) {
-                detectedMediaFiles.any { it.url == absoluteUrl }
-            }
-            if (!existsAlready) {
-                synchronized(detectedMediaFiles) {
-                    detectedMediaFiles.add(mediaFile)
-                }
-                runOnUiThread { updateFabVisibility() }
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Error processing detected media URL: ${e.message}")
-        }
     }
 }
