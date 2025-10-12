@@ -882,6 +882,25 @@ private fun checkBatteryOptimization() {
                 }
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                     val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
+                    if (isMediaUrl(url)) {
+                        val mediaFile = MediaFile(
+                            url = url,
+                            title = URLUtil.guessFileName(url, null, null),
+                            mimeType = "video/mp4",
+                            quality = "Unknown",
+                            category = MediaCategory.VIDEO,
+                            fileSize = "Unknown",
+                            language = null,
+                            isMainContent = false
+                        )
+                        synchronized(detectedMediaFiles) {
+                            if (!detectedMediaFiles.any { it.url == url }) {
+                                detectedMediaFiles.add(mediaFile)
+                                runOnUiThread { updateFabVisibility() }
+                            }
+                        }
+                    }
+
                     if (isUrlWhitelisted(url)) {
                         return super.shouldInterceptRequest(view, request)
                     }
@@ -1132,12 +1151,6 @@ private fun injectMediaStateDetector() {
                         hasPrevious: hasPreviousButton
                     };
                     
-                    // Always report the media source URL if it's new
-                    if (this.mediaElement && this.mediaElement.src && this.mediaElement.src !== this.lastInformedState.src && !this.mediaElement.src.startsWith('blob:')) {
-                        AndroidMediaState.onMediaSourceDetected(this.mediaElement.src);
-                        currentState.src = this.mediaElement.src;
-                    }
-
                     // Only send an update if the state has actually changed
                     if (JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState)) {
                         AndroidMediaState.updateMediaPlaybackState(
@@ -1248,13 +1261,6 @@ private fun injectMediaStateDetector() {
                 if (activity.hasStartedForegroundService || isPlaying) {
                     activity.startOrUpdatePlaybackService()
                 }
-            }
-        }
-
-        @JavascriptInterface
-        fun onMediaSourceDetected(url: String) {
-            this@MainActivity.runOnUiThread {
-                processDetectedMediaUrl(url)
             }
         }
 
@@ -1424,7 +1430,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
         if (isAdOrTrackingUrl(lower)) return false
-        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
+        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback") || lower.endsWith(".m3u8") || lower.endsWith(".mpd")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
@@ -1485,17 +1491,26 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .setNegativeButton("Cancel", null)
             .show()
     }
+    private fun isHlsOrDash(url: String): Boolean {
+        return url.endsWith(".m3u8") || url.endsWith(".mpd")
+    }
+
     private fun downloadMediaFile(mediaFile: MediaFile) {
-        try {
-            val request = DownloadManager.Request(Uri.parse(mediaFile.url))
-                .setTitle(mediaFile.title)
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, mediaFile.title)
-            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            dm.enqueue(request)
-            Toast.makeText(this, "Download started: ${mediaFile.title}", Toast.LENGTH_LONG).show()
-        } catch (e: Exception) {
-            Toast.makeText(this, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+        if (isHlsOrDash(mediaFile.url)) {
+            HlsDownloadHelper.getInstance(this).download(Uri.parse(mediaFile.url))
+            Toast.makeText(this, "HLS download started: ${mediaFile.title}", Toast.LENGTH_LONG).show()
+        } else {
+            try {
+                val request = DownloadManager.Request(Uri.parse(mediaFile.url))
+                    .setTitle(mediaFile.title)
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, mediaFile.title)
+                val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                dm.enqueue(request)
+                Toast.makeText(this, "Download started: ${mediaFile.title}", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
     }
     private fun addToHistory(url: String) {
@@ -2114,47 +2129,5 @@ if (isDesktopMode) {
                 addToBlockedList(Uri.parse(url).host ?: url)
             }
             .show()
-    }
-
-    private fun processDetectedMediaUrl(url: String) {
-        try {
-            if (!isMediaUrl(url)) return
-
-            val absoluteUrl = webView.url?.let { baseUrl ->
-                java.net.URI.create(baseUrl).resolve(url).toString()
-            } ?: url
-
-            val category = MediaCategory.fromUrl(absoluteUrl)
-            val isMainContent = isMainVideoContent(absoluteUrl)
-            if (category == MediaCategory.VIDEO && isMainContent) {
-                currentVideoUrl = absoluteUrl
-            }
-            val detectedFormat = detectVideoFormat(absoluteUrl)
-            val quality = extractQualityFromUrl(absoluteUrl)
-            val enhancedTitle = generateSmartFileName(absoluteUrl, detectedFormat.extension, quality, category)
-            val fileSize = estimateFileSize(absoluteUrl, category)
-            val language = extractLanguageFromUrl(absoluteUrl)
-            val mediaFile = MediaFile(
-                url = absoluteUrl,
-                title = enhancedTitle,
-                mimeType = detectedFormat.mimeType,
-                quality = quality,
-                category = category,
-                fileSize = fileSize,
-                language = language,
-                isMainContent = isMainContent
-            )
-            val existsAlready = synchronized(detectedMediaFiles) {
-                detectedMediaFiles.any { it.url == absoluteUrl }
-            }
-            if (!existsAlready) {
-                synchronized(detectedMediaFiles) {
-                    detectedMediaFiles.add(mediaFile)
-                }
-                runOnUiThread { updateFabVisibility() }
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Error processing detected media URL: ${e.message}")
-        }
     }
 }

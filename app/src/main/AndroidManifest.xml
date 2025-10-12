@@ -99,6 +99,11 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".HlsDownloadHelper$MyDownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
             
     </application>
 
