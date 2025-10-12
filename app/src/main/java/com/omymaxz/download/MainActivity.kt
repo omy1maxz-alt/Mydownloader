@@ -888,41 +888,6 @@ private fun checkBatteryOptimization() {
                     if (isAdDomain(url)) {
                         return createEmptyResponse()
                     }
-                    if (isMediaUrl(url)) {
-                        try {
-                            val category = MediaCategory.fromUrl(url)
-                            val isMainContent = isMainVideoContent(url)
-                            if (category == MediaCategory.VIDEO && isMainContent) {
-                                currentVideoUrl = url
-                            }
-                            val detectedFormat = detectVideoFormat(url)
-                            val quality = extractQualityFromUrl(url)
-                            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
-                            val fileSize = estimateFileSize(url, category)
-                            val language = extractLanguageFromUrl(url)
-                            val mediaFile = MediaFile(
-                                url = url,
-                                title = enhancedTitle,
-                                mimeType = detectedFormat.mimeType,
-                                quality = quality,
-                                category = category,
-                                fileSize = fileSize,
-                                language = language,
-                                isMainContent = isMainContent
-                            )
-                            val existsAlready = synchronized(detectedMediaFiles) {
-                                detectedMediaFiles.any { it.url == url }
-                            }
-                            if (!existsAlready) {
-                                synchronized(detectedMediaFiles) {
-                                    detectedMediaFiles.add(mediaFile)
-                                }
-                                runOnUiThread { updateFabVisibility() }
-                            }
-                        } catch (e: Exception) {
-                            android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
-                        }
-                    }
                     return super.shouldInterceptRequest(view, request)
                 }
                 private fun createEmptyResponse(): WebResourceResponse {
@@ -1114,7 +1079,7 @@ private fun injectMediaStateDetector() {
                     let allMedia = Array.from(doc.querySelectorAll('video, audio'));
 
                     // Prioritize media that is actually playing
-                    let activeMedia = allMedia.find(m => !m.paused && m.currentTime > 0);
+                    let activeMedia = allMedia.find(m => !m.paused && m.currentTime > 0 && !m.muted && m.volume > 0);
                     if (activeMedia) return { media: activeMedia, doc: doc };
 
                     // Fallback to the longest media element if nothing is playing
@@ -1167,6 +1132,12 @@ private fun injectMediaStateDetector() {
                         hasPrevious: hasPreviousButton
                     };
                     
+                    // Always report the media source URL if it's new
+                    if (this.mediaElement && this.mediaElement.src && this.mediaElement.src !== this.lastInformedState.src && !this.mediaElement.src.startsWith('blob:')) {
+                        AndroidMediaState.onMediaSourceDetected(this.mediaElement.src);
+                        currentState.src = this.mediaElement.src;
+                    }
+
                     // Only send an update if the state has actually changed
                     if (JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState)) {
                         AndroidMediaState.updateMediaPlaybackState(
@@ -1277,6 +1248,13 @@ private fun injectMediaStateDetector() {
                 if (activity.hasStartedForegroundService || isPlaying) {
                     activity.startOrUpdatePlaybackService()
                 }
+            }
+        }
+
+        @JavascriptInterface
+        fun onMediaSourceDetected(url: String) {
+            this@MainActivity.runOnUiThread {
+                processDetectedMediaUrl(url)
             }
         }
 
@@ -2136,5 +2114,47 @@ if (isDesktopMode) {
                 addToBlockedList(Uri.parse(url).host ?: url)
             }
             .show()
+    }
+
+    private fun processDetectedMediaUrl(url: String) {
+        try {
+            if (!isMediaUrl(url)) return
+
+            val absoluteUrl = webView.url?.let { baseUrl ->
+                java.net.URI.create(baseUrl).resolve(url).toString()
+            } ?: url
+
+            val category = MediaCategory.fromUrl(absoluteUrl)
+            val isMainContent = isMainVideoContent(absoluteUrl)
+            if (category == MediaCategory.VIDEO && isMainContent) {
+                currentVideoUrl = absoluteUrl
+            }
+            val detectedFormat = detectVideoFormat(absoluteUrl)
+            val quality = extractQualityFromUrl(absoluteUrl)
+            val enhancedTitle = generateSmartFileName(absoluteUrl, detectedFormat.extension, quality, category)
+            val fileSize = estimateFileSize(absoluteUrl, category)
+            val language = extractLanguageFromUrl(absoluteUrl)
+            val mediaFile = MediaFile(
+                url = absoluteUrl,
+                title = enhancedTitle,
+                mimeType = detectedFormat.mimeType,
+                quality = quality,
+                category = category,
+                fileSize = fileSize,
+                language = language,
+                isMainContent = isMainContent
+            )
+            val existsAlready = synchronized(detectedMediaFiles) {
+                detectedMediaFiles.any { it.url == absoluteUrl }
+            }
+            if (!existsAlready) {
+                synchronized(detectedMediaFiles) {
+                    detectedMediaFiles.add(mediaFile)
+                }
+                runOnUiThread { updateFabVisibility() }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error processing detected media URL: ${e.message}")
+        }
     }
 }
