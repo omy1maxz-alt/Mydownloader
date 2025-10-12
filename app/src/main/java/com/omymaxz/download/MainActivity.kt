@@ -1083,6 +1083,7 @@ private fun injectMediaStateDetector() {
                 lastInformedState: {},
                 mediaElement: null,
                 targetDocument: document,
+                mutationObserver: null,
 
                 findActiveMedia: function(doc) {
                     let allMedia = Array.from(doc.querySelectorAll('video, audio'));
@@ -1091,7 +1092,18 @@ private fun injectMediaStateDetector() {
                     let activeMedia = allMedia.find(m => !m.paused && m.currentTime > 0 && !m.muted && m.volume > 0);
                     if (activeMedia) return { media: activeMedia, doc: doc };
 
-                    // Fallback to the longest media element if nothing is playing
+                    // Prioritize visible media
+                    let visibleMedia = allMedia.filter(m => {
+                        const rect = m.getBoundingClientRect();
+                        return rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+                    });
+
+                    if (visibleMedia.length > 0) {
+                        // If there are visible media, return the one with the largest area
+                        return { media: visibleMedia.sort((a, b) => (b.width * b.height) - (a.width * a.height))[0], doc: doc };
+                    }
+
+                    // Fallback to the longest media element if nothing is playing or visible
                     let longestMedia = allMedia.filter(m => m.duration > 0).sort((a, b) => b.duration - a.duration)[0];
                     if (longestMedia) return { media: longestMedia, doc: doc };
 
@@ -1104,12 +1116,16 @@ private fun injectMediaStateDetector() {
 
                     try {
                         for (const frame of window.frames) {
-                            if (frame.document) {
-                                mediaInfo = this.findActiveMedia(frame.document);
-                                if (mediaInfo) return mediaInfo;
+                            try {
+                                if (frame.document) {
+                                    mediaInfo = this.findActiveMedia(frame.document);
+                                    if (mediaInfo) return mediaInfo;
+                                }
+                            } catch (e) {
+                                console.log('Could not access cross-origin frame.');
                             }
                         }
-                    } catch (e) { /* cross-origin frame error */ }
+                    } catch (e) { /* error accessing frames */ }
                     return null;
                 },
 
@@ -1142,17 +1158,19 @@ private fun injectMediaStateDetector() {
                     };
                     
                     // Only send an update if the state has actually changed
+                    // Always report the media source URL if it's new
+                    if (this.mediaElement && this.mediaElement.src && this.mediaElement.src !== this.lastInformedState.src && !this.mediaElement.src.startsWith('blob:')) {
+                        AndroidMediaState.onMediaSourceDetected(this.mediaElement.src);
+                        currentState.src = this.mediaElement.src;
+                    }
+
+                    // Only send an update if the state has actually changed
                     if (JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState)) {
                         AndroidMediaState.updateMediaPlaybackState(
                             currentState.title, currentState.isPlaying, currentState.currentTime,
                             currentState.duration, currentState.hasNext, currentState.hasPrevious
                         );
                         this.lastInformedState = currentState;
-
-                        // Also report the media source URL
-                        if (this.mediaElement && this.mediaElement.src && !this.mediaElement.src.startsWith('blob:')) {
-                            AndroidMediaState.onMediaSourceDetected(this.mediaElement.src);
-                        }
                     }
                 },
 
@@ -1191,11 +1209,55 @@ private fun injectMediaStateDetector() {
                 init: function() {
                     // Run state collection every second
                     setInterval(() => this.collectState(), 1000);
+                },
+
+                destroy: function() {
+                    if (this.stateCollectionInterval) {
+                        clearInterval(this.stateCollectionInterval);
+                        this.stateCollectionInterval = null;
+                    }
+                    if (this.mutationObserver) {
+                        this.mutationObserver.disconnect();
+                        this.mutationObserver = null;
+                    }
+                },
+
+                setupMutationObserver: function() {
+                    if (this.mutationObserver) return; // Already set up
+                    this.mutationObserver = new MutationObserver((mutations) => {
+                        for (const mutation of mutations) {
+                            if (mutation.addedNodes.length > 0) {
+                                for (const node of mutation.addedNodes) {
+                                    if (node.nodeName === 'VIDEO' || node.nodeName === 'AUDIO' || (node.querySelector && (node.querySelector('video') || node.querySelector('audio')))) {
+                                        console.log('DOM changed, re-scanning for media...');
+                                        this.refreshMediaElement();
+                                        this.collectState();
+                                        return; // No need to check other mutations
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    this.mutationObserver.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
                 }
             };
 
             window.AndroidMediaController = controller;
             controller.init();
+            controller.setupMutationObserver();
+
+            // Re-initialize when visibility changes (handles app resume)
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    console.log('Page visible again, refreshing media controller');
+                    controller.refreshMediaElement();
+                    controller.collectState();
+                }
+            });
         })();
     """.trimIndent()
     webView.evaluateJavascript(script, null)
