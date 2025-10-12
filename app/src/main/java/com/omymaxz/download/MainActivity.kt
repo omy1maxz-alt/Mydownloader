@@ -556,6 +556,12 @@ private fun checkBatteryOptimization() {
                     android.util.Log.e("MainActivity", "Failed to save WebView state: ${e.message}")
                 }
             }
+            currentTab.isMediaPlaying = isMediaPlaying
+            currentTab.mediaTitle = currentMediaTitle
+            currentTab.hasNextMedia = hasNextMedia
+            currentTab.hasPreviousMedia = hasPreviousMedia
+            currentTab.mediaPosition = currentPosition
+            currentTab.mediaDuration = (duration * 1000).toLong()
         }
     }
 
@@ -564,6 +570,13 @@ private fun checkBatteryOptimization() {
         val tab = tabs[tabIndex]
         binding.urlEditTextToolbar.setText(tab.url)
         
+        isMediaPlaying = tab.isMediaPlaying
+        currentMediaTitle = tab.mediaTitle
+        hasNextMedia = tab.hasNextMedia
+        hasPreviousMedia = tab.hasPreviousMedia
+        currentPosition = tab.mediaPosition
+        duration = tab.mediaDuration.toDouble() / 1000
+
         if (tab.url != null) {
             if (tab.historyStack.isNotEmpty()) {
                 webView.loadUrl(tab.historyStack.last())
@@ -588,6 +601,12 @@ private fun checkBatteryOptimization() {
             }
         } else {
             showStartPage()
+        }
+
+        if (isMediaPlaying) {
+            startOrUpdatePlaybackService()
+        } else {
+            stopPlaybackService()
         }
     }
 
@@ -1251,6 +1270,16 @@ private fun injectMediaStateDetector() {
             hasPrevious: Boolean
         ) {
             activity.runOnUiThread {
+                if (activity.currentTabIndex in activity.tabs.indices) {
+                    val tab = activity.tabs[activity.currentTabIndex]
+                    tab.mediaTitle = title
+                    tab.isMediaPlaying = isPlaying
+                    tab.mediaPosition = (currentPosition * 1000).toLong()
+                    tab.mediaDuration = (duration * 1000).toLong()
+                    tab.hasNextMedia = hasNext
+                    tab.hasPreviousMedia = hasPrevious
+                }
+
                 activity.currentMediaTitle = title
                 activity.isMediaPlaying = isPlaying
                 activity.currentPosition = (currentPosition * 1000).toLong()
@@ -1430,7 +1459,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
         if (isAdOrTrackingUrl(lower)) return false
-        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback") || lower.endsWith(".m3u8") || lower.endsWith(".mpd")
+        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
@@ -1491,10 +1520,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .setNegativeButton("Cancel", null)
             .show()
     }
-    private fun isHlsOrDash(url: String): Boolean {
-        return url.endsWith(".m3u8") || url.endsWith(".mpd")
-    }
-
     private fun downloadMediaFile(mediaFile: MediaFile) {
         if (isHlsOrDash(mediaFile.url)) {
             HlsDownloadHelper.getInstance(this).download(Uri.parse(mediaFile.url))
@@ -1512,6 +1537,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 Toast.makeText(this, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun isHlsOrDash(url: String): Boolean {
+        return url.endsWith(".m3u8") || url.endsWith(".mpd")
     }
     private fun addToHistory(url: String) {
         val title = webView.title ?: "No Title"

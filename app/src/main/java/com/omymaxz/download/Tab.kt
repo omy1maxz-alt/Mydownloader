@@ -20,5 +20,7 @@ data class Tab(
     var isMediaPlaying: Boolean = false,
     var mediaTitle: String? = null,
     var hasNextMedia: Boolean = false,
-    var hasPreviousMedia: Boolean = false
+    var hasPreviousMedia: Boolean = false,
+    var mediaPosition: Long = 0L,
+    var mediaDuration: Long = 0L
 )
