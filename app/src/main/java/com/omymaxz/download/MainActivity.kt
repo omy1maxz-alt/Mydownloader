@@ -593,11 +593,10 @@ private fun checkBatteryOptimization() {
 
     private fun switchTab(newIndex: Int, forceReload: Boolean = false) {
         if (newIndex !in tabs.indices) return
-
-        // Always stop the service to prevent sticky notifications
-        stopPlaybackService()
-        isMediaPlaying = false
-
+        if (isMediaPlaying) {
+            stopPlaybackService()
+            isMediaPlaying = false
+        }
         if (!forceReload) {
             saveCurrentTabState()
         }
@@ -870,7 +869,6 @@ private fun checkBatteryOptimization() {
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
-                    injectAdvancedMediaDetector(webView) // Call the new detector
                     injectMediaStateDetector()
                     injectPendingUserscripts()
                     url?.let {
@@ -901,10 +899,41 @@ private fun checkBatteryOptimization() {
                     if (isAdDomain(url)) {
                         return createEmptyResponse()
                     }
-                    // The new JS detector handles media detection, so this is no longer needed.
-                    // if (isMediaUrl(url)) {
-                    //     handleFoundMediaUrl(url)
-                    // }
+                    if (isMediaUrl(url)) {
+                        try {
+                            val category = MediaCategory.fromUrl(url)
+                            val isMainContent = isMainVideoContent(url)
+                            if (category == MediaCategory.VIDEO && isMainContent) {
+                                currentVideoUrl = url
+                            }
+                            val detectedFormat = detectVideoFormat(url)
+                            val quality = extractQualityFromUrl(url)
+                            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
+                            val fileSize = estimateFileSize(url, category)
+                            val language = extractLanguageFromUrl(url)
+                            val mediaFile = MediaFile(
+                                url = url,
+                                title = enhancedTitle,
+                                mimeType = detectedFormat.mimeType,
+                                quality = quality,
+                                category = category,
+                                fileSize = fileSize,
+                                language = language,
+                                isMainContent = isMainContent
+                            )
+                            val existsAlready = synchronized(detectedMediaFiles) {
+                                detectedMediaFiles.any { it.url == url }
+                            }
+                            if (!existsAlready) {
+                                synchronized(detectedMediaFiles) {
+                                    detectedMediaFiles.add(mediaFile)
+                                }
+                                runOnUiThread { updateFabVisibility() }
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
+                        }
+                    }
                     return super.shouldInterceptRequest(view, request)
                 }
                 private fun createEmptyResponse(): WebResourceResponse {
@@ -1081,90 +1110,6 @@ private fun checkBatteryOptimization() {
         """.trimIndent()
         webView?.loadUrl(polyfillScript)
     }
-private fun injectAdvancedMediaDetector(webView: WebView) {
-    val script = """
-        javascript:(function() {
-            'use strict';
-            if (window.AdvancedMediaDetector) return;
-
-            const detector = {
-                foundUrls: new Set(),
-                reportUrl: function(url) {
-                    if (url && !this.foundUrls.has(url)) {
-                        this.foundUrls.add(url);
-                        AndroidMediaState.onVideoFound(url);
-                        console.log('Video found:', url);
-                    }
-                },
-
-                // 1. MutationObserver to catch dynamically added media
-                observeDOM: function() {
-                    const observer = new MutationObserver(mutations => {
-                        mutations.forEach(mutation => {
-                            mutation.addedNodes.forEach(node => {
-                                if (node.tagName === 'VIDEO' || node.tagName === 'AUDIO') {
-                                    this.reportUrl(node.src);
-                                }
-                                if (node.querySelectorAll) {
-                                    node.querySelectorAll('video, audio').forEach(media => this.reportUrl(media.src));
-                                }
-                            });
-                        });
-                    });
-                    observer.observe(document.body, { childList: true, subtree: true });
-                },
-
-                // 2. Intercept Fetch and XHR
-                interceptNetworkRequests: function() {
-                    const self = this;
-                    const originalFetch = window.fetch;
-                    window.fetch = function() {
-                        const url = arguments[0] instanceof Request ? arguments[0].url : arguments[0];
-                        if (url.includes('.m3u8') || url.includes('.mpd')) {
-                           self.reportUrl(url);
-                        }
-                        return originalFetch.apply(this, arguments);
-                    };
-
-                    const originalXhrOpen = XMLHttpRequest.prototype.open;
-                    XMLHttpRequest.prototype.open = function() {
-                        const url = arguments[1];
-                         if (url.includes('.m3u8') || url.includes('.mpd')) {
-                           self.reportUrl(url);
-                        }
-                        originalXhrOpen.apply(this, arguments);
-                    };
-                },
-
-                // 3. Handle Blob URLs
-                handleBlobUrls: function() {
-                    const self = this;
-                    const originalCreateObjectURL = URL.createObjectURL;
-                    URL.createObjectURL = function(blob) {
-                        const url = originalCreateObjectURL.apply(this, arguments);
-                        // We can't do much with the blob URL itself, but we can watch for its use
-                        // The MutationObserver will catch it when it's assigned to a video src
-                        return url;
-                    };
-                },
-
-                init: function() {
-                    console.log("Advanced Media Detector Initializing...");
-                    this.observeDOM();
-                    this.interceptNetworkRequests();
-                    this.handleBlobUrls();
-                    // Initial scan
-                    document.querySelectorAll('video, audio').forEach(media => this.reportUrl(media.src));
-                    console.log("Advanced Media Detector Initialized.");
-                }
-            };
-            window.AdvancedMediaDetector = detector;
-            detector.init();
-        })();
-    """.trimIndent()
-    webView.evaluateJavascript(script, null)
-}
-
 private fun injectMediaStateDetector() {
     val script = """
         javascript:(function() {
@@ -1255,26 +1200,22 @@ private fun injectMediaStateDetector() {
                     }
                 },
                 next: function() {
-                    let nextButton = this.mediaElement?.parentElement?.querySelector('[aria-label*="Next" i], [title*="Next" i]');
-                    if (!nextButton) {
-                        nextButton = this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
-                    }
-
+                    // First try to click a button if it exists
+                    const nextButton = this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
                     if (nextButton) {
                         nextButton.click();
                     } else if (this.mediaElement) {
+                        // Otherwise, seek forward 10 seconds
                         this.mediaElement.currentTime = Math.min(this.mediaElement.currentTime + 10, this.mediaElement.duration);
                     }
                 },
                 previous: function() {
-                    let prevButton = this.mediaElement?.parentElement?.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
-                    if (!prevButton) {
-                        prevButton = this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
-                    }
-
+                    // First try to click a button if it exists
+                    const prevButton = this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
                     if (prevButton) {
                         prevButton.click();
                     } else if (this.mediaElement) {
+                        // Otherwise, seek backward 10 seconds
                         this.mediaElement.currentTime = Math.max(this.mediaElement.currentTime - 10, 0);
                     }
                 },
@@ -1354,7 +1295,8 @@ private fun injectMediaStateDetector() {
         fun onVideoFound(videoUrl: String) {
             activity.runOnUiThread {
                 if (videoUrl.isNotEmpty() && videoUrl != "about:blank") {
-                    activity.handleFoundMediaUrl(videoUrl)
+                    activity.currentVideoUrl = videoUrl
+                    android.util.Log.d("MediaStateInterface", "Video found: $videoUrl")
                 }
             }
         }
@@ -1395,36 +1337,6 @@ private fun injectMediaStateDetector() {
                 activity.stopPlaybackService()
                 Toast.makeText(activity, "Media playback error: $error", Toast.LENGTH_LONG).show()
             }
-        }
-    }
-    private fun handleFoundMediaUrl(url: String) {
-        try {
-            val category = MediaCategory.fromUrl(url)
-            val detectedFormat = detectVideoFormat(url)
-            val quality = extractQualityFromUrl(url)
-            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
-            val mediaFile = MediaFile(
-                url = url,
-                title = enhancedTitle,
-                mimeType = detectedFormat.mimeType,
-                quality = quality,
-                category = category,
-                fileSize = estimateFileSize(url, category),
-                language = extractLanguageFromUrl(url),
-                isMainContent = isMainVideoContent(url)
-            )
-
-            val existsAlready = synchronized(detectedMediaFiles) {
-                detectedMediaFiles.any { it.url == url }
-            }
-            if (!existsAlready) {
-                synchronized(detectedMediaFiles) {
-                    detectedMediaFiles.add(mediaFile)
-                }
-                runOnUiThread { updateFabVisibility() }
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
         }
     }
     private fun askForNotificationPermission() {
@@ -1541,6 +1453,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val clip = android.content.ClipData.newPlainText("URL", text)
         clipboard.setPrimaryClip(clip)
         Toast.makeText(this, "URL copied", Toast.LENGTH_SHORT).show()
+    }
+    private fun isMediaUrl(url: String): Boolean {
+        val lower = url.lowercase()
+        if (isAdOrTrackingUrl(lower)) return false
+        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
