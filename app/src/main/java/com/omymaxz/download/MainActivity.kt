@@ -1634,140 +1634,126 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun manualMediaScan() {
         val script = """
             (function() {
-                const media = [];
-                const processedFrames = new Set();
+                if (window.mediaScanInitiated) {
+                    return JSON.stringify(Array.from(window.foundMedia.values()));
+                }
+                window.mediaScanInitiated = true;
+                window.foundMedia = new Map();
 
-                function scanDocument(doc) {
-                    // Scan for video/audio tags and their sources
-                    doc.querySelectorAll('video, audio').forEach(el => {
-                        if (el.src && typeof el.src === 'string' && el.src.trim() !== '') {
-                            try {
-                                media.push({ url: new URL(el.src, doc.baseURI).href, title: el.title || doc.title, type: 'video' });
-                            } catch(e) { console.error('Invalid media URL:', el.src); }
-                        }
-                        el.querySelectorAll('source').forEach(source => {
-                            if (source.src && typeof source.src === 'string' && source.src.trim() !== '') {
-                                 try {
-                                    media.push({ url: new URL(source.src, doc.baseURI).href, title: source.title || doc.title, type: 'video' });
-                                } catch(e) { console.error('Invalid media URL:', source.src); }
+                const originalFetch = window.fetch;
+                window.fetch = function(...args) {
+                    const url = args[0] instanceof Request ? args[0].url : args[0];
+                    if (typeof url === 'string' && (url.includes('.m3u8') || url.includes('.mpd') || url.includes('kisscloud.online/video/'))) {
+                        window.foundMedia.set(url, { url: url, title: document.title, type: 'video' });
+                    }
+                    return originalFetch.apply(this, args);
+                };
+
+                const originalXhrOpen = window.XMLHttpRequest.prototype.open;
+                window.XMLHttpRequest.prototype.open = function(...args) {
+                    const url = args[1];
+                    if (typeof url === 'string' && (url.includes('.m3u8') || url.includes('.mpd') || url.includes('kisscloud.online/video/'))) {
+                        window.foundMedia.set(url, { url: url, title: document.title, type: 'video' });
+                    }
+                    return originalXhrOpen.apply(this, args);
+                };
+
+                // Also run the iframe scan as a fallback
+                const processedFrames = new Set();
+                function searchFrames(win) {
+                    if (processedFrames.has(win)) return;
+                    processedFrames.add(win);
+                    try {
+                        win.document.querySelectorAll('video, audio, source, track').forEach(el => {
+                            if (el.src && typeof el.src === 'string' && el.src.trim() !== '') {
+                                try {
+                                    const absUrl = new URL(el.src, win.document.baseURI).href;
+                                    window.foundMedia.set(absUrl, { url: absUrl, title: el.title || win.document.title, type: el.tagName.toLowerCase() === 'track' ? 'subtitle' : 'video'});
+                                } catch(e) {}
                             }
                         });
-                    });
-
-                    // Scan for subtitle tracks
-                    doc.querySelectorAll('track').forEach(track => {
-                        if (track.src && typeof track.src === 'string' && track.src.trim() !== '' && (track.kind === 'subtitles' || track.kind === 'captions')) {
-                             try {
-                                media.push({ url: new URL(track.src, doc.baseURI).href, title: track.label || 'subtitle', type: 'subtitle' });
-                            } catch(e) { console.error('Invalid media URL:', track.src); }
+                        for (let i = 0; i < win.frames.length; i++) {
+                            searchFrames(win.frames[i]);
                         }
-                    });
-
-                    // Heuristic scan for manifest URLs in links
-                    doc.querySelectorAll('a[href]').forEach(a => {
-                        if (a.href.includes('.m3u8') || a.href.includes('.mpd')) {
-                             try {
-                                media.push({ url: new URL(a.href, doc.baseURI).href, title: a.textContent || 'HLS/DASH Stream', type: 'video' });
-                            } catch(e) { console.error('Invalid media URL:', a.href); }
-                        }
-                    });
+                    } catch (e) {}
                 }
-
-                function searchFrames(win) {
-                    if (processedFrames.has(win)) {
-                        return;
-                    }
-                    processedFrames.add(win);
-
-                    try {
-                        scanDocument(win.document);
-                    } catch (e) {
-                        console.error('Could not access document:', e);
-                    }
-
-                    for (let i = 0; i < win.frames.length; i++) {
-                        try {
-                            if (win.frames[i].document) {
-                                searchFrames(win.frames[i]);
-                            }
-                        } catch (e) {
-                            console.warn('Cross-origin frame blocked:', e);
-                        }
-                    }
-                }
-
                 searchFrames(window);
 
-                const uniqueMedia = Array.from(new Map(media.map(item => [item.url, item])).values());
-
-                return JSON.stringify(uniqueMedia);
+                // The results will be collected by the patched functions.
+                // Let the user know to play the video and press again.
+                return JSON.stringify([]);
             })();
         """
 
         webView.evaluateJavascript(script) { result ->
-            if (result != null && result != "null" && result != "\"[]\"") {
-                try {
-                    val unescapedResult = result.substring(1, result.length - 1).replace("\\\"", "\"")
+            val isInitialScan = result == null || result == "null" || result == "\"[]\""
 
-                    val gson = Gson()
-                    val type = object : TypeToken<List<Map<String, String>>>() {}.type
-                    val foundMedia: List<Map<String, String>> = gson.fromJson(unescapedResult, type)
+            // First press: Injects script and informs user to play the video.
+            if (isInitialScan) {
+                runOnUiThread {
+                    Toast.makeText(this, "Detection activated. Play the video, then press again to see results.", Toast.LENGTH_LONG).show()
+                }
+                return@evaluateJavascript
+            }
 
-                    if (foundMedia.isNotEmpty()) {
-                        val newMediaFiles = foundMedia.mapNotNull {
-                            val url = it["url"] ?: return@mapNotNull null
-                            val title = it["title"] ?: "Untitled"
-                            val type = it["type"] ?: "video"
+            // Second press: Gathers results from the now-active script.
+            try {
+                val unescapedResult = result.substring(1, result.length - 1).replace("\\\"", "\"")
 
-                            val category = if (type == "video") MediaCategory.VIDEO else MediaCategory.SUBTITLE
-                            val detectedFormat = detectVideoFormat(url)
-                            val quality = extractQualityFromUrl(url)
-                            MediaFile(
-                                url = url,
-                                title = generateSmartFileName(url, detectedFormat.extension, quality, category),
-                                mimeType = detectedFormat.mimeType,
-                                quality = quality,
-                                category = category,
-                                fileSize = "Unknown",
-                                language = null,
-                                isMainContent = false
-                            )
-                        }
+                val gson = Gson()
+                val type = object : TypeToken<List<Map<String, String>>>() {}.type
+                val foundMedia: List<Map<String, String>> = gson.fromJson(unescapedResult, type)
 
-                        var addedCount = 0
-                        synchronized(detectedMediaFiles) {
-                            val existingUrls = detectedMediaFiles.map { it.url }.toSet()
-                            newMediaFiles.forEach {
-                                if (!existingUrls.contains(it.url)) {
-                                    detectedMediaFiles.add(it)
-                                    addedCount++
-                                }
+                if (foundMedia.isNotEmpty()) {
+                    val newMediaFiles = foundMedia.mapNotNull {
+                        val url = it["url"] ?: return@mapNotNull null
+                        val title = it["title"] ?: "Untitled"
+                        val type = it["type"] ?: "video"
+
+                        val category = if (type == "video") MediaCategory.VIDEO else MediaCategory.SUBTITLE
+                        val detectedFormat = detectVideoFormat(url)
+                        val quality = extractQualityFromUrl(url)
+                        MediaFile(
+                            url = url,
+                            title = generateSmartFileName(url, detectedFormat.extension, quality, category),
+                            mimeType = detectedFormat.mimeType,
+                            quality = quality,
+                            category = category,
+                            fileSize = "Unknown",
+                            language = null,
+                            isMainContent = false
+                        )
+                    }
+
+                    var addedCount = 0
+                    synchronized(detectedMediaFiles) {
+                        val existingUrls = detectedMediaFiles.map { it.url }.toSet()
+                        newMediaFiles.forEach {
+                            if (!existingUrls.contains(it.url)) {
+                                detectedMediaFiles.add(it)
+                                addedCount++
                             }
-                        }
-
-                        runOnUiThread {
-                            if (addedCount > 0) {
-                                Toast.makeText(this, "$addedCount new media item(s) found!", Toast.LENGTH_SHORT).show()
-                                showMediaListDialog()
-                            } else {
-                                Toast.makeText(this, "No new media found. Showing existing list.", Toast.LENGTH_SHORT).show()
-                                showMediaListDialog()
-                            }
-                        }
-                    } else {
-                        runOnUiThread {
-                            Toast.makeText(this, "No media found on page.", Toast.LENGTH_SHORT).show()
                         }
                     }
-                } catch (e: Exception) {
-                    android.util.Log.e("MainActivity", "Error parsing media scan result", e)
+
                     runOnUiThread {
-                        Toast.makeText(this, "Error scanning for media.", Toast.LENGTH_SHORT).show()
+                        if (addedCount > 0) {
+                            Toast.makeText(this, "$addedCount new media item(s) found!", Toast.LENGTH_SHORT).show()
+                            showMediaListDialog()
+                        } else {
+                            Toast.makeText(this, "No new media found since last scan. Showing existing list.", Toast.LENGTH_SHORT).show()
+                            showMediaListDialog()
+                        }
+                    }
+                } else {
+                    runOnUiThread {
+                        Toast.makeText(this, "No media detected. Try playing the video first.", Toast.LENGTH_LONG).show()
                     }
                 }
-            } else {
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Error parsing media scan result", e)
                 runOnUiThread {
-                    Toast.makeText(this, "No media found on page.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Error scanning for media.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
