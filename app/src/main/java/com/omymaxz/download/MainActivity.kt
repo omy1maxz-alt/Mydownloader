@@ -1481,15 +1481,31 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val dialogBinding = DialogMediaListBinding.inflate(layoutInflater)
         val dialog = AlertDialog.Builder(this).setView(dialogBinding.root).create()
         val adapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
-            showRenameDialog(mediaFile)
+            // Tap to download
+            downloadMediaFile(mediaFile)
             dialog.dismiss()
         }, { mediaFile ->
-            openInExternalPlayer(mediaFile.url)
+            // Long press to "Open With"
+            openMediaWith(mediaFile)
+            dialog.dismiss()
         })
         dialogBinding.mediaRecyclerView.layoutManager = LinearLayoutManager(this)
         dialogBinding.mediaRecyclerView.adapter = adapter
         dialog.show()
     }
+    private fun openMediaWith(mediaFile: MediaFile) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(Uri.parse(mediaFile.url), mediaFile.mimeType)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            val chooser = Intent.createChooser(intent, "Open with")
+            startActivity(chooser)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, "No application found to handle this file.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun openInExternalPlayer(videoUrl: String) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl)).apply {
@@ -1607,9 +1623,106 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 showSiteDebuggingOptions()
                 true
             }
+            R.id.menu_enable_media_detection -> {
+                manualMediaScan()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    private fun manualMediaScan() {
+        val script = """
+            (function() {
+                const media = [];
+                document.querySelectorAll('video, audio').forEach(el => {
+                    if (el.src && typeof el.src === 'string' && el.src.trim() !== '') {
+                        media.push({ url: new URL(el.src, document.baseURI).href, title: el.title || document.title, type: 'video' });
+                    }
+                    el.querySelectorAll('source').forEach(source => {
+                        if (source.src && typeof source.src === 'string' && source.src.trim() !== '') {
+                            media.push({ url: new URL(source.src, document.baseURI).href, title: source.title || document.title, type: 'video' });
+                        }
+                    });
+                });
+                document.querySelectorAll('track').forEach(track => {
+                    if (track.src && typeof track.src === 'string' && track.src.trim() !== '' && (track.kind === 'subtitles' || track.kind === 'captions')) {
+                         media.push({ url: new URL(track.src, document.baseURI).href, title: track.label || 'subtitle', type: 'subtitle' });
+                    }
+                });
+                return JSON.stringify(media);
+            })();
+        """
+
+        webView.evaluateJavascript(script) { result ->
+            if (result != null && result != "null" && result != "\"[]\"") {
+                try {
+                    val unescapedResult = result.substring(1, result.length - 1).replace("\\\"", "\"")
+
+                    val gson = Gson()
+                    val type = object : TypeToken<List<Map<String, String>>>() {}.type
+                    val foundMedia: List<Map<String, String>> = gson.fromJson(unescapedResult, type)
+
+                    if (foundMedia.isNotEmpty()) {
+                        val newMediaFiles = foundMedia.mapNotNull {
+                            val url = it["url"] ?: return@mapNotNull null
+                            val title = it["title"] ?: "Untitled"
+                            val type = it["type"] ?: "video"
+
+                            val category = if (type == "video") MediaCategory.VIDEO else MediaCategory.SUBTITLE
+                            val detectedFormat = detectVideoFormat(url)
+                            val quality = extractQualityFromUrl(url)
+                            MediaFile(
+                                url = url,
+                                title = generateSmartFileName(url, detectedFormat.extension, quality, category),
+                                mimeType = detectedFormat.mimeType,
+                                quality = quality,
+                                category = category,
+                                fileSize = "Unknown",
+                                language = null,
+                                isMainContent = false
+                            )
+                        }
+
+                        var addedCount = 0
+                        synchronized(detectedMediaFiles) {
+                            val existingUrls = detectedMediaFiles.map { it.url }.toSet()
+                            newMediaFiles.forEach {
+                                if (!existingUrls.contains(it.url)) {
+                                    detectedMediaFiles.add(it)
+                                    addedCount++
+                                }
+                            }
+                        }
+
+                        runOnUiThread {
+                            if (addedCount > 0) {
+                                Toast.makeText(this, "$addedCount new media item(s) found!", Toast.LENGTH_SHORT).show()
+                                showMediaListDialog()
+                            } else {
+                                Toast.makeText(this, "No new media found. Showing existing list.", Toast.LENGTH_SHORT).show()
+                                showMediaListDialog()
+                            }
+                        }
+                    } else {
+                        runOnUiThread {
+                            Toast.makeText(this, "No media found on page.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Error parsing media scan result", e)
+                    runOnUiThread {
+                        Toast.makeText(this, "Error scanning for media.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                runOnUiThread {
+                    Toast.makeText(this, "No media found on page.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     private fun addCurrentPageToBookmarks() {
         if (webView.visibility == View.VISIBLE && !webView.url.isNullOrEmpty()) {
             val url = webView.url!!
