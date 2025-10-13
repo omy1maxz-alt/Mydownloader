@@ -1635,22 +1635,72 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val script = """
             (function() {
                 const media = [];
-                document.querySelectorAll('video, audio').forEach(el => {
-                    if (el.src && typeof el.src === 'string' && el.src.trim() !== '') {
-                        media.push({ url: new URL(el.src, document.baseURI).href, title: el.title || document.title, type: 'video' });
-                    }
-                    el.querySelectorAll('source').forEach(source => {
-                        if (source.src && typeof source.src === 'string' && source.src.trim() !== '') {
-                            media.push({ url: new URL(source.src, document.baseURI).href, title: source.title || document.title, type: 'video' });
+                const processedFrames = new Set();
+
+                function scanDocument(doc) {
+                    // Scan for video/audio tags and their sources
+                    doc.querySelectorAll('video, audio').forEach(el => {
+                        if (el.src && typeof el.src === 'string' && el.src.trim() !== '') {
+                            try {
+                                media.push({ url: new URL(el.src, doc.baseURI).href, title: el.title || doc.title, type: 'video' });
+                            } catch(e) { console.error('Invalid media URL:', el.src); }
+                        }
+                        el.querySelectorAll('source').forEach(source => {
+                            if (source.src && typeof source.src === 'string' && source.src.trim() !== '') {
+                                 try {
+                                    media.push({ url: new URL(source.src, doc.baseURI).href, title: source.title || doc.title, type: 'video' });
+                                } catch(e) { console.error('Invalid media URL:', source.src); }
+                            }
+                        });
+                    });
+
+                    // Scan for subtitle tracks
+                    doc.querySelectorAll('track').forEach(track => {
+                        if (track.src && typeof track.src === 'string' && track.src.trim() !== '' && (track.kind === 'subtitles' || track.kind === 'captions')) {
+                             try {
+                                media.push({ url: new URL(track.src, doc.baseURI).href, title: track.label || 'subtitle', type: 'subtitle' });
+                            } catch(e) { console.error('Invalid media URL:', track.src); }
                         }
                     });
-                });
-                document.querySelectorAll('track').forEach(track => {
-                    if (track.src && typeof track.src === 'string' && track.src.trim() !== '' && (track.kind === 'subtitles' || track.kind === 'captions')) {
-                         media.push({ url: new URL(track.src, document.baseURI).href, title: track.label || 'subtitle', type: 'subtitle' });
+
+                    // Heuristic scan for manifest URLs in links
+                    doc.querySelectorAll('a[href]').forEach(a => {
+                        if (a.href.includes('.m3u8') || a.href.includes('.mpd')) {
+                             try {
+                                media.push({ url: new URL(a.href, doc.baseURI).href, title: a.textContent || 'HLS/DASH Stream', type: 'video' });
+                            } catch(e) { console.error('Invalid media URL:', a.href); }
+                        }
+                    });
+                }
+
+                function searchFrames(win) {
+                    if (processedFrames.has(win)) {
+                        return;
                     }
-                });
-                return JSON.stringify(media);
+                    processedFrames.add(win);
+
+                    try {
+                        scanDocument(win.document);
+                    } catch (e) {
+                        console.error('Could not access document:', e);
+                    }
+
+                    for (let i = 0; i < win.frames.length; i++) {
+                        try {
+                            if (win.frames[i].document) {
+                                searchFrames(win.frames[i]);
+                            }
+                        } catch (e) {
+                            console.warn('Cross-origin frame blocked:', e);
+                        }
+                    }
+                }
+
+                searchFrames(window);
+
+                const uniqueMedia = Array.from(new Map(media.map(item => [item.url, item])).values());
+
+                return JSON.stringify(uniqueMedia);
             })();
         """
 
