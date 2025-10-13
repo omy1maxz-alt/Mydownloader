@@ -1641,31 +1641,38 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val script = """
             (function() {
                 const media = [];
-                const kisscloudFrame = Array.from(document.querySelectorAll('iframe')).find(f => f.src.includes('kisscloud.online'));
 
-                if (kisscloudFrame) {
-                    // This is a simplified approach. A real implementation would need to
-                    // communicate with the iframe's content script to get the variable.
-                    // For this example, we'll assume the URL is exposed in a way we can guess.
-                    // Based on the log `Final Video URL: https://kisscloud.online/video/445dc1b...`
-                    // we can assume the iframe's src IS the video URL.
+                // 1. Targeted scan for the specific video iframe
+                const kisscloudFrame = Array.from(document.querySelectorAll('iframe')).find(f => f.src.includes('kisscloud.online'));
+                if (kisscloudFrame && kisscloudFrame.src) {
                      media.push({ url: kisscloudFrame.src, title: document.title, type: 'video' });
                 }
 
-                // Fallback to the previous iframe scan
+                // 2. General, recursive scan for all other media, especially subtitles
                 const processedFrames = new Set();
                 function searchFrames(win) {
                     if (processedFrames.has(win)) return;
                     processedFrames.add(win);
                     try {
-                        win.document.querySelectorAll('video, audio, source, track').forEach(el => {
+                        // Scan for standard video/audio/source tags
+                        win.document.querySelectorAll('video, audio, source').forEach(el => {
                             if (el.src && typeof el.src === 'string' && el.src.trim() !== '') {
                                 try {
                                     const absUrl = new URL(el.src, win.document.baseURI).href;
-                                     media.push({ url: absUrl, title: el.title || win.document.title, type: el.tagName.toLowerCase() === 'track' ? 'subtitle' : 'video'});
+                                     media.push({ url: absUrl, title: el.title || win.document.title, type: 'video'});
                                 } catch(e) {}
                             }
                         });
+                        // Scan specifically for subtitle tracks
+                        win.document.querySelectorAll('track').forEach(track => {
+                            if (track.src && typeof track.src === 'string' && track.src.trim() !== '' && (track.kind === 'subtitles' || track.kind === 'captions')) {
+                                try {
+                                    const absUrl = new URL(track.src, win.document.baseURI).href;
+                                    media.push({ url: absUrl, title: track.label || 'Subtitle', type: 'subtitle' });
+                                } catch (e) {}
+                            }
+                        });
+
                         for (let i = 0; i < win.frames.length; i++) {
                             searchFrames(win.frames[i]);
                         }
@@ -1673,6 +1680,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 }
                 searchFrames(window);
 
+                // De-duplicate results
                 const uniqueMedia = Array.from(new Map(media.map(item => [item.url, item])).values());
                 return JSON.stringify(uniqueMedia);
             })();
