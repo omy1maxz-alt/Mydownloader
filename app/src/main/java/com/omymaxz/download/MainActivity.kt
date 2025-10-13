@@ -34,6 +34,8 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.ScrollView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -1627,6 +1629,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 manualMediaScan()
                 true
             }
+            R.id.menu_debug_page -> {
+                showPageSource()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -1757,6 +1763,49 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 }
             }
         }
+    }
+
+    private fun showPageSource() {
+        val script = """
+            (function() {
+                let html = 'Main Page Source:\\n\\n' + document.documentElement.outerHTML;
+                const frames = document.querySelectorAll('iframe');
+                frames.forEach((frame, index) => {
+                    try {
+                        html += '\\n\\n' + '--- Iframe ' + index + ' Source: ---' + '\\n\\n' + frame.contentDocument.documentElement.outerHTML;
+                    } catch(e) {
+                        html += '\\n\\n' + '--- Iframe ' + index + ' Source (Cross-origin): ---' + '\\n\\n' + 'Could not access content.';
+                    }
+                });
+                return html;
+            })();
+        """
+        webView.evaluateJavascript(script) { html ->
+            val unescapedHtml = html?.substring(1, html.length - 1)?.replace("\\u003C", "<")?.replace("\\n", "\n")?.replace("\\t", "\t")?.replace("\\\"", "\"")
+            showDebugInfoDialog(unescapedHtml ?: "Could not retrieve page source.")
+        }
+    }
+
+    private fun showDebugInfoDialog(source: String) {
+        val scrollView = ScrollView(this)
+        val textView = TextView(this).apply {
+            text = source
+            setTextIsSelectable(true)
+            setPadding(40, 40, 40, 40)
+        }
+        scrollView.addView(textView)
+
+        AlertDialog.Builder(this)
+            .setTitle("Page Debug Info")
+            .setView(scrollView)
+            .setPositiveButton("Copy to Clipboard") { _, _ ->
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("Page Source", source)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this, "Source copied to clipboard", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Close", null)
+            .show()
     }
 
     private fun addCurrentPageToBookmarks() {
