@@ -1123,13 +1123,13 @@ private fun injectMediaStateDetector() {
                 mediaElement: null,
                 targetDocument: document,
 
-                // Helper to find the best button from a list of selectors, ensuring it's visible
+                // Helper to find the best button from a list of selectors
                 _findButton: function(selectors) {
                     for (const selector of selectors) {
                         try {
                             const button = this.targetDocument.querySelector(selector);
-                            // Check if the button exists and is visible (offsetParent is null for hidden elements)
-                            if (button && button.offsetParent !== null) {
+                            // The strict visibility check (offsetParent) was removed as it was too aggressive for some sites.
+                            if (button) {
                                 return button;
                             }
                         } catch (e) { /* Invalid selector, ignore */ }
@@ -1234,7 +1234,6 @@ private fun injectMediaStateDetector() {
                     if (nextButton) {
                         nextButton.click();
                     } else if (this.mediaElement) {
-                        // Fallback to seeking forward if no button is found
                         this.mediaElement.currentTime = Math.min(this.mediaElement.currentTime + 10, this.mediaElement.duration);
                     }
                 },
@@ -1251,7 +1250,6 @@ private fun injectMediaStateDetector() {
                     if (prevButton) {
                         prevButton.click();
                     } else if (this.mediaElement) {
-                        // Fallback to seeking backward if no button is found
                         this.mediaElement.currentTime = Math.max(this.mediaElement.currentTime - 10, 0);
                     }
                 },
