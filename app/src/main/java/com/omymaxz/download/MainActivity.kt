@@ -1123,17 +1123,26 @@ private fun injectMediaStateDetector() {
                 mediaElement: null,
                 targetDocument: document,
 
+                // Helper to find the best button from a list of selectors, ensuring it's visible
+                _findButton: function(selectors) {
+                    for (const selector of selectors) {
+                        try {
+                            const button = this.targetDocument.querySelector(selector);
+                            // Check if the button exists and is visible (offsetParent is null for hidden elements)
+                            if (button && button.offsetParent !== null) {
+                                return button;
+                            }
+                        } catch (e) { /* Invalid selector, ignore */ }
+                    }
+                    return null;
+                },
+
                 findActiveMedia: function(doc) {
                     let allMedia = Array.from(doc.querySelectorAll('video, audio'));
-
-                    // Prioritize media that is actually playing
                     let activeMedia = allMedia.find(m => !m.paused && m.currentTime > 0 && !m.muted && m.volume > 0);
                     if (activeMedia) return { media: activeMedia, doc: doc };
-
-                    // Fallback to the longest media element if nothing is playing
                     let longestMedia = allMedia.filter(m => m.duration > 0).sort((a, b) => b.duration - a.duration)[0];
                     if (longestMedia) return { media: longestMedia, doc: doc };
-
                     return allMedia.length > 0 ? { media: allMedia[0], doc: doc } : null;
                 },
 
@@ -1154,22 +1163,35 @@ private fun injectMediaStateDetector() {
 
                 collectState: function() {
                     let mediaInfo = this.findMediaElementInFrames();
-
                     if (mediaInfo) {
                         this.mediaElement = mediaInfo.media;
                         this.targetDocument = mediaInfo.doc;
                     } else {
-                        // If no media is found, but we previously thought it was playing, send a pause state
                         if (this.lastInformedState.isPlaying) {
-                             AndroidMediaState.updateMediaPlaybackState(document.title, false, 0, 0, false, false);
+                            AndroidMediaState.updateMediaPlaybackState(document.title, false, 0, 0, false, false);
                         }
                         this.lastInformedState = { isPlaying: false };
                         return;
                     }
 
-                    // Simple check for next/previous buttons for sites that have them
-                    const hasNextButton = !!this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
-                    const hasPreviousButton = !!this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
+                    const hasNextButton = !!this._findButton([
+                        '[aria-label="Playbar: Next Song button"]',
+                        '[aria-label*="Next Song" i]',
+                        '[aria-label*="Next track" i]',
+                        '[aria-label*="Next Video" i]',
+                        '[aria-label*="Skip" i]:not([aria-label*="Ad" i])',
+                        '[title*="Next" i]:not([title*="Page" i])',
+                        '[aria-label*="Next" i]:not([aria-label*="Page" i])'
+                    ]);
+                    const hasPreviousButton = !!this._findButton([
+                        '[aria-label="Playbar: Previous Song button"]',
+                        '[aria-label*="Previous Song" i]',
+                        '[aria-label*="Previous track" i]',
+                        '[aria-label*="Previous Video" i]',
+                        '[aria-label*="replay" i]',
+                        '[title*="Previous" i]:not([title*="Page" i])',
+                        '[aria-label*="Previous" i]:not([aria-label*="Page" i])'
+                    ]);
 
                     const currentState = {
                         title: this.targetDocument.title || document.title,
@@ -1179,8 +1201,7 @@ private fun injectMediaStateDetector() {
                         hasNext: hasNextButton,
                         hasPrevious: hasPreviousButton
                     };
-                    
-                    // Only send an update if the state has actually changed
+
                     if (JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState)) {
                         AndroidMediaState.updateMediaPlaybackState(
                             currentState.title, currentState.isPlaying, currentState.currentTime,
@@ -1190,7 +1211,6 @@ private fun injectMediaStateDetector() {
                     }
                 },
 
-                // --- NEW ROBUST CONTROLS ---
                 play: function() {
                     if (this.mediaElement && this.mediaElement.paused) {
                         this.mediaElement.play().catch(e => console.error("Play failed", e));
@@ -1202,28 +1222,41 @@ private fun injectMediaStateDetector() {
                     }
                 },
                 next: function() {
-                    // First try to click a button if it exists
-                    const nextButton = this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
+                    const nextButton = this._findButton([
+                        '[aria-label="Playbar: Next Song button"]',
+                        '[aria-label*="Next Song" i]',
+                        '[aria-label*="Next track" i]',
+                        '[aria-label*="Next Video" i]',
+                        '[aria-label*="Skip" i]:not([aria-label*="Ad" i])',
+                        '[title*="Next" i]:not([title*="Page" i])',
+                        '[aria-label*="Next" i]:not([aria-label*="Page" i])'
+                    ]);
                     if (nextButton) {
                         nextButton.click();
                     } else if (this.mediaElement) {
-                        // Otherwise, seek forward 10 seconds
+                        // Fallback to seeking forward if no button is found
                         this.mediaElement.currentTime = Math.min(this.mediaElement.currentTime + 10, this.mediaElement.duration);
                     }
                 },
                 previous: function() {
-                    // First try to click a button if it exists
-                    const prevButton = this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
+                    const prevButton = this._findButton([
+                        '[aria-label="Playbar: Previous Song button"]',
+                        '[aria-label*="Previous Song" i]',
+                        '[aria-label*="Previous track" i]',
+                        '[aria-label*="Previous Video" i]',
+                        '[aria-label*="replay" i]',
+                        '[title*="Previous" i]:not([title*="Page" i])',
+                        '[aria-label*="Previous" i]:not([aria-label*="Page" i])'
+                    ]);
                     if (prevButton) {
                         prevButton.click();
                     } else if (this.mediaElement) {
-                        // Otherwise, seek backward 10 seconds
+                        // Fallback to seeking backward if no button is found
                         this.mediaElement.currentTime = Math.max(this.mediaElement.currentTime - 10, 0);
                     }
                 },
 
                 init: function() {
-                    // Run state collection every second
                     setInterval(() => this.collectState(), 1000);
                 }
             };
