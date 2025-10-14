@@ -34,8 +34,6 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
-import android.widget.ScrollView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -1167,19 +1165,23 @@ private fun injectMediaStateDetector() {
                         return;
                     }
 
-                    // Simple check for next/previous buttons for sites that have them
-                    const hasNextButton = !!this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
-                    const hasPreviousButton = !!this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
+// Simple check for next/previous buttons for sites that have them
+                    const nextButton = this.targetDocument.querySelector(
+                        '[aria-label*="Next" i], [title*="Next" i], [class*="next" i], [id*="next" i], .ytp-next-button'
+                    );
+                    const prevButton = this.targetDocument.querySelector(
+                        '[aria-label*="Previous" i], [title*="Previous" i], [class*="prev" i], [id*="prev" i], .ytp-prev-button'
+                    );
 
                     const currentState = {
                         title: this.targetDocument.title || document.title,
                         isPlaying: !this.mediaElement.paused,
                         currentTime: this.mediaElement.currentTime || 0,
                         duration: this.mediaElement.duration || 0,
-                        hasNext: hasNextButton,
-                        hasPrevious: hasPreviousButton
+                        hasNext: !!nextButton,
+                        hasPrevious: !!prevButton
                     };
-                    
+
                     // Only send an update if the state has actually changed
                     if (JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState)) {
                         AndroidMediaState.updateMediaPlaybackState(
@@ -1202,8 +1204,10 @@ private fun injectMediaStateDetector() {
                     }
                 },
                 next: function() {
-                    // First try to click a button if it exists
-                    const nextButton = this.targetDocument.querySelector('[aria-label*="Next" i], [title*="Next" i]');
+                    // Re-query for the button in case the DOM has changed
+                    const nextButton = this.targetDocument.querySelector(
+                        '[aria-label*="Next" i], [title*="Next" i], [class*="next" i], [id*="next" i], .ytp-next-button'
+                    );
                     if (nextButton) {
                         nextButton.click();
                     } else if (this.mediaElement) {
@@ -1212,8 +1216,10 @@ private fun injectMediaStateDetector() {
                     }
                 },
                 previous: function() {
-                    // First try to click a button if it exists
-                    const prevButton = this.targetDocument.querySelector('[aria-label*="Previous" i], [title*="Previous" i]');
+                    // Re-query for the button in case the DOM has changed
+                    const prevButton = this.targetDocument.querySelector(
+                        '[aria-label*="Previous" i], [title*="Previous" i], [class*="prev" i], [id*="prev" i], .ytp-prev-button'
+                    );
                     if (prevButton) {
                         prevButton.click();
                     } else if (this.mediaElement) {
@@ -1483,31 +1489,15 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val dialogBinding = DialogMediaListBinding.inflate(layoutInflater)
         val dialog = AlertDialog.Builder(this).setView(dialogBinding.root).create()
         val adapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
-            // Tap to download
-            downloadMediaFile(mediaFile)
+            showRenameDialog(mediaFile)
             dialog.dismiss()
         }, { mediaFile ->
-            // Long press to "Open With"
-            openMediaWith(mediaFile)
-            dialog.dismiss()
+            openInExternalPlayer(mediaFile.url)
         })
         dialogBinding.mediaRecyclerView.layoutManager = LinearLayoutManager(this)
         dialogBinding.mediaRecyclerView.adapter = adapter
         dialog.show()
     }
-    private fun openMediaWith(mediaFile: MediaFile) {
-        try {
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(Uri.parse(mediaFile.url), mediaFile.mimeType)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            val chooser = Intent.createChooser(intent, "Open with")
-            startActivity(chooser)
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(this, "No application found to handle this file.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
     private fun openInExternalPlayer(videoUrl: String) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl)).apply {
@@ -1625,175 +1615,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 showSiteDebuggingOptions()
                 true
             }
-            R.id.menu_enable_media_detection -> {
-                manualMediaScan()
-                true
-            }
-            R.id.menu_debug_page -> {
-                showPageSource()
-                true
-            }
             else -> super.onOptionsItemSelected(item)
         }
     }
-
-    private fun manualMediaScan() {
-        val script = """
-            (function() {
-                const media = [];
-
-                // 1. Targeted scan for the specific video iframe
-                const kisscloudFrame = Array.from(document.querySelectorAll('iframe')).find(f => f.src.includes('kisscloud.online'));
-                if (kisscloudFrame && kisscloudFrame.src) {
-                     media.push({ url: kisscloudFrame.src, title: document.title, type: 'video' });
-                }
-
-                // 2. General, recursive scan for all other media, especially subtitles
-                const processedFrames = new Set();
-                function searchFrames(win) {
-                    if (processedFrames.has(win)) return;
-                    processedFrames.add(win);
-                    try {
-                        // Scan for standard video/audio/source tags
-                        win.document.querySelectorAll('video, audio, source').forEach(el => {
-                            if (el.src && typeof el.src === 'string' && el.src.trim() !== '') {
-                                try {
-                                    const absUrl = new URL(el.src, win.document.baseURI).href;
-                                     media.push({ url: absUrl, title: el.title || win.document.title, type: 'video'});
-                                } catch(e) {}
-                            }
-                        });
-                        // Scan specifically for subtitle tracks
-                        win.document.querySelectorAll('track').forEach(track => {
-                            if (track.src && typeof track.src === 'string' && track.src.trim() !== '' && (track.kind === 'subtitles' || track.kind === 'captions')) {
-                                try {
-                                    const absUrl = new URL(track.src, win.document.baseURI).href;
-                                    media.push({ url: absUrl, title: track.label || 'Subtitle', type: 'subtitle' });
-                                } catch (e) {}
-                            }
-                        });
-
-                        for (let i = 0; i < win.frames.length; i++) {
-                            searchFrames(win.frames[i]);
-                        }
-                    } catch (e) {}
-                }
-                searchFrames(window);
-
-                // De-duplicate results
-                const uniqueMedia = Array.from(new Map(media.map(item => [item.url, item])).values());
-                return JSON.stringify(uniqueMedia);
-            })();
-        """
-
-        webView.evaluateJavascript(script) { result ->
-
-            // Second press: Gathers results from the now-active script.
-            try {
-                val unescapedResult = result.substring(1, result.length - 1).replace("\\\"", "\"")
-
-                val gson = Gson()
-                val type = object : TypeToken<List<Map<String, String>>>() {}.type
-                val foundMedia: List<Map<String, String>> = gson.fromJson(unescapedResult, type)
-
-                if (foundMedia.isNotEmpty()) {
-                    val newMediaFiles = foundMedia.mapNotNull {
-                        val url = it["url"] ?: return@mapNotNull null
-                        val title = it["title"] ?: "Untitled"
-                        val type = it["type"] ?: "video"
-
-                        val category = if (type == "video") MediaCategory.VIDEO else MediaCategory.SUBTITLE
-                        val detectedFormat = detectVideoFormat(url)
-                        val quality = extractQualityFromUrl(url)
-                        MediaFile(
-                            url = url,
-                            title = generateSmartFileName(url, detectedFormat.extension, quality, category),
-                            mimeType = detectedFormat.mimeType,
-                            quality = quality,
-                            category = category,
-                            fileSize = "Unknown",
-                            language = null,
-                            isMainContent = false
-                        )
-                    }
-
-                    var addedCount = 0
-                    synchronized(detectedMediaFiles) {
-                        val existingUrls = detectedMediaFiles.map { it.url }.toSet()
-                        newMediaFiles.forEach {
-                            if (!existingUrls.contains(it.url)) {
-                                detectedMediaFiles.add(it)
-                                addedCount++
-                            }
-                        }
-                    }
-
-                    runOnUiThread {
-                        if (addedCount > 0) {
-                            Toast.makeText(this, "$addedCount new media item(s) found!", Toast.LENGTH_SHORT).show()
-                            showMediaListDialog()
-                        } else {
-                            Toast.makeText(this, "No new media found since last scan. Showing existing list.", Toast.LENGTH_SHORT).show()
-                            showMediaListDialog()
-                        }
-                    }
-                } else {
-                    runOnUiThread {
-                        Toast.makeText(this, "No media detected. Try playing the video first.", Toast.LENGTH_LONG).show()
-                    }
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Error parsing media scan result", e)
-                runOnUiThread {
-                    Toast.makeText(this, "Error scanning for media.", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private fun showPageSource() {
-        val script = """
-            (function() {
-                let html = 'Main Page Source:\\n\\n' + document.documentElement.outerHTML;
-                const frames = document.querySelectorAll('iframe');
-                frames.forEach((frame, index) => {
-                    try {
-                        html += '\\n\\n' + '--- Iframe ' + index + ' Source: ---' + '\\n\\n' + frame.contentDocument.documentElement.outerHTML;
-                    } catch(e) {
-                        html += '\\n\\n' + '--- Iframe ' + index + ' Source (Cross-origin): ---' + '\\n\\n' + 'Could not access content.';
-                    }
-                });
-                return html;
-            })();
-        """
-        webView.evaluateJavascript(script) { html ->
-            val unescapedHtml = html?.substring(1, html.length - 1)?.replace("\\u003C", "<")?.replace("\\n", "\n")?.replace("\\t", "\t")?.replace("\\\"", "\"")
-            showDebugInfoDialog(unescapedHtml ?: "Could not retrieve page source.")
-        }
-    }
-
-    private fun showDebugInfoDialog(source: String) {
-        val scrollView = ScrollView(this)
-        val textView = TextView(this).apply {
-            text = source
-            setTextIsSelectable(true)
-            setPadding(40, 40, 40, 40)
-        }
-        scrollView.addView(textView)
-
-        AlertDialog.Builder(this)
-            .setTitle("Page Debug Info")
-            .setView(scrollView)
-            .setPositiveButton("Copy to Clipboard") { _, _ ->
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                val clip = android.content.ClipData.newPlainText("Page Source", source)
-                clipboard.setPrimaryClip(clip)
-                Toast.makeText(this, "Source copied to clipboard", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Close", null)
-            .show()
-    }
-
     private fun addCurrentPageToBookmarks() {
         if (webView.visibility == View.VISIBLE && !webView.url.isNullOrEmpty()) {
             val url = webView.url!!
