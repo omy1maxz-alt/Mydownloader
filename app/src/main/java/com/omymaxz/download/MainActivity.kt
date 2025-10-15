@@ -1175,6 +1175,9 @@ private fun injectMediaStateDetector() {
                     }
 
                     const hasNextButton = !!this._findButton([
+                        '[data-testid*="next" i]',
+                        '[data-e2e="next-button"]',
+                        'button[class*="next" i]',
                         '[aria-label="Playbar: Next Song button"]',
                         '[aria-label*="Next Song" i]',
                         '[aria-label*="Next track" i]',
@@ -1184,6 +1187,9 @@ private fun injectMediaStateDetector() {
                         '[aria-label*="Next" i]:not([aria-label*="Page" i])'
                     ]);
                     const hasPreviousButton = !!this._findButton([
+                        '[data-testid*="previous" i]',
+                        '[data-e2e="previous-button"]',
+                        'button[class*="previous" i]',
                         '[aria-label="Playbar: Previous Song button"]',
                         '[aria-label*="Previous Song" i]',
                         '[aria-label*="Previous track" i]',
@@ -1223,6 +1229,9 @@ private fun injectMediaStateDetector() {
                 },
                 next: function() {
                     const nextButton = this._findButton([
+                        '[data-testid*="next" i]',
+                        '[data-e2e="next-button"]',
+                        'button[class*="next" i]',
                         '[aria-label="Playbar: Next Song button"]',
                         '[aria-label*="Next Song" i]',
                         '[aria-label*="Next track" i]',
@@ -1239,6 +1248,9 @@ private fun injectMediaStateDetector() {
                 },
                 previous: function() {
                     const prevButton = this._findButton([
+                        '[data-testid*="previous" i]',
+                        '[data-e2e="previous-button"]',
+                        'button[class*="previous" i]',
                         '[aria-label="Playbar: Previous Song button"]',
                         '[aria-label*="Previous Song" i]',
                         '[aria-label*="Previous track" i]',
@@ -1515,7 +1527,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val dialog = AlertDialog.Builder(this).setView(dialogBinding.root).create()
         val adapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
             // Tap to download
-            downloadMediaFile(mediaFile)
+            showRenameDialog(mediaFile)
             dialog.dismiss()
         }, { mediaFile ->
             // Long press to "Open With"
