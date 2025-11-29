@@ -1401,17 +1401,18 @@ private fun injectMediaStateDetector() {
     }
     private fun detectVideoFormat(url: String): VideoFormat {
         val lowerUrl = url.lowercase()
+        val cleanUrl = lowerUrl.substringBefore('?')
         return when {
-            lowerUrl.endsWith(".mp4") -> VideoFormat(".mp4", "video/mp4")
-            lowerUrl.endsWith(".mkv") -> VideoFormat(".mkv", "video/x-matroska")
-            lowerUrl.endsWith(".webm") -> VideoFormat(".webm", "video/webm")
-            lowerUrl.endsWith(".avi") -> VideoFormat(".avi", "video/x-msvideo")
-            lowerUrl.endsWith(".mov") -> VideoFormat(".mov", "video/quicktime")
-            lowerUrl.endsWith(".flv") -> VideoFormat(".flv", "video/x-flv")
+            cleanUrl.endsWith(".mp4") -> VideoFormat(".mp4", "video/mp4")
+            cleanUrl.endsWith(".mkv") -> VideoFormat(".mkv", "video/x-matroska")
+            cleanUrl.endsWith(".webm") -> VideoFormat(".webm", "video/webm")
+            cleanUrl.endsWith(".avi") -> VideoFormat(".avi", "video/x-msvideo")
+            cleanUrl.endsWith(".mov") -> VideoFormat(".mov", "video/quicktime")
+            cleanUrl.endsWith(".flv") -> VideoFormat(".flv", "video/x-flv")
             lowerUrl.contains(".m3u8") -> VideoFormat(".m3u8", "application/vnd.apple.mpegurl")
-            lowerUrl.endsWith(".m4v") -> VideoFormat(".m4v", "video/mp4")
-            lowerUrl.endsWith(".vtt") -> VideoFormat(".vtt", "text/vtt")
-            lowerUrl.endsWith(".srt") -> VideoFormat(".srt", "application/x-subrip")
+            cleanUrl.endsWith(".m4v") -> VideoFormat(".m4v", "video/mp4")
+            cleanUrl.endsWith(".vtt") -> VideoFormat(".vtt", "text/vtt")
+            cleanUrl.endsWith(".srt") -> VideoFormat(".srt", "application/x-subrip")
             lowerUrl.contains("videoplayback") -> VideoFormat(".mp4", "video/mp4")
             else -> VideoFormat(".mp4", "video/mp4")
         }
@@ -1501,8 +1502,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
     private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
+        val cleanUrl = lower.substringBefore('?')
         if (isAdOrTrackingUrl(lower)) return false
-        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
+        return cleanUrl.endsWith(".mp4") || cleanUrl.endsWith(".mkv") || cleanUrl.endsWith(".webm") || cleanUrl.endsWith(".vtt") || cleanUrl.endsWith(".srt") || lower.contains("videoplayback")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
@@ -1585,6 +1587,15 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 .setTitle(mediaFile.title)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, mediaFile.title)
+
+            // Add User-Agent and Cookies
+            val userAgent = webView.settings.userAgentString
+            val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
+            request.addRequestHeader("User-Agent", userAgent)
+            if (cookie != null) {
+                request.addRequestHeader("Cookie", cookie)
+            }
+
             val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
             dm.enqueue(request)
             Toast.makeText(this, "Download started: ${mediaFile.title}", Toast.LENGTH_LONG).show()
