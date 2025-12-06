@@ -1084,6 +1084,86 @@ private fun checkBatteryOptimization() {
         fun getVoices(): String {
             return "[{\"name\":\"Default\",\"lang\":\"en-US\",\"default\":true}]"
         }
+        @JavascriptInterface
+        fun receiveVttContent(content: String) {
+            runOnUiThread {
+                showPreviewDialog(content)
+            }
+        }
+        @JavascriptInterface
+        fun onPreviewFallback(url: String) {
+             lifecycleScope.launch(Dispatchers.IO) {
+                 try {
+                     val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                     connection.setRequestProperty("User-Agent", webView.settings.userAgentString)
+                     val cookie = CookieManager.getInstance().getCookie(url)
+                     if (cookie != null) {
+                         connection.setRequestProperty("Cookie", cookie)
+                     }
+                     connection.connect()
+                     val stream = connection.inputStream
+                     val content = stream.bufferedReader().use { it.readText() }
+                     withContext(Dispatchers.Main) {
+                         showPreviewDialog(content)
+                     }
+                 } catch (e: Exception) {
+                     withContext(Dispatchers.Main) {
+                         Toast.makeText(context, "Preview failed: ${e.message}", Toast.LENGTH_LONG).show()
+                     }
+                 }
+             }
+        }
+    }
+
+    private var currentPreviewMediaFile: MediaFile? = null
+
+    private fun showPreviewDialog(content: String) {
+        val scrollView = ScrollView(this)
+        val textView = TextView(this).apply {
+            text = content
+            setTextIsSelectable(true)
+            setPadding(40, 40, 40, 40)
+        }
+        scrollView.addView(textView)
+
+        AlertDialog.Builder(this)
+            .setTitle("Subtitle Preview")
+            .setView(scrollView)
+            .setPositiveButton("Download") { _, _ ->
+                currentPreviewMediaFile?.let { mediaFile ->
+                    saveToDownloads(content, mediaFile.title)
+                }
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    private fun saveToDownloads(content: String, filename: String) {
+        try {
+            val finalName = if (filename.endsWith(".vtt") || filename.endsWith(".srt")) filename else "$filename.vtt"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, finalName)
+                    put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "text/vtt")
+                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                }
+                val uri = contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                uri?.let {
+                    contentResolver.openOutputStream(it)?.use { outputStream ->
+                        outputStream.write(content.toByteArray())
+                    }
+                    Toast.makeText(this, "Saved to Downloads: $finalName", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                val file = java.io.File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), finalName)
+                java.io.FileOutputStream(file).use { outputStream ->
+                    outputStream.write(content.toByteArray())
+                }
+                Toast.makeText(this, "Saved to Downloads: $finalName", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+             Toast.makeText(this, "Save failed: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
     private fun injectPerchanceFixes(webView: WebView?) {
         val polyfillScript = """
@@ -1567,7 +1647,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             setText(mediaFile.title.substringBeforeLast('.'))
             selectAll()
         }
-        AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
             .setTitle("Download File")
             .setMessage("Quality: ${mediaFile.quality}")
             .setView(input)
@@ -1577,7 +1657,101 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 downloadMediaFile(mediaFile.copy(title = finalName))
             }
             .setNegativeButton("Cancel", null)
-            .show()
+
+        // Only show Preview for subtitle files
+        if (mediaFile.category == MediaCategory.SUBTITLE || mediaFile.url.endsWith(".vtt") || mediaFile.url.endsWith(".srt") || mediaFile.url.startsWith("blob:")) {
+            builder.setNeutralButton("Preview") { _, _ ->
+                currentPreviewMediaFile = mediaFile
+                val script = """
+                    (function() {
+                        var targetUrl = "${mediaFile.url}";
+
+                        function sendResult(text) {
+                            if (window.AndroidWebAPI && window.AndroidWebAPI.receiveVttContent) {
+                                window.AndroidWebAPI.receiveVttContent(text);
+                            }
+                        }
+
+                        function tryFetch(url) {
+                            fetch(url)
+                                .then(r => r.text())
+                                .then(text => sendResult(text))
+                                .catch(e => {
+                                    console.error("Fetch failed", e);
+                                    if (window.AndroidWebAPI && window.AndroidWebAPI.onPreviewFallback) {
+                                        window.AndroidWebAPI.onPreviewFallback(url);
+                                    }
+                                });
+                        }
+
+                        // Try to find the element in frames if it's a blob
+                        if (targetUrl.startsWith('blob:')) {
+                            var found = false;
+                            function searchFrames(win) {
+                                if (found) return;
+                                try {
+                                    // Check video tracks
+                                    var videos = win.document.querySelectorAll('video');
+                                    videos.forEach(v => {
+                                        Array.from(v.textTracks).forEach(track => {
+                                            if (found) return;
+                                            // Heuristic to match track
+                                            if (track.mode !== 'disabled') {
+                                                if (track.cues && track.cues.length > 0) {
+                                                     // Reconstruct VTT
+                                                     var vtt = "WEBVTT\n\n";
+                                                     for (var i=0; i<track.cues.length; i++) {
+                                                         var cue = track.cues[i];
+                                                         var start = formatTime(cue.startTime);
+                                                         var end = formatTime(cue.endTime);
+                                                         vtt += start + " --> " + end + "\n" + cue.text + "\n\n";
+                                                     }
+                                                     found = true;
+                                                     sendResult(vtt);
+                                                }
+                                            }
+                                        });
+                                    });
+
+                                    // Check track elements
+                                    win.document.querySelectorAll('track').forEach(t => {
+                                        if (t.src === targetUrl) {
+                                             // Try to fetch inside this frame context
+                                             found = true;
+                                             win.fetch(targetUrl).then(r=>r.text()).then(sendResult).catch(() => tryFetch(targetUrl));
+                                        }
+                                    });
+
+                                    for (var i = 0; i < win.frames.length; i++) {
+                                        searchFrames(win.frames[i]);
+                                    }
+                                } catch(e) {}
+                            }
+
+                            function formatTime(s) {
+                                var ms = s % 1;
+                                s = Math.floor(s);
+                                var m = Math.floor(s / 60);
+                                var h = Math.floor(m / 60);
+                                s = s % 60;
+                                m = m % 60;
+                                return (h<10?"0"+h:h) + ":" + (m<10?"0"+m:m) + ":" + (s<10?"0"+s:s) + "." + Math.floor(ms*1000);
+                            }
+
+                            searchFrames(window);
+                            if (!found) {
+                                tryFetch(targetUrl);
+                            }
+                        } else {
+                            tryFetch(targetUrl);
+                        }
+                    })();
+                """.trimIndent()
+                webView.evaluateJavascript(script, null)
+            }
+        }
+
+        builder.show()
     }
     private fun downloadMediaFile(mediaFile: MediaFile) {
         try {
