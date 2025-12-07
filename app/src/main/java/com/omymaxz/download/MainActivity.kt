@@ -1084,85 +1084,87 @@ private fun checkBatteryOptimization() {
         fun getVoices(): String {
             return "[{\"name\":\"Default\",\"lang\":\"en-US\",\"default\":true}]"
         }
+
         @JavascriptInterface
-        fun receiveVttContent(content: String) {
+        fun saveBlob(base64Data: String, filename: String, mimeType: String) {
+            try {
+                val decodedBytes = android.util.Base64.decode(base64Data.substringAfter(","), android.util.Base64.DEFAULT)
+                saveToDownloads(decodedBytes, filename, mimeType)
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Toast.makeText(context, "Save failed: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun showPreview(text: String, filename: String, mimeType: String) {
             runOnUiThread {
-                showPreviewDialog(content)
-            }
-        }
-        @JavascriptInterface
-        fun onPreviewFallback(url: String) {
-             lifecycleScope.launch(Dispatchers.IO) {
-                 try {
-                     val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
-                     connection.setRequestProperty("User-Agent", webView.settings.userAgentString)
-                     val cookie = CookieManager.getInstance().getCookie(url)
-                     if (cookie != null) {
-                         connection.setRequestProperty("Cookie", cookie)
-                     }
-                     connection.connect()
-                     val stream = connection.inputStream
-                     val content = stream.bufferedReader().use { it.readText() }
-                     withContext(Dispatchers.Main) {
-                         showPreviewDialog(content)
-                     }
-                 } catch (e: Exception) {
-                     withContext(Dispatchers.Main) {
-                         Toast.makeText(context, "Preview failed: ${e.message}", Toast.LENGTH_LONG).show()
-                     }
-                 }
-             }
-        }
-    }
-
-    private var currentPreviewMediaFile: MediaFile? = null
-
-    private fun showPreviewDialog(content: String) {
-        val scrollView = ScrollView(this)
-        val textView = TextView(this).apply {
-            text = content
-            setTextIsSelectable(true)
-            setPadding(40, 40, 40, 40)
-        }
-        scrollView.addView(textView)
-
-        AlertDialog.Builder(this)
-            .setTitle("Subtitle Preview")
-            .setView(scrollView)
-            .setPositiveButton("Download") { _, _ ->
-                currentPreviewMediaFile?.let { mediaFile ->
-                    saveToDownloads(content, mediaFile.title)
+                val scrollView = ScrollView(this@MainActivity)
+                val textView = TextView(this@MainActivity).apply {
+                    this.text = text
+                    setPadding(32, 32, 32, 32)
+                    setTextIsSelectable(true)
                 }
-            }
-            .setNegativeButton("Close", null)
-            .show()
-    }
+                scrollView.addView(textView)
 
-    private fun saveToDownloads(content: String, filename: String) {
-        try {
-            val finalName = if (filename.endsWith(".vtt") || filename.endsWith(".srt")) filename else "$filename.vtt"
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val values = android.content.ContentValues().apply {
-                    put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, finalName)
-                    put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "text/vtt")
-                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-                }
-                val uri = contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                uri?.let {
-                    contentResolver.openOutputStream(it)?.use { outputStream ->
-                        outputStream.write(content.toByteArray())
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Content Preview")
+                    .setView(scrollView)
+                    .setNegativeButton("Close", null)
+                    .setPositiveButton("Download") { _, _ ->
+                        saveToDownloads(text.toByteArray(), filename, mimeType)
                     }
-                    Toast.makeText(this, "Saved to Downloads: $finalName", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                val file = java.io.File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), finalName)
-                java.io.FileOutputStream(file).use { outputStream ->
-                    outputStream.write(content.toByteArray())
-                }
-                Toast.makeText(this, "Saved to Downloads: $finalName", Toast.LENGTH_SHORT).show()
+                    .show()
             }
-        } catch (e: Exception) {
-             Toast.makeText(this, "Save failed: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+
+        @JavascriptInterface
+        fun onPreviewError(error: String) {
+            runOnUiThread {
+                Toast.makeText(context, "Preview failed: $error", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun onBlobDownloadError(error: String) {
+            runOnUiThread {
+                Toast.makeText(context, "Download failed: $error", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun onPreviewFallback(url: String, filename: String, mimeType: String) {
+            if (url.startsWith("blob:")) {
+                runOnUiThread {
+                    Toast.makeText(context, "Preview failed: Blob URL inaccessible.", Toast.LENGTH_LONG).show()
+                }
+                return
+            }
+
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                    val userAgent = withContext(Dispatchers.Main) { webView.settings.userAgentString }
+                    val cookie = CookieManager.getInstance().getCookie(url)
+                    connection.setRequestProperty("User-Agent", userAgent)
+                    if (cookie != null) {
+                        connection.setRequestProperty("Cookie", cookie)
+                    }
+
+                    connection.connect()
+
+                    val text = connection.inputStream.bufferedReader().use { it.readText() }
+
+                    withContext(Dispatchers.Main) {
+                        showPreview(text.take(20000), filename, mimeType)
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Native Preview failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
         }
     }
     private fun injectPerchanceFixes(webView: WebView?) {
@@ -1481,17 +1483,18 @@ private fun injectMediaStateDetector() {
     }
     private fun detectVideoFormat(url: String): VideoFormat {
         val lowerUrl = url.lowercase()
+        val cleanUrl = lowerUrl.substringBefore('?')
         return when {
-            lowerUrl.endsWith(".mp4") -> VideoFormat(".mp4", "video/mp4")
-            lowerUrl.endsWith(".mkv") -> VideoFormat(".mkv", "video/x-matroska")
-            lowerUrl.endsWith(".webm") -> VideoFormat(".webm", "video/webm")
-            lowerUrl.endsWith(".avi") -> VideoFormat(".avi", "video/x-msvideo")
-            lowerUrl.endsWith(".mov") -> VideoFormat(".mov", "video/quicktime")
-            lowerUrl.endsWith(".flv") -> VideoFormat(".flv", "video/x-flv")
+            cleanUrl.endsWith(".mp4") -> VideoFormat(".mp4", "video/mp4")
+            cleanUrl.endsWith(".mkv") -> VideoFormat(".mkv", "video/x-matroska")
+            cleanUrl.endsWith(".webm") -> VideoFormat(".webm", "video/webm")
+            cleanUrl.endsWith(".avi") -> VideoFormat(".avi", "video/x-msvideo")
+            cleanUrl.endsWith(".mov") -> VideoFormat(".mov", "video/quicktime")
+            cleanUrl.endsWith(".flv") -> VideoFormat(".flv", "video/x-flv")
             lowerUrl.contains(".m3u8") -> VideoFormat(".m3u8", "application/vnd.apple.mpegurl")
-            lowerUrl.endsWith(".m4v") -> VideoFormat(".m4v", "video/mp4")
-            lowerUrl.endsWith(".vtt") -> VideoFormat(".vtt", "text/vtt")
-            lowerUrl.endsWith(".srt") -> VideoFormat(".srt", "application/x-subrip")
+            cleanUrl.endsWith(".m4v") -> VideoFormat(".m4v", "video/mp4")
+            cleanUrl.endsWith(".vtt") -> VideoFormat(".vtt", "text/vtt")
+            cleanUrl.endsWith(".srt") -> VideoFormat(".srt", "application/x-subrip")
             lowerUrl.contains("videoplayback") -> VideoFormat(".mp4", "video/mp4")
             else -> VideoFormat(".mp4", "video/mp4")
         }
@@ -1581,8 +1584,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
     private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
+        val cleanUrl = lower.substringBefore('?')
         if (isAdOrTrackingUrl(lower)) return false
-        return lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".webm") || lower.endsWith(".vtt") || lower.endsWith(".srt") || lower.contains("videoplayback")
+        return cleanUrl.endsWith(".mp4") || cleanUrl.endsWith(".mkv") || cleanUrl.endsWith(".webm") || cleanUrl.endsWith(".vtt") || cleanUrl.endsWith(".srt") || lower.contains("videoplayback")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
@@ -1642,6 +1646,108 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             Toast.makeText(this, "No video player found", Toast.LENGTH_SHORT).show()
         }
     }
+    private fun getBlobContentScript(url: String, asBase64: Boolean, callbackFunction: String, errorFunction: String): String {
+        return """
+            (function() {
+                var callback = $callbackFunction;
+                var errorCallback = $errorFunction;
+
+                function formatTime(seconds) {
+                    var date = new Date(0);
+                    date.setMilliseconds(seconds * 1000);
+                    return date.toISOString().substr(11, 12);
+                }
+                function serializeCues(cues) {
+                    var output = "WEBVTT\n\n";
+                    for (var i = 0; i < cues.length; i++) {
+                        var cue = cues[i];
+                        output += formatTime(cue.startTime) + " --> " + formatTime(cue.endTime) + "\n";
+                        output += cue.text + "\n\n";
+                    }
+                    return output;
+                }
+                function sendResult(data) {
+                    if ($asBase64) {
+                        try {
+                            var b64 = btoa(unescape(encodeURIComponent(data)));
+                            callback("data:text/vtt;base64," + b64);
+                        } catch(e) {
+                            errorCallback("Encoding failed: " + e.toString());
+                        }
+                    } else {
+                        callback(data);
+                    }
+                }
+
+                var targetUrl = "$url";
+                var processedFrames = new Set();
+
+                function findTrack(win) {
+                    if (processedFrames.has(win)) return null;
+                    processedFrames.add(win);
+                    try {
+                        var tracks = win.document.querySelectorAll('track');
+                        for (var i = 0; i < tracks.length; i++) {
+                            if (tracks[i].src === targetUrl) return tracks[i];
+                        }
+                        for (var i = 0; i < win.frames.length; i++) {
+                            var t = findTrack(win.frames[i]);
+                            if (t) return t;
+                        }
+                    } catch (e) { }
+                    return null;
+                }
+
+                var track = findTrack(window);
+                
+                function doFetch(contextWindow) {
+                    console.log("Falling back to fetch for " + targetUrl);
+                    var fetcher = contextWindow ? contextWindow.fetch : fetch;
+                    fetcher(targetUrl).then(res => {
+                        if ($asBase64) {
+                            return res.blob().then(blob => {
+                                var reader = new FileReader();
+                                reader.onloadend = function() { callback(reader.result); }
+                                reader.readAsDataURL(blob);
+                            });
+                        } else {
+                            return res.text().then(text => callback(text));
+                        }
+                    }).catch(err => {
+                        console.error("Fetch failed", err);
+                        errorCallback("Preview failed. Track found: " + (!!track) + ". Fetch error: " + err.toString());
+                    });
+                }
+
+                if (track) {
+                    console.log("Found track element");
+                    if (track.track.mode === 'disabled') {
+                        console.log("Enabling track mode");
+                        track.track.mode = 'hidden';
+                    }
+                    
+                    var attempts = 0;
+                    function checkCues() {
+                        if (track.track.cues && track.track.cues.length > 0) {
+                             console.log("Cues found");
+                             sendResult(serializeCues(track.track.cues));
+                        } else if (attempts < 20) {
+                             attempts++;
+                             setTimeout(checkCues, 100);
+                        } else {
+                             console.warn("No cues found after waiting");
+                             doFetch(track.ownerDocument.defaultView);
+                        }
+                    }
+                    checkCues();
+                } else {
+                    console.warn("Track element not found in DOM");
+                    doFetch(window);
+                }
+            })();
+        """
+    }
+
     private fun showRenameDialog(mediaFile: MediaFile) {
         val input = EditText(this).apply {
             setText(mediaFile.title.substringBeforeLast('.'))
@@ -1658,107 +1764,92 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             }
             .setNegativeButton("Cancel", null)
 
-        // Only show Preview for subtitle files
-        if (mediaFile.category == MediaCategory.SUBTITLE || mediaFile.url.endsWith(".vtt") || mediaFile.url.endsWith(".srt") || mediaFile.url.startsWith("blob:")) {
+        if (mediaFile.url.startsWith("blob:") || mediaFile.mimeType.startsWith("text/") || mediaFile.title.endsWith(".vtt") || mediaFile.title.endsWith(".srt")) {
             builder.setNeutralButton("Preview") { _, _ ->
-                currentPreviewMediaFile = mediaFile
-                val script = """
-                    (function() {
-                        var targetUrl = "${mediaFile.url}";
-
-                        function sendResult(text) {
-                            if (window.AndroidWebAPI && window.AndroidWebAPI.receiveVttContent) {
-                                window.AndroidWebAPI.receiveVttContent(text);
-                            }
-                        }
-
-                        function tryFetch(url) {
-                            fetch(url)
-                                .then(r => r.text())
-                                .then(text => sendResult(text))
-                                .catch(e => {
-                                    console.error("Fetch failed", e);
-                                    if (window.AndroidWebAPI && window.AndroidWebAPI.onPreviewFallback) {
-                                        window.AndroidWebAPI.onPreviewFallback(url);
-                                    }
-                                });
-                        }
-
-                        // Try to find the element in frames if it's a blob
-                        if (targetUrl.startsWith('blob:')) {
-                            var found = false;
-                            function searchFrames(win) {
-                                if (found) return;
-                                try {
-                                    // Check video tracks
-                                    var videos = win.document.querySelectorAll('video');
-                                    videos.forEach(v => {
-                                        Array.from(v.textTracks).forEach(track => {
-                                            if (found) return;
-                                            // Heuristic to match track
-                                            if (track.mode !== 'disabled') {
-                                                if (track.cues && track.cues.length > 0) {
-                                                     // Reconstruct VTT
-                                                     var vtt = "WEBVTT\n\n";
-                                                     for (var i=0; i<track.cues.length; i++) {
-                                                         var cue = track.cues[i];
-                                                         var start = formatTime(cue.startTime);
-                                                         var end = formatTime(cue.endTime);
-                                                         vtt += start + " --> " + end + "\n" + cue.text + "\n\n";
-                                                     }
-                                                     found = true;
-                                                     sendResult(vtt);
-                                                }
-                                            }
-                                        });
-                                    });
-
-                                    // Check track elements
-                                    win.document.querySelectorAll('track').forEach(t => {
-                                        if (t.src === targetUrl) {
-                                             // Try to fetch inside this frame context
-                                             found = true;
-                                             win.fetch(targetUrl).then(r=>r.text()).then(sendResult).catch(() => tryFetch(targetUrl));
-                                        }
-                                    });
-
-                                    for (var i = 0; i < win.frames.length; i++) {
-                                        searchFrames(win.frames[i]);
-                                    }
-                                } catch(e) {}
-                            }
-
-                            function formatTime(s) {
-                                var ms = s % 1;
-                                s = Math.floor(s);
-                                var m = Math.floor(s / 60);
-                                var h = Math.floor(m / 60);
-                                s = s % 60;
-                                m = m % 60;
-                                return (h<10?"0"+h:h) + ":" + (m<10?"0"+m:m) + ":" + (s<10?"0"+s:s) + "." + Math.floor(ms*1000);
-                            }
-
-                            searchFrames(window);
-                            if (!found) {
-                                tryFetch(targetUrl);
-                            }
-                        } else {
-                            tryFetch(targetUrl);
-                        }
-                    })();
-                """.trimIndent()
-                webView.evaluateJavascript(script, null)
+                val safeUrl = mediaFile.url.replace("\"", "\\\"")
+                val safeTitle = mediaFile.title.replace("\"", "\\\"")
+                val safeMime = mediaFile.mimeType.replace("\"", "\\\"")
+                val js = getBlobContentScript(
+                    mediaFile.url,
+                    false,
+                    "function(text) { AndroidWebAPI.showPreview(text.substring(0, 20000), \"$safeTitle\", \"$safeMime\"); }",
+                    "function(err) { AndroidWebAPI.onPreviewFallback(\"$safeUrl\", \"$safeTitle\", \"$safeMime\"); }"
+                )
+                webView.evaluateJavascript(js, null)
             }
         }
 
         builder.show()
     }
+
+    private fun saveToDownloads(bytes: ByteArray, filename: String, mimeType: String) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val contentValues = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                    put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                }
+                val resolver = contentResolver
+                val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                if (uri != null) {
+                    resolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.write(bytes)
+                    }
+                    runOnUiThread {
+                        Toast.makeText(this, "Saved to Downloads: $filename", Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    runOnUiThread {
+                        Toast.makeText(this, "Failed to create file in Downloads", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } else {
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val file = java.io.File(downloadsDir, filename)
+                java.io.FileOutputStream(file).use { outputStream ->
+                    outputStream.write(bytes)
+                }
+                runOnUiThread {
+                    Toast.makeText(this, "Saved to: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                }
+            }
+        } catch (e: Exception) {
+            runOnUiThread {
+                Toast.makeText(this, "Save failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     private fun downloadMediaFile(mediaFile: MediaFile) {
+        if (mediaFile.url.startsWith("blob:")) {
+            val safeTitle = mediaFile.title.replace("\"", "\\\"")
+            val safeMime = mediaFile.mimeType.replace("\"", "\\\"")
+            val js = getBlobContentScript(
+                mediaFile.url,
+                true,
+                "function(b64) { AndroidWebAPI.saveBlob(b64, \"$safeTitle\", \"$safeMime\"); }",
+                "function(err) { AndroidWebAPI.onBlobDownloadError(err); }"
+            )
+            webView.evaluateJavascript(js, null)
+            Toast.makeText(this, "Processing blob download...", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         try {
             val request = DownloadManager.Request(Uri.parse(mediaFile.url))
                 .setTitle(mediaFile.title)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, mediaFile.title)
+
+            // Add User-Agent and Cookies
+            val userAgent = webView.settings.userAgentString
+            val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
+            request.addRequestHeader("User-Agent", userAgent)
+            if (cookie != null) {
+                request.addRequestHeader("Cookie", cookie)
+            }
+
             val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
             dm.enqueue(request)
             Toast.makeText(this, "Download started: ${mediaFile.title}", Toast.LENGTH_LONG).show()
@@ -1885,7 +1976,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                             if (track.src && typeof track.src === 'string' && track.src.trim() !== '' && (track.kind === 'subtitles' || track.kind === 'captions')) {
                                 try {
                                     const absUrl = new URL(track.src, win.document.baseURI).href;
-                                    media.push({ url: absUrl, title: track.label || 'Subtitle', type: 'subtitle' });
+                                    const lang = track.srclang || '';
+                                    const label = track.label || 'Subtitle';
+                                    media.push({ url: absUrl, title: label, type: 'subtitle', language: lang });
                                 } catch (e) {}
                             }
                         });
@@ -1918,18 +2011,32 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         val url = it["url"] ?: return@mapNotNull null
                         val title = it["title"] ?: "Untitled"
                         val type = it["type"] ?: "video"
+                        val language = it["language"]
 
                         val category = if (type == "video") MediaCategory.VIDEO else MediaCategory.SUBTITLE
-                        val detectedFormat = detectVideoFormat(url)
+                        var detectedFormat = detectVideoFormat(url)
+
+                        if (category == MediaCategory.SUBTITLE && (url.startsWith("blob:") || detectedFormat.extension == ".mp4")) {
+                            detectedFormat = VideoFormat(".vtt", "text/vtt")
+                        }
+
                         val quality = extractQualityFromUrl(url)
+
+                        val finalTitle = if (category == MediaCategory.SUBTITLE && title != "Untitled") {
+                             // Use the subtitle label as filename
+                             "$title${detectedFormat.extension}"
+                        } else {
+                             generateSmartFileName(url, detectedFormat.extension, quality, category)
+                        }
+
                         MediaFile(
                             url = url,
-                            title = generateSmartFileName(url, detectedFormat.extension, quality, category),
+                            title = finalTitle,
                             mimeType = detectedFormat.mimeType,
                             quality = quality,
                             category = category,
                             fileSize = "Unknown",
-                            language = null,
+                            language = language,
                             isMainContent = false
                         )
                     }

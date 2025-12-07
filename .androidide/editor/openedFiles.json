@@ -1,0 +1,20 @@
+{
+  "allFiles": [
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 117699,
+          "line": 2659
+        },
+        "start": {
+          "column": 0,
+          "index": 117699,
+          "line": 2659
+        }
+      }
+    }
+  ],
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/MainActivity.kt"
+}
