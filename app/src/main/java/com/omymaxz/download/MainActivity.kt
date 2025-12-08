@@ -1979,6 +1979,18 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             return
         }
 
+        // Check for HLS (.m3u8)
+        val isHls = mediaFile.url.contains(".m3u8", ignoreCase = true) ||
+                    mediaFile.mimeType == "application/vnd.apple.mpegurl" ||
+                    mediaFile.mimeType == "application/x-mpegURL"
+
+        if (isHls) {
+            val userAgent = webView.settings.userAgentString
+            val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
+            HlsDownloadHelper.downloadHls(this, mediaFile.url, mediaFile.title, userAgent, cookie)
+            return
+        }
+
         try {
             val request = DownloadManager.Request(Uri.parse(mediaFile.url))
                 .setTitle(mediaFile.title)
