@@ -2093,6 +2093,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             (function() {
                 const media = [];
 
+<<<<<<< HEAD
                 function extractMediaUrls(str) {
                     if (!str) return;
                     try {
@@ -2115,6 +2116,65 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 });
 
                 // 2. Recursive scan for media elements
+=======
+                function addMedia(url, title, type, language) {
+                     if(!url) return;
+                     url = url.trim();
+                     if(url.startsWith('//')) url = 'https:' + url;
+                     media.push({ url: url, title: title || document.title, type: type || 'video', language: language });
+                }
+
+                // 1. Variable Scan (MacCMS / player_aaaa)
+                try {
+                    if (window.player_aaaa && window.player_aaaa.url) {
+                        addMedia(window.player_aaaa.url, (window.player_aaaa.vod_data && window.player_aaaa.vod_data.vod_name) || document.title, 'video');
+                    }
+                     if (window.player_aaaa && window.player_aaaa.url_next) {
+                        addMedia(window.player_aaaa.url_next, ((window.player_aaaa.vod_data && window.player_aaaa.vod_data.vod_name) || document.title) + " - Next", 'video');
+                    }
+                } catch(e) {}
+
+                // 2. Iframe Src Query Param Scan
+                try {
+                    document.querySelectorAll('iframe').forEach(iframe => {
+                        const src = iframe.src;
+                        if (src) {
+                            const match = src.match(/(https?%3A%2F%2F|https?:\/\/)[^&"'<>\s]+(\.m3u8|\.mp4|\.mkv)[^&"'<>\s]*/i);
+                            if (match) {
+                                let extractedUrl = match[0];
+                                if (extractedUrl.includes('%3A') || extractedUrl.includes('%2F')) {
+                                    extractedUrl = decodeURIComponent(extractedUrl);
+                                }
+                                addMedia(extractedUrl, document.title + " (Embedded)", 'video');
+                            }
+                        }
+                    });
+                } catch(e) {}
+
+                // 3. Script Tag Regex Scan
+                try {
+                     const urlRegex = /["'](https?:\/\/[^"']+\.(?:m3u8|mp4|mkv)(?:\?[^"']*)?)["']/gi;
+                     document.querySelectorAll('script').forEach(script => {
+                         if (script.textContent) {
+                             let match;
+                             while ((match = urlRegex.exec(script.textContent)) !== null) {
+                                 let extractedUrl = match[1];
+                                 if (!extractedUrl.includes('example.com')) {
+                                     addMedia(extractedUrl, document.title + " (Script Scan)", 'video');
+                                 }
+                             }
+                         }
+                     });
+                } catch(e) {}
+
+                // 4. Targeted scan for the specific video iframe
+                const kisscloudFrame = Array.from(document.querySelectorAll('iframe')).find(f => f.src.includes('kisscloud.online'));
+                if (kisscloudFrame && kisscloudFrame.src) {
+                     addMedia(kisscloudFrame.src, document.title, 'video');
+                }
+
+                // 5. General, recursive scan for all other media, especially subtitles
+>>>>>>> origin/master
                 const processedFrames = new Set();
                 function searchFrames(win) {
                     if (processedFrames.has(win)) return;
@@ -2128,7 +2188,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                             if (el.src && typeof el.src === 'string' && el.src.trim() !== '') {
                                 try {
                                     const absUrl = new URL(el.src, win.document.baseURI).href;
-                                     media.push({ url: absUrl, title: el.title || win.document.title, type: 'video'});
+                                     addMedia(absUrl, el.title || win.document.title, 'video');
                                 } catch(e) {}
                             }
                         });
@@ -2139,7 +2199,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                                     const absUrl = new URL(track.src, win.document.baseURI).href;
                                     const lang = track.srclang || '';
                                     const label = track.label || 'Subtitle';
-                                    media.push({ url: absUrl, title: label, type: 'subtitle', language: lang });
+                                    addMedia(absUrl, label, 'subtitle', lang);
                                 } catch (e) {}
                             }
                         });
