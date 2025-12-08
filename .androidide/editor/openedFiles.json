@@ -49,14 +49,14 @@
       "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/HlsDownloadHelper.kt",
       "selection": {
         "end": {
-          "column": 0,
-          "index": 7444,
-          "line": 173
+          "column": 3,
+          "index": 7304,
+          "line": 168
         },
         "start": {
-          "column": 0,
-          "index": 7444,
-          "line": 173
+          "column": 3,
+          "index": 7304,
+          "line": 168
         }
       }
     },
@@ -106,5 +106,5 @@
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/res/values/strings.xml"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/HlsDownloadHelper.kt"
 }
