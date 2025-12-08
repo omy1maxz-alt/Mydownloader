@@ -2093,18 +2093,36 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             (function() {
                 const media = [];
 
-                // 1. Targeted scan for the specific video iframe
-                const kisscloudFrame = Array.from(document.querySelectorAll('iframe')).find(f => f.src.includes('kisscloud.online'));
-                if (kisscloudFrame && kisscloudFrame.src) {
-                     media.push({ url: kisscloudFrame.src, title: document.title, type: 'video' });
+                function extractMediaUrls(str) {
+                    if (!str) return;
+                    try {
+                        const decoded = decodeURIComponent(str);
+                        const candidates = [str, decoded];
+                        const regex = /https?:\/\/[^"'\s<>]+\.(m3u8|mp4|mkv|webm|mpd)([^"'\s<>]*)/gi;
+
+                        candidates.forEach(s => {
+                            let match;
+                            while ((match = regex.exec(s)) !== null) {
+                                media.push({ url: match[0], title: document.title, type: 'video' });
+                            }
+                        });
+                    } catch(e) {}
                 }
 
-                // 2. General, recursive scan for all other media, especially subtitles
+                // 1. Scan all iframes in the current document for embedded media URLs
+                document.querySelectorAll('iframe').forEach(iframe => {
+                    extractMediaUrls(iframe.src);
+                });
+
+                // 2. Recursive scan for media elements
                 const processedFrames = new Set();
                 function searchFrames(win) {
                     if (processedFrames.has(win)) return;
                     processedFrames.add(win);
                     try {
+                        // Also check the window location itself
+                        extractMediaUrls(win.location.href);
+
                         // Scan for standard video/audio/source tags
                         win.document.querySelectorAll('video, audio, source').forEach(el => {
                             if (el.src && typeof el.src === 'string' && el.src.trim() !== '') {
