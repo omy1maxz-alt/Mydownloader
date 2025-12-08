@@ -104,7 +104,37 @@
           "line": 16
         }
       }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/.gitignore",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 0,
+          "line": 0
+        },
+        "start": {
+          "column": 0,
+          "index": 0,
+          "line": 0
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/build.log",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 0,
+          "line": 0
+        },
+        "start": {
+          "column": 0,
+          "index": 0,
+          "line": 0
+        }
+      }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/app/src/main/java/com/omymaxz/download/HlsDownloadHelper.kt"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/Mydownloader/build.log"
 }
