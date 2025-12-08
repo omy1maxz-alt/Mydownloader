@@ -872,6 +872,7 @@ private fun checkBatteryOptimization() {
                         injectPerchanceFixes(view)
                     }
                     injectMediaStateDetector()
+                    injectAdvancedMediaDetector()
                     injectPendingUserscripts()
                     url?.let {
                         addToHistory(it)
@@ -1194,6 +1195,108 @@ private fun checkBatteryOptimization() {
         """.trimIndent()
         webView?.loadUrl(polyfillScript)
     }
+    private fun injectAdvancedMediaDetector() {
+        val script = """
+            javascript:(function() {
+                'use strict';
+                if (window.AndroidMediaDetector) return;
+
+                const detector = {
+                    processedUrls: new Set(),
+
+                    notify: function(url, type) {
+                        if (!url || this.processedUrls.has(url)) return;
+                        this.processedUrls.add(url);
+                        if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) {
+                            window.AndroidMediaState.onMediaDetected(url, type);
+                        }
+                    },
+
+                    checkUrl: function(url, type) {
+                        if (!url || url.startsWith('data:') || url.startsWith('blob:')) return;
+
+                        // Basic extension check
+                        if (url.match(/\.(mp4|mkv|webm|m3u8|mpd|mov|avi|flv|m4v)(\?|${'$'})/i)) {
+                             this.notify(url, 'video');
+                        } else if (url.match(/\.(mp3|aac|m4a|wav|ogg)(\?|${'$'})/i)) {
+                             this.notify(url, 'audio');
+                        } else if (url.includes('videoplayback') || url.includes('manifest')) {
+                             this.notify(url, 'video');
+                        }
+                    },
+
+                    initMutationObserver: function() {
+                        const observer = new MutationObserver((mutations) => {
+                            mutations.forEach((mutation) => {
+                                if (mutation.type === 'childList') {
+                                    mutation.addedNodes.forEach((node) => {
+                                        if (node.nodeName === 'VIDEO' || node.nodeName === 'AUDIO') {
+                                            if (node.src) this.checkUrl(node.src, node.nodeName.toLowerCase());
+                                            if (node.querySelectorAll) {
+                                                node.querySelectorAll('source').forEach(src => this.checkUrl(src.src, node.nodeName.toLowerCase()));
+                                            }
+                                        }
+                                    });
+                                } else if (mutation.type === 'attributes' && (mutation.attributeName === 'src' || mutation.attributeName === 'href')) {
+                                     const node = mutation.target;
+                                     if (node.nodeName === 'VIDEO' || node.nodeName === 'AUDIO' || node.nodeName === 'SOURCE') {
+                                         const type = (node.closest('audio') || node.nodeName === 'AUDIO') ? 'audio' : 'video';
+                                         this.checkUrl(node.src, type);
+                                     }
+                                }
+                            });
+                        });
+                        observer.observe(document, { childList: true, subtree: true, attributes: true });
+                    },
+
+                    initNetworkInterceptors: function() {
+                        const originalOpen = XMLHttpRequest.prototype.open;
+                        const self = this;
+                        XMLHttpRequest.prototype.open = function(method, url) {
+                            if (typeof url === 'string') {
+                                self.checkUrl(url, 'unknown');
+                            }
+                            return originalOpen.apply(this, arguments);
+                        };
+
+                        const originalFetch = window.fetch;
+                        window.fetch = function(input, init) {
+                            let url;
+                            if (typeof input === 'string') {
+                                url = input;
+                            } else if (input instanceof Request) {
+                                url = input.url;
+                            }
+                            if (url) {
+                                self.checkUrl(url, 'unknown');
+                            }
+                            return originalFetch.apply(this, arguments);
+                        };
+                    },
+
+                    scanDOM: function() {
+                        document.querySelectorAll('video, audio, source').forEach(el => {
+                            if (el.src) {
+                                const type = (el.closest('audio') || el.nodeName === 'AUDIO') ? 'audio' : 'video';
+                                this.checkUrl(el.src, type);
+                            }
+                        });
+                    },
+
+                    init: function() {
+                        this.scanDOM();
+                        this.initMutationObserver();
+                        this.initNetworkInterceptors();
+                    }
+                };
+
+                window.AndroidMediaDetector = detector;
+                detector.init();
+            })();
+        """.trimIndent()
+        webView.evaluateJavascript(script, null)
+    }
+
 private fun injectMediaStateDetector() {
     val script = """
         javascript:(function() {
@@ -1395,6 +1498,46 @@ private fun injectMediaStateDetector() {
         webView.loadUrl(resumeScript)
     }
     inner class MediaStateInterface(private val activity: MainActivity) {
+        @JavascriptInterface
+        fun onMediaDetected(url: String, type: String) {
+            activity.runOnUiThread {
+                try {
+                    if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:")) {
+                         val existsAlready = synchronized(activity.detectedMediaFiles) {
+                            activity.detectedMediaFiles.any { it.url == url }
+                         }
+
+                         if (!existsAlready) {
+                             val category = if (type.contains("audio", true)) MediaCategory.AUDIO else MediaCategory.VIDEO
+
+                             val detectedFormat = activity.detectVideoFormat(url)
+                             val quality = activity.extractQualityFromUrl(url)
+                             val enhancedTitle = activity.generateSmartFileName(url, detectedFormat.extension, quality, category)
+
+                             val mediaFile = MediaFile(
+                                url = url,
+                                title = enhancedTitle,
+                                mimeType = detectedFormat.mimeType,
+                                quality = quality,
+                                category = category,
+                                fileSize = "Unknown",
+                                language = null,
+                                isMainContent = false
+                            )
+
+                            synchronized(activity.detectedMediaFiles) {
+                                activity.detectedMediaFiles.add(mediaFile)
+                            }
+                            activity.updateFabVisibility()
+                            android.util.Log.d("MediaStateInterface", "Advanced detection found: $url")
+                         }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("MediaStateInterface", "Error in onMediaDetected: ${e.message}")
+                }
+            }
+        }
+
         @JavascriptInterface
         fun updateMediaPlaybackState(
             title: String,
