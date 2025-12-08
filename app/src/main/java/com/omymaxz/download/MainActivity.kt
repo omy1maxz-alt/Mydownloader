@@ -2189,9 +2189,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     if (processedFrames.has(win)) return;
                     processedFrames.add(win);
                     try {
-                        // Also check the window location itself
-                        extractMediaUrls(win.location.href);
-
                         // Scan for standard video/audio/source tags
                         win.document.querySelectorAll('video, audio, source').forEach(el => {
                             if (el.src && typeof el.src === 'string' && el.src.trim() !== '') {
