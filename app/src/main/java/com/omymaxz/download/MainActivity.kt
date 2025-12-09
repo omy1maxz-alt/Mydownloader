@@ -70,6 +70,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gmApi: GMApi
 
     private val detectedMediaFiles = Collections.synchronizedList(mutableListOf<MediaFile>())
+    private var lastMediaListOpenTime: Long = 0L
     private var lastUsedName: String = "Video"
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
@@ -550,6 +551,10 @@ private fun checkBatteryOptimization() {
             if (webView.visibility == View.VISIBLE) {
                 currentTab.url = webView.url
                 currentTab.title = webView.title ?: "New Tab"
+                currentTab.mediaTitle = currentMediaTitle
+                currentTab.isMediaPlaying = isMediaPlaying
+                currentTab.hasNextMedia = hasNextMedia
+                currentTab.hasPreviousMedia = hasPreviousMedia
                 val state = Bundle()
                 try {
                     webView.saveState(state)
@@ -564,6 +569,22 @@ private fun checkBatteryOptimization() {
     private fun restoreTabState(tabIndex: Int) {
         if (tabIndex !in tabs.indices) return
         val tab = tabs[tabIndex]
+
+        // Restore media state or reset if null
+        currentMediaTitle = tab.mediaTitle
+        isMediaPlaying = tab.isMediaPlaying
+        hasNextMedia = tab.hasNextMedia
+        hasPreviousMedia = tab.hasPreviousMedia
+
+        // If we switched to a tab that was playing, we might want to update the service/UI
+        // But typically the page reload will re-trigger detection.
+        // Crucially, we MUST reset currentMediaTitle if the new tab doesn't have one,
+        // to prevent 'onMediaPlay' from picking up the old tab's title.
+        if (currentMediaTitle == null) {
+            currentMediaTitle = null // Explicitly ensure it's null/cleared
+            isMediaPlaying = false
+        }
+
         binding.urlEditTextToolbar.setText(tab.url)
         
         if (tab.url != null) {
@@ -1099,7 +1120,7 @@ private fun checkBatteryOptimization() {
         }
 
         @JavascriptInterface
-        fun showPreview(text: String, filename: String, mimeType: String) {
+        fun showPreview(text: String, filename: String, mimeType: String, url: String) {
             runOnUiThread {
                 val scrollView = ScrollView(this@MainActivity)
                 val textView = TextView(this@MainActivity).apply {
@@ -1114,7 +1135,18 @@ private fun checkBatteryOptimization() {
                     .setView(scrollView)
                     .setNegativeButton("Close", null)
                     .setPositiveButton("Download") { _, _ ->
-                        saveToDownloads(text.toByteArray(), filename, mimeType)
+                        // Reconstruct MediaFile to reuse downloadMediaFile logic
+                        val mediaFile = MediaFile(
+                            url = url,
+                            title = filename,
+                            mimeType = mimeType,
+                            quality = "Unknown",
+                            category = MediaCategory.SUBTITLE,
+                            fileSize = "Unknown",
+                            language = null,
+                            isMainContent = false
+                        )
+                        showRenameDialog(mediaFile)
                     }
                     .show()
             }
@@ -1158,7 +1190,7 @@ private fun checkBatteryOptimization() {
                     val text = connection.inputStream.bufferedReader().use { it.readText() }
 
                     withContext(Dispatchers.Main) {
-                        showPreview(text.take(20000), filename, mimeType)
+                        showPreview(text.take(20000), filename, mimeType, url)
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
@@ -1729,7 +1761,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val lower = url.lowercase()
         val cleanUrl = lower.substringBefore('?')
         if (isAdOrTrackingUrl(lower)) return false
-        return cleanUrl.endsWith(".mp4") || cleanUrl.endsWith(".mkv") || cleanUrl.endsWith(".webm") || cleanUrl.endsWith(".vtt") || cleanUrl.endsWith(".srt") || lower.contains("videoplayback")
+        return cleanUrl.endsWith(".mp4") || cleanUrl.endsWith(".mkv") || cleanUrl.endsWith(".webm") ||
+               cleanUrl.endsWith(".m3u8") || cleanUrl.endsWith(".mpd") || cleanUrl.endsWith(".avi") ||
+               cleanUrl.endsWith(".mov") || cleanUrl.endsWith(".flv") || cleanUrl.endsWith(".m4v") ||
+               cleanUrl.endsWith(".vtt") || cleanUrl.endsWith(".srt") || lower.contains("videoplayback")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")
@@ -1748,11 +1783,13 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             return
         }
         val mediaFilesCopy = synchronized(detectedMediaFiles) {
-            detectedMediaFiles.toList()
+            // Sort by timestamp descending so new items appear at the top
+            detectedMediaFiles.sortedByDescending { it.timestamp }
         }
         val dialogBinding = DialogMediaListBinding.inflate(layoutInflater)
         val dialog = AlertDialog.Builder(this).setView(dialogBinding.root).create()
-        val adapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
+
+        val adapter = MediaListAdapter(mediaFilesCopy, lastMediaListOpenTime, { mediaFile ->
             // Tap to download
             showRenameDialog(mediaFile)
             dialog.dismiss()
@@ -1761,6 +1798,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             openMediaWith(mediaFile)
             dialog.dismiss()
         })
+
+        // Update the timestamp so next time we know what's new
+        lastMediaListOpenTime = System.currentTimeMillis()
+
         dialogBinding.mediaRecyclerView.layoutManager = LinearLayoutManager(this)
         dialogBinding.mediaRecyclerView.adapter = adapter
         dialog.show()
@@ -1915,7 +1956,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 val js = getBlobContentScript(
                     mediaFile.url,
                     false,
-                    "function(text) { AndroidWebAPI.showPreview(text.substring(0, 20000), \"$safeTitle\", \"$safeMime\"); }",
+                    "function(text) { AndroidWebAPI.showPreview(text.substring(0, 20000), \"$safeTitle\", \"$safeMime\", \"$safeUrl\"); }",
                     "function(err) { AndroidWebAPI.onPreviewFallback(\"$safeUrl\", \"$safeTitle\", \"$safeMime\"); }"
                 )
                 webView.evaluateJavascript(js, null)
