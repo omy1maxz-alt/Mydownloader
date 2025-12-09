@@ -70,6 +70,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gmApi: GMApi
 
     private val detectedMediaFiles = Collections.synchronizedList(mutableListOf<MediaFile>())
+    private var lastMediaListOpenTime: Long = 0L
     private var lastUsedName: String = "Video"
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
@@ -1762,11 +1763,13 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             return
         }
         val mediaFilesCopy = synchronized(detectedMediaFiles) {
-            detectedMediaFiles.toList()
+            // Sort by timestamp descending so new items appear at the top
+            detectedMediaFiles.sortedByDescending { it.timestamp }
         }
         val dialogBinding = DialogMediaListBinding.inflate(layoutInflater)
         val dialog = AlertDialog.Builder(this).setView(dialogBinding.root).create()
-        val adapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
+
+        val adapter = MediaListAdapter(mediaFilesCopy, lastMediaListOpenTime, { mediaFile ->
             // Tap to download
             showRenameDialog(mediaFile)
             dialog.dismiss()
@@ -1775,6 +1778,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             openMediaWith(mediaFile)
             dialog.dismiss()
         })
+
+        // Update the timestamp so next time we know what's new
+        lastMediaListOpenTime = System.currentTimeMillis()
+
         dialogBinding.mediaRecyclerView.layoutManager = LinearLayoutManager(this)
         dialogBinding.mediaRecyclerView.adapter = adapter
         dialog.show()

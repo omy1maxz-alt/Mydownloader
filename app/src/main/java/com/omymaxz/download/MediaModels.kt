@@ -8,7 +8,8 @@ data class MediaFile(
     val category: MediaCategory,
     val fileSize: String,
     val language: String?,
-    val isMainContent: Boolean
+    val isMainContent: Boolean,
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 enum class MediaCategory(val displayName: String, val priority: Int) {

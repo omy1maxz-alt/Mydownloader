@@ -13,6 +13,7 @@ import android.net.Uri
 
 class MediaListAdapter(
     private val mediaFiles: List<MediaFile>,
+    private val lastSeenTimestamp: Long,
     private val onItemClicked: (MediaFile) -> Unit,
     private val onItemLongClicked: (MediaFile) -> Unit
 ) : RecyclerView.Adapter<MediaListAdapter.MediaViewHolder>() {
@@ -25,7 +26,8 @@ class MediaListAdapter(
 
     override fun onBindViewHolder(holder: MediaViewHolder, position: Int) {
         val mediaFile = mediaFiles[position]
-        holder.bind(mediaFile)
+        val isNew = mediaFile.timestamp > lastSeenTimestamp
+        holder.bind(mediaFile, isNew)
         holder.itemView.setOnClickListener {
             onItemClicked(mediaFile)
         }
@@ -64,7 +66,7 @@ class MediaListAdapter(
         private val typeTextView: TextView = itemView.findViewById(R.id.media_type)
         private val thumbnailView: ImageView = itemView.findViewById(R.id.media_thumbnail)
 
-        fun bind(mediaFile: MediaFile) {
+        fun bind(mediaFile: MediaFile, isNew: Boolean) {
             val categoryIndicator = when (mediaFile.category) {
                 MediaCategory.VIDEO -> if (mediaFile.isMainContent) "🎥 MAIN VIDEO" else "🎬 Video Clip"
                 MediaCategory.AUDIO -> "🔊 Audio"
@@ -74,7 +76,8 @@ class MediaListAdapter(
                 else -> "❓ ${mediaFile.category.displayName}"
             }
 
-            titleTextView.text = "$categoryIndicator\n${mediaFile.title}"
+            val newBadge = if (isNew) "🆕 " else ""
+            titleTextView.text = "$newBadge$categoryIndicator\n${mediaFile.title}"
 
             val sourceInfo = detectSourceAndFormat(mediaFile.url)
             val sizeInfo = if (mediaFile.fileSize != "Unknown") " • ${mediaFile.fileSize}" else ""
