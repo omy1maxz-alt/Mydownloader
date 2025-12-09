@@ -1125,7 +1125,7 @@ private fun checkBatteryOptimization() {
                             language = null,
                             isMainContent = false
                         )
-                        downloadMediaFile(mediaFile)
+                        showRenameDialog(mediaFile)
                     }
                     .show()
             }
