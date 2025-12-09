@@ -78,7 +78,11 @@ object HlsDownloadHelper {
         if (dataSourceFactory == null) {
             // Use a factory that applies the latest headers
             val upstreamFactory = DefaultHttpDataSource.Factory()
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> media-detection-fix
             dataSourceFactory = DataSource.Factory {
                 val dataSource = upstreamFactory.createDataSource()
                 if (currentUserAgent != null) {
@@ -103,7 +107,11 @@ object HlsDownloadHelper {
         }
         return downloadNotificationHelper!!
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> media-detection-fix
     fun downloadHls(context: Context, url: String, title: String, userAgent: String?, cookie: String?) {
         val mediaItemBuilder = MediaItem.Builder()
             .setUri(Uri.parse(url))
@@ -136,23 +144,40 @@ object HlsDownloadHelper {
                 // which uses the *global* downloadManager and its *global* dataSourceFactory.
                 // To support headers in the actual download, we must embed them into the DownloadRequest
                 // or the Service must know how to recreate the factory.
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> media-detection-fix
                 // ExoPlayer's DownloadManager uses a single DataSource.Factory.
                 // To support per-download headers, the standard pattern is less straightforward.
                 // However, often the "preparation" phase is where strict checks happen (manifest fetch).
                 // If the segments also require headers, we might still have issues with the global factory.
+<<<<<<< HEAD
 
                 // CRITICAL FIX: Since we can't easily change the global factory per request in the Service,
                 // we rely on the fact that often the manifest URL is the most protected.
                 // But for robust support, we should ideally use a global factory that delegates based on
                 // the request, which is complex.
 
+=======
+                
+                // CRITICAL FIX: Since we can't easily change the global factory per request in the Service,
+                // we rely on the fact that often the manifest URL is the most protected.
+                // But for robust support, we should ideally use a global factory that delegates based on 
+                // the request, which is complex.
+                
+>>>>>>> media-detection-fix
                 // As a fallback/best-effort for this architecture:
                 // We prepared with headers. We will launch the download.
                 // If the global factory is generic, segment downloads *might* fail if they need cookies.
                 // BUT, replacing the entire DownloadManager architecture is out of scope.
                 // We proceed with the specific factory for the helper preparation at least.
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> media-detection-fix
                 val downloadRequest = helper.getDownloadRequest(
                     Util.getUtf8Bytes(title) // Store title in data
                 )
