@@ -551,6 +551,10 @@ private fun checkBatteryOptimization() {
             if (webView.visibility == View.VISIBLE) {
                 currentTab.url = webView.url
                 currentTab.title = webView.title ?: "New Tab"
+                currentTab.mediaTitle = currentMediaTitle
+                currentTab.isMediaPlaying = isMediaPlaying
+                currentTab.hasNextMedia = hasNextMedia
+                currentTab.hasPreviousMedia = hasPreviousMedia
                 val state = Bundle()
                 try {
                     webView.saveState(state)
@@ -565,6 +569,22 @@ private fun checkBatteryOptimization() {
     private fun restoreTabState(tabIndex: Int) {
         if (tabIndex !in tabs.indices) return
         val tab = tabs[tabIndex]
+
+        // Restore media state or reset if null
+        currentMediaTitle = tab.mediaTitle
+        isMediaPlaying = tab.isMediaPlaying
+        hasNextMedia = tab.hasNextMedia
+        hasPreviousMedia = tab.hasPreviousMedia
+
+        // If we switched to a tab that was playing, we might want to update the service/UI
+        // But typically the page reload will re-trigger detection.
+        // Crucially, we MUST reset currentMediaTitle if the new tab doesn't have one,
+        // to prevent 'onMediaPlay' from picking up the old tab's title.
+        if (currentMediaTitle == null) {
+            currentMediaTitle = null // Explicitly ensure it's null/cleared
+            isMediaPlaying = false
+        }
+
         binding.urlEditTextToolbar.setText(tab.url)
         
         if (tab.url != null) {
