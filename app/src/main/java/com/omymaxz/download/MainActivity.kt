@@ -1140,13 +1140,12 @@ private fun checkBatteryOptimization() {
         }
 
         @JavascriptInterface
-        fun onSubtitleSnippet(url: String, snippet: String) {
+        fun onSubtitleSnippet(url: String, snippet: String, language: String?) {
             if (snippet.isNotBlank()) {
                 val detectedFormat = detectVideoFormat(url)
-                // If it is a blob, detectVideoFormat likely defaults to .vtt based on my previous manualMediaScan logic
-                // or just uses .mp4. We should ensure extension is .vtt if not known
                 val ext = if (detectedFormat.extension == ".mp4") ".vtt" else detectedFormat.extension
-                val newTitle = "$snippet$ext"
+                val prefix = if (!language.isNullOrBlank()) "[$language] " else ""
+                val newTitle = "$prefix$snippet$ext"
                 updateMediaTitle(url, newTitle)
             }
         }
@@ -1776,11 +1775,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 connection.connect()
 
                 val text = connection.inputStream.bufferedReader().use { it.readText() }
-                val snippet = SubtitleUtils.extractSnippet(text)
+                val result = SubtitleUtils.extractSnippet(text)
 
-                if (!snippet.isNullOrBlank()) {
+                if (!result.snippet.isNullOrBlank()) {
                      val detectedFormat = detectVideoFormat(mediaFile.url)
-                     val newTitle = "$snippet${detectedFormat.extension}"
+                     val prefix = if (!result.language.isNullOrBlank()) "[${result.language}] " else ""
+                     val newTitle = "$prefix${result.snippet}${detectedFormat.extension}"
                      updateMediaTitle(mediaFile.url, newTitle)
                 }
             } catch (e: Exception) {
@@ -2307,15 +2307,29 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                                     (function() {
                                         fetch("$url").then(r => r.text()).then(text => {
                                             var snippet = "";
+                                            var language = "";
                                             var lines = text.split('\n');
                                             for(var i=0; i<lines.length; i++) {
-                                                var line = lines[i].trim();
-                                                if(!line || line === "WEBVTT" || line.includes("-->") || /^\d+$/.test(line)) continue;
+                                                var line = lines[i].replace(/^\uFEFF/, '').trim();
+                                                if(!line) continue;
+
+                                                if(line.toLowerCase().includes("webvtt")) continue;
+
+                                                var langMatch = line.match(/^Language:\s*([a-zA-Z-]+)/i);
+                                                if(langMatch) {
+                                                    language = langMatch[1];
+                                                    continue;
+                                                }
+
+                                                if(line.match(/^(Kind|Style|Region|NOTE):/i)) continue;
+                                                if(line.match(/^\d+$/)) continue; // Index
+                                                if(line.includes("-->")) continue; // Timestamp
+
                                                 snippet = line.replace(/<[^>]*>/g, '').replace(/[♪♫]/g, '').trim();
                                                 if(snippet) break;
                                             }
                                             if(snippet.length > 50) snippet = snippet.substring(0, 50) + "...";
-                                            if(snippet) AndroidWebAPI.onSubtitleSnippet("$url", snippet);
+                                            if(snippet) AndroidWebAPI.onSubtitleSnippet("$url", snippet, language);
                                         });
                                     })();
                                 """
