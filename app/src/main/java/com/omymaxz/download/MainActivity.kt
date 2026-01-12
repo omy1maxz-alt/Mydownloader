@@ -70,6 +70,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gmApi: GMApi
 
     private val detectedMediaFiles = Collections.synchronizedList(mutableListOf<MediaFile>())
+    private var currentMediaListAdapter: MediaListAdapter? = null
     private var lastUsedName: String = "Video"
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
@@ -932,6 +933,9 @@ private fun checkBatteryOptimization() {
                                     detectedMediaFiles.add(mediaFile)
                                 }
                                 runOnUiThread { updateFabVisibility() }
+                                if (category == MediaCategory.SUBTITLE) {
+                                    fetchSubtitleSnippet(mediaFile)
+                                }
                             }
                         } catch (e: Exception) {
                             android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
@@ -939,6 +943,7 @@ private fun checkBatteryOptimization() {
                     }
                     return super.shouldInterceptRequest(view, request)
                 }
+
                 private fun createEmptyResponse(): WebResourceResponse {
                     return WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
                 }
@@ -1131,6 +1136,18 @@ private fun checkBatteryOptimization() {
         fun onBlobDownloadError(error: String) {
             runOnUiThread {
                 Toast.makeText(context, "Download failed: $error", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun onSubtitleSnippet(url: String, snippet: String) {
+            if (snippet.isNotBlank()) {
+                val detectedFormat = detectVideoFormat(url)
+                // If it is a blob, detectVideoFormat likely defaults to .vtt based on my previous manualMediaScan logic
+                // or just uses .mp4. We should ensure extension is .vtt if not known
+                val ext = if (detectedFormat.extension == ".mp4") ".vtt" else detectedFormat.extension
+                val newTitle = "$snippet$ext"
+                updateMediaTitle(url, newTitle)
             }
         }
 
@@ -1742,6 +1759,36 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun updateFabVisibility() {
         binding.fabShowMedia.visibility = if (detectedMediaFiles.isNotEmpty()) View.VISIBLE else View.GONE
     }
+    private fun fetchSubtitleSnippet(mediaFile: MediaFile) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val connection = java.net.URL(mediaFile.url).openConnection() as java.net.HttpURLConnection
+                val userAgent = withContext(Dispatchers.Main) { webView.settings.userAgentString }
+                val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
+                connection.setRequestProperty("User-Agent", userAgent)
+                if (cookie != null) {
+                    connection.setRequestProperty("Cookie", cookie)
+                }
+                // Try to get just the beginning of the file to save bandwidth
+                // Most servers support range requests
+                connection.setRequestProperty("Range", "bytes=0-4096")
+
+                connection.connect()
+
+                val text = connection.inputStream.bufferedReader().use { it.readText() }
+                val snippet = SubtitleUtils.extractSnippet(text)
+
+                if (!snippet.isNullOrBlank()) {
+                     val detectedFormat = detectVideoFormat(mediaFile.url)
+                     val newTitle = "$snippet${detectedFormat.extension}"
+                     updateMediaTitle(mediaFile.url, newTitle)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to fetch subtitle snippet: ${e.message}")
+            }
+        }
+    }
+
     private fun showMediaListDialog() {
         if (detectedMediaFiles.isEmpty()) {
             Toast.makeText(this, "No media files detected.", Toast.LENGTH_SHORT).show()
@@ -1752,7 +1799,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
         val dialogBinding = DialogMediaListBinding.inflate(layoutInflater)
         val dialog = AlertDialog.Builder(this).setView(dialogBinding.root).create()
-        val adapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
+        currentMediaListAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
             // Tap to download
             showRenameDialog(mediaFile)
             dialog.dismiss()
@@ -1761,9 +1808,28 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             openMediaWith(mediaFile)
             dialog.dismiss()
         })
+        dialog.setOnDismissListener {
+            currentMediaListAdapter = null
+        }
         dialogBinding.mediaRecyclerView.layoutManager = LinearLayoutManager(this)
-        dialogBinding.mediaRecyclerView.adapter = adapter
+        dialogBinding.mediaRecyclerView.adapter = currentMediaListAdapter
         dialog.show()
+    }
+
+    private fun updateMediaTitle(url: String, newTitle: String) {
+        synchronized(detectedMediaFiles) {
+            val index = detectedMediaFiles.indexOfFirst { it.url == url }
+            if (index != -1) {
+                val oldFile = detectedMediaFiles[index]
+                if (oldFile.title != newTitle) {
+                    val newFile = oldFile.copy(title = newTitle)
+                    detectedMediaFiles[index] = newFile
+                    runOnUiThread {
+                        currentMediaListAdapter?.notifyItemChanged(index)
+                    }
+                }
+            }
+        }
     }
     private fun openMediaWith(mediaFile: MediaFile) {
         try {
@@ -2227,11 +2293,40 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
                         val quality = extractQualityFromUrl(url)
 
-                        val finalTitle = if (category == MediaCategory.SUBTITLE && title != "Untitled") {
+                        val finalTitle = if (category == MediaCategory.SUBTITLE && title != "Untitled" && title != "Subtitle") {
                              // Use the subtitle label as filename
                              "$title${detectedFormat.extension}"
                         } else {
                              generateSmartFileName(url, detectedFormat.extension, quality, category)
+                        }
+
+                        if (category == MediaCategory.SUBTITLE) {
+                            if (url.startsWith("blob:")) {
+                                // Inject script to fetch blob content
+                                val js = """
+                                    (function() {
+                                        fetch("$url").then(r => r.text()).then(text => {
+                                            var snippet = "";
+                                            var lines = text.split('\n');
+                                            for(var i=0; i<lines.length; i++) {
+                                                var line = lines[i].trim();
+                                                if(!line || line === "WEBVTT" || line.includes("-->") || /^\d+$/.test(line)) continue;
+                                                snippet = line.replace(/<[^>]*>/g, '').replace(/[♪♫]/g, '').trim();
+                                                if(snippet) break;
+                                            }
+                                            if(snippet.length > 50) snippet = snippet.substring(0, 50) + "...";
+                                            if(snippet) AndroidWebAPI.onSubtitleSnippet("$url", snippet);
+                                        });
+                                    })();
+                                """
+                                runOnUiThread { webView.evaluateJavascript(js, null) }
+                            } else {
+                                // For HTTP URLs, we can use the native fetcher
+                                // But we need to do it after adding to the list
+                                // The native fetcher is called below in the synchronized block logic?
+                                // No, manualMediaScan logic constructs the list and adds it.
+                                // So we need to trigger it after adding.
+                            }
                         }
 
                         MediaFile(
@@ -2253,6 +2348,27 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                             if (!existingUrls.contains(it.url)) {
                                 detectedMediaFiles.add(it)
                                 addedCount++
+                                // Trigger http fetch if needed
+                                if (it.category == MediaCategory.SUBTITLE) {
+                                    if (!it.url.startsWith("blob:")) {
+                                        fetchSubtitleSnippet(it)
+                                    } else {
+                                        // For blobs found via Manual Scan, we need to re-inject the fetcher
+                                        // because the previous loop only injected it for *newly constructed* objects
+                                        // Wait, the previous loop injected it immediately upon construction.
+                                        // But that was before it was added to detectedMediaFiles.
+                                        // Actually, the previous injection in the mapNotNull block handles the blob fetching
+                                        // because it runs regardless of whether the file is "new" to the list or not.
+                                        // However, mapNotNull creates the MediaFile object.
+                                        // The injection block I added in the previous step is inside mapNotNull loop.
+                                        // So it runs for every candidate found by JS.
+                                        // This is correct.
+                                        // But if the file *already existed* in the list, we might want to refresh it?
+                                        // The current logic says: if !existingUrls.contains(it.url) -> add it.
+                                        // If it already exists, we do nothing.
+                                        // So if we run scan twice, the second time we don't re-fetch. This is efficient.
+                                    }
+                                }
                             }
                         }
                     }
