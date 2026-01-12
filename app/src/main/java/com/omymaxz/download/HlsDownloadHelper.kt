@@ -20,6 +20,7 @@ import androidx.media3.exoplayer.offline.DownloadService
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.Executor
+import androidx.media3.common.util.Util
 
 object HlsDownloadHelper {
     private var downloadManager: DownloadManager? = null
