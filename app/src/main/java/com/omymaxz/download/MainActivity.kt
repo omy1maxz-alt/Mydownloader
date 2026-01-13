@@ -165,6 +165,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        @JavascriptInterface
+        fun copyToClipboard(text: String) {
+             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+             val clip = android.content.ClipData.newPlainText("Copied Text", text)
+             clipboard.setPrimaryClip(clip)
+             runOnUiThread {
+                 Toast.makeText(this@MainActivity, "Text copied to clipboard", Toast.LENGTH_SHORT).show()
+             }
+        }
     }
 
 private fun checkBatteryOptimization() {
@@ -759,6 +769,7 @@ private fun checkBatteryOptimization() {
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
             addJavascriptInterface(gmApi, "GMApi")
+            addJavascriptInterface(YouTubeInterface(this@MainActivity), "YouTubeInterface")
 
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -882,6 +893,7 @@ private fun checkBatteryOptimization() {
                             tabs[currentTabIndex].title = view?.title ?: "No Title"
                         }
                     }
+                    checkForYouTube(url)
                 }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
@@ -1210,6 +1222,86 @@ private fun checkBatteryOptimization() {
             })();
         """.trimIndent()
         webView?.loadUrl(polyfillScript)
+    }
+
+    private fun injectJulesEnhancements(webView: WebView?) {
+        val script = """
+            javascript:(function() {
+                if (document.getElementById('jules-copy-btn')) return;
+
+                var btn = document.createElement('div');
+                btn.id = 'jules-copy-btn';
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+                btn.style.position = 'fixed';
+                btn.style.bottom = '80px';
+                btn.style.right = '20px';
+                btn.style.width = '48px';
+                btn.style.height = '48px';
+                btn.style.backgroundColor = '#6200EE';
+                btn.style.color = '#FFFFFF';
+                btn.style.borderRadius = '50%';
+                btn.style.display = 'flex';
+                btn.style.alignItems = 'center';
+                btn.style.justifyContent = 'center';
+                btn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+                btn.style.zIndex = '9999';
+                btn.style.cursor = 'pointer';
+
+                btn.onclick = function() {
+                    var text = "";
+                    var selection = window.getSelection().toString();
+
+                    if (selection && selection.length > 0) {
+                        text = selection;
+                    } else {
+                        // Resilient heuristic: find the last meaningful text block
+                        // We ignore scripts, styles, buttons, inputs, and short text
+                        var walker = document.createTreeWalker(
+                            document.body,
+                            NodeFilter.SHOW_ELEMENT,
+                            {
+                                acceptNode: function(node) {
+                                    if (['SCRIPT', 'STYLE', 'BUTTON', 'INPUT', 'TEXTAREA', 'NAV', 'HEADER', 'FOOTER'].includes(node.tagName)) {
+                                        return NodeFilter.FILTER_REJECT;
+                                    }
+                                    if (node.innerText && node.innerText.length > 50) {
+                                        return NodeFilter.FILTER_ACCEPT;
+                                    }
+                                    return NodeFilter.FILTER_SKIP;
+                                }
+                            }
+                        );
+
+                        var lastNode = null;
+                        while(walker.nextNode()) {
+                            lastNode = walker.currentNode;
+                        }
+
+                        if (lastNode) {
+                            text = lastNode.innerText;
+                        } else {
+                            // Fallback to body text if no specific block found
+                            text = document.body.innerText;
+                        }
+                    }
+
+                    if (text && text.length > 0) {
+                        AndroidWebAPI.copyToClipboard(text);
+                        // Visual feedback
+                        var originalColor = btn.style.backgroundColor;
+                        btn.style.backgroundColor = '#03DAC5'; // Teal/Success color
+                        setTimeout(function() {
+                            btn.style.backgroundColor = originalColor;
+                        }, 500);
+                    } else {
+                         AndroidWebAPI.onPreviewError("No text found to copy.");
+                    }
+                };
+
+                document.body.appendChild(btn);
+            })();
+        """.trimIndent()
+        webView?.evaluateJavascript(script, null)
     }
     private fun injectAdvancedMediaDetector() {
         val script = """
@@ -1756,7 +1848,38 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         return lower.contains("videoplayback") || lower.contains("manifest")
     }
     private fun updateFabVisibility() {
-        binding.fabShowMedia.visibility = if (detectedMediaFiles.isNotEmpty()) View.VISIBLE else View.GONE
+        if (isYouTubeUrl(webView.url)) {
+            binding.fabShowMedia.setImageResource(R.drawable.ic_download) // Ensure you have this or similar
+            binding.fabShowMedia.visibility = View.VISIBLE
+            // We override the click listener if it's YouTube
+            binding.fabShowMedia.setOnClickListener {
+                if (isYouTubeUrl(webView.url)) {
+                    Toast.makeText(this, "Analyzing YouTube video...", Toast.LENGTH_SHORT).show()
+                    webView.evaluateJavascript(YouTubeHelper.EXTRACTION_SCRIPT, null)
+                } else {
+                    showMediaListDialog()
+                }
+            }
+        } else {
+             // Reset to default behavior
+            binding.fabShowMedia.setImageResource(android.R.drawable.ic_menu_add) // Or your default icon
+            binding.fabShowMedia.visibility = if (detectedMediaFiles.isNotEmpty()) View.VISIBLE else View.GONE
+            binding.fabShowMedia.setOnClickListener {
+                showMediaListDialog()
+            }
+        }
+    }
+
+    private fun isYouTubeUrl(url: String?): Boolean {
+        if (url == null) return false
+        val lower = url.lowercase()
+        return (lower.contains("youtube.com/watch") || lower.contains("m.youtube.com/watch") || lower.contains("youtu.be/")) && !lower.contains("googleads")
+    }
+
+    private fun checkForYouTube(url: String?) {
+        runOnUiThread {
+            updateFabVisibility()
+        }
     }
     private fun fetchSubtitleSnippet(mediaFile: MediaFile) {
         lifecycleScope.launch(Dispatchers.IO) {
@@ -1786,6 +1909,67 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed to fetch subtitle snippet: ${e.message}")
             }
+        }
+    }
+
+    inner class YouTubeInterface(private val activity: MainActivity) {
+        @JavascriptInterface
+        fun onVideoData(json: String) {
+            val video = YouTubeHelper.parseVideoData(json)
+            if (video != null && video.formats.isNotEmpty()) {
+                activity.runOnUiThread {
+                    showYouTubeQualityDialog(video)
+                }
+            } else {
+                onError("No downloadable video found.")
+            }
+        }
+
+        @JavascriptInterface
+        fun onError(error: String) {
+            activity.runOnUiThread {
+                Toast.makeText(activity, "YouTube Error: $error", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun showYouTubeQualityDialog(video: YouTubeVideo) {
+        val formats = video.formats.sortedByDescending { it.height }
+        val options = formats.map { "${it.qualityLabel} - ${it.mimeType.substringBefore(';')} " }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Download: ${video.title}")
+            .setItems(options) { _, which ->
+                val selectedFormat = formats[which]
+                downloadYouTubeVideo(video.title, selectedFormat)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun downloadYouTubeVideo(title: String, format: YouTubeFormat) {
+        try {
+            val sanitizedTitle = title.replace("[^a-zA-Z0-9._-]".toRegex(), "_")
+            val fileName = "${sanitizedTitle}_${format.height}p.mp4"
+
+            val request = DownloadManager.Request(Uri.parse(format.url))
+                .setTitle(fileName)
+                .setDescription("Downloading YouTube Video")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+
+            val userAgent = webView.settings.userAgentString
+            val cookie = CookieManager.getInstance().getCookie(webView.url)
+            request.addRequestHeader("User-Agent", userAgent)
+            if (cookie != null) {
+                request.addRequestHeader("Cookie", cookie)
+            }
+
+            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            dm.enqueue(request)
+            Toast.makeText(this, "Download started", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
