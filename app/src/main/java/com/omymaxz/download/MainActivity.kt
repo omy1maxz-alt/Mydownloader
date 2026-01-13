@@ -165,6 +165,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        @JavascriptInterface
+        fun copyToClipboard(text: String) {
+             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+             val clip = android.content.ClipData.newPlainText("Copied Text", text)
+             clipboard.setPrimaryClip(clip)
+             runOnUiThread {
+                 Toast.makeText(this@MainActivity, "Text copied to clipboard", Toast.LENGTH_SHORT).show()
+             }
+        }
     }
 
 private fun checkBatteryOptimization() {
@@ -1212,6 +1222,86 @@ private fun checkBatteryOptimization() {
             })();
         """.trimIndent()
         webView?.loadUrl(polyfillScript)
+    }
+
+    private fun injectJulesEnhancements(webView: WebView?) {
+        val script = """
+            javascript:(function() {
+                if (document.getElementById('jules-copy-btn')) return;
+
+                var btn = document.createElement('div');
+                btn.id = 'jules-copy-btn';
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+                btn.style.position = 'fixed';
+                btn.style.bottom = '80px';
+                btn.style.right = '20px';
+                btn.style.width = '48px';
+                btn.style.height = '48px';
+                btn.style.backgroundColor = '#6200EE';
+                btn.style.color = '#FFFFFF';
+                btn.style.borderRadius = '50%';
+                btn.style.display = 'flex';
+                btn.style.alignItems = 'center';
+                btn.style.justifyContent = 'center';
+                btn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+                btn.style.zIndex = '9999';
+                btn.style.cursor = 'pointer';
+
+                btn.onclick = function() {
+                    var text = "";
+                    var selection = window.getSelection().toString();
+
+                    if (selection && selection.length > 0) {
+                        text = selection;
+                    } else {
+                        // Resilient heuristic: find the last meaningful text block
+                        // We ignore scripts, styles, buttons, inputs, and short text
+                        var walker = document.createTreeWalker(
+                            document.body,
+                            NodeFilter.SHOW_ELEMENT,
+                            {
+                                acceptNode: function(node) {
+                                    if (['SCRIPT', 'STYLE', 'BUTTON', 'INPUT', 'TEXTAREA', 'NAV', 'HEADER', 'FOOTER'].includes(node.tagName)) {
+                                        return NodeFilter.FILTER_REJECT;
+                                    }
+                                    if (node.innerText && node.innerText.length > 50) {
+                                        return NodeFilter.FILTER_ACCEPT;
+                                    }
+                                    return NodeFilter.FILTER_SKIP;
+                                }
+                            }
+                        );
+
+                        var lastNode = null;
+                        while(walker.nextNode()) {
+                            lastNode = walker.currentNode;
+                        }
+
+                        if (lastNode) {
+                            text = lastNode.innerText;
+                        } else {
+                            // Fallback to body text if no specific block found
+                            text = document.body.innerText;
+                        }
+                    }
+
+                    if (text && text.length > 0) {
+                        AndroidWebAPI.copyToClipboard(text);
+                        // Visual feedback
+                        var originalColor = btn.style.backgroundColor;
+                        btn.style.backgroundColor = '#03DAC5'; // Teal/Success color
+                        setTimeout(function() {
+                            btn.style.backgroundColor = originalColor;
+                        }, 500);
+                    } else {
+                         AndroidWebAPI.onPreviewError("No text found to copy.");
+                    }
+                };
+
+                document.body.appendChild(btn);
+            })();
+        """.trimIndent()
+        webView?.evaluateJavascript(script, null)
     }
     private fun injectAdvancedMediaDetector() {
         val script = """
