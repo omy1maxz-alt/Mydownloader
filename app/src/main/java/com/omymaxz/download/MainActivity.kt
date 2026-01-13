@@ -759,6 +759,7 @@ private fun checkBatteryOptimization() {
             addJavascriptInterface(MediaStateInterface(this@MainActivity), "AndroidMediaState")
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
             addJavascriptInterface(gmApi, "GMApi")
+            addJavascriptInterface(YouTubeInterface(this@MainActivity), "YouTubeInterface")
 
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -882,6 +883,7 @@ private fun checkBatteryOptimization() {
                             tabs[currentTabIndex].title = view?.title ?: "No Title"
                         }
                     }
+                    checkForYouTube(url)
                 }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
@@ -1756,7 +1758,38 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         return lower.contains("videoplayback") || lower.contains("manifest")
     }
     private fun updateFabVisibility() {
-        binding.fabShowMedia.visibility = if (detectedMediaFiles.isNotEmpty()) View.VISIBLE else View.GONE
+        if (isYouTubeUrl(webView.url)) {
+            binding.fabShowMedia.setImageResource(R.drawable.ic_download) // Ensure you have this or similar
+            binding.fabShowMedia.visibility = View.VISIBLE
+            // We override the click listener if it's YouTube
+            binding.fabShowMedia.setOnClickListener {
+                if (isYouTubeUrl(webView.url)) {
+                    Toast.makeText(this, "Analyzing YouTube video...", Toast.LENGTH_SHORT).show()
+                    webView.evaluateJavascript(YouTubeHelper.EXTRACTION_SCRIPT, null)
+                } else {
+                    showMediaListDialog()
+                }
+            }
+        } else {
+             // Reset to default behavior
+            binding.fabShowMedia.setImageResource(android.R.drawable.ic_menu_add) // Or your default icon
+            binding.fabShowMedia.visibility = if (detectedMediaFiles.isNotEmpty()) View.VISIBLE else View.GONE
+            binding.fabShowMedia.setOnClickListener {
+                showMediaListDialog()
+            }
+        }
+    }
+
+    private fun isYouTubeUrl(url: String?): Boolean {
+        if (url == null) return false
+        val lower = url.lowercase()
+        return (lower.contains("youtube.com/watch") || lower.contains("m.youtube.com/watch") || lower.contains("youtu.be/")) && !lower.contains("googleads")
+    }
+
+    private fun checkForYouTube(url: String?) {
+        runOnUiThread {
+            updateFabVisibility()
+        }
     }
     private fun fetchSubtitleSnippet(mediaFile: MediaFile) {
         lifecycleScope.launch(Dispatchers.IO) {
@@ -1786,6 +1819,67 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed to fetch subtitle snippet: ${e.message}")
             }
+        }
+    }
+
+    inner class YouTubeInterface(private val activity: MainActivity) {
+        @JavascriptInterface
+        fun onVideoData(json: String) {
+            val video = YouTubeHelper.parseVideoData(json)
+            if (video != null && video.formats.isNotEmpty()) {
+                activity.runOnUiThread {
+                    showYouTubeQualityDialog(video)
+                }
+            } else {
+                onError("No downloadable video found.")
+            }
+        }
+
+        @JavascriptInterface
+        fun onError(error: String) {
+            activity.runOnUiThread {
+                Toast.makeText(activity, "YouTube Error: $error", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun showYouTubeQualityDialog(video: YouTubeVideo) {
+        val formats = video.formats.sortedByDescending { it.height }
+        val options = formats.map { "${it.qualityLabel} - ${it.mimeType.substringBefore(';')} " }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Download: ${video.title}")
+            .setItems(options) { _, which ->
+                val selectedFormat = formats[which]
+                downloadYouTubeVideo(video.title, selectedFormat)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun downloadYouTubeVideo(title: String, format: YouTubeFormat) {
+        try {
+            val sanitizedTitle = title.replace("[^a-zA-Z0-9._-]".toRegex(), "_")
+            val fileName = "${sanitizedTitle}_${format.height}p.mp4"
+
+            val request = DownloadManager.Request(Uri.parse(format.url))
+                .setTitle(fileName)
+                .setDescription("Downloading YouTube Video")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+
+            val userAgent = webView.settings.userAgentString
+            val cookie = CookieManager.getInstance().getCookie(webView.url)
+            request.addRequestHeader("User-Agent", userAgent)
+            if (cookie != null) {
+                request.addRequestHeader("Cookie", cookie)
+            }
+
+            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            dm.enqueue(request)
+            Toast.makeText(this, "Download started", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
