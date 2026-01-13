@@ -40,17 +40,17 @@ class BookmarkAdapter(
             }
 
             try {
-                val domain = Uri.parse(bookmark.url).host
-                val faviconUrl = "https://www.google.com/s2/favicons?domain=$domain&sz=128"
-
-                Glide.with(itemView.context)
-                    .load(faviconUrl)
-                    // Use android.R to access system resources
-                    .placeholder(android.R.drawable.ic_menu_compass) 
-                    .error(android.R.drawable.ic_menu_compass) 
-                    .into(icon)
+                if (bookmark.host != null) {
+                    val faviconUrl = "https://www.google.com/s2/favicons?domain=${bookmark.host}&sz=128"
+                    Glide.with(itemView.context)
+                        .load(faviconUrl)
+                        .placeholder(android.R.drawable.ic_menu_compass)
+                        .error(android.R.drawable.ic_menu_compass)
+                        .into(icon)
+                } else {
+                    icon.setImageResource(android.R.drawable.ic_menu_compass)
+                }
             } catch (e: Exception) {
-                // Use android.R here as well
                 icon.setImageResource(android.R.drawable.ic_menu_compass)
             }
         }
