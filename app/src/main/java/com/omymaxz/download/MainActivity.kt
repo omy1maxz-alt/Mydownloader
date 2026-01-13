@@ -166,15 +166,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        @JavascriptInterface
-        fun copyToClipboard(text: String) {
-             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-             val clip = android.content.ClipData.newPlainText("Copied Text", text)
-             clipboard.setPrimaryClip(clip)
-             runOnUiThread {
-                 Toast.makeText(this@MainActivity, "Text copied to clipboard", Toast.LENGTH_SHORT).show()
-             }
-        }
     }
 
 private fun checkBatteryOptimization() {
@@ -570,6 +561,7 @@ private fun checkBatteryOptimization() {
                 }
             }
         }
+
     }
 
     private fun restoreTabState(tabIndex: Int) {
@@ -704,6 +696,16 @@ private fun checkBatteryOptimization() {
                     binding.urlEditTextToolbar.selectAll()
                 }
             }
+        }
+
+        @JavascriptInterface
+        fun copyToClipboard(text: String) {
+             val clipboard = this@MainActivity.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+             val clip = android.content.ClipData.newPlainText("Copied Text", text)
+             clipboard.setPrimaryClip(clip)
+             runOnUiThread {
+                 Toast.makeText(this@MainActivity, "Text copied to clipboard", Toast.LENGTH_SHORT).show()
+             }
         }
     }
 
@@ -885,6 +887,9 @@ private fun checkBatteryOptimization() {
                     }
                     injectMediaStateDetector()
                     injectAdvancedMediaDetector()
+                    if (url?.contains("jules.google.com") == true) {
+                        injectJulesEnhancements(view)
+                    }
                     injectPendingUserscripts()
                     url?.let {
                         addToHistory(it)
@@ -1963,8 +1968,41 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
 
     private fun showYouTubeQualityDialog(video: YouTubeVideo) {
-        val formats = video.formats.sortedByDescending { it.height }
-        val options = formats.map { "${it.qualityLabel} - ${it.mimeType.substringBefore(';')} " }.toTypedArray()
+        val formats = video.formats.sortedWith(compareByDescending<YouTubeFormat> {
+             // Sort priority: 1. Combined (Video+Audio), 2. Video Only, 3. Audio Only
+             // We guess Combined if it has audio and video mime types, but here we only have one mimeType string.
+             // Progressive usually has video/mp4.
+             // Adaptive video has video/mp4. Adaptive audio has audio/mp4.
+             // We prioritize height (video quality) or presence of audio?
+             // Let's sort by height first.
+             it.height
+        }.thenByDescending {
+             it.mimeType.startsWith("video/")
+        })
+
+        val options = formats.map { format ->
+            val typeLabel = when {
+                format.mimeType.startsWith("audio/") -> "(Audio Only)"
+                format.mimeType.startsWith("video/") -> {
+                    // If it is adaptive formats (usually found in high res), they are often video-only.
+                    // Progressive formats (720p and below) usually have audio.
+                    // We can check if we have a way to distinguish.
+                    // For now, we will assume standard behavior:
+                    // If it's 1080p or higher, it's likely video-only in this simple extractor.
+                    if (format.height >= 1080 || format.qualityLabel.contains("60")) {
+                        "(Video Only)"
+                    } else {
+                        ""
+                    }
+                }
+                else -> ""
+            }
+
+            val cleanMime = format.mimeType.substringBefore(';')
+            val label = if (format.qualityLabel.isNotEmpty()) format.qualityLabel else "Audio"
+
+            "$label - $cleanMime $typeLabel"
+        }.toTypedArray()
 
         AlertDialog.Builder(this)
             .setTitle("Download: ${video.title}")

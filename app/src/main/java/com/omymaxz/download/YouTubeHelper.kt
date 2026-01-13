@@ -35,25 +35,44 @@ object YouTubeHelper {
                 var videoDetails = playerResponse.videoDetails;
                 var streamingData = playerResponse.streamingData;
 
-                if (!streamingData || !streamingData.formats) {
-                     YouTubeInterface.onError("No progressive streams found.");
+                if (!streamingData) {
+                     YouTubeInterface.onError("No streaming data found.");
                      return;
                 }
 
-                var formats = streamingData.formats.map(function(f) {
+                var rawFormats = [];
+                if (streamingData.formats) {
+                    rawFormats = rawFormats.concat(streamingData.formats);
+                }
+                if (streamingData.adaptiveFormats) {
+                    rawFormats = rawFormats.concat(streamingData.adaptiveFormats);
+                }
+
+                if (rawFormats.length === 0) {
+                     YouTubeInterface.onError("No streams found.");
+                     return;
+                }
+
+                var formats = rawFormats.map(function(f) {
                     return {
                         itag: f.itag,
                         url: f.url,
                         mimeType: f.mimeType,
-                        qualityLabel: f.qualityLabel,
+                        qualityLabel: f.qualityLabel || "", // Adaptive audio might not have qualityLabel
                         width: f.width,
                         height: f.height,
                         contentLength: f.contentLength
                     };
                 }).filter(function(f) {
-                    // Filter for MP4 and valid URLs
-                    return f.url && f.mimeType && f.mimeType.includes('mp4');
+                    // Filter for valid URLs (skipping ciphered signatures for now as requested)
+                    // We allow all mimeTypes (video/mp4, video/webm, audio/mp4, etc.)
+                    return f.url && f.url.startsWith('http');
                 });
+
+                if (formats.length === 0) {
+                     YouTubeInterface.onError("No downloadable streams found (all might be encrypted).");
+                     return;
+                }
 
                 var result = {
                     title: videoDetails.title,
