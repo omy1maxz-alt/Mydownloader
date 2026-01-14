@@ -67,13 +67,16 @@ object YouTubeHelper {
                         fps: f.fps || 0
                     };
                 }).filter(function(f) {
-                    // Filter for valid URLs.
-                    // Future improvement: Handle signatureCipher/cipher if url is missing.
-                    return f.url && f.url.startsWith('http');
+                    if (f.url && f.url.startsWith('http')) return true;
+                    return false;
                 });
 
                 if (formats.length === 0) {
-                     YouTubeInterface.onError("No downloadable streams found (possibly encrypted/protected).");
+                     if (rawFormats.length > 0) {
+                         YouTubeInterface.onError("Encrypted video detected. Long-press the download button to see intercepted streams.");
+                     } else {
+                         YouTubeInterface.onError("No downloadable streams found.");
+                     }
                      return;
                 }
 

@@ -1246,47 +1246,50 @@ private fun checkBatteryOptimization() {
 
                 document.addEventListener('contextmenu', function(e) {
                     var target = e.target;
-                    // Ignore inputs
                     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
                     if (target.closest('a')) return;
 
-                    // Find container
                     var container = target;
                     var bestContainer = null;
+
                     while (container && container !== document.body) {
-                        if (container.getAttribute('data-message-author-role') === 'model' ||
-                            container.classList.contains('model-turn') ||
-                            container.classList.contains('message-content') ||
-                            container.getAttribute('role') === 'log') {
+                        var role = container.getAttribute('data-message-author-role');
+                        if (role === 'model') {
                             bestContainer = container;
                             break;
                         }
-                        // Heuristic: If we hit a block that contains multiple paragraphs or code blocks, it's likely a container
-                        if (container.querySelectorAll('p, pre, code').length > 1) {
-                             if (!bestContainer) bestContainer = container;
+                        if (container.classList.contains('model-turn') || container.classList.contains('assistant-message')) {
+                            bestContainer = container;
+                        }
+                        if (container.parentElement) {
+                            var parentRole = container.parentElement.getAttribute('role');
+                            if (parentRole === 'log' || parentRole === 'feed' || parentRole === 'list') {
+                                bestContainer = container;
+                                break;
+                            }
                         }
                         container = container.parentElement;
                     }
 
                     if (!bestContainer) {
-                        // Fallback to original logic
                         container = target;
                         while (container && container !== document.body) {
-                            var style = window.getComputedStyle(container);
-                            if (container.innerText && container.innerText.trim().length > 20 && style.display !== 'inline') {
-                                 bestContainer = container;
-                                 break;
+                            if (container.tagName === 'MAIN') break;
+                            if (container.offsetWidth > (window.innerWidth * 0.8)) {
+                                bestContainer = container;
                             }
                             container = container.parentElement;
                         }
                     }
 
-                    if (!bestContainer) bestContainer = target;
+                    var finalTarget = bestContainer || target;
+                    var text = finalTarget.innerText;
 
-                    var text = bestContainer.innerText;
                     if (text && text.trim().length > 0) {
                         e.preventDefault();
                         e.stopPropagation();
+                        finalTarget.style.outline = '2px solid #4CAF50';
+                        setTimeout(function() { finalTarget.style.outline = ''; }, 200);
                         AndroidWebAPI.copyToClipboard(text);
                     }
                 }, true);
@@ -1839,25 +1842,32 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         return lower.contains("videoplayback") || lower.contains("manifest")
     }
     private fun updateFabVisibility() {
-        if (isYouTubeUrl(webView.url)) {
-            binding.fabShowMedia.setImageResource(R.drawable.ic_download) // Ensure you have this or similar
+        val isYoutube = isYouTubeUrl(webView.url)
+        val hasFiles = detectedMediaFiles.isNotEmpty()
+
+        if (isYoutube || hasFiles) {
             binding.fabShowMedia.visibility = View.VISIBLE
-            // We override the click listener if it's YouTube
+            binding.fabShowMedia.setImageResource(if (isYoutube) R.drawable.ic_download else android.R.drawable.ic_menu_add)
+
             binding.fabShowMedia.setOnClickListener {
-                if (isYouTubeUrl(webView.url)) {
+                if (isYoutube) {
                     Toast.makeText(this, "Analyzing YouTube video...", Toast.LENGTH_SHORT).show()
                     webView.evaluateJavascript(YouTubeHelper.EXTRACTION_SCRIPT, null)
                 } else {
                     showMediaListDialog()
                 }
             }
-        } else {
-             // Reset to default behavior
-            binding.fabShowMedia.setImageResource(android.R.drawable.ic_menu_add) // Or your default icon
-            binding.fabShowMedia.visibility = if (detectedMediaFiles.isNotEmpty()) View.VISIBLE else View.GONE
-            binding.fabShowMedia.setOnClickListener {
-                showMediaListDialog()
+
+            binding.fabShowMedia.setOnLongClickListener {
+                if (detectedMediaFiles.isNotEmpty()) {
+                    showMediaListDialog()
+                } else {
+                    Toast.makeText(this, "No media intercepted yet. Play the video first.", Toast.LENGTH_SHORT).show()
+                }
+                true
             }
+        } else {
+            binding.fabShowMedia.visibility = View.GONE
         }
     }
 
