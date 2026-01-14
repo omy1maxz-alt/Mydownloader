@@ -198,10 +198,14 @@ class YouTubeDownloadService : Service() {
             if (userAgent != null) connection.setRequestProperty("User-Agent", userAgent)
             if (cookie != null) connection.setRequestProperty("Cookie", cookie)
             connection.setRequestProperty("Referer", "https://www.youtube.com/")
+            connection.setRequestProperty("Accept", "*/*")
+            connection.connectTimeout = 30000
+            connection.readTimeout = 30000
             connection.connect()
 
-            if (connection.responseCode !in 200..299) {
-                 return@withContext false
+            val responseCode = connection.responseCode
+            if (responseCode !in 200..299) {
+                 throw Exception("HTTP $responseCode: ${connection.responseMessage}")
             }
 
             val fileLength = connection.contentLength

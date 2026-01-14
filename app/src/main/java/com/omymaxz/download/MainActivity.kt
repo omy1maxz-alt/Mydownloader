@@ -275,9 +275,6 @@ private fun checkBatteryOptimization() {
         binding.fabShowMedia.setOnClickListener {
             showMediaListDialog()
         }
-        findViewById<View>(R.id.julesCopyFab).setOnClickListener {
-            triggerJulesCopy()
-        }
         askForNotificationPermission()
         loadBookmarks()
         loadEnabledUserScripts()
@@ -868,10 +865,7 @@ private fun checkBatteryOptimization() {
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.clear()
                     }
-                    runOnUiThread {
-                        updateFabVisibility()
-                        updateJulesFabVisibility(url)
-                    }
+                    runOnUiThread { updateFabVisibility() }
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
@@ -894,7 +888,9 @@ private fun checkBatteryOptimization() {
                     }
                     injectMediaStateDetector()
                     injectAdvancedMediaDetector()
-                    updateJulesFabVisibility(url)
+                    if (url?.contains("jules.google.com", ignoreCase = true) == true) {
+                        injectJulesLongPress(view)
+                    }
                     injectPendingUserscripts()
                     url?.let {
                         addToHistory(it)
@@ -982,8 +978,8 @@ private fun checkBatteryOptimization() {
                     if (newProgress >= 10 && isPageLoading) {
                          injectEarlyUserscripts(view?.url)
                     }
-                    if (newProgress > 80) {
-                        updateJulesFabVisibility(view?.url)
+                    if (newProgress > 80 && view?.url?.contains("jules.google.com", ignoreCase = true) == true) {
+                        injectJulesLongPress(view)
                     }
                 }
                 override fun onReceivedTitle(view: WebView?, title: String?) {
@@ -1242,66 +1238,39 @@ private fun checkBatteryOptimization() {
         webView?.loadUrl(polyfillScript)
     }
 
-    private fun updateJulesFabVisibility(url: String?) {
-        val fab = findViewById<View>(R.id.julesCopyFab) ?: return
-        if (url?.contains("jules.google.com", ignoreCase = true) == true) {
-            fab.visibility = View.VISIBLE
-        } else {
-            fab.visibility = View.GONE
-        }
-    }
-
-    private fun triggerJulesCopy() {
+    private fun injectJulesLongPress(webView: WebView?) {
         val script = """
             (function() {
-                if (window.julesCopyModeActive) return;
-                window.julesCopyModeActive = true;
+                if (window.julesLongPressInjected) return;
+                window.julesLongPressInjected = true;
 
-                var overlay = document.createElement('div');
-                overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(98, 0, 238, 0.1); z-index: 2147483646; pointer-events: none;';
-                document.body.appendChild(overlay);
-
-                var toast = document.createElement('div');
-                toast.textContent = 'Tap any text to copy';
-                toast.style.cssText = 'position: fixed; bottom: 180px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 12px 24px; border-radius: 24px; z-index: 2147483647; font-size: 14px; font-family: sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
-                document.body.appendChild(toast);
-
-                function handler(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
+                document.addEventListener('contextmenu', function(e) {
                     var target = e.target;
-                    while (target && target !== document.body && (!target.innerText || target.innerText.trim().length < 5)) {
+                    // Ignore inputs
+                    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+                    if (target.closest('a')) return;
+
+                    // Find meaningful text block
+                    var originalTarget = target;
+                    while (target && target !== document.body) {
+                        var style = window.getComputedStyle(target);
+                        if (target.innerText && target.innerText.trim().length > 10 && style.display !== 'inline') {
+                             break;
+                        }
                         target = target.parentElement;
                     }
-                    if (!target) target = e.target;
+                    if (!target || target === document.body) target = originalTarget;
 
-                    var text = target.innerText || "";
-                    if (text.trim().length > 0) {
+                    var text = target.innerText;
+                    if (text && text.trim().length > 0) {
+                        e.preventDefault();
+                        e.stopPropagation();
                         AndroidWebAPI.copyToClipboard(text);
-                    } else {
-                        AndroidWebAPI.onPreviewError("No text found");
                     }
-
-                    cleanup();
-                }
-
-                function cleanup() {
-                    window.removeEventListener('click', handler, true);
-                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-                    if (toast.parentNode) toast.parentNode.removeChild(toast);
-                    window.julesCopyModeActive = false;
-                }
-
-                window.addEventListener('click', handler, true);
-
-                // Auto cancel after 10s
-                setTimeout(function() {
-                    if (window.julesCopyModeActive) cleanup();
-                }, 10000);
+                }, true);
             })();
         """
-        webView.evaluateJavascript(script, null)
+        webView?.evaluateJavascript(script, null)
     }
     private fun injectAdvancedMediaDetector() {
         val script = """
