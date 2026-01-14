@@ -34,6 +34,8 @@ class YouTubeDownloadService : Service() {
         const val EXTRA_AUDIO_URL = "com.omymaxz.download.extra.AUDIO_URL" // Optional
         const val EXTRA_TITLE = "com.omymaxz.download.extra.TITLE"
         const val EXTRA_MIME_TYPE = "com.omymaxz.download.extra.MIME_TYPE" // Target mime type
+        const val EXTRA_USER_AGENT = "com.omymaxz.download.extra.USER_AGENT"
+        const val EXTRA_COOKIE = "com.omymaxz.download.extra.COOKIE"
         const val CHANNEL_ID = "youtube_download_channel"
         const val NOTIFICATION_ID_BASE = 2000
     }
@@ -56,13 +58,15 @@ class YouTubeDownloadService : Service() {
             val audioUrl = intent.getStringExtra(EXTRA_AUDIO_URL)
             val title = intent.getStringExtra(EXTRA_TITLE) ?: "YouTube Video"
             val mimeType = intent.getStringExtra(EXTRA_MIME_TYPE) ?: "video/mp4"
+            val userAgent = intent.getStringExtra(EXTRA_USER_AGENT)
+            val cookie = intent.getStringExtra(EXTRA_COOKIE)
 
             if (videoUrl != null) {
                 val notificationId = NOTIFICATION_ID_BASE + (System.currentTimeMillis() % 1000).toInt()
                 startForeground(notificationId, createNotification(title, "Starting download...", 0, true))
 
                 serviceScope.launch {
-                    processDownload(videoUrl, audioUrl, title, mimeType, notificationId)
+                    processDownload(videoUrl, audioUrl, title, mimeType, userAgent, cookie, notificationId)
                 }
             }
         }
@@ -102,6 +106,8 @@ class YouTubeDownloadService : Service() {
         audioUrl: String?,
         title: String,
         mimeType: String,
+        userAgent: String?,
+        cookie: String?,
         notificationId: Int
     ) {
         val tempDir = cacheDir
@@ -112,7 +118,7 @@ class YouTubeDownloadService : Service() {
         try {
             // 1. Download Video
             updateNotification(notificationId, title, "Downloading video...", 0, true)
-            val videoSuccess = downloadFile(videoUrl, videoTempFile) { progress ->
+            val videoSuccess = downloadFile(videoUrl, videoTempFile, userAgent, cookie) { progress ->
                 updateNotification(notificationId, title, "Downloading video: $progress%", progress, false)
             }
             if (!videoSuccess) throw Exception("Failed to download video")
@@ -120,7 +126,7 @@ class YouTubeDownloadService : Service() {
             // 2. Download Audio if needed
             if (audioUrl != null) {
                 updateNotification(notificationId, title, "Downloading audio...", 0, true)
-                val audioSuccess = downloadFile(audioUrl, audioTempFile) { progress ->
+                val audioSuccess = downloadFile(audioUrl, audioTempFile, userAgent, cookie) { progress ->
                     updateNotification(notificationId, title, "Downloading audio: $progress%", progress, false)
                 }
                 if (!audioSuccess) throw Exception("Failed to download audio")
@@ -182,13 +188,16 @@ class YouTubeDownloadService : Service() {
         notificationManager?.notify(id, createNotification(title, status, progress, indeterminate))
     }
 
-    private suspend fun downloadFile(urlStr: String, destination: File, onProgress: (Int) -> Unit): Boolean = withContext(Dispatchers.IO) {
+    private suspend fun downloadFile(urlStr: String, destination: File, userAgent: String?, cookie: String?, onProgress: (Int) -> Unit): Boolean = withContext(Dispatchers.IO) {
         var input: BufferedInputStream? = null
         var output: FileOutputStream? = null
         var connection: HttpURLConnection? = null
         try {
             val url = URL(urlStr)
             connection = url.openConnection() as HttpURLConnection
+            if (userAgent != null) connection.setRequestProperty("User-Agent", userAgent)
+            if (cookie != null) connection.setRequestProperty("Cookie", cookie)
+            connection.setRequestProperty("Referer", "https://www.youtube.com/")
             connection.connect()
 
             if (connection.responseCode !in 200..299) {

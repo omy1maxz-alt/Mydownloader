@@ -1254,18 +1254,51 @@ private fun checkBatteryOptimization() {
     private fun triggerJulesCopy() {
         val script = """
             (function() {
-                var text = "";
-                var selection = window.getSelection().toString();
-                if (selection && selection.length > 0) {
-                    text = selection;
-                } else if (document.body) {
-                    text = document.body.innerText;
+                if (window.julesCopyModeActive) return;
+                window.julesCopyModeActive = true;
+
+                var overlay = document.createElement('div');
+                overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(98, 0, 238, 0.1); z-index: 2147483646; pointer-events: none;';
+                document.body.appendChild(overlay);
+
+                var toast = document.createElement('div');
+                toast.textContent = 'Tap any text to copy';
+                toast.style.cssText = 'position: fixed; bottom: 180px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 12px 24px; border-radius: 24px; z-index: 2147483647; font-size: 14px; font-family: sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
+                document.body.appendChild(toast);
+
+                function handler(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    var target = e.target;
+                    while (target && target !== document.body && (!target.innerText || target.innerText.trim().length < 5)) {
+                        target = target.parentElement;
+                    }
+                    if (!target) target = e.target;
+
+                    var text = target.innerText || "";
+                    if (text.trim().length > 0) {
+                        AndroidWebAPI.copyToClipboard(text);
+                    } else {
+                        AndroidWebAPI.onPreviewError("No text found");
+                    }
+
+                    cleanup();
                 }
-                if (text) {
-                    AndroidWebAPI.copyToClipboard(text);
-                } else {
-                    AndroidWebAPI.onPreviewError("No text found");
+
+                function cleanup() {
+                    window.removeEventListener('click', handler, true);
+                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                    window.julesCopyModeActive = false;
                 }
+
+                window.addEventListener('click', handler, true);
+
+                // Auto cancel after 10s
+                setTimeout(function() {
+                    if (window.julesCopyModeActive) cleanup();
+                }, 10000);
             })();
         """
         webView.evaluateJavascript(script, null)
@@ -1951,6 +1984,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val intent = Intent(this, YouTubeDownloadService::class.java).apply {
             action = YouTubeDownloadService.ACTION_START_DOWNLOAD
             putExtra(YouTubeDownloadService.EXTRA_TITLE, title)
+
+            val userAgent = webView.settings.userAgentString
+            val cookie = CookieManager.getInstance().getCookie(webView.url)
+            putExtra(YouTubeDownloadService.EXTRA_USER_AGENT, userAgent)
+            if (cookie != null) putExtra(YouTubeDownloadService.EXTRA_COOKIE, cookie)
 
             if (option.videoFormat != null) {
                 putExtra(YouTubeDownloadService.EXTRA_VIDEO_URL, option.videoFormat.url)
