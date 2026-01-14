@@ -275,6 +275,9 @@ private fun checkBatteryOptimization() {
         binding.fabShowMedia.setOnClickListener {
             showMediaListDialog()
         }
+        findViewById<View>(R.id.julesCopyFab).setOnClickListener {
+            triggerJulesCopy()
+        }
         askForNotificationPermission()
         loadBookmarks()
         loadEnabledUserScripts()
@@ -865,7 +868,10 @@ private fun checkBatteryOptimization() {
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.clear()
                     }
-                    runOnUiThread { updateFabVisibility() }
+                    runOnUiThread {
+                        updateFabVisibility()
+                        updateJulesFabVisibility(url)
+                    }
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
@@ -888,10 +894,7 @@ private fun checkBatteryOptimization() {
                     }
                     injectMediaStateDetector()
                     injectAdvancedMediaDetector()
-                    if (url?.contains("jules.google.com", ignoreCase = true) == true) {
-                        Toast.makeText(this@MainActivity, "Jules Enhancements Active", Toast.LENGTH_SHORT).show()
-                        injectJulesEnhancements(view)
-                    }
+                    updateJulesFabVisibility(url)
                     injectPendingUserscripts()
                     url?.let {
                         addToHistory(it)
@@ -979,8 +982,8 @@ private fun checkBatteryOptimization() {
                     if (newProgress >= 10 && isPageLoading) {
                          injectEarlyUserscripts(view?.url)
                     }
-                    if (newProgress > 80 && view?.url?.contains("jules.google.com", ignoreCase = true) == true) {
-                        injectJulesEnhancements(view)
+                    if (newProgress > 80) {
+                        updateJulesFabVisibility(view?.url)
                     }
                 }
                 override fun onReceivedTitle(view: WebView?, title: String?) {
@@ -1239,97 +1242,33 @@ private fun checkBatteryOptimization() {
         webView?.loadUrl(polyfillScript)
     }
 
-    private fun injectJulesEnhancements(webView: WebView?) {
+    private fun updateJulesFabVisibility(url: String?) {
+        val fab = findViewById<View>(R.id.julesCopyFab) ?: return
+        if (url?.contains("jules.google.com", ignoreCase = true) == true) {
+            fab.visibility = View.VISIBLE
+        } else {
+            fab.visibility = View.GONE
+        }
+    }
+
+    private fun triggerJulesCopy() {
         val script = """
             (function() {
-                try {
-                    function injectBtn() {
-                        if (document.getElementById('jules-copy-btn')) return;
-                        if (!document.body) return;
-
-                        var btn = document.createElement('div');
-                        btn.id = 'jules-copy-btn';
-                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-
-                        btn.style.cssText = 'position: fixed !important; bottom: 120px !important; right: 20px !important; width: 48px !important; height: 48px !important; background-color: #6200EE !important; color: #FFFFFF !important; border-radius: 50% !important; display: flex !important; align-items: center !important; justify-content: center !important; box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important; z-index: 2147483647 !important; cursor: pointer !important; border: 2px solid white !important; pointer-events: auto !important;';
-
-                        btn.onclick = function(e) {
-                            e.stopPropagation();
-                            var text = "";
-                            var selection = window.getSelection().toString();
-
-                            if (selection && selection.length > 0) {
-                                text = selection;
-                            } else {
-                                // Fallback: Try to get reasonable content
-                                var potentialContainers = [
-                                    ...document.querySelectorAll('div[role="log"] > *'),
-                                    ...document.querySelectorAll('main > *'),
-                                    ...document.querySelectorAll('article')
-                                ];
-
-                                if (potentialContainers.length > 0) {
-                                    for (var i = potentialContainers.length - 1; i >= 0; i--) {
-                                        var node = potentialContainers[i];
-                                        if (node.innerText && node.innerText.length > 20) {
-                                            text = node.innerText;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (!text && document.body) {
-                                    text = document.body.innerText;
-                                }
-                            }
-
-                            if (text && text.length > 0) {
-                                try {
-                                    AndroidWebAPI.copyToClipboard(text);
-                                    var originalColor = btn.style.backgroundColor;
-                                    btn.style.backgroundColor = '#03DAC5'; // Teal success
-                                    setTimeout(function() {
-                                        btn.style.backgroundColor = '#6200EE'; // Back to Purple
-                                    }, 500);
-                                } catch (e) {
-                                    console.error("Clipboard error: " + e.message);
-                                }
-                            } else {
-                                 try { AndroidWebAPI.onPreviewError("No text found to copy."); } catch(e) {}
-                            }
-                        };
-
-                        document.body.appendChild(btn);
-                        console.log("Jules Copy Button Injected");
-                    }
-
-                    var observer = new MutationObserver(function(mutations) {
-                        if (!document.getElementById('jules-copy-btn')) {
-                            injectBtn();
-                        }
-                    });
-
-                    if (document.body) {
-                        observer.observe(document.body, { childList: true, subtree: true });
-                        injectBtn();
-                    } else {
-                        document.addEventListener('DOMContentLoaded', function() {
-                             if(document.body) {
-                                 observer.observe(document.body, { childList: true, subtree: true });
-                                 injectBtn();
-                             }
-                        });
-                    }
-
-                    setInterval(injectBtn, 2000);
-
-                } catch(e) {
-                    console.error("Jules Injection Error: " + e.message);
-                    try { AndroidWebAPI.onPreviewError("Jules Script Error: " + e.message); } catch(err){}
+                var text = "";
+                var selection = window.getSelection().toString();
+                if (selection && selection.length > 0) {
+                    text = selection;
+                } else if (document.body) {
+                    text = document.body.innerText;
+                }
+                if (text) {
+                    AndroidWebAPI.copyToClipboard(text);
+                } else {
+                    AndroidWebAPI.onPreviewError("No text found");
                 }
             })();
-        """.trimIndent()
-        webView?.evaluateJavascript(script, null)
+        """
+        webView.evaluateJavascript(script, null)
     }
     private fun injectAdvancedMediaDetector() {
         val script = """
