@@ -1,0 +1,69 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeDebugStartupProfile UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:kaptGenerateStubsDebugKotlin
+> Task :app:kaptDebugKotlin UP-TO-DATE
+
+> Task :app:compileDebugKotlin
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:373:13 Variable 'backgroundLoadingEnabled' is never used
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:742:19 'onBackPressed(): Unit' is deprecated. Deprecated in Java
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1021:35 No cast needed
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1022:38 'setter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1022:65 'SYSTEM_UI_FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1022:99 'SYSTEM_UI_FLAG_IMMERSIVE_STICKY: Int' is deprecated. Deprecated in Java
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1027:35 No cast needed
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1029:38 'setter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1029:64 'SYSTEM_UI_FLAG_VISIBLE: Int' is deprecated. Deprecated in Java
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1091:21 'setToolbarColor(Int): CustomTabsIntent.Builder' is deprecated. Deprecated in Java
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1108:33 Parameter 'voiceName' is never used
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1831:34 Parameter 'url' is never used
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1831:47 Parameter 'category' is never used
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1832:40 Parameter 'url' is never used
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:1907:33 Parameter 'url' is never used
+w: file:///app/app/src/main/java/com/omymaxz/download/MainActivity.kt:2524:29 Name shadowed: type
+
+> Task :app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleDebug
+
+BUILD SUCCESSFUL in 34s
+40 actionable tasks: 6 executed, 34 up-to-date
