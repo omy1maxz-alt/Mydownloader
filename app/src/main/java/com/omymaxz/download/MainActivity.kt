@@ -1250,18 +1250,40 @@ private fun checkBatteryOptimization() {
                     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
                     if (target.closest('a')) return;
 
-                    // Find meaningful text block
-                    var originalTarget = target;
-                    while (target && target !== document.body) {
-                        var style = window.getComputedStyle(target);
-                        if (target.innerText && target.innerText.trim().length > 10 && style.display !== 'inline') {
-                             break;
+                    // Find container
+                    var container = target;
+                    var bestContainer = null;
+                    while (container && container !== document.body) {
+                        if (container.getAttribute('data-message-author-role') === 'model' ||
+                            container.classList.contains('model-turn') ||
+                            container.classList.contains('message-content') ||
+                            container.getAttribute('role') === 'log') {
+                            bestContainer = container;
+                            break;
                         }
-                        target = target.parentElement;
+                        // Heuristic: If we hit a block that contains multiple paragraphs or code blocks, it's likely a container
+                        if (container.querySelectorAll('p, pre, code').length > 1) {
+                             if (!bestContainer) bestContainer = container;
+                        }
+                        container = container.parentElement;
                     }
-                    if (!target || target === document.body) target = originalTarget;
 
-                    var text = target.innerText;
+                    if (!bestContainer) {
+                        // Fallback to original logic
+                        container = target;
+                        while (container && container !== document.body) {
+                            var style = window.getComputedStyle(container);
+                            if (container.innerText && container.innerText.trim().length > 20 && style.display !== 'inline') {
+                                 bestContainer = container;
+                                 break;
+                            }
+                            container = container.parentElement;
+                        }
+                    }
+
+                    if (!bestContainer) bestContainer = target;
+
+                    var text = bestContainer.innerText;
                     if (text && text.trim().length > 0) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1958,6 +1980,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             val cookie = CookieManager.getInstance().getCookie(webView.url)
             putExtra(YouTubeDownloadService.EXTRA_USER_AGENT, userAgent)
             if (cookie != null) putExtra(YouTubeDownloadService.EXTRA_COOKIE, cookie)
+            putExtra(YouTubeDownloadService.EXTRA_REFERER, webView.url)
 
             if (option.videoFormat != null) {
                 putExtra(YouTubeDownloadService.EXTRA_VIDEO_URL, option.videoFormat.url)

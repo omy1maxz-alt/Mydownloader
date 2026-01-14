@@ -36,6 +36,7 @@ class YouTubeDownloadService : Service() {
         const val EXTRA_MIME_TYPE = "com.omymaxz.download.extra.MIME_TYPE" // Target mime type
         const val EXTRA_USER_AGENT = "com.omymaxz.download.extra.USER_AGENT"
         const val EXTRA_COOKIE = "com.omymaxz.download.extra.COOKIE"
+        const val EXTRA_REFERER = "com.omymaxz.download.extra.REFERER"
         const val CHANNEL_ID = "youtube_download_channel"
         const val NOTIFICATION_ID_BASE = 2000
     }
@@ -60,13 +61,14 @@ class YouTubeDownloadService : Service() {
             val mimeType = intent.getStringExtra(EXTRA_MIME_TYPE) ?: "video/mp4"
             val userAgent = intent.getStringExtra(EXTRA_USER_AGENT)
             val cookie = intent.getStringExtra(EXTRA_COOKIE)
+            val referer = intent.getStringExtra(EXTRA_REFERER)
 
             if (videoUrl != null) {
                 val notificationId = NOTIFICATION_ID_BASE + (System.currentTimeMillis() % 1000).toInt()
                 startForeground(notificationId, createNotification(title, "Starting download...", 0, true))
 
                 serviceScope.launch {
-                    processDownload(videoUrl, audioUrl, title, mimeType, userAgent, cookie, notificationId)
+                    processDownload(videoUrl, audioUrl, title, mimeType, userAgent, cookie, referer, notificationId)
                 }
             }
         }
@@ -108,6 +110,7 @@ class YouTubeDownloadService : Service() {
         mimeType: String,
         userAgent: String?,
         cookie: String?,
+        referer: String?,
         notificationId: Int
     ) {
         val tempDir = cacheDir
@@ -118,7 +121,7 @@ class YouTubeDownloadService : Service() {
         try {
             // 1. Download Video
             updateNotification(notificationId, title, "Downloading video...", 0, true)
-            val videoSuccess = downloadFile(videoUrl, videoTempFile, userAgent, cookie) { progress ->
+            val videoSuccess = downloadFile(videoUrl, videoTempFile, userAgent, cookie, referer) { progress ->
                 updateNotification(notificationId, title, "Downloading video: $progress%", progress, false)
             }
             if (!videoSuccess) throw Exception("Failed to download video")
@@ -126,7 +129,7 @@ class YouTubeDownloadService : Service() {
             // 2. Download Audio if needed
             if (audioUrl != null) {
                 updateNotification(notificationId, title, "Downloading audio...", 0, true)
-                val audioSuccess = downloadFile(audioUrl, audioTempFile, userAgent, cookie) { progress ->
+                val audioSuccess = downloadFile(audioUrl, audioTempFile, userAgent, cookie, referer) { progress ->
                     updateNotification(notificationId, title, "Downloading audio: $progress%", progress, false)
                 }
                 if (!audioSuccess) throw Exception("Failed to download audio")
@@ -188,7 +191,7 @@ class YouTubeDownloadService : Service() {
         notificationManager?.notify(id, createNotification(title, status, progress, indeterminate))
     }
 
-    private suspend fun downloadFile(urlStr: String, destination: File, userAgent: String?, cookie: String?, onProgress: (Int) -> Unit): Boolean = withContext(Dispatchers.IO) {
+    private suspend fun downloadFile(urlStr: String, destination: File, userAgent: String?, cookie: String?, referer: String?, onProgress: (Int) -> Unit): Boolean = withContext(Dispatchers.IO) {
         var input: BufferedInputStream? = null
         var output: FileOutputStream? = null
         var connection: HttpURLConnection? = null
@@ -197,7 +200,7 @@ class YouTubeDownloadService : Service() {
             connection = url.openConnection() as HttpURLConnection
             if (userAgent != null) connection.setRequestProperty("User-Agent", userAgent)
             if (cookie != null) connection.setRequestProperty("Cookie", cookie)
-            connection.setRequestProperty("Referer", "https://www.youtube.com/")
+            if (referer != null) connection.setRequestProperty("Referer", referer) else connection.setRequestProperty("Referer", "https://www.youtube.com/")
             connection.setRequestProperty("Accept", "*/*")
             connection.connectTimeout = 30000
             connection.readTimeout = 30000
