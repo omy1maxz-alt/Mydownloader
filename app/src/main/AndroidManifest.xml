@@ -109,6 +109,11 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".YouTubeDownloadService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
             
     </application>
 

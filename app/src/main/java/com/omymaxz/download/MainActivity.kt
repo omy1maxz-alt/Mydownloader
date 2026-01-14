@@ -54,6 +54,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.omymaxz.download.databinding.ActivityMainBinding
 import com.omymaxz.download.databinding.DialogMediaListBinding
+import com.omymaxz.download.YouTubeDownloadService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -1109,6 +1110,11 @@ private fun checkBatteryOptimization() {
         }
 
         @JavascriptInterface
+        fun copyToClipboard(text: String) {
+            this@MainActivity.copyToClipboard(text)
+        }
+
+        @JavascriptInterface
         fun saveBlob(base64Data: String, filename: String, mimeType: String) {
             try {
                 val decodedBytes = android.util.Base64.decode(base64Data.substringAfter(","), android.util.Base64.DEFAULT)
@@ -1239,7 +1245,7 @@ private fun checkBatteryOptimization() {
                     btn.id = 'jules-copy-btn';
                     btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
                     btn.style.position = 'fixed';
-                    btn.style.bottom = '120px'; // Raised higher to clear FABs
+                    btn.style.bottom = '120px';
                     btn.style.right = '20px';
                     btn.style.width = '48px';
                     btn.style.height = '48px';
@@ -1250,25 +1256,25 @@ private fun checkBatteryOptimization() {
                     btn.style.alignItems = 'center';
                     btn.style.justifyContent = 'center';
                     btn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
-                    btn.style.zIndex = '2147483647'; // Max Z-Index
+                    btn.style.zIndex = '2147483647';
                     btn.style.cursor = 'pointer';
-                    btn.style.border = '2px solid white'; // Added border for visibility
+                    btn.style.border = '2px solid white';
+                    btn.style.pointerEvents = 'auto'; // Ensure clicks are captured
 
-                    btn.onclick = function() {
+                    btn.onclick = function(e) {
+                        e.stopPropagation(); // Prevent event bubbling
                         var text = "";
                         var selection = window.getSelection().toString();
 
                         if (selection && selection.length > 0) {
                             text = selection;
                         } else {
-                            // Enhanced heuristic for chat interfaces
                             var potentialContainers = [
-                                ...document.querySelectorAll('div[role="log"] > *'), // Common for chat logs
-                                ...document.querySelectorAll('main > *'),            // Common main content
-                                ...document.querySelectorAll('article')              // Semantic articles
+                                ...document.querySelectorAll('div[role="log"] > *'),
+                                ...document.querySelectorAll('main > *'),
+                                ...document.querySelectorAll('article')
                             ];
 
-                            // If specialized containers found, search them last-to-first
                             if (potentialContainers.length > 0) {
                                 for (var i = potentialContainers.length - 1; i >= 0; i--) {
                                     var node = potentialContainers[i];
@@ -1279,7 +1285,6 @@ private fun checkBatteryOptimization() {
                                 }
                             }
 
-                            // Fallback to original walker if no structured content found
                             if (!text) {
                                 var walker = document.createTreeWalker(
                                     document.body,
@@ -1309,30 +1314,32 @@ private fun checkBatteryOptimization() {
                         }
 
                         if (text && text.length > 0) {
-                            AndroidWebAPI.copyToClipboard(text);
-                            var originalColor = btn.style.backgroundColor;
-                            btn.style.backgroundColor = '#03DAC5';
-                            setTimeout(function() {
-                                btn.style.backgroundColor = originalColor;
-                            }, 500);
+                            try {
+                                AndroidWebAPI.copyToClipboard(text);
+                                var originalColor = btn.style.backgroundColor;
+                                btn.style.backgroundColor = '#03DAC5';
+                                setTimeout(function() {
+                                    btn.style.backgroundColor = originalColor;
+                                }, 500);
+                            } catch (e) {
+                                console.error("Clipboard error: " + e.message);
+                            }
                         } else {
-                             AndroidWebAPI.onPreviewError("No text found to copy.");
+                             try { AndroidWebAPI.onPreviewError("No text found to copy."); } catch(e) {}
                         }
                     };
 
-                    // Try to append to root to avoid body styling issues
-                    (document.documentElement || document.body).appendChild(btn);
+                    document.documentElement.appendChild(btn);
+                    console.log("Jules Copy Button Injected");
                 }
 
-                // Initial injection
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', injectBtn);
                 } else {
                     injectBtn();
                 }
 
-                // Persistence check (polling) for SPA navigation
-                setInterval(injectBtn, 2000);
+                setInterval(injectBtn, 1000);
             })();
         """.trimIndent()
         webView?.evaluateJavascript(script, null)
@@ -1967,77 +1974,72 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
     }
 
+    private data class YouTubeOption(val label: String, val videoFormat: YouTubeFormat?, val audioFormat: YouTubeFormat?)
+
     private fun showYouTubeQualityDialog(video: YouTubeVideo) {
-        val formats = video.formats.sortedWith(compareByDescending<YouTubeFormat> {
-             // Sort priority: 1. Combined (Video+Audio), 2. Video Only, 3. Audio Only
-             // We guess Combined if it has audio and video mime types, but here we only have one mimeType string.
-             // Progressive usually has video/mp4.
-             // Adaptive video has video/mp4. Adaptive audio has audio/mp4.
-             // We prioritize height (video quality) or presence of audio?
-             // Let's sort by height first.
-             it.height
-        }.thenByDescending {
-             it.mimeType.startsWith("video/")
-        })
+        val videoFormats = video.formats.filter { it.mimeType.startsWith("video/") }
+        val audioFormats = video.formats.filter { it.mimeType.startsWith("audio/") }
+        val bestAudio = audioFormats.maxByOrNull { it.averageBitrate ?: 0 }
 
-        val options = formats.map { format ->
-            val typeLabel = when {
-                format.mimeType.startsWith("audio/") -> "(Audio Only)"
-                format.mimeType.startsWith("video/") -> {
-                    // If it is adaptive formats (usually found in high res), they are often video-only.
-                    // Progressive formats (720p and below) usually have audio.
-                    // We can check if we have a way to distinguish.
-                    // For now, we will assume standard behavior:
-                    // If it's 1080p or higher, it's likely video-only in this simple extractor.
-                    if (format.height >= 1080 || format.qualityLabel.contains("60")) {
-                        "(Video Only)"
-                    } else {
-                        ""
-                    }
-                }
-                else -> ""
-            }
+        val options = mutableListOf<YouTubeOption>()
 
-            val cleanMime = format.mimeType.substringBefore(';')
-            val label = if (format.qualityLabel.isNotEmpty()) format.qualityLabel else "Audio"
+        // 1. Video Options (Grouped by Height)
+        val groupedVideos = videoFormats.groupBy { it.height }
+        groupedVideos.keys.sortedDescending().forEach { height ->
+             if (height <= 0) return@forEach
+             val formatsAtHeight = groupedVideos[height]!!
+             // Prefer MP4, then highest bitrate
+             val bestFormat = formatsAtHeight.sortedWith(compareByDescending<YouTubeFormat> {
+                 it.mimeType.contains("mp4")
+             }.thenByDescending {
+                 it.averageBitrate ?: 0
+             }).first()
 
-            "$label - $cleanMime $typeLabel"
-        }.toTypedArray()
+             // Check if it's combined or adaptive
+             val isAdaptive = bestFormat.audioQuality == null
+             val needsMuxing = isAdaptive && bestAudio != null
+
+             val label = "${height}p ${if (needsMuxing) "(Video+Audio)" else if (isAdaptive) "(Video Only)" else ""}"
+             options.add(YouTubeOption(label, bestFormat, if (needsMuxing) bestAudio else null))
+        }
+
+        // 2. Audio Only Option
+        if (bestAudio != null) {
+             val bitrate = (bestAudio.averageBitrate ?: 0) / 1000
+             options.add(YouTubeOption("Audio Only (${bitrate}kbps)", null, bestAudio))
+        }
+
+        val displayItems = options.map { it.label }.toTypedArray()
 
         AlertDialog.Builder(this)
             .setTitle("Download: ${video.title}")
-            .setItems(options) { _, which ->
-                val selectedFormat = formats[which]
-                downloadYouTubeVideo(video.title, selectedFormat)
+            .setItems(displayItems) { _, which ->
+                val selected = options[which]
+                startYouTubeDownload(video.title, selected)
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
-    private fun downloadYouTubeVideo(title: String, format: YouTubeFormat) {
-        try {
-            val sanitizedTitle = title.replace("[^a-zA-Z0-9._-]".toRegex(), "_")
-            val fileName = "${sanitizedTitle}_${format.height}p.mp4"
+    private fun startYouTubeDownload(title: String, option: YouTubeOption) {
+        val intent = Intent(this, YouTubeDownloadService::class.java).apply {
+            action = YouTubeDownloadService.ACTION_START_DOWNLOAD
+            putExtra(YouTubeDownloadService.EXTRA_TITLE, title)
 
-            val request = DownloadManager.Request(Uri.parse(format.url))
-                .setTitle(fileName)
-                .setDescription("Downloading YouTube Video")
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-
-            val userAgent = webView.settings.userAgentString
-            val cookie = CookieManager.getInstance().getCookie(webView.url)
-            request.addRequestHeader("User-Agent", userAgent)
-            if (cookie != null) {
-                request.addRequestHeader("Cookie", cookie)
+            if (option.videoFormat != null) {
+                putExtra(YouTubeDownloadService.EXTRA_VIDEO_URL, option.videoFormat.url)
+                if (option.audioFormat != null) {
+                     putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, option.audioFormat.url)
+                }
+                putExtra(YouTubeDownloadService.EXTRA_MIME_TYPE, option.videoFormat.mimeType.substringBefore(";"))
+            } else if (option.audioFormat != null) {
+                 // Audio only - pass as videoUrl to service logic
+                 putExtra(YouTubeDownloadService.EXTRA_VIDEO_URL, option.audioFormat.url)
+                 putExtra(YouTubeDownloadService.EXTRA_MIME_TYPE, option.audioFormat.mimeType.substringBefore(";"))
             }
-
-            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            dm.enqueue(request)
-            Toast.makeText(this, "Download started", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Toast.makeText(this, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
+        ContextCompat.startForegroundService(this, intent)
+        Toast.makeText(this, "Starting download...", Toast.LENGTH_SHORT).show()
     }
 
     private fun showMediaListDialog() {

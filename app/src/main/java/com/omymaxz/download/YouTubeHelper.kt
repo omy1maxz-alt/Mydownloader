@@ -58,19 +58,22 @@ object YouTubeHelper {
                         itag: f.itag,
                         url: f.url,
                         mimeType: f.mimeType,
-                        qualityLabel: f.qualityLabel || "", // Adaptive audio might not have qualityLabel
-                        width: f.width,
-                        height: f.height,
-                        contentLength: f.contentLength
+                        qualityLabel: f.qualityLabel || "",
+                        width: f.width || 0,
+                        height: f.height || 0,
+                        contentLength: f.contentLength,
+                        averageBitrate: f.averageBitrate || 0,
+                        audioQuality: f.audioQuality || null,
+                        fps: f.fps || 0
                     };
                 }).filter(function(f) {
-                    // Filter for valid URLs (skipping ciphered signatures for now as requested)
-                    // We allow all mimeTypes (video/mp4, video/webm, audio/mp4, etc.)
+                    // Filter for valid URLs.
+                    // Future improvement: Handle signatureCipher/cipher if url is missing.
                     return f.url && f.url.startsWith('http');
                 });
 
                 if (formats.length === 0) {
-                     YouTubeInterface.onError("No downloadable streams found (all might be encrypted).");
+                     YouTubeInterface.onError("No downloadable streams found (possibly encrypted/protected).");
                      return;
                 }
 
