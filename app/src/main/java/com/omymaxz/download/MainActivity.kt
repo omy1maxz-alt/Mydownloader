@@ -888,7 +888,8 @@ private fun checkBatteryOptimization() {
                     }
                     injectMediaStateDetector()
                     injectAdvancedMediaDetector()
-                    if (url?.contains("jules.google.com") == true) {
+                    if (url?.contains("jules.google.com", ignoreCase = true) == true) {
+                        Toast.makeText(this@MainActivity, "Jules Enhancements Active", Toast.LENGTH_SHORT).show()
                         injectJulesEnhancements(view)
                     }
                     injectPendingUserscripts()
@@ -1237,9 +1238,10 @@ private fun checkBatteryOptimization() {
 
     private fun injectJulesEnhancements(webView: WebView?) {
         val script = """
-            javascript:(function() {
+            (function() {
                 function injectBtn() {
                     if (document.getElementById('jules-copy-btn')) return;
+                    if (!document.body) return;
 
                     var btn = document.createElement('div');
                     btn.id = 'jules-copy-btn';
@@ -1329,7 +1331,7 @@ private fun checkBatteryOptimization() {
                         }
                     };
 
-                    document.documentElement.appendChild(btn);
+                    document.body.appendChild(btn);
                     console.log("Jules Copy Button Injected");
                 }
 
