@@ -159,4 +159,16 @@
         android:background="@android:color/black"
         android:visibility="gone" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/julesCopyFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_copy"
+        android:contentDescription="Copy Text"
+        android:visibility="gone"
+        app:backgroundTint="#6200EE"
+        app:tint="#FFFFFF" />
+
 </FrameLayout>
