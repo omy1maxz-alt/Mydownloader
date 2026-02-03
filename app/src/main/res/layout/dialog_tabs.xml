@@ -11,12 +11,49 @@
         android:layout_weight="1"
         android:padding="8dp"/>
 
-    <Button
-        android:id="@+id/newTabButton"
-        style="@style/Widget.AppCompat.Button.Colored"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:text="+ New Tab" />
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/selectTabButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Select"
+            android:layout_marginEnd="4dp"/>
+
+        <Button
+            android:id="@+id/newTabButton"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="+ New Tab"
+            android:layout_marginStart="4dp"/>
+
+        <Button
+            android:id="@+id/cancelSelectionButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Cancel"
+            android:visibility="gone"
+            android:layout_marginEnd="4dp"/>
+
+        <Button
+            android:id="@+id/deleteSelectedButton"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Delete"
+            android:visibility="gone"
+            android:layout_marginStart="4dp"/>
+
+    </LinearLayout>
 
 </LinearLayout>

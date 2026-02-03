@@ -483,7 +483,17 @@ private fun checkBatteryOptimization() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_tabs, null)
         val tabsRecyclerView = dialogView.findViewById<RecyclerView>(R.id.tabsRecyclerView)
         val newTabButton = dialogView.findViewById<Button>(R.id.newTabButton)
-        tabsRecyclerView.layoutManager = LinearLayoutManager(this)
+        val selectTabButton = dialogView.findViewById<Button>(R.id.selectTabButton)
+        val cancelSelectionButton = dialogView.findViewById<Button>(R.id.cancelSelectionButton)
+        val deleteSelectedButton = dialogView.findViewById<Button>(R.id.deleteSelectedButton)
+
+        val layoutManager = LinearLayoutManager(this)
+        tabsRecyclerView.layoutManager = layoutManager
+
+        fun updateDeleteButton(count: Int) {
+            deleteSelectedButton.text = "Delete ($count)"
+        }
+
         val tabAdapter = TabAdapter(
             tabs = tabs,
             currentTabIndex = this.currentTabIndex,
@@ -497,17 +507,84 @@ private fun checkBatteryOptimization() {
                 if (tabs.isNotEmpty()) {
                     showTabsDialog()
                 }
+            },
+            onSelectionChanged = { count ->
+                updateDeleteButton(count)
             }
         )
         tabsRecyclerView.adapter = tabAdapter
+
         newTabButton.setOnClickListener {
             createNewTab()
             tabsDialog?.dismiss()
         }
+
+        selectTabButton.setOnClickListener {
+            tabAdapter.setSelectionMode(true)
+            newTabButton.visibility = View.GONE
+            selectTabButton.visibility = View.GONE
+            cancelSelectionButton.visibility = View.VISIBLE
+            deleteSelectedButton.visibility = View.VISIBLE
+            updateDeleteButton(0)
+        }
+
+        cancelSelectionButton.setOnClickListener {
+            tabAdapter.setSelectionMode(false)
+            newTabButton.visibility = View.VISIBLE
+            selectTabButton.visibility = View.VISIBLE
+            cancelSelectionButton.visibility = View.GONE
+            deleteSelectedButton.visibility = View.GONE
+        }
+
+        deleteSelectedButton.setOnClickListener {
+            val selectedPositions = tabAdapter.getSelectedPositions().sortedDescending()
+            if (selectedPositions.isEmpty()) {
+                Toast.makeText(this, "No tabs selected", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val wasCurrentTabDeleted = selectedPositions.contains(currentTabIndex)
+            var deletedBeforeCurrent = 0
+
+            for (pos in selectedPositions) {
+                if (pos < currentTabIndex) {
+                    deletedBeforeCurrent++
+                }
+                tabs.removeAt(pos)
+            }
+
+            if (tabs.isEmpty()) {
+                tabs.add(Tab(title = "New Tab"))
+                currentTabIndex = 0
+                switchTab(0, forceReload = true)
+            } else {
+                if (wasCurrentTabDeleted) {
+                    currentTabIndex -= deletedBeforeCurrent
+                    if (currentTabIndex >= tabs.size) {
+                        currentTabIndex = tabs.size - 1
+                    }
+                    if (currentTabIndex < 0) currentTabIndex = 0
+                    switchTab(currentTabIndex, forceReload = true)
+                } else {
+                    currentTabIndex -= deletedBeforeCurrent
+                    updateTabCount()
+                    saveTabsState()
+                }
+            }
+
+            tabsDialog?.dismiss()
+            showTabsDialog()
+        }
+
         tabsDialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .create()
         tabsDialog?.show()
+
+        // Scroll to active tab
+        tabsRecyclerView.post {
+            layoutManager.scrollToPositionWithOffset(currentTabIndex, 0)
+        }
     }
 
     private fun createNewTab() {
