@@ -86,7 +86,7 @@ class MediaListAdapter(
             val iconRes = when(mediaFile.category) {
                 MediaCategory.VIDEO -> android.R.drawable.ic_media_play
                 MediaCategory.AUDIO -> android.R.drawable.ic_media_ff
-                MediaCategory.SUBTITLE -> android.R.drawable.ic_menu_edit
+                MediaCategory.SUBTITLE -> android.R.drawable.ic_menu_sort_by_size
                 MediaCategory.THUMBNAIL -> android.R.drawable.ic_menu_gallery
                 MediaCategory.AD -> android.R.drawable.ic_menu_close_clear_cancel
                 else -> android.R.drawable.ic_menu_help
