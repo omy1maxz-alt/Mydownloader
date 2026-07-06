@@ -544,6 +544,9 @@ private fun checkBatteryOptimization() {
             }
 
             val wasCurrentTabDeleted = selectedPositions.contains(currentTabIndex)
+            if (wasCurrentTabDeleted) {
+                stopPlaybackService()
+            }
             var deletedBeforeCurrent = 0
 
             for (pos in selectedPositions) {
@@ -614,6 +617,7 @@ private fun checkBatteryOptimization() {
         val closingCurrentTab = position == currentTabIndex
         tabs.removeAt(position)
         if (closingCurrentTab) {
+            stopPlaybackService()
             val newIndex = if (position > 0) position - 1 else 0
             switchTab(newIndex, forceReload = true)
         } else {
