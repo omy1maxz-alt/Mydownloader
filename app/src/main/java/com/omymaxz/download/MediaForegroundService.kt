@@ -222,11 +222,38 @@ class MediaForegroundService : Service() {
             )
         }
 
+
+        // Add close action
+        builder.addAction(
+            NotificationCompat.Action(
+                R.drawable.ic_close,
+                "Close",
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)
+            )
+        )
+
         // Set the style using the MediaSession token
+        val actionIndices = mutableListOf<Int>()
+        var currentIndex = 0
+
+        if (hasPrevious) {
+            currentIndex++
+        }
+
+        val playPauseIndex = currentIndex++
+        actionIndices.add(playPauseIndex)
+
+        if (hasNext) {
+            currentIndex++
+        }
+
+        val closeIndex = currentIndex++
+        actionIndices.add(closeIndex)
+
         builder.setStyle(
             androidx.media.app.NotificationCompat.MediaStyle()
                 .setMediaSession(mediaSession?.sessionToken)
-                .setShowActionsInCompactView(0, 1, 2) // Adjust indices based on how many actions you add (0-indexed)
+                .setShowActionsInCompactView(*actionIndices.toIntArray())
         )
 
         return builder.build()
