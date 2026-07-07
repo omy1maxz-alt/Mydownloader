@@ -159,6 +159,15 @@ class MainActivity : AppCompatActivity() {
                         binding.webView.evaluateJavascript("window.AndroidMediaController.previous();", null)
                     }
                     MediaForegroundService.ACTION_STOP_SERVICE -> {
+                        for (tab in tabs) {
+                            if (tab.isMediaPlaying) {
+                                tab.isMediaPlaying = false
+                                if (tab == tabs[currentTabIndex]) {
+                                    binding.webView.evaluateJavascript("window.AndroidMediaController.pause();", null)
+                                }
+                            }
+                        }
+
                         binding.webView.evaluateJavascript("window.AndroidMediaController.pause();", null)
                         stopPlaybackService()
                         isMediaPlaying = false
@@ -544,14 +553,17 @@ private fun checkBatteryOptimization() {
             }
 
             val wasCurrentTabDeleted = selectedPositions.contains(currentTabIndex)
-            if (wasCurrentTabDeleted) {
-                stopPlaybackService()
-            }
+
             var deletedBeforeCurrent = 0
 
             for (pos in selectedPositions) {
                 if (pos < currentTabIndex) {
                     deletedBeforeCurrent++
+                }
+                val closingTab = tabs[pos]
+                if (closingTab.isMediaPlaying) {
+                    stopPlaybackService()
+                    isMediaPlaying = false
                 }
                 tabs.removeAt(pos)
             }
@@ -615,9 +627,15 @@ private fun checkBatteryOptimization() {
             return
         }
         val closingCurrentTab = position == currentTabIndex
+
+        val closingTab = tabs[position]
+        if (closingTab.isMediaPlaying) {
+            stopPlaybackService()
+            isMediaPlaying = false
+        }
+
         tabs.removeAt(position)
         if (closingCurrentTab) {
-            stopPlaybackService()
             val newIndex = if (position > 0) position - 1 else 0
             switchTab(newIndex, forceReload = true)
         } else {
