@@ -972,6 +972,10 @@ private fun checkBatteryOptimization() {
                         val tab = tabs[currentTabIndex]
                         if (tab.historyStack.isEmpty() || tab.historyStack.last() != url) {
                             tab.historyStack.add(url!!)
+                            // Limit history size to prevent data bloat
+                            if (tab.historyStack.size > 50) {
+                                tab.historyStack.removeAt(0)
+                            }
                         }
                     }
                     updateToolbarNavButtonState()
@@ -2417,6 +2421,14 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val editor = sharedPrefs.edit()
         val gson = Gson()
         saveCurrentTabState()
+
+        // Truncate history before saving to prevent SharedPreferences bloat over time
+        for (tab in tabs) {
+            if (tab.historyStack.size > 20) {
+                tab.historyStack = tab.historyStack.takeLast(20).toMutableList()
+            }
+        }
+
         val tabsJson = gson.toJson(tabs)
         editor.putString("TABS_LIST", tabsJson)
         editor.putInt("CURRENT_TAB_INDEX", currentTabIndex)
@@ -3310,3 +3322,4 @@ if (isDesktopMode) {
             .show()
     }
 }
+// Dummy edit to trigger new branch submission
