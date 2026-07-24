@@ -1168,20 +1168,32 @@ private fun checkBatteryOptimization() {
             }
             setDownloadListener { url, userAgent, contentDisposition, mimetype, _ ->
                 try {
-                    val request = DownloadManager.Request(Uri.parse(url)).apply {
-                        setMimeType(mimetype)
-                        addRequestHeader("User-Agent", userAgent)
-                        addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
-                        setDescription("Downloading file...")
-                        setTitle(URLUtil.guessFileName(url, contentDisposition, mimetype))
-                        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                        setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(url, contentDisposition, mimetype))
-                    }
-                    val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
-                    dm.enqueue(request)
-                    Toast.makeText(applicationContext, "Downloading File", Toast.LENGTH_LONG).show()
+                    val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Download File")
+                        .setMessage("Do you want to download $fileName?")
+                        .setPositiveButton("Download") { _, _ ->
+                            try {
+                                val request = DownloadManager.Request(Uri.parse(url)).apply {
+                                    setMimeType(mimetype)
+                                    addRequestHeader("User-Agent", userAgent)
+                                    addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+                                    setDescription("Downloading file...")
+                                    setTitle(fileName)
+                                    setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                                }
+                                val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+                                dm.enqueue(request)
+                                Toast.makeText(applicationContext, "Downloading File", Toast.LENGTH_LONG).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(applicationContext, "Download Failed: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
                 } catch (e: Exception) {
-                    Toast.makeText(applicationContext, "Download Failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(applicationContext, "Download Check Failed: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -3329,16 +3341,16 @@ if (isDesktopMode) {
     }
     fun showBlockedNavigationDialog(url: String) {
         AlertDialog.Builder(this)
-            .setTitle("Link Action")
-            .setMessage("A page is trying to navigate or open a new window:$url")
-            .setPositiveButton("Open") { _, _ ->
+            .setTitle("Suspicious Redirect Blocked")
+            .setMessage("The site is trying to redirect you to:\n$url\n\nDo you want to allow this?")
+            .setPositiveButton("Allow") { _, _ ->
                 webView.loadUrl(url)
             }
             .setNeutralButton("Open in Background") { _, _ ->
                 openInNewTab(url, inBackground = true)
             }
             .setNegativeButton("Block") { _, _ ->
-                Toast.makeText(this, "Action blocked", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Redirect blocked", Toast.LENGTH_SHORT).show()
                 addToBlockedList(Uri.parse(url).host ?: url)
             }
             .show()
