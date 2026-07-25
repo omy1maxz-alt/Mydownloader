@@ -27,7 +27,8 @@ class RedirectLogic(private val prefs: SharedPreferences) {
             return true
         }
         val currentTime = System.currentTimeMillis()
-        if (isAdDomain(url) || isInBlockedList(url) || (!isUrlWhitelisted(url) && isSuspiciousRedirectPattern(url, currentTime, webViewUrl))) {
+        val hasGesture = request?.hasGesture() ?: false
+        if (isAdDomain(url) || isInBlockedList(url) || (!isUrlWhitelisted(url) && isSuspiciousRedirectPattern(url, currentTime, webViewUrl, hasGesture))) {
             return true
         }
         lastNavigationTime = currentTime
@@ -35,12 +36,18 @@ class RedirectLogic(private val prefs: SharedPreferences) {
         return false
     }
 
-    private fun isSuspiciousRedirectPattern(url: String, currentTime: Long, previousUrl: String?): Boolean {
+    private fun isSuspiciousRedirectPattern(url: String, currentTime: Long, previousUrl: String?, hasGesture: Boolean): Boolean {
         if (!prefs.getBoolean("BLOCK_REDIRECTS", true)) return false
         val timeSinceLastNav = currentTime - lastNavigationTime
         val currentHost = getHost(url)
         val previousHost = getHost(previousUrl)
         val isDifferentHost = currentHost != null && currentHost != previousHost
+
+        // If it's a cross-domain navigation without a user gesture, it's highly suspicious (likely an auto-redirect or ad popup)
+        if (isDifferentHost && !hasGesture && navigationCount > 0) {
+            return true
+        }
+
         return isDifferentHost && (timeSinceLastNav < 1000 && navigationCount > 0)
     }
 
