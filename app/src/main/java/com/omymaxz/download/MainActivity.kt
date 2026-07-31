@@ -1188,7 +1188,31 @@ private fun checkBatteryOptimization() {
             }
             setDownloadListener { url, userAgent, contentDisposition, mimetype, _ ->
                 try {
-                    val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
+                    var fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
+                    if (fileName.endsWith(".bin") || fileName.startsWith("downloadfile")) {
+                        // Fallback 1: Extract from Content-Disposition header directly
+                        if (!contentDisposition.isNullOrEmpty()) {
+                            val match = Regex("filename=\"?([^\"]+)\"?").find(contentDisposition)
+                            if (match != null) {
+                                fileName = match.groupValues[1]
+                            }
+                        }
+                        // Fallback 2: Extract from the URL path if Content-Disposition failed or wasn't present
+                        if (fileName.endsWith(".bin") || fileName.startsWith("downloadfile")) {
+                            try {
+                                val uriPath = java.net.URI(url).path
+                                if (!uriPath.isNullOrEmpty()) {
+                                    val lastSegment = uriPath.substringAfterLast("/")
+                                    if (lastSegment.contains(".")) {
+                                        fileName = java.net.URLDecoder.decode(lastSegment, "UTF-8")
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                // Ignore parsing errors, keep the guessed file name
+                            }
+                        }
+                    }
+
                     AlertDialog.Builder(this@MainActivity)
                         .setTitle("Download File")
                         .setMessage("Do you want to download $fileName?")
@@ -3354,4 +3378,3 @@ if (isDesktopMode) {
             .show()
     }
 }
-// Dummy edit to trigger new branch submission
