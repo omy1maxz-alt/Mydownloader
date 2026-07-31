@@ -1121,13 +1121,33 @@ private fun checkBatteryOptimization() {
                     fullscreenView = view
                     customViewCallback = callback
                     (binding.root as FrameLayout).addView(fullscreenView)
-                    window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+                    window.decorView.systemUiVisibility = (
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_FULLSCREEN
+                    )
+                    window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
+                        if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0 && fullscreenView != null) {
+                            window.decorView.systemUiVisibility = (
+                                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                            )
+                        }
+                    }
                     binding.mainContent.visibility = View.GONE
                 }
                 override fun onHideCustomView() {
                     if (fullscreenView == null) return
                     (binding.root as FrameLayout).removeView(fullscreenView)
                     fullscreenView = null
+                    window.decorView.setOnSystemUiVisibilityChangeListener(null)
                     window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
                     binding.mainContent.visibility = View.VISIBLE
                     customViewCallback?.onCustomViewHidden()
