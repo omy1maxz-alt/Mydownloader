@@ -140,6 +140,67 @@ class MainActivity : AppCompatActivity() {
         const val EXTRA_COMMAND = "command"
     }
 
+    private val downloadReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
+                val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L)
+                if (downloadId != -1L) {
+                    checkDownloadStatus(downloadId)
+                }
+            }
+        }
+    }
+
+    private fun checkDownloadStatus(downloadId: Long) {
+        val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        val query = DownloadManager.Query().setFilterById(downloadId)
+
+        downloadManager.query(query)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                if (statusIndex != -1) {
+                    val status = cursor.getInt(statusIndex)
+                    if (status == DownloadManager.STATUS_FAILED) {
+                        val reasonIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON)
+                        val uriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_URI)
+
+                        val reason = if (reasonIndex != -1) cursor.getInt(reasonIndex) else -1
+                        val uriString = if (uriIndex != -1) cursor.getString(uriIndex) else "Unknown URL"
+
+                        val reasonText = when (reason) {
+                            DownloadManager.ERROR_CANNOT_RESUME -> "ERROR_CANNOT_RESUME (Some possibly transient error occurred but we can't resume the download.)"
+                            DownloadManager.ERROR_DEVICE_NOT_FOUND -> "ERROR_DEVICE_NOT_FOUND (No external storage device was found. Typically, this is because the SD card is not mounted.)"
+                            DownloadManager.ERROR_FILE_ALREADY_EXISTS -> "ERROR_FILE_ALREADY_EXISTS (The requested destination file already exists (the download manager will not overwrite an existing file).)"
+                            DownloadManager.ERROR_FILE_ERROR -> "ERROR_FILE_ERROR (A storage issue arises which doesn't fit under any other error code.)"
+                            DownloadManager.ERROR_HTTP_DATA_ERROR -> "ERROR_HTTP_DATA_ERROR (An error receiving or processing data occurred at the HTTP level.)"
+                            DownloadManager.ERROR_INSUFFICIENT_SPACE -> "ERROR_INSUFFICIENT_SPACE (There was not enough storage space to record the destination file.)"
+                            DownloadManager.ERROR_TOO_MANY_REDIRECTS -> "ERROR_TOO_MANY_REDIRECTS (There were too many redirects.)"
+                            DownloadManager.ERROR_UNHANDLED_HTTP_CODE -> "ERROR_UNHANDLED_HTTP_CODE (An HTTP code was received that download manager can't handle.)"
+                            DownloadManager.ERROR_UNKNOWN -> "ERROR_UNKNOWN (The download has completed with an error that doesn't fit under any other error code.)"
+                            else -> "Unknown error code: $reason"
+                        }
+
+                        val errorMessage = "Download failed for URL:\n$uriString\n\nReason:\n$reasonText"
+
+                        runOnUiThread {
+                            androidx.appcompat.app.AlertDialog.Builder(this)
+                                .setTitle("Download Failed")
+                                .setMessage(errorMessage)
+                                .setPositiveButton("Copy Error") { _, _ ->
+                                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                    val clip = android.content.ClipData.newPlainText("Download Error", errorMessage)
+                                    clipboard.setPrimaryClip(clip)
+                                    Toast.makeText(this, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                                }
+                                .setNegativeButton("Close", null)
+                                .show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private val mediaControlReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val action = intent?.getStringExtra(EXTRA_COMMAND)
@@ -360,14 +421,17 @@ private fun checkBatteryOptimization() {
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(mediaControlReceiver, IntentFilter(ACTION_MEDIA_CONTROL), RECEIVER_EXPORTED)
+            registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), RECEIVER_EXPORTED)
         } else {
             registerReceiver(mediaControlReceiver, IntentFilter(ACTION_MEDIA_CONTROL))
+            registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(mediaControlReceiver)
+        unregisterReceiver(downloadReceiver)
         webView.destroy()
         if (hasStartedForegroundService) {
             stopPlaybackService()
