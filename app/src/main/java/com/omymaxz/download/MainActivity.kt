@@ -177,7 +177,13 @@ class MainActivity : AppCompatActivity() {
                             DownloadManager.ERROR_TOO_MANY_REDIRECTS -> "ERROR_TOO_MANY_REDIRECTS (There were too many redirects.)"
                             DownloadManager.ERROR_UNHANDLED_HTTP_CODE -> "ERROR_UNHANDLED_HTTP_CODE (An HTTP code was received that download manager can't handle.)"
                             DownloadManager.ERROR_UNKNOWN -> "ERROR_UNKNOWN (The download has completed with an error that doesn't fit under any other error code.)"
-                            else -> "Unknown error code: $reason"
+                            else -> {
+                                if (reason in 400..599) {
+                                    "HTTP_ERROR_$reason (The server returned HTTP status code $reason.)"
+                                } else {
+                                    "Unknown error code: $reason"
+                                }
+                            }
                         }
 
                         val errorMessage = "Download failed for URL:\n$uriString\n\nReason:\n$reasonText"
