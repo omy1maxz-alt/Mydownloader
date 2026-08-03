@@ -1291,7 +1291,14 @@ private fun checkBatteryOptimization() {
                                 val request = DownloadManager.Request(Uri.parse(url)).apply {
                                     setMimeType(mimetype)
                                     addRequestHeader("User-Agent", userAgent)
-                                    addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+                                    val cookie = CookieManager.getInstance().getCookie(url)
+                                    if (cookie != null) {
+                                        addRequestHeader("Cookie", cookie)
+                                    }
+                                    val currentUrl = webView.url
+                                    if (currentUrl != null) {
+                                        addRequestHeader("Referer", currentUrl)
+                                    }
                                     setDescription("Downloading file...")
                                     setTitle(fileName)
                                     setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)

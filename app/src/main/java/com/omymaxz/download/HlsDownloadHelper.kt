@@ -48,6 +48,22 @@ object HlsDownloadHelper {
                 Executor { it.run() }
             ).apply {
                 maxParallelDownloads = 3
+                addListener(object : DownloadManager.Listener {
+                    override fun onDownloadChanged(
+                        downloadManager: DownloadManager,
+                        download: androidx.media3.exoplayer.offline.Download,
+                        finalException: Exception?
+                    ) {
+                        if (download.state == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED) {
+                            val title = String(download.request.data)
+                            val intent = android.content.Intent(appContext, HlsExportService::class.java).apply {
+                                putExtra(HlsExportService.EXTRA_DOWNLOAD_ID, download.request.id)
+                                putExtra(HlsExportService.EXTRA_TITLE, title)
+                            }
+                            appContext.startService(intent)
+                        }
+                    }
+                })
             }
         }
         return downloadManager!!
@@ -93,6 +109,14 @@ object HlsDownloadHelper {
             }
         }
         return dataSourceFactory!!
+    }
+
+    @Synchronized
+    fun getCacheDataSourceFactory(context: Context): androidx.media3.datasource.cache.CacheDataSource.Factory {
+        return androidx.media3.datasource.cache.CacheDataSource.Factory()
+            .setCache(getDownloadCache(context))
+            .setUpstreamDataSourceFactory(getDataSourceFactory(context))
+            .setCacheWriteDataSinkFactory(null) // Disable writing when reading for export
     }
 
     @Synchronized
