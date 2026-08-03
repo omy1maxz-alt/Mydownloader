@@ -114,6 +114,11 @@
             android:name=".YouTubeDownloadService"
             android:foregroundServiceType="dataSync"
             android:exported="false" />
+
+        <service
+            android:name=".HlsExportService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
             
     </application>
 

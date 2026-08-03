@@ -86,6 +86,7 @@ dependencies {
     implementation("androidx.media3:media3-datasource-cronet:1.3.1")
     implementation("androidx.media3:media3-ui:1.3.1")
     implementation("androidx.media3:media3-session:1.3.1")
+    implementation("androidx.media3:media3-transformer:1.3.1")
 
     // Room Database
     val room_version = "2.6.1"
