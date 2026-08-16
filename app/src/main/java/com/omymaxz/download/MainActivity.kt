@@ -75,6 +75,7 @@ class MainActivity : AppCompatActivity() {
     private var lastUsedName: String = "Video"
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
+    private var fullscreenDownloadButton: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     var isServiceRunning = false
     private val handler = Handler(Looper.getMainLooper())
@@ -1191,6 +1192,31 @@ private fun checkBatteryOptimization() {
                     fullscreenView = view
                     customViewCallback = callback
                     (binding.root as FrameLayout).addView(fullscreenView)
+
+                    val downloadButton = com.google.android.material.floatingactionbutton.FloatingActionButton(this@MainActivity).apply {
+                        setImageResource(android.R.drawable.ic_menu_save) // A generic download/save icon
+                        contentDescription = "Download Video"
+                        backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#88000000"))
+                        imageTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
+
+                        val params = FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            FrameLayout.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            gravity = android.view.Gravity.TOP or android.view.Gravity.END
+                            topMargin = 100
+                            marginEnd = 100
+                        }
+                        layoutParams = params
+
+                        setOnClickListener {
+                            webView.evaluateJavascript("if (window.AndroidMediaController) window.AndroidMediaController.downloadActiveMedia();", null)
+                            Toast.makeText(this@MainActivity, "Requesting active video download...", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    (binding.root as FrameLayout).addView(downloadButton)
+                    fullscreenDownloadButton = downloadButton
+
                     window.decorView.systemUiVisibility = (
                         View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -1217,6 +1243,12 @@ private fun checkBatteryOptimization() {
                     if (fullscreenView == null) return
                     (binding.root as FrameLayout).removeView(fullscreenView)
                     fullscreenView = null
+
+                    if (fullscreenDownloadButton != null) {
+                        (binding.root as FrameLayout).removeView(fullscreenDownloadButton)
+                        fullscreenDownloadButton = null
+                    }
+
                     window.decorView.setOnSystemUiVisibilityChangeListener(null)
                     window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
                     binding.mainContent.visibility = View.VISIBLE
@@ -1791,6 +1823,23 @@ private fun injectMediaStateDetector() {
 
                 init: function() {
                     setInterval(() => this.collectState(), 1000);
+                },
+                downloadActiveMedia: function() {
+                    if (this.mediaElement) {
+                        let src = this.mediaElement.currentSrc || this.mediaElement.src;
+                        if (!src && this.mediaElement.querySelector('source')) {
+                            src = this.mediaElement.querySelector('source').src;
+                        }
+                        if (src) {
+                            let type = this.mediaElement.tagName.toLowerCase();
+                            let title = this.targetDocument.title || document.title;
+                            if (window.AndroidMediaState && window.AndroidMediaState.onDownloadActiveMedia) {
+                                window.AndroidMediaState.onDownloadActiveMedia(src, type, title);
+                            }
+                        } else {
+                            console.error("No active media source found.");
+                        }
+                    }
                 }
             };
 
@@ -1868,10 +1917,36 @@ private fun injectMediaStateDetector() {
                             }
                             activity.updateFabVisibility()
                             android.util.Log.d("MediaStateInterface", "Advanced detection found: $url")
+
                          }
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("MediaStateInterface", "Error in onMediaDetected: ${e.message}")
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun onDownloadActiveMedia(url: String, type: String, title: String) {
+            activity.runOnUiThread {
+                if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:")) {
+                    val category = if (type.contains("audio", true)) MediaCategory.AUDIO else MediaCategory.VIDEO
+                    val detectedFormat = activity.detectVideoFormat(url)
+                    val quality = activity.extractQualityFromUrl(url)
+                    val enhancedTitle = activity.generateSmartFileName(url, detectedFormat.extension, quality, category)
+                    val mediaFile = MediaFile(
+                        url = url,
+                        title = enhancedTitle,
+                        mimeType = detectedFormat.mimeType,
+                        quality = quality,
+                        category = category,
+                        fileSize = "Unknown",
+                        language = null,
+                        isMainContent = true
+                    )
+                    activity.downloadMediaFile(mediaFile)
+                } else {
+                    Toast.makeText(activity, "Cannot download this media source (it may be a blob or hidden).", Toast.LENGTH_SHORT).show()
                 }
             }
         }
