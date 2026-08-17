@@ -1830,11 +1830,19 @@ private fun injectMediaStateDetector() {
                         if (!src && this.mediaElement.querySelector('source')) {
                             src = this.mediaElement.querySelector('source').src;
                         }
+
+                        // Extract subtitle track if available
+                        let subtitleUrl = "";
+                        let track = this.mediaElement.querySelector('track[kind="subtitles"]') || this.mediaElement.querySelector('track[kind="captions"]');
+                        if (track && track.src) {
+                            subtitleUrl = track.src;
+                        }
+
                         if (src) {
                             let type = this.mediaElement.tagName.toLowerCase();
                             let title = this.targetDocument.title || document.title;
                             if (window.AndroidMediaState && window.AndroidMediaState.onDownloadActiveMedia) {
-                                window.AndroidMediaState.onDownloadActiveMedia(src, type, title);
+                                window.AndroidMediaState.onDownloadActiveMedia(src, type, title, subtitleUrl);
                             }
                         } else {
                             console.error("No active media source found.");
@@ -1928,6 +1936,11 @@ private fun injectMediaStateDetector() {
 
         @JavascriptInterface
         fun onDownloadActiveMedia(url: String, type: String, title: String) {
+            onDownloadActiveMedia(url, type, title, "")
+        }
+
+        @JavascriptInterface
+        fun onDownloadActiveMedia(url: String, type: String, title: String, subtitleUrl: String) {
             activity.runOnUiThread {
                 if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:")) {
                     val category = if (type.contains("audio", true)) MediaCategory.AUDIO else MediaCategory.VIDEO
@@ -1957,6 +1970,9 @@ private fun injectMediaStateDetector() {
                                     val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
                                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
                                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, enhancedTitle)
+                                        if (subtitleUrl.isNotEmpty()) {
+                                            putExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URL, subtitleUrl)
+                                        }
                                     }
                                     activity.startActivity(intent)
                                 }
