@@ -17,6 +17,7 @@ class CustomPlayerActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_VIDEO_URL = "extra_video_url"
         const val EXTRA_VIDEO_TITLE = "extra_video_title"
+        const val EXTRA_SUBTITLE_URL = "extra_subtitle_url"
     }
 
     private var player: ExoPlayer? = null
@@ -88,12 +89,26 @@ class CustomPlayerActivity : AppCompatActivity() {
         val playerView = findViewById<PlayerView>(R.id.player_view)
         playerView.player = player
 
-        val mediaItem = MediaItem.Builder()
+        val fabSave = findViewById<FloatingActionButton>(R.id.fab_save_offline)
+        playerView.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
+            fabSave.visibility = visibility
+        })
+
+        val subtitleUrl = intent.getStringExtra(EXTRA_SUBTITLE_URL)
+        val mediaItemBuilder = MediaItem.Builder()
             .setUri(Uri.parse(videoUrl))
-            // Determine MimeType based on extension. Default to M3U8 if unknown for this specific context,
-            // or let ExoPlayer decide. For streaming videos like HLS, M3U8 is common.
             .setMimeType(if (videoUrl?.contains(".m3u8") == true) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
-            .build()
+
+        if (!subtitleUrl.isNullOrEmpty()) {
+            val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse(subtitleUrl))
+                .setMimeType(MimeTypes.TEXT_VTT) // Assume VTT by default, most common for web
+                .setLanguage("en") // Defaulting to english if unknown
+                .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_DEFAULT)
+                .build()
+            mediaItemBuilder.setSubtitleConfigurations(listOf(subtitleConfig))
+        }
+
+        val mediaItem = mediaItemBuilder.build()
 
         player?.setMediaItem(mediaItem)
         player?.prepare()
