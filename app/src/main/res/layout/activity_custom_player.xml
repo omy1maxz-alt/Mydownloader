@@ -10,7 +10,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:show_timeout="5000"
-        app:use_controller="true" />
+        app:use_controller="true"
+        app:show_subtitle_button="true" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_save_offline"
