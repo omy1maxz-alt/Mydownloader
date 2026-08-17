@@ -33,6 +33,7 @@ class HlsExportService : Service() {
     companion object {
         const val EXTRA_DOWNLOAD_ID = "com.omymaxz.download.extra.DOWNLOAD_ID"
         const val EXTRA_TITLE = "com.omymaxz.download.extra.TITLE"
+        const val EXTRA_URL = "com.omymaxz.download.extra.URL"
         const val CHANNEL_ID = "hls_export_channel"
         const val NOTIFICATION_ID = 3000
         private const val TAG = "HlsExportService"
@@ -58,9 +59,10 @@ class HlsExportService : Service() {
         }
 
         val downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
+        val url = intent.getStringExtra(EXTRA_URL)
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown Video"
 
-        if (downloadId == null) {
+        if (downloadId == null && url == null) {
             if (activeExports.get() == 0) stopSelf(startId)
             return START_NOT_STICKY
         }
@@ -78,7 +80,11 @@ class HlsExportService : Service() {
 
         serviceScope.launch {
             try {
-                exportHlsToMp4(downloadId, title)
+                if (downloadId != null) {
+                    exportHlsToMp4(downloadId, title)
+                } else if (url != null) {
+                    exportHlsToMp4FromUrl(url, title)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Export failed", e)
                 Toast.makeText(applicationContext, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
@@ -144,7 +150,47 @@ class HlsExportService : Service() {
         }
     }
 
-    private fun createNotificationChannel() {
+
+    private suspend fun exportHlsToMp4FromUrl(url: String, title: String) = suspendCancellableCoroutine { continuation ->
+        val cacheDataSourceFactory = HlsDownloadHelper.getStreamCacheDataSourceFactory(applicationContext)
+        val mediaItem = MediaItem.Builder().setUri(Uri.parse(url)).build()
+
+        val transformer = Transformer.Builder(applicationContext)
+            .setAssetLoaderFactory(androidx.media3.transformer.DefaultAssetLoaderFactory(
+                applicationContext,
+                androidx.media3.transformer.DefaultDecoderFactory(applicationContext),
+                /* forceAudioTrack= */ false,
+                androidx.media3.common.util.Clock.DEFAULT,
+                androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
+                    .setDataSourceFactory(cacheDataSourceFactory),
+                androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
+            ))
+            .addListener(object : Transformer.Listener {
+                override fun onCompleted(composition: androidx.media3.transformer.Composition, exportResult: ExportResult) {
+                    Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
+                    HlsDownloadHelper.clearStreamCache(applicationContext)
+                    continuation.resume(Unit)
+                }
+
+                override fun onError(composition: androidx.media3.transformer.Composition, exportResult: ExportResult, exportException: ExportException) {
+                    Log.e(TAG, "Transformer Error", exportException)
+                    Toast.makeText(applicationContext, "Export error: ${exportException.message}", Toast.LENGTH_LONG).show()
+                    continuation.resume(Unit)
+                }
+            })
+            .build()
+
+        val sanitizedTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val outFile = File(downloadsDir, "$sanitizedTitle.mp4")
+
+        transformer.start(mediaItem, outFile.absolutePath)
+
+        continuation.invokeOnCancellation {
+            transformer.cancel()
+        }
+    }
+private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
