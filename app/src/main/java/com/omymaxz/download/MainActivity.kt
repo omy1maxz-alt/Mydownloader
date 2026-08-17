@@ -1282,7 +1282,7 @@ private fun checkBatteryOptimization() {
 
                     // For Google Sign-In and OAuth, the popup MUST be kept alive in the view hierarchy
                     // and MUST have a webChromeClient with onCloseWindow to return the token to the parent.
-                    val rootLayout = findViewById<FrameLayout>(android.R.id.content)
+                    val rootLayout = findViewById<FrameLayout>(R.id.rootContainer)
                     rootLayout.addView(newWebView)
 
                     val transport = resultMsg.obj as WebView.WebViewTransport
@@ -1608,6 +1608,8 @@ private fun checkBatteryOptimization() {
                              this.notify(url, 'video');
                         } else if (url.match(/\.(mp3|aac|m4a|wav|ogg)(\?|${'$'})/i)) {
                              this.notify(url, 'audio');
+                        } else if (url.match(/\.(vtt|srt|ass|ssa)(\?|${'$'})/i)) {
+                             this.notify(url, 'subtitle');
                         } else if (url.includes('videoplayback') || url.includes('manifest')) {
                              this.notify(url, 'video');
                         }
