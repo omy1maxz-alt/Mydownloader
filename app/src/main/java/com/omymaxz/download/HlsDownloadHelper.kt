@@ -202,19 +202,30 @@ object HlsDownloadHelper {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val connection = URL(url).openConnection() as HttpURLConnection
+                        connection.connectTimeout = 15000
+                        connection.readTimeout = 15000
                         if (userAgent != null) connection.setRequestProperty("User-Agent", userAgent)
                         if (cookie != null) connection.setRequestProperty("Cookie", cookie)
 
                         connection.inputStream.bufferedReader().use { reader ->
                             var subtitleUri: String? = null
+                            var fallbackSubtitleUri: String? = null
                             reader.forEachLine { line ->
                                 if (line.startsWith("#EXT-X-MEDIA:TYPE=SUBTITLES") && line.contains("URI=\"")) {
                                     val start = line.indexOf("URI=\"") + 5
                                     val end = line.indexOf("\"", start)
                                     if (start > 4 && end > start) {
-                                        subtitleUri = line.substring(start, end)
+                                        val uri = line.substring(start, end)
+                                        if (line.contains("LANGUAGE=\"en\"") || line.contains("LANGUAGE=\"eng\"")) {
+                                            subtitleUri = uri
+                                        } else if (fallbackSubtitleUri == null) {
+                                            fallbackSubtitleUri = uri
+                                        }
                                     }
                                 }
+                            }
+                            if (subtitleUri == null) {
+                                subtitleUri = fallbackSubtitleUri
                             }
 
                             subtitleUri?.let { relUri ->
@@ -224,6 +235,8 @@ object HlsDownloadHelper {
                                 }
 
                                 val subConn = URL(absoluteSubUrl).openConnection() as HttpURLConnection
+                                subConn.connectTimeout = 15000
+                                subConn.readTimeout = 15000
                                 if (userAgent != null) subConn.setRequestProperty("User-Agent", userAgent)
                                 if (cookie != null) subConn.setRequestProperty("Cookie", cookie)
 
