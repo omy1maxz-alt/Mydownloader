@@ -23,6 +23,39 @@ import java.util.concurrent.Executor
 import androidx.media3.common.util.Util
 
 object HlsDownloadHelper {
+
+    private var streamCache: Cache? = null
+
+    @Synchronized
+    fun getStreamCache(context: Context): Cache {
+        if (streamCache == null) {
+            val streamContentDirectory = File(context.getExternalFilesDir(null), "stream_cache")
+            streamCache = SimpleCache(
+                streamContentDirectory,
+                NoOpCacheEvictor(),
+                getDatabaseProvider(context)
+            )
+        }
+        return streamCache!!
+    }
+
+    @Synchronized
+    fun getStreamCacheDataSourceFactory(context: Context): androidx.media3.datasource.cache.CacheDataSource.Factory {
+        return androidx.media3.datasource.cache.CacheDataSource.Factory()
+            .setCache(getStreamCache(context))
+            .setUpstreamDataSourceFactory(getDataSourceFactory(context))
+            .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+    }
+
+    @Synchronized
+    fun clearStreamCache(context: Context) {
+        val cache = getStreamCache(context)
+        val keys = cache.keys
+        for (key in keys) {
+            cache.removeResource(key)
+        }
+    }
+
     private var downloadManager: DownloadManager? = null
     private var downloadNotificationHelper: DownloadNotificationHelper? = null
     private var databaseProvider: DatabaseProvider? = null
@@ -78,19 +111,6 @@ object HlsDownloadHelper {
     }
 
     @Synchronized
-    private fun getDownloadCache(context: Context): Cache {
-        if (downloadCache == null) {
-            val downloadContentDirectory = File(context.getExternalFilesDir(null), "downloads")
-            downloadCache = SimpleCache(
-                downloadContentDirectory,
-                NoOpCacheEvictor(),
-                getDatabaseProvider(context)
-            )
-        }
-        return downloadCache!!
-    }
-
-    @Synchronized
     private fun getDataSourceFactory(context: Context): DataSource.Factory {
         if (dataSourceFactory == null) {
             // Use a factory that applies the latest headers
@@ -129,6 +149,22 @@ object HlsDownloadHelper {
         }
         return downloadNotificationHelper!!
     }
+
+
+
+    @Synchronized
+    fun getDownloadCache(context: Context): Cache {
+        if (downloadCache == null) {
+            val downloadContentDirectory = File(context.getExternalFilesDir(null), "downloads")
+            downloadCache = SimpleCache(
+                downloadContentDirectory,
+                NoOpCacheEvictor(),
+                getDatabaseProvider(context)
+            )
+        }
+        return downloadCache!!
+    }
+
 
 
     fun downloadHls(context: Context, url: String, title: String, userAgent: String?, cookie: String?) {

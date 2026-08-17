@@ -1944,7 +1944,25 @@ private fun injectMediaStateDetector() {
                         language = null,
                         isMainContent = true
                     )
-                    activity.downloadMediaFile(mediaFile)
+                    val options = arrayOf("Download (Uses Data)", "Play in App (Saves Data Cache)")
+                    androidx.appcompat.app.AlertDialog.Builder(activity)
+                        .setTitle("Video Action")
+                        .setItems(options) { _, which ->
+                            when (which) {
+                                0 -> {
+                                    Toast.makeText(activity, "Downloading Active Video...", Toast.LENGTH_SHORT).show()
+                                    activity.downloadMediaFile(mediaFile)
+                                }
+                                1 -> {
+                                    val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
+                                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
+                                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, enhancedTitle)
+                                    }
+                                    activity.startActivity(intent)
+                                }
+                            }
+                        }
+                        .show()
                 } else {
                     Toast.makeText(activity, "Cannot download this media source (it may be a blob or hidden).", Toast.LENGTH_SHORT).show()
                 }

@@ -120,6 +120,11 @@
             android:foregroundServiceType="dataSync"
             android:exported="false" />
             
+
+        <activity
+            android:name=".CustomPlayerActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
 
 </manifest>
