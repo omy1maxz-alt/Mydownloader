@@ -95,6 +95,11 @@ class CustomPlayerActivity : AppCompatActivity() {
         })
 
         val subtitleUrl = intent.getStringExtra(EXTRA_SUBTITLE_URL)
+        if (!subtitleUrl.isNullOrEmpty()) {
+            Toast.makeText(this, "Subtitle found!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "No subtitle URL found.", Toast.LENGTH_SHORT).show()
+        }
         val mediaItemBuilder = MediaItem.Builder()
             .setUri(Uri.parse(videoUrl))
             .setMimeType(if (videoUrl?.contains(".m3u8") == true) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
