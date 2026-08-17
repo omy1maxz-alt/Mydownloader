@@ -1833,9 +1833,17 @@ private fun injectMediaStateDetector() {
 
                         // Extract subtitle track if available
                         let subtitleUrl = "";
-                        let track = this.mediaElement.querySelector('track[kind="subtitles"]') || this.mediaElement.querySelector('track[kind="captions"]');
-                        if (track && track.src) {
-                            subtitleUrl = track.src;
+                        let tracks = this.mediaElement.querySelectorAll('track');
+                        for (let i = 0; i < tracks.length; i++) {
+                            if (tracks[i].src && (tracks[i].kind === 'subtitles' || tracks[i].kind === 'captions' || !tracks[i].kind)) {
+                                subtitleUrl = tracks[i].src;
+                                break;
+                            }
+                        }
+
+                        // If no direct track, check if window.AndroidMediaState.lastDetectedSubtitle exists (from main detector)
+                        if (!subtitleUrl && window.AndroidMediaState && window.AndroidMediaState.getLastDetectedSubtitle) {
+                            subtitleUrl = window.AndroidMediaState.getLastDetectedSubtitle();
                         }
 
                         if (src) {
@@ -1893,8 +1901,18 @@ private fun injectMediaStateDetector() {
         webView.loadUrl(resumeScript)
     }
     inner class MediaStateInterface(private val activity: MainActivity) {
+
+        private var lastSubtitleUrl: String = ""
+
+        @JavascriptInterface
+        fun getLastDetectedSubtitle(): String {
+            return lastSubtitleUrl
+        }
         @JavascriptInterface
         fun onMediaDetected(url: String, type: String) {
+            if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
+                lastSubtitleUrl = url
+            }
             activity.runOnUiThread {
                 try {
                     if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:")) {
