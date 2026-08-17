@@ -1282,7 +1282,7 @@ private fun checkBatteryOptimization() {
 
                     // For Google Sign-In and OAuth, the popup MUST be kept alive in the view hierarchy
                     // and MUST have a webChromeClient with onCloseWindow to return the token to the parent.
-                    val rootLayout = findViewById<FrameLayout>(R.id.rootContainer)
+                    val rootLayout = binding.rootContainer
                     rootLayout.addView(newWebView)
 
                     val transport = resultMsg.obj as WebView.WebViewTransport
