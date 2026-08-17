@@ -105,10 +105,12 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setMimeType(if (videoUrl?.contains(".m3u8") == true) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
 
         if (!subtitleUrl.isNullOrEmpty()) {
+            // Determine correct mime type based on extension
+            val mimeType = if (subtitleUrl.endsWith(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
             val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse(subtitleUrl))
-                .setMimeType(MimeTypes.TEXT_VTT) // Assume VTT by default, most common for web
-                .setLanguage("en") // Defaulting to english if unknown
-                .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_DEFAULT)
+                .setMimeType(mimeType)
+                .setLanguage("en")
+                .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED) // Force it to show by default
                 .build()
             mediaItemBuilder.setSubtitleConfigurations(listOf(subtitleConfig))
         }
@@ -116,6 +118,14 @@ class CustomPlayerActivity : AppCompatActivity() {
         val mediaItem = mediaItemBuilder.build()
 
         player?.setMediaItem(mediaItem)
+
+        // Force track selection for text to automatically turn on subtitles if they exist
+        player?.trackSelectionParameters = player!!.trackSelectionParameters
+            .buildUpon()
+            .setPreferredTextLanguage("en")
+            .setSelectUndeterminedTextLanguage(true)
+            .build()
+
         player?.prepare()
         player?.playWhenReady = true
     }

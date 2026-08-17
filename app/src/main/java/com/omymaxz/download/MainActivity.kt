@@ -1257,34 +1257,52 @@ private fun checkBatteryOptimization() {
                 }
                 override fun onCreateWindow(view: WebView, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message): Boolean {
                     val currentUrl = view.url
-                    if (currentUrl != null && isUrlWhitelisted(currentUrl)) {
-                        val newWebView = WebView(this@MainActivity)
-                        val transport = resultMsg.obj as WebView.WebViewTransport
-                        transport.webView = newWebView
-                        resultMsg.sendToTarget()
-                        return true
-                    }
                     val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
                     val blockPopups = settingsPrefs.getBoolean("BLOCK_ALL_POPUPS", true)
-                    if (blockPopups) {
+
+                    // Allow popups if user gesture is present OR if the URL is whitelisted
+                    if (blockPopups && !isUserGesture && (currentUrl == null || !isUrlWhitelisted(currentUrl))) {
                         val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
                         if (showNotice) {
                             Toast.makeText(applicationContext, "Pop-up blocked", Toast.LENGTH_SHORT).show()
                         }
-                        return true
+                        return true // Blocked
                     }
-                    val newWebView = WebView(this@MainActivity)
+
+                    val newWebView = WebView(this@MainActivity).apply {
+                        settings.javaScriptEnabled = true
+                        settings.setSupportMultipleWindows(true)
+                        settings.javaScriptCanOpenWindowsAutomatically = true
+                        settings.domStorageEnabled = true
+                        layoutParams = FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT,
+                            FrameLayout.LayoutParams.MATCH_PARENT
+                        )
+                    }
+
+                    // For Google Sign-In and OAuth, the popup MUST be kept alive in the view hierarchy
+                    // and MUST have a webChromeClient with onCloseWindow to return the token to the parent.
+                    val rootLayout = findViewById<FrameLayout>(android.R.id.content)
+                    rootLayout.addView(newWebView)
+
                     val transport = resultMsg.obj as WebView.WebViewTransport
                     transport.webView = newWebView
                     resultMsg.sendToTarget()
+
                     newWebView.webViewClient = object : WebViewClient() {
                         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                            openInNewTab(request.url.toString(), false)
-                            (view.parent as? ViewGroup)?.removeView(view)
-                            view.destroy()
-                            return true
+                            // Let the popup handle its own redirects internally
+                            return false
                         }
                     }
+
+                    newWebView.webChromeClient = object : WebChromeClient() {
+                        override fun onCloseWindow(window: WebView?) {
+                            rootLayout.removeView(newWebView)
+                            newWebView.destroy()
+                        }
+                    }
+
                     return true
                 }
             }
@@ -1903,6 +1921,10 @@ private fun injectMediaStateDetector() {
     inner class MediaStateInterface(private val activity: MainActivity) {
 
         private var lastSubtitleUrl: String = ""
+
+        fun clearState() {
+            lastSubtitleUrl = ""
+        }
 
         @JavascriptInterface
         fun getLastDetectedSubtitle(): String {
