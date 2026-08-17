@@ -10,6 +10,7 @@ import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.CacheKeyFactory
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.offline.DownloadHelper
@@ -17,21 +18,33 @@ import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadNotificationHelper
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
+import androidx.media3.exoplayer.offline.DefaultDownloaderFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.concurrent.Executor
 import androidx.media3.common.util.Util
 
 object HlsDownloadHelper {
 
+    val customCacheKeyFactory = CacheKeyFactory { dataSpec ->
+        dataSpec.uri.buildUpon().clearQuery().toString()
+    }
+
     private var streamCache: Cache? = null
 
     @Synchronized
-    fun getStreamCache(context: Context): Cache {
+    fun getUnifiedCache(context: Context): Cache {
         if (streamCache == null) {
-            val streamContentDirectory = File(context.getExternalFilesDir(null), "stream_cache")
+            val unifiedContentDirectory = File(context.getExternalFilesDir(null), "unified_video_cache")
             streamCache = SimpleCache(
-                streamContentDirectory,
+                unifiedContentDirectory,
                 NoOpCacheEvictor(),
                 getDatabaseProvider(context)
             )
@@ -42,14 +55,15 @@ object HlsDownloadHelper {
     @Synchronized
     fun getStreamCacheDataSourceFactory(context: Context): androidx.media3.datasource.cache.CacheDataSource.Factory {
         return androidx.media3.datasource.cache.CacheDataSource.Factory()
-            .setCache(getStreamCache(context))
+            .setCache(getUnifiedCache(context))
             .setUpstreamDataSourceFactory(getDataSourceFactory(context))
+            .setCacheKeyFactory(customCacheKeyFactory)
             .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
     }
 
     @Synchronized
     fun clearStreamCache(context: Context) {
-        val cache = getStreamCache(context)
+        val cache = getUnifiedCache(context)
         val keys = cache.keys
         for (key in keys) {
             cache.removeResource(key)
@@ -71,14 +85,17 @@ object HlsDownloadHelper {
         if (downloadManager == null) {
             val appContext = context.applicationContext
             val databaseProvider = getDatabaseProvider(appContext)
-            val cache = getDownloadCache(appContext)
+            val cache = getUnifiedCache(appContext)
             val dataSourceFactory = getDataSourceFactory(appContext)
+            val cacheDataSourceFactory = androidx.media3.datasource.cache.CacheDataSource.Factory()
+                .setCache(cache)
+                .setUpstreamDataSourceFactory(dataSourceFactory)
+                .setCacheKeyFactory(customCacheKeyFactory)
+
             downloadManager = DownloadManager(
                 appContext,
-                databaseProvider,
-                cache,
-                dataSourceFactory,
-                Executor { it.run() }
+                androidx.media3.exoplayer.offline.DefaultDownloadIndex(databaseProvider),
+                DefaultDownloaderFactory(cacheDataSourceFactory, Executor { it.run() })
             ).apply {
                 maxParallelDownloads = 3
                 addListener(object : DownloadManager.Listener {
@@ -134,8 +151,9 @@ object HlsDownloadHelper {
     @Synchronized
     fun getCacheDataSourceFactory(context: Context): androidx.media3.datasource.cache.CacheDataSource.Factory {
         return androidx.media3.datasource.cache.CacheDataSource.Factory()
-            .setCache(getDownloadCache(context))
+            .setCache(getUnifiedCache(context))
             .setUpstreamDataSourceFactory(getDataSourceFactory(context))
+            .setCacheKeyFactory(customCacheKeyFactory)
             .setCacheWriteDataSinkFactory(null) // Disable writing when reading for export
     }
 
@@ -148,21 +166,6 @@ object HlsDownloadHelper {
             )
         }
         return downloadNotificationHelper!!
-    }
-
-
-
-    @Synchronized
-    fun getDownloadCache(context: Context): Cache {
-        if (downloadCache == null) {
-            val downloadContentDirectory = File(context.getExternalFilesDir(null), "downloads")
-            downloadCache = SimpleCache(
-                downloadContentDirectory,
-                NoOpCacheEvictor(),
-                getDatabaseProvider(context)
-            )
-        }
-        return downloadCache!!
     }
 
 
@@ -195,6 +198,53 @@ object HlsDownloadHelper {
 
         downloadHelper.prepare(object : DownloadHelper.Callback {
             override fun onPrepared(helper: DownloadHelper) {
+                // Parse manifest to extract subtitle and download it to stream_cache
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val connection = URL(url).openConnection() as HttpURLConnection
+                        if (userAgent != null) connection.setRequestProperty("User-Agent", userAgent)
+                        if (cookie != null) connection.setRequestProperty("Cookie", cookie)
+
+                        connection.inputStream.bufferedReader().use { reader ->
+                            var subtitleUri: String? = null
+                            reader.forEachLine { line ->
+                                if (line.startsWith("#EXT-X-MEDIA:TYPE=SUBTITLES") && line.contains("URI=\"")) {
+                                    val start = line.indexOf("URI=\"") + 5
+                                    val end = line.indexOf("\"", start)
+                                    if (start > 4 && end > start) {
+                                        subtitleUri = line.substring(start, end)
+                                    }
+                                }
+                            }
+
+                            subtitleUri?.let { relUri ->
+                                val absoluteSubUrl = if (relUri.startsWith("http")) relUri else {
+                                    val base = url.substringBeforeLast("/")
+                                    "$base/$relUri"
+                                }
+
+                                val subConn = URL(absoluteSubUrl).openConnection() as HttpURLConnection
+                                if (userAgent != null) subConn.setRequestProperty("User-Agent", userAgent)
+                                if (cookie != null) subConn.setRequestProperty("Cookie", cookie)
+
+                                val subExt = if (absoluteSubUrl.contains(".vtt", true)) ".vtt" else ".srt"
+                                val sanitizedTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+                                val unifiedContentDirectory = File(context.getExternalFilesDir(null), "unified_video_cache")
+                                if (!unifiedContentDirectory.exists()) unifiedContentDirectory.mkdirs()
+                                val subFile = File(unifiedContentDirectory, "${sanitizedTitle}_subtitle$subExt")
+
+                                subConn.inputStream.use { input ->
+                                    FileOutputStream(subFile).use { output ->
+                                        input.copyTo(output)
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
                 // The preparation is done. However, the actual download will run in the Service
                 // which uses the *global* downloadManager and its *global* dataSourceFactory.
                 // To support headers in the actual download, we must embed them into the DownloadRequest

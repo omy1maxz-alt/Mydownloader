@@ -94,7 +94,21 @@ class CustomPlayerActivity : AppCompatActivity() {
             fabSave.visibility = visibility
         })
 
-        val subtitleUrl = intent.getStringExtra(EXTRA_SUBTITLE_URL)
+        var subtitleUrl = intent.getStringExtra(EXTRA_SUBTITLE_URL)
+
+        // Check for local subtitle if none provided
+        if (subtitleUrl.isNullOrEmpty() && videoTitle != null) {
+            val sanitizedTitle = videoTitle!!.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+            val cacheDir = java.io.File(getExternalFilesDir(null), "unified_video_cache")
+            val vttFile = java.io.File(cacheDir, "${sanitizedTitle}_subtitle.vtt")
+            val srtFile = java.io.File(cacheDir, "${sanitizedTitle}_subtitle.srt")
+            if (vttFile.exists()) {
+                subtitleUrl = vttFile.absolutePath
+            } else if (srtFile.exists()) {
+                subtitleUrl = srtFile.absolutePath
+            }
+        }
+
         if (!subtitleUrl.isNullOrEmpty()) {
             Toast.makeText(this, "Subtitle found!", Toast.LENGTH_SHORT).show()
         } else {
@@ -106,8 +120,10 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         if (!subtitleUrl.isNullOrEmpty()) {
             // Determine correct mime type based on extension
-            val mimeType = if (subtitleUrl.endsWith(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
-            val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse(subtitleUrl))
+            val mimeType = if (subtitleUrl!!.endsWith(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
+            val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(
+                if (subtitleUrl!!.startsWith("http")) Uri.parse(subtitleUrl) else Uri.fromFile(java.io.File(subtitleUrl))
+            )
                 .setMimeType(mimeType)
                 .setLanguage("en")
                 .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED) // Force it to show by default
