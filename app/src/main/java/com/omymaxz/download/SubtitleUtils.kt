@@ -9,6 +9,14 @@ object SubtitleUtils {
 
     data class SubtitleResult(val snippet: String?, val language: String?)
 
+    fun isEnglishSubtitleTrack(manifestLine: String): Boolean {
+        if (!manifestLine.startsWith("#EXT-X-MEDIA:TYPE=SUBTITLES")) return false
+        val lowerLine = manifestLine.lowercase()
+        return lowerLine.contains("language=\"en\"") ||
+               lowerLine.contains("language=\"eng\"") ||
+               lowerLine.contains("name=\"english\"")
+    }
+
     fun extractSnippet(content: String): SubtitleResult {
         val lines = content.lines()
         var language: String? = null
