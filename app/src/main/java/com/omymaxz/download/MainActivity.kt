@@ -896,10 +896,7 @@ private fun checkBatteryOptimization() {
 
     override fun onBackPressed() {
         if (fullscreenView != null) {
-            (window.decorView as FrameLayout).removeView(fullscreenView)
-            fullscreenView = null
-            customViewCallback?.onCustomViewHidden()
-            requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            webView.webChromeClient?.onHideCustomView()
         } else if (currentTabIndex in tabs.indices && tabs[currentTabIndex].historyStack.size > 1) {
             tabs[currentTabIndex].historyStack.removeAt(tabs[currentTabIndex].historyStack.size - 1)
             val prevUrl = tabs[currentTabIndex].historyStack.last()
@@ -1001,6 +998,13 @@ private fun checkBatteryOptimization() {
                 private var navigationCount = 0
 
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    // Restore UI if trapped in fullscreen
+                    if (fullscreenView != null) {
+                        webView.webChromeClient?.onHideCustomView()
+                    }
+                    binding.mainContent.visibility = View.VISIBLE
+                    binding.toolbar.visibility = View.VISIBLE
+
                     val javascript = if (isDesktopMode) {
                         """
                         javascript:(function() {
@@ -1311,7 +1315,56 @@ private fun checkBatteryOptimization() {
                     // For Google Sign-In and OAuth, the popup MUST be kept alive in the view hierarchy
                     // and MUST have a webChromeClient with onCloseWindow to return the token to the parent.
                     val rootLayout = binding.rootContainer
-                    rootLayout.addView(newWebView)
+
+                    // Create a wrapper layout for the popup to enforce navigation UI
+                    val popupWrapper = android.widget.LinearLayout(this@MainActivity).apply {
+                        orientation = android.widget.LinearLayout.VERTICAL
+                        layoutParams = FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT,
+                            FrameLayout.LayoutParams.MATCH_PARENT
+                        )
+                        setBackgroundColor(android.graphics.Color.WHITE)
+                    }
+
+                    // Simple navigation bar for the popup
+                    val popupNavBar = android.widget.LinearLayout(this@MainActivity).apply {
+                        orientation = android.widget.LinearLayout.HORIZONTAL
+                        layoutParams = android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                        setPadding(16, 16, 16, 16)
+                        setBackgroundColor(android.graphics.Color.LTGRAY)
+                    }
+
+                    val popupUrlTitle = android.widget.TextView(this@MainActivity).apply {
+                        text = "Popup Window"
+                        textSize = 16f
+                        layoutParams = android.widget.LinearLayout.LayoutParams(
+                            0,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                            1f
+                        )
+                        maxLines = 1
+                        ellipsize = android.text.TextUtils.TruncateAt.END
+                    }
+
+                    val popupCloseBtn = android.widget.ImageButton(this@MainActivity).apply {
+                        setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+                        setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        setOnClickListener {
+                            rootLayout.removeView(popupWrapper)
+                            newWebView.destroy()
+                        }
+                    }
+
+                    popupNavBar.addView(popupUrlTitle)
+                    popupNavBar.addView(popupCloseBtn)
+
+                    popupWrapper.addView(popupNavBar)
+                    popupWrapper.addView(newWebView)
+
+                    rootLayout.addView(popupWrapper)
 
                     val transport = resultMsg.obj as WebView.WebViewTransport
                     transport.webView = newWebView
