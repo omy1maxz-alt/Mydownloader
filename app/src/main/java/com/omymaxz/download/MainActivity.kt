@@ -76,6 +76,7 @@ class MainActivity : AppCompatActivity() {
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
     private var fullscreenDownloadButton: View? = null
+    private var fullscreenExitButton: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     var isServiceRunning = false
     private val handler = Handler(Looper.getMainLooper())
@@ -1217,6 +1218,29 @@ private fun checkBatteryOptimization() {
                     (binding.root as FrameLayout).addView(downloadButton)
                     fullscreenDownloadButton = downloadButton
 
+                                        val exitButton = com.google.android.material.floatingactionbutton.FloatingActionButton(this@MainActivity).apply {
+                        setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+                        contentDescription = "Exit Fullscreen"
+                        backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#88000000"))
+                        imageTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
+
+                        val params = FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            FrameLayout.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            gravity = android.view.Gravity.TOP or android.view.Gravity.START
+                            topMargin = 100
+                            marginStart = 100
+                        }
+                        layoutParams = params
+
+                        setOnClickListener {
+                            onHideCustomView()
+                        }
+                    }
+                    (binding.root as FrameLayout).addView(exitButton)
+                    fullscreenExitButton = exitButton
+
                     window.decorView.systemUiVisibility = (
                         View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -1247,6 +1271,10 @@ private fun checkBatteryOptimization() {
                     if (fullscreenDownloadButton != null) {
                         (binding.root as FrameLayout).removeView(fullscreenDownloadButton)
                         fullscreenDownloadButton = null
+                    }
+                    if (fullscreenExitButton != null) {
+                        (binding.root as FrameLayout).removeView(fullscreenExitButton)
+                        fullscreenExitButton = null
                     }
 
                     window.decorView.setOnSystemUiVisibilityChangeListener(null)

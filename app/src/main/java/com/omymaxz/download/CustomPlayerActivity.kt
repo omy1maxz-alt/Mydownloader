@@ -10,6 +10,11 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MergingMediaSource
+import androidx.media3.exoplayer.source.SingleSampleMediaSource
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.hls.HlsMediaSource
+import androidx.appcompat.app.AlertDialog
 import android.util.Log
 import androidx.media3.ui.PlayerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -82,6 +87,14 @@ class CustomPlayerActivity : AppCompatActivity() {
     }
 
     private fun initializePlayer() {
+        // Pass video URL as referer to prevent 403
+        if (videoUrl != null) {
+            HlsDownloadHelper.currentReferer = videoUrl
+            // A common default user agent if the global one is null
+            if (HlsDownloadHelper.currentUserAgent == null) {
+                HlsDownloadHelper.currentUserAgent = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
+            }
+        }
         val cacheDataSourceFactory = HlsDownloadHelper.getStreamCacheDataSourceFactory(this)
 
         player = ExoPlayer.Builder(this)
@@ -101,7 +114,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         // Check for local subtitle if none provided
         if (subtitleUrl.isNullOrEmpty() && videoTitle != null) {
             val sanitizedTitle = videoTitle!!.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-            val cacheDir = java.io.File(getExternalFilesDir(null), "unified_video_cache")
+            val cacheDir = java.io.File(getExternalFilesDir(null), "subtitles")
             val vttFile = java.io.File(cacheDir, "${sanitizedTitle}_subtitle.vtt")
             val srtFile = java.io.File(cacheDir, "${sanitizedTitle}_subtitle.srt")
             if (vttFile.exists()) {
@@ -120,32 +133,52 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setUri(Uri.parse(videoUrl))
             .setMimeType(if (videoUrl?.contains(".m3u8") == true) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
 
+        val baseMediaItem = mediaItemBuilder.build()
+        val hlsMediaSource = HlsMediaSource.Factory(cacheDataSourceFactory).createMediaSource(baseMediaItem)
+        var mediaSourceToPlay: MediaSource = hlsMediaSource
+
         if (!subtitleUrl.isNullOrEmpty()) {
             val isHttp = subtitleUrl!!.startsWith("http")
             val subtitleFile = if (!isHttp) java.io.File(subtitleUrl) else null
             if (isHttp || (subtitleFile != null && subtitleFile.exists())) {
-                // Determine correct mime type based on extension
-                val mimeType = if (subtitleUrl!!.endsWith(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
-                val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(
-                    if (isHttp) Uri.parse(subtitleUrl) else Uri.fromFile(subtitleFile)
-                )
-                    .setMimeType(mimeType)
-                    .setLanguage("en")
-                    .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED) // Force it to show by default
-                    .build()
-                mediaItemBuilder.setSubtitleConfigurations(listOf(subtitleConfig))
+                try {
+                    // Determine correct mime type based on extension
+                    val mimeType = if (subtitleUrl!!.endsWith(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
+                    val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(
+                        if (isHttp) Uri.parse(subtitleUrl) else Uri.fromFile(subtitleFile)
+                    )
+                        .setMimeType(mimeType)
+                        .setLanguage("en")
+                        .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED) // Force it to show by default
+                        .build()
+
+                    val localDataSourceFactory = androidx.media3.datasource.DefaultDataSource.Factory(this)
+                    val subtitleSourceFactory = if (isHttp) cacheDataSourceFactory else localDataSourceFactory
+
+                    val subtitleSource = SingleSampleMediaSource.Factory(subtitleSourceFactory)
+                        .setTreatLoadErrorsAsEndOfStream(true)
+                        .createMediaSource(subtitleConfig, androidx.media3.common.C.TIME_UNSET)
+
+                    mediaSourceToPlay = MergingMediaSource(hlsMediaSource, subtitleSource)
+                } catch (e: Exception) {
+                    Log.e("CustomPlayerActivity", "Failed to create subtitle source", e)
+                }
             } else {
                 Log.e("CustomPlayerActivity", "Subtitle file does not exist: $subtitleUrl")
             }
         }
 
-        val mediaItem = mediaItemBuilder.build()
-
-        player?.setMediaItem(mediaItem)
+        player?.setMediaSource(mediaSourceToPlay)
 
         player?.addListener(object : Player.Listener {
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                 Log.e("CustomPlayerActivity", "Player error: ", error)
+                val errorCodeName = error.errorCodeName
+                AlertDialog.Builder(this@CustomPlayerActivity)
+                    .setTitle("Playback Error")
+                    .setMessage("Error ($errorCodeName):\n${error.message}")
+                    .setPositiveButton("OK", null)
+                    .show()
                 Toast.makeText(this@CustomPlayerActivity, "Playback error: ${error.message}", Toast.LENGTH_LONG).show()
             }
         })

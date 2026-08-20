@@ -62,7 +62,7 @@ object HlsDownloadHelper {
     }
 
     @Synchronized
-    fun clearStreamCache(context: Context) {
+    fun clearUnifiedCache(context: Context) {
         val cache = getUnifiedCache(context)
         val keys = cache.keys
         for (key in keys) {
@@ -77,8 +77,9 @@ object HlsDownloadHelper {
     private var dataSourceFactory: DataSource.Factory? = null
 
     // Shared state for headers
-    private var currentUserAgent: String? = null
-    private var currentCookie: String? = null
+    var currentUserAgent: String? = null
+    var currentCookie: String? = null
+    var currentReferer: String? = null
 
     @Synchronized
     fun getDownloadManager(context: Context): DownloadManager {
@@ -128,7 +129,7 @@ object HlsDownloadHelper {
     }
 
     @Synchronized
-    private fun getDataSourceFactory(context: Context): DataSource.Factory {
+    fun getDataSourceFactory(context: Context): DataSource.Factory {
         if (dataSourceFactory == null) {
             // Use a factory that applies the latest headers
             val upstreamFactory = DefaultHttpDataSource.Factory()
@@ -141,6 +142,9 @@ object HlsDownloadHelper {
                 }
                 if (currentCookie != null) {
                     dataSource.setRequestProperty("Cookie", currentCookie!!)
+                }
+                if (currentReferer != null) {
+                    dataSource.setRequestProperty("Referer", currentReferer!!)
                 }
                 dataSource
             }
@@ -236,9 +240,9 @@ object HlsDownloadHelper {
 
                                 val subExt = if (absoluteSubUrl.contains(".vtt", true)) ".vtt" else ".srt"
                                 val sanitizedTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-                                val unifiedContentDirectory = File(context.getExternalFilesDir(null), "unified_video_cache")
-                                if (!unifiedContentDirectory.exists()) unifiedContentDirectory.mkdirs()
-                                val subFile = File(unifiedContentDirectory, "${sanitizedTitle}_subtitle$subExt")
+                                val subtitlesDirectory = File(context.getExternalFilesDir(null), "subtitles")
+                                if (!subtitlesDirectory.exists()) subtitlesDirectory.mkdirs()
+                                val subFile = File(subtitlesDirectory, "${sanitizedTitle}_subtitle$subExt")
 
                                 subConn.inputStream.use { input ->
                                     FileOutputStream(subFile).use { output ->
