@@ -3160,7 +3160,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .show()
     }
     private fun showMasterSettingsDialog() {
-        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading")
+        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs")
         AlertDialog.Builder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
@@ -3170,6 +3170,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     2 -> showWhitelistManagementDialog()
                     3 -> showBackupRestoreDialog()
                     4 -> showBackgroundLoadingDialog()
+                    5 -> {
+                        val intent = Intent(this, LogcatViewerActivity::class.java)
+                        startActivity(intent)
+                    }
                 }
             }
             .show()
