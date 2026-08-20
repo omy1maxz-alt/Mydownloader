@@ -152,7 +152,7 @@ class HlsExportService : Service() {
 
 
     private suspend fun exportHlsToMp4FromUrl(url: String, title: String) = suspendCancellableCoroutine { continuation ->
-        val cacheDataSourceFactory = HlsDownloadHelper.getStreamCacheDataSourceFactory(applicationContext)
+        val cacheDataSourceFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext)
         val mediaItem = MediaItem.Builder().setUri(Uri.parse(url)).build()
 
         val transformer = Transformer.Builder(applicationContext)
@@ -168,7 +168,7 @@ class HlsExportService : Service() {
             .addListener(object : Transformer.Listener {
                 override fun onCompleted(composition: androidx.media3.transformer.Composition, exportResult: ExportResult) {
                     Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
-                    HlsDownloadHelper.clearStreamCache(applicationContext)
+                    HlsDownloadHelper.clearUnifiedCache(applicationContext)
                     continuation.resume(Unit)
                 }
 
