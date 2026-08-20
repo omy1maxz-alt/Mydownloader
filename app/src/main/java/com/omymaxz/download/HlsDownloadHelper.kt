@@ -209,23 +209,17 @@ object HlsDownloadHelper {
 
                         connection.inputStream.bufferedReader().use { reader ->
                             var subtitleUri: String? = null
-                            var fallbackSubtitleUri: String? = null
                             reader.forEachLine { line ->
                                 if (line.startsWith("#EXT-X-MEDIA:TYPE=SUBTITLES") && line.contains("URI=\"")) {
                                     val start = line.indexOf("URI=\"") + 5
                                     val end = line.indexOf("\"", start)
                                     if (start > 4 && end > start) {
                                         val uri = line.substring(start, end)
-                                        if (line.contains("LANGUAGE=\"en\"") || line.contains("LANGUAGE=\"eng\"")) {
+                                        if (SubtitleUtils.isEnglishSubtitleTrack(line)) {
                                             subtitleUri = uri
-                                        } else if (fallbackSubtitleUri == null) {
-                                            fallbackSubtitleUri = uri
                                         }
                                     }
                                 }
-                            }
-                            if (subtitleUri == null) {
-                                subtitleUri = fallbackSubtitleUri
                             }
 
                             subtitleUri?.let { relUri ->

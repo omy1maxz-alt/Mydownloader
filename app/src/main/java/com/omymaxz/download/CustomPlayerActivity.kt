@@ -139,7 +139,6 @@ class CustomPlayerActivity : AppCompatActivity() {
         player?.trackSelectionParameters = player!!.trackSelectionParameters
             .buildUpon()
             .setPreferredTextLanguage("en")
-            .setSelectUndeterminedTextLanguage(true)
             .build()
 
         player?.prepare()
