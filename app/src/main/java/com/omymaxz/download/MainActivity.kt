@@ -1005,6 +1005,8 @@ private fun checkBatteryOptimization() {
                     binding.mainContent.visibility = View.VISIBLE
                     binding.toolbar.visibility = View.VISIBLE
 
+                    injectAntiHijackingScripts(view)
+
                     val javascript = if (isDesktopMode) {
                         """
                         javascript:(function() {
@@ -1293,18 +1295,18 @@ private fun checkBatteryOptimization() {
                     val blockPopups = settingsPrefs.getBoolean("BLOCK_ALL_POPUPS", true)
 
                     // Allow popups if user gesture is present OR if the URL is whitelisted
-                    if (blockPopups && !isUserGesture && (currentUrl == null || !isUrlWhitelisted(currentUrl))) {
+                    if (!isUserGesture && (currentUrl == null || !isUrlWhitelisted(currentUrl))) {
                         val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
                         if (showNotice) {
-                            Toast.makeText(applicationContext, "Pop-up blocked", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(applicationContext, "Malicious Pop-up blocked", Toast.LENGTH_SHORT).show()
                         }
-                        return true // Blocked
+                        return false // Aggressively kill the popup
                     }
 
                     val newWebView = WebView(this@MainActivity).apply {
                         settings.javaScriptEnabled = true
                         settings.setSupportMultipleWindows(true)
-                        settings.javaScriptCanOpenWindowsAutomatically = true
+                        settings.javaScriptCanOpenWindowsAutomatically = false
                         settings.domStorageEnabled = true
                         layoutParams = FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.MATCH_PARENT,
@@ -1577,6 +1579,33 @@ private fun checkBatteryOptimization() {
             }
         }
     }
+
+    private fun injectAntiHijackingScripts(view: WebView?) {
+        val js = """
+        javascript:(function() {
+            // Override window.open to do nothing
+            window.open = function() { return null; };
+            // Intercept and prevent click-jacking overlays
+            document.addEventListener('click', function(e) {
+                var target = e.target;
+                if (target && target.tagName === 'DIV') {
+                    var style = window.getComputedStyle(target);
+                    // Check for invisible/transparent full-screen overlays often used for click-jacking
+                    if (style.position === 'absolute' || style.position === 'fixed') {
+                        if (style.zIndex > 1000 && (style.opacity < 0.1 || style.backgroundColor === 'rgba(0, 0, 0, 0)' || style.backgroundColor === 'transparent')) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            target.remove(); // Remove the offending element
+                            console.log('Intercepted and removed click-jack overlay.');
+                        }
+                    }
+                }
+            }, true);
+        })();
+        """
+        view?.evaluateJavascript(js, null)
+    }
+
     private fun injectPerchanceFixes(webView: WebView?) {
         val polyfillScript = """
             javascript:(function() {
