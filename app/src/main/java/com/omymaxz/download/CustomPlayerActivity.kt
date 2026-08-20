@@ -7,8 +7,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import android.util.Log
 import androidx.media3.ui.PlayerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
@@ -119,21 +121,34 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setMimeType(if (videoUrl?.contains(".m3u8") == true) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
 
         if (!subtitleUrl.isNullOrEmpty()) {
-            // Determine correct mime type based on extension
-            val mimeType = if (subtitleUrl!!.endsWith(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
-            val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(
-                if (subtitleUrl!!.startsWith("http")) Uri.parse(subtitleUrl) else Uri.fromFile(java.io.File(subtitleUrl))
-            )
-                .setMimeType(mimeType)
-                .setLanguage("en")
-                .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED) // Force it to show by default
-                .build()
-            mediaItemBuilder.setSubtitleConfigurations(listOf(subtitleConfig))
+            val isHttp = subtitleUrl!!.startsWith("http")
+            val subtitleFile = if (!isHttp) java.io.File(subtitleUrl) else null
+            if (isHttp || (subtitleFile != null && subtitleFile.exists())) {
+                // Determine correct mime type based on extension
+                val mimeType = if (subtitleUrl!!.endsWith(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
+                val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(
+                    if (isHttp) Uri.parse(subtitleUrl) else Uri.fromFile(subtitleFile)
+                )
+                    .setMimeType(mimeType)
+                    .setLanguage("en")
+                    .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED) // Force it to show by default
+                    .build()
+                mediaItemBuilder.setSubtitleConfigurations(listOf(subtitleConfig))
+            } else {
+                Log.e("CustomPlayerActivity", "Subtitle file does not exist: $subtitleUrl")
+            }
         }
 
         val mediaItem = mediaItemBuilder.build()
 
         player?.setMediaItem(mediaItem)
+
+        player?.addListener(object : Player.Listener {
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                Log.e("CustomPlayerActivity", "Player error: ", error)
+                Toast.makeText(this@CustomPlayerActivity, "Playback error: ${error.message}", Toast.LENGTH_LONG).show()
+            }
+        })
 
         // Force track selection for text to automatically turn on subtitles if they exist
         player?.trackSelectionParameters = player!!.trackSelectionParameters
