@@ -71,6 +71,48 @@ class CustomPlayerActivity : AppCompatActivity() {
     override fun onPause()  { super.onPause();  player?.pause() }
     override fun onStop()   { super.onStop();   /* keep activePlayer alive for bg playback */ }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val newSubUrl = intent?.getStringExtra(EXTRA_SUBTITLE_URL)
+        if (newSubUrl != null && player != null) {
+            // We just got a new subtitle URL pushed while playing. Fetch it.
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val bytes = HlsDownloadHelper.httpGetBytes(newSubUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentCookie)
+                    if (bytes != null) {
+                        val contentString = String(bytes, Charsets.UTF_8)
+                        var detectedLang = "und"
+                        if (contentString.contains("thank", ignoreCase = true)) {
+                            detectedLang = "en"
+                        } else if (contentString.contains("gracias", ignoreCase = true)) {
+                            detectedLang = "es"
+                        } else {
+                            detectedLang = "Detected"
+                        }
+
+                        val ext = if (newSubUrl.contains(".srt", true)) ".srt" else ".vtt"
+                        val safeTitle = videoTitle ?: "Offline_Video_${System.currentTimeMillis()}"
+                        val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, safeTitle)
+                        val outFile = File(outDir, "${safeTitle.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$detectedLang$ext")
+
+                        if (!outFile.exists()) {
+                            java.io.FileOutputStream(outFile).use { it.write(bytes) }
+                        }
+
+                        val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this@CustomPlayerActivity)
+                        val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, safeTitle)
+                        withContext(Dispatchers.Main) {
+                            hotSwapSubtitles(newLocalFiles, cacheFactory)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("CustomPlayerActivity", "Failed to add subtitle from onNewIntent", e)
+                }
+            }
+        }
+    }
+
     private fun initializePlayer() {
         if (activePlayer != null) {
             player = activePlayer
@@ -158,7 +200,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             try {
                 // 1. Process EXTRA_SUBTITLE_URL as a regular downloaded file so it merges properly without being hardcoded to "English"
                 val intentSubUrl = intent.getStringExtra(EXTRA_SUBTITLE_URL)
-                if (!intentSubUrl.isNullOrBlank() && localFiles.isEmpty()) {
+                if (!intentSubUrl.isNullOrBlank()) {
                     val bytes = HlsDownloadHelper.httpGetBytes(intentSubUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentCookie)
                     if (bytes != null) {
                         val contentString = String(bytes, Charsets.UTF_8)
@@ -210,11 +252,16 @@ class CustomPlayerActivity : AppCompatActivity() {
         val cacheFactoryToUse = cacheFactory
 
         // --- Build base video source (recreate to avoid buffering issue) ---
+        val isHls = videoUrl?.contains("m3u8", ignoreCase = true) == true
         val baseItem = MediaItem.Builder()
             .setUri(Uri.parse(videoUrl!!))
-            .setMimeType(MimeTypes.APPLICATION_M3U8)
+            .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
             .build()
-        val baseSource: MediaSource = HlsMediaSource.Factory(cacheFactoryToUse).createMediaSource(baseItem)
+
+        val baseSource: MediaSource = if (isHls)
+            HlsMediaSource.Factory(cacheFactoryToUse).createMediaSource(baseItem)
+        else
+            ProgressiveMediaSource.Factory(cacheFactoryToUse).createMediaSource(baseItem)
 
         val subSources = mutableListOf<MediaSource>()
 
