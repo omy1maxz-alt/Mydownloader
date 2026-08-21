@@ -14,38 +14,33 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
-import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadManager
+import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.File
 import kotlin.coroutines.resume
-import kotlinx.coroutines.suspendCancellableCoroutine
 
 class HlsExportService : Service() {
 
     companion object {
         const val EXTRA_DOWNLOAD_ID = "com.omymaxz.download.extra.DOWNLOAD_ID"
-        const val EXTRA_TITLE = "com.omymaxz.download.extra.TITLE"
-        const val EXTRA_URL = "com.omymaxz.download.extra.URL"
-        // NEW: lets the caller choose "just export what's cached" vs "complete the missing
-        // parts and export the full video" instead of the service always doing the latter.
-        const val EXTRA_CACHED_ONLY = "com.omymaxz.download.extra.CACHED_ONLY"
-        const val CHANNEL_ID = "hls_export_channel"
-        const val NOTIFICATION_ID = 3000
-        private const val TAG = "HlsExportService"
+        const val EXTRA_TITLE      = "com.omymaxz.download.extra.TITLE"
+        const val EXTRA_URL        = "com.omymaxz.download.extra.URL"
+        const val CHANNEL_ID       = "hls_export_channel"
+        const val NOTIFICATION_ID  = 3000
+        private const val TAG      = "HlsExportService"
     }
 
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
     private var notificationManager: NotificationManager? = null
-    private var activeExports = java.util.concurrent.atomic.AtomicInteger(0)
+    private val activeExports = java.util.concurrent.atomic.AtomicInteger(0)
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -56,22 +51,206 @@ class HlsExportService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent == null) {
-            if (activeExports.get() == 0) stopSelf(startId)
-            return START_NOT_STICKY
-        }
+        if (intent == null) { if (activeExports.get() == 0) stopSelf(startId); return START_NOT_STICKY }
 
         val downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
-        val url = intent.getStringExtra(EXTRA_URL)
-        val title = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown Video"
-        val cachedOnly = intent.getBooleanExtra(EXTRA_CACHED_ONLY, false)
+        val url        = intent.getStringExtra(EXTRA_URL)
+        val title      = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
 
         if (downloadId == null && url == null) {
             if (activeExports.get() == 0) stopSelf(startId)
             return START_NOT_STICKY
         }
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        startForeground(NOTIFICATION_ID, buildNotification(title))
+        activeExports.incrementAndGet()
+
+        serviceScope.launch {
+            try {
+                when {
+                    downloadId != null -> exportFromDownloadId(downloadId, title)
+                    url != null        -> exportFromUrl(url, title)
+                }
+            } catch (t: Throwable) {
+                Log.e(TAG, "Export failed", t)
+                Toast.makeText(applicationContext, "Export failed: ${t.message}", Toast.LENGTH_LONG).show()
+            } finally {
+                if (activeExports.decrementAndGet() == 0) stopSelf()
+            }
+        }
+        return START_NOT_STICKY
+    }
+
+    // ---------- Path A: we already have a DownloadManager entry ----------
+    private suspend fun exportFromDownloadId(downloadId: String, title: String) {
+        val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
+        val download = dm.downloadIndex.getDownload(downloadId)
+            ?: run {
+                Toast.makeText(applicationContext, "Video cache not found", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+        // Ensure the asset is fully cached before muxing. DownloadManager will resume, not restart.
+        ensureFullyCached(dm, download)
+
+        val mediaItem = download.request.toMediaItem()
+        muxToMp4(mediaItem, title) {
+            // Success: optionally drop the offline entry since we now have a standalone MP4.
+            try { dm.removeDownload(downloadId) } catch (_: Throwable) {}
+        }
+    }
+
+    // ---------- Path B: direct URL (e.g. from the player's "Save" FAB) ----------
+    private suspend fun exportFromUrl(url: String, title: String) {
+        val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
+
+        // Build a MediaItem the same way the downloader would.
+        val mediaItem = MediaItem.Builder()
+            .setUri(Uri.parse(url))
+            .setMimeType(MimeTypes.APPLICATION_M3U8)
+            .setTag(title)
+            .build()
+
+        // Prepare a DownloadRequest, then push it through DownloadManager so the
+        // unified cache is filled (resuming from whatever is already cached).
+        val helper = androidx.media3.exoplayer.offline.DownloadHelper.forMediaItem(
+            applicationContext, mediaItem,
+            null,
+            HlsDownloadHelper.getDataSourceFactory(applicationContext)
+        )
+        val req = withContext(Dispatchers.IO) {
+            suspendCancellableCoroutine<androidx.media3.exoplayer.offline.DownloadRequest> { cont ->
+                helper.prepare(object : androidx.media3.exoplayer.offline.DownloadHelper.Callback {
+                    override fun onPrepared(h: androidx.media3.exoplayer.offline.DownloadHelper) {
+                        val r = h.getDownloadRequest(androidx.media3.common.util.Util.getUtf8Bytes(title))
+                        h.release()
+                        cont.resume(r)
+                    }
+                    override fun onPrepareError(h: androidx.media3.exoplayer.offline.DownloadHelper, e: java.io.IOException) {
+                        h.release()
+                        cont.cancel(e)
+                    }
+                })
+            }
+        }
+        DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, req, true)
+
+        // Wait for DownloadManager to finish (it will reuse cached segments).
+        val completed = waitForCompletion(dm, req.id)
+        if (!completed) {
+            Toast.makeText(applicationContext, "Download did not complete", Toast.LENGTH_LONG).show()
+            return
+        }
+        muxToMp4(mediaItem, title, onMuxSuccess = {
+            try { HlsDownloadHelper.clearUnifiedCache(applicationContext) } catch (_: Throwable) {}
+        })
+    }
+
+    // ---------- Cache coverage check + DownloadManager resume ----------
+    private suspend fun ensureFullyCached(dm: DownloadManager, download: Download) {
+        if (download.state == Download.STATE_COMPLETED) return
+
+        // Ask the cache how many bytes we already have for this key.
+        val cache: Cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
+        val key = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(
+            androidx.media3.datasource.DataSpec(Uri.parse(download.request.uri.toString()))
+        )
+        val cachedBytes = cache.getCachedBytes(key, 0, androidx.media3.common.C.LENGTH_UNSET.toLong())
+        val totalBytes  = download.bytesDownloaded.coerceAtLeast(1L)
+        Log.i(TAG, "Cache coverage for ${download.request.id}: $cachedBytes / $totalBytes")
+
+        if (cachedBytes >= totalBytes - 1024) {
+            // Close enough — treat as complete.
+            return
+        }
+
+        // Otherwise, (re-)add the download so DownloadManager resumes from cache.
+        DownloadService.sendAddDownload(
+            applicationContext, HlsDownloadService::class.java, download.request, true
+        )
+        waitForCompletion(dm, download.request.id)
+    }
+
+    private suspend fun waitForCompletion(dm: DownloadManager, id: String): Boolean =
+        withContext(Dispatchers.IO) {
+            suspendCancellableCoroutine { cont ->
+                val listener = object : DownloadManager.Listener {
+                    override fun onDownloadChanged(
+                        dm: DownloadManager, d: Download, finalException: Exception?
+                    ) {
+                        if (d.request.id != id) return
+                        when (d.state) {
+                            Download.STATE_COMPLETED -> {
+                                dm.removeListener(this); if (cont.isActive) cont.resume(true)
+                            }
+                            Download.STATE_FAILED -> {
+                                dm.removeListener(this); if (cont.isActive) cont.resume(false)
+                            }
+                            else -> Unit
+                        }
+                    }
+                }
+                dm.addListener(listener)
+                // Seed check in case it already completed.
+                runCatching {
+                    val cur = dm.downloadIndex.getDownload(id)
+                    if (cur?.state == Download.STATE_COMPLETED) {
+                        dm.removeListener(listener); if (cont.isActive) cont.resume(true)
+                    }
+                }
+                cont.invokeOnCancellation { dm.removeListener(listener) }
+            }
+        }
+
+    // ---------- The actual MP4 mux ----------
+    private suspend fun muxToMp4(mediaItem: MediaItem, title: String, onMuxSuccess: () -> Unit) =
+        suspendCancellableCoroutine<Unit> { cont ->
+
+            // IMPORTANT: use the unified CacheDataSource (read-only is fine here because
+            // ensureFullyCached() guarantees the bytes are present).
+            val cacheFactory: CacheDataSource.Factory =
+                HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
+
+            val transformer = Transformer.Builder(applicationContext)
+                .setAssetLoaderFactory(
+                    androidx.media3.transformer.DefaultAssetLoaderFactory(
+                        applicationContext,
+                        androidx.media3.transformer.DefaultDecoderFactory(applicationContext),
+                        /* forceAudioTrack= */ false,
+                        androidx.media3.common.util.Clock.DEFAULT,
+                        androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
+                            .setDataSourceFactory(cacheFactory),
+                        androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
+                    )
+                )
+                .addListener(object : Transformer.Listener {
+                    override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
+                        Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
+                        onMuxSuccess()
+                        if (cont.isActive) cont.resume(Unit)
+                    }
+                    override fun onError(
+                        composition: androidx.media3.transformer.Composition,
+                        result: ExportResult, ex: ExportException
+                    ) {
+                        Log.e(TAG, "Transformer error", ex)
+                        Toast.makeText(applicationContext, "Export error: ${ex.message}", Toast.LENGTH_LONG).show()
+                        if (cont.isActive) cont.resume(Unit)
+                    }
+                })
+                .build()
+
+            val safe = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+            val out = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "$safe.mp4"
+            )
+            transformer.start(mediaItem, out.absolutePath)
+            cont.invokeOnCancellation { transformer.cancel() }
+        }
+
+    private fun buildNotification(title: String) =
+        NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Exporting Video to Downloads Folder")
             .setContentText(title)
             .setSmallIcon(android.R.drawable.stat_sys_download)
@@ -79,201 +258,14 @@ class HlsExportService : Service() {
             .setProgress(100, 0, true)
             .build()
 
-        startForeground(NOTIFICATION_ID, notification)
-        activeExports.incrementAndGet()
-
-        serviceScope.launch {
-            try {
-                if (downloadId != null) {
-                    exportHlsToMp4(downloadId, title)
-                } else if (url != null) {
-                    exportHlsToMp4FromUrl(url, title, cachedOnly)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Export failed", e)
-                Toast.makeText(applicationContext, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
-            } finally {
-                if (activeExports.decrementAndGet() == 0) {
-                    stopSelf()
-                }
-            }
-        }
-
-        return START_NOT_STICKY
-    }
-
-    // Unchanged: this path exports a DownloadManager-completed (fully downloaded) item, so
-    // there's nothing partial to reason about.
-    private suspend fun exportHlsToMp4(downloadId: String, title: String) = suspendCancellableCoroutine { continuation ->
-        val downloadManager = HlsDownloadHelper.getDownloadManager(applicationContext)
-        val download = downloadManager.downloadIndex.getDownload(downloadId)
-
-        if (download == null) {
-            Log.e(TAG, "Download not found in index for id: $downloadId")
-            Toast.makeText(applicationContext, "Video cache not found", Toast.LENGTH_SHORT).show()
-            continuation.resume(Unit)
-            return@suspendCancellableCoroutine
-        }
-
-        val mediaItem = download.request.toMediaItem()
-        val cacheDataSourceFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
-
-        val transformer = buildTransformer(cacheDataSourceFactory, title) { continuation.resume(Unit) }
-
-        val sanitizedTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val outFile = File(downloadsDir, "$sanitizedTitle.mp4")
-
-        transformer.start(mediaItem, outFile.absolutePath)
-        continuation.invokeOnCancellation { transformer.cancel() }
-    }
-
-    /**
-     * REWRITTEN. Previously this always ran Transformer over the full, unclipped manifest
-     * duration — meaning every export behaved like a fresh full download regardless of how
-     * much was actually cached. Now it explicitly branches:
-     *
-     *  - cachedOnly = true  -> exports only the contiguous run of already-cached segments,
-     *    clipped with MediaItem.ClippingConfiguration. No network touched, no filler duration.
-     *  - cachedOnly = false -> first fetches ONLY the segments that are missing (through a
-     *    writable cache factory, so the fetch benefits future playback too), then runs the
-     *    read-only Transformer pass over the now-complete cache.
-     */
-    private suspend fun exportHlsToMp4FromUrl(url: String, title: String, cachedOnly: Boolean) {
-        val userAgent = HlsDownloadHelper.currentUserAgent
-        val cookie = HlsDownloadHelper.currentCookie
-
-        // Subtitle sidecar wasn't being fetched at all for this path before — now it is,
-        // so an exported MP4 has a matching .vtt/.srt file CustomPlayerActivity can attach.
-        HlsDownloadHelper.fetchAndCacheSubtitles(applicationContext, url, title, userAgent, cookie)
-
-        val segments = HlsDownloadHelper.inspectSegments(applicationContext, url, userAgent, cookie)
-        if (segments.isEmpty()) {
-            Toast.makeText(applicationContext, "Could not read playlist segments", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        val clipEndMs: Long
-        if (cachedOnly) {
-            val firstMissingIndex = segments.indexOfFirst { !it.isCached }
-            if (firstMissingIndex == 0) {
-                Toast.makeText(applicationContext, "Nothing cached yet — play more of the video first", Toast.LENGTH_LONG).show()
-                return
-            }
-            clipEndMs = if (firstMissingIndex == -1) {
-                segments.last().let { it.startMs + it.durationMs }
-            } else {
-                segments[firstMissingIndex - 1].let { it.startMs + it.durationMs }
-            }
-        } else {
-            val missing = segments.filterNot { it.isCached }
-            if (missing.isNotEmpty()) {
-                fetchMissingSegments(missing)
-            }
-            clipEndMs = segments.last().let { it.startMs + it.durationMs }
-        }
-
-        val mediaItem = MediaItem.Builder()
-            .setUri(Uri.parse(url))
-            .setClippingConfiguration(
-                MediaItem.ClippingConfiguration.Builder()
-                    .setStartPositionMs(0)
-                    .setEndPositionMs(clipEndMs)
-                    .build()
-            )
-            .build()
-
-        val cacheDataSourceFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
-
-        suspendCancellableCoroutine<Unit> { continuation ->
-            val transformer = buildTransformer(cacheDataSourceFactory, title) { continuation.resume(Unit) }
-            val sanitizedTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val outFile = File(downloadsDir, "$sanitizedTitle.mp4")
-            transformer.start(mediaItem, outFile.absolutePath)
-            continuation.invokeOnCancellation { transformer.cancel() }
-        }
-    }
-
-    /**
-     * Downloads exactly the segments that are missing, through a WRITABLE cache factory (so
-     * the bytes land in the shared cache and benefit future playback/export too) — nothing
-     * that's already cached is touched or re-fetched.
-     */
-    private suspend fun fetchMissingSegments(missing: List<HlsDownloadHelper.SegmentCacheInfo>) {
-        kotlinx.coroutines.withContext(Dispatchers.IO) {
-            val writableFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = false)
-            val dataSource = writableFactory.createDataSource()
-            missing.forEach { segment ->
-                try {
-                    val dataSpec = DataSpec.Builder()
-                        .setUri(Uri.parse(segment.uri))
-                        .setKey(segment.cacheKey)
-                        .build()
-                    dataSource.open(dataSpec)
-                    val buffer = ByteArray(64 * 1024)
-                    while (dataSource.read(buffer, 0, buffer.size) != -1) {
-                        // Bytes are written into the shared cache as they're read; nothing else to do.
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to fetch missing segment ${segment.uri}", e)
-                } finally {
-                    dataSource.close()
-                }
-            }
-        }
-    }
-
-    private fun buildTransformer(
-        cacheDataSourceFactory: CacheDataSource.Factory,
-        title: String,
-        onDone: () -> Unit
-    ): Transformer {
-        return Transformer.Builder(applicationContext)
-            .setAssetLoaderFactory(
-                androidx.media3.transformer.DefaultAssetLoaderFactory(
-                    applicationContext,
-                    androidx.media3.transformer.DefaultDecoderFactory(applicationContext),
-                    /* forceAudioTrack= */ false,
-                    androidx.media3.common.util.Clock.DEFAULT,
-                    DefaultMediaSourceFactory(applicationContext).setDataSourceFactory(cacheDataSourceFactory),
-                    androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
-                )
-            )
-            .addListener(object : Transformer.Listener {
-                override fun onCompleted(composition: androidx.media3.transformer.Composition, exportResult: ExportResult) {
-                    Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
-                    onDone()
-                }
-
-                override fun onError(
-                    composition: androidx.media3.transformer.Composition,
-                    exportResult: ExportResult,
-                    exportException: ExportException
-                ) {
-                    Log.e(TAG, "Transformer Error", exportException)
-                    Toast.makeText(applicationContext, "Export error: ${exportException.message}", Toast.LENGTH_LONG).show()
-                    onDone()
-                }
-            })
-            .build()
-    }
-
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Video Export",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
+            val ch = NotificationChannel(CHANNEL_ID, "Video Export", NotificationManager.IMPORTANCE_LOW).apply {
                 description = "Shows progress of exporting downloaded videos"
             }
-            notificationManager?.createNotificationChannel(channel)
+            notificationManager?.createNotificationChannel(ch)
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        serviceJob.cancel()
-    }
+    override fun onDestroy() { super.onDestroy(); serviceJob.cancel() }
 }
