@@ -2055,7 +2055,13 @@ private fun injectMediaStateDetector() {
                          }
 
                          if (!existsAlready) {
-                             val category = if (type.contains("audio", true)) MediaCategory.AUDIO else MediaCategory.VIDEO
+                             val category = if (type.contains("subtitle", true) || url.endsWith(".vtt") || url.endsWith(".srt") || url.contains(".vtt?") || url.contains(".srt?")) {
+                                 MediaCategory.SUBTITLE
+                             } else if (type.contains("audio", true)) {
+                                 MediaCategory.AUDIO
+                             } else {
+                                 MediaCategory.VIDEO
+                             }
 
                              val detectedFormat = activity.detectVideoFormat(url)
                              val quality = activity.extractQualityFromUrl(url)
@@ -2095,7 +2101,13 @@ private fun injectMediaStateDetector() {
         fun onDownloadActiveMedia(url: String, type: String, title: String, subtitleUrl: String) {
             activity.runOnUiThread {
                 if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:")) {
-                    val category = if (type.contains("audio", true)) MediaCategory.AUDIO else MediaCategory.VIDEO
+                    val category = if (type.contains("subtitle", true) || url.endsWith(".vtt") || url.endsWith(".srt") || url.contains(".vtt?") || url.contains(".srt?")) {
+                        MediaCategory.SUBTITLE
+                    } else if (type.contains("audio", true)) {
+                        MediaCategory.AUDIO
+                    } else {
+                        MediaCategory.VIDEO
+                    }
                     val detectedFormat = activity.detectVideoFormat(url)
                     val quality = activity.extractQualityFromUrl(url)
                     val enhancedTitle = activity.generateSmartFileName(url, detectedFormat.extension, quality, category)
@@ -3030,7 +3042,13 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         val type = it["type"] ?: "video"
                         val language = it["language"]
 
-                        val category = if (type == "video") MediaCategory.VIDEO else MediaCategory.SUBTITLE
+                        val category = if (type == "video") {
+                            if (url.endsWith(".vtt") || url.endsWith(".srt") || url.contains(".vtt?") || url.contains(".srt?")) {
+                                MediaCategory.SUBTITLE
+                            } else {
+                                MediaCategory.VIDEO
+                            }
+                        } else MediaCategory.SUBTITLE
                         var detectedFormat = detectVideoFormat(url)
 
                         if (category == MediaCategory.SUBTITLE && (url.startsWith("blob:") || detectedFormat.extension == ".mp4")) {
