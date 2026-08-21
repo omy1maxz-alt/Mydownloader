@@ -417,6 +417,12 @@ private fun checkBatteryOptimization() {
         if (hasStartedForegroundService) {
             stopPlaybackService()
         }
+
+        // Prevent webview from auto-playing video if CustomPlayer is active in PiP or full screen
+        if (CustomPlayerActivity.activePlayer != null) {
+            val disableAutoPlayScript = "javascript:(function() { var video = document.querySelector('video'); if (video) { video.pause(); } })();"
+            webView.loadUrl(disableAutoPlayScript)
+        }
     }
 
     override fun onStart() {
