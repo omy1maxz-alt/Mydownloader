@@ -13,14 +13,31 @@
         app:use_controller="true"
         app:show_subtitle_button="true" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_save_offline"
+    <LinearLayout
+        android:id="@+id/fab_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
         android:layout_margin="16dp"
-        android:src="@android:drawable/ic_menu_save"
-        android:contentDescription="Save Offline"
-        app:tint="@android:color/white" />
+        android:orientation="horizontal">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_pip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="Minimize to Picture in Picture"
+            app:tint="@android:color/white" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_save_offline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_save"
+            android:contentDescription="Save Offline"
+            app:tint="@android:color/white" />
+
+    </LinearLayout>
 
 </FrameLayout>
