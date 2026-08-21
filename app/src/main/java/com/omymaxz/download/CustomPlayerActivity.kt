@@ -243,6 +243,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             ?.buildUpon()
             ?.setPreferredTextLanguage("en")
             ?.setIgnoredTextSelectionFlags(0)
+            ?.setSelectUndeterminedTextLanguage(true)
             ?.build()!!
 
         player?.addListener(object : Player.Listener {
@@ -316,6 +317,16 @@ class CustomPlayerActivity : AppCompatActivity() {
     private fun hotSwapSubtitles(localFiles: List<File>, cacheFactory: androidx.media3.datasource.DataSource.Factory) {
         val p = player ?: return
         val cacheFactoryToUse = cacheFactory
+
+        // Ensure videoUrl is not null to prevent crashes when hot-swapping subtitles from manual Add to Player intents
+        if (videoUrl == null) {
+            Log.w("CustomPlayerActivity", "videoUrl is null during hotSwapSubtitles. Attempting to extract from current player item.")
+            videoUrl = p.currentMediaItem?.localConfiguration?.uri?.toString()
+            if (videoUrl == null) {
+                Log.e("CustomPlayerActivity", "Could not recover videoUrl. Cannot hot swap subtitles.")
+                return
+            }
+        }
 
         // --- Build base video source (recreate to avoid buffering issue) ---
         val isHls = videoUrl?.contains("m3u8", ignoreCase = true) == true

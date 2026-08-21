@@ -425,6 +425,16 @@ private fun checkBatteryOptimization() {
         }
     }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        // If CustomPlayerActivity enters PiP, MainActivity might regain focus but CustomPlayerActivity is still active.
+        // We must ensure the webview video remains paused to prevent double audio.
+        if (hasFocus && CustomPlayerActivity.activePlayer != null) {
+            val disableAutoPlayScript = "javascript:(function() { var videos = document.querySelectorAll('video'); videos.forEach(v => v.pause()); })();"
+            webView.loadUrl(disableAutoPlayScript)
+        }
+    }
+
     override fun onStart() {
         super.onStart()
         Intent(this, MediaForegroundService::class.java).also { intent ->
@@ -2726,6 +2736,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                         putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, arrayListOf(mediaFile.url))
                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, mediaFile.title)
+                        // Make sure to preserve video URL and title in case CustomPlayerActivity tries to recreate the source
+                        // CustomPlayerActivity is now robust against null videoUrl during hot-swap
                     }
                     startActivity(intent)
                     Toast.makeText(this, "Subtitle sent to Custom Player", Toast.LENGTH_SHORT).show()
