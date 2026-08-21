@@ -20,7 +20,12 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.ui.PlayerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import androidx.lifecycle.lifecycleScope
 
 class CustomPlayerActivity : AppCompatActivity() {
 
@@ -122,6 +127,13 @@ class CustomPlayerActivity : AppCompatActivity() {
             else MergingMediaSource(baseSource, *subSources.toTypedArray())
 
         player?.setMediaSource(finalSource)
+
+        // Set English as the default preferred subtitle language
+        player?.trackSelectionParameters = player?.trackSelectionParameters
+            ?.buildUpon()
+            ?.setPreferredTextLanguage("en")
+            ?.build()!!
+
         player?.addListener(object : Player.Listener {
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                 Log.e("CustomPlayerActivity", "Player error", error)
@@ -135,6 +147,77 @@ class CustomPlayerActivity : AppCompatActivity() {
         activePlayer = player
         player?.prepare()
         player?.playWhenReady = true
+
+        // Async background subtitle fetch for live streaming
+        if (isHls) { // We always want to fetch them to see if we have them all
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    // Fetch subtitles using HlsDownloadHelper
+                    HlsDownloadHelper.fetchAndSaveSubtitles(
+                        this@CustomPlayerActivity,
+                        videoUrl!!,
+                        videoTitle!!,
+                        HlsDownloadHelper.currentUserAgent,
+                        HlsDownloadHelper.currentCookie
+                    )
+
+                    val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, videoTitle!!)
+
+                    if (newLocalFiles.isNotEmpty() && newLocalFiles.size > localFiles.size) {
+                        withContext(Dispatchers.Main) {
+                            hotSwapSubtitles(newLocalFiles, cacheFactory)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("CustomPlayerActivity", "Background subtitle fetch failed", e)
+                }
+            }
+        }
+    }
+
+    private fun hotSwapSubtitles(localFiles: List<File>, cacheFactory: androidx.media3.datasource.DataSource.Factory) {
+        val p = player ?: return
+        val cacheFactoryToUse = cacheFactory
+
+        // --- Build base video source (recreate to avoid buffering issue) ---
+        val baseItem = MediaItem.Builder()
+            .setUri(Uri.parse(videoUrl!!))
+            .setMimeType(MimeTypes.APPLICATION_M3U8)
+            .build()
+        val baseSource: MediaSource = HlsMediaSource.Factory(cacheFactoryToUse).createMediaSource(baseItem)
+
+        val subSources = mutableListOf<MediaSource>()
+
+        // (a) Intent-provided subtitle URL
+        intent.getStringExtra(EXTRA_SUBTITLE_URL)?.takeIf { it.isNotBlank() }?.let { url ->
+            buildSubtitleSource(url, "en", "English (Default)", cacheFactory)?.let { subSources.add(it) }
+        }
+
+        // (b) Local subtitles
+        val localDs = androidx.media3.datasource.DefaultDataSource.Factory(this)
+        for (f in localFiles) {
+            val lang = f.nameWithoutExtension
+                .substringAfter("_subtitle_", "und")
+                .substringBeforeLast(".")
+            buildSubtitleSource(Uri.fromFile(f).toString(), lang, lang.uppercase(), localDs)
+                ?.let { subSources.add(it) }
+        }
+
+        if (subSources.isNotEmpty()) {
+            val finalSource = MergingMediaSource(baseSource, *subSources.toTypedArray())
+
+            // Save state
+            val currentPos = p.currentPosition
+            val playWhenReady = p.playWhenReady
+
+            // Hot swap
+            p.setMediaSource(finalSource)
+            p.prepare()
+            p.seekTo(currentPos)
+            p.playWhenReady = playWhenReady
+
+            Toast.makeText(this, "Subtitles loaded", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun attachPlayerView() {
