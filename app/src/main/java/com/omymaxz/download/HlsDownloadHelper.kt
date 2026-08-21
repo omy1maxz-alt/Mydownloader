@@ -202,7 +202,7 @@ object HlsDownloadHelper {
      * resolve each URI against the master's base URL, and write .vtt/.srt
      * into subtitles/<sanitizedTitle>/.
      */
-    private fun fetchAndSaveSubtitles(
+    fun fetchAndSaveSubtitles(
         context: Context, masterUrl: String, title: String,
         userAgent: String?, cookie: String?
     ) {
