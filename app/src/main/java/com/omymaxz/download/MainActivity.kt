@@ -2699,9 +2699,28 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 val finalName = if (newName.isNotEmpty()) "$newName.${mediaFile.title.substringAfterLast('.')}" else mediaFile.title
                 downloadMediaFile(mediaFile.copy(title = finalName))
             }
-            .setNegativeButton("Cancel", null)
 
-        if (mediaFile.url.startsWith("blob:") || mediaFile.mimeType.startsWith("text/") || mediaFile.title.endsWith(".vtt") || mediaFile.title.endsWith(".srt")) {
+        val isSubtitle = mediaFile.category == MediaCategory.SUBTITLE || mediaFile.title.endsWith(".vtt") || mediaFile.title.endsWith(".srt")
+
+        if (isSubtitle) {
+            builder.setNegativeButton("Add to Player") { _, _ ->
+                if (CustomPlayerActivity.activePlayer == null) {
+                    Toast.makeText(this, "Please play a video in the Custom Player first.", Toast.LENGTH_LONG).show()
+                    return@setNegativeButton
+                }
+                val intent = Intent(this, CustomPlayerActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    putExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URL, mediaFile.url)
+                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, mediaFile.title) // Used for saving locally
+                }
+                startActivity(intent)
+                Toast.makeText(this, "Subtitle sent to Custom Player", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            builder.setNegativeButton("Cancel", null)
+        }
+
+        if (mediaFile.url.startsWith("blob:") || mediaFile.mimeType.startsWith("text/") || isSubtitle) {
             builder.setNeutralButton("Preview") { _, _ ->
                 val safeUrl = mediaFile.url.replace("\"", "\\\"")
                 val safeTitle = mediaFile.title.replace("\"", "\\\"")
