@@ -106,12 +106,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         // --- Collect subtitle sources ---
         val subSources = mutableListOf<MediaSource>()
 
-        // (a) Intent-provided subtitle URL (HTTP or local path)
-        intent.getStringExtra(EXTRA_SUBTITLE_URL)?.takeIf { it.isNotBlank() }?.let { url ->
-            buildSubtitleSource(url, "en", "English (Default)", cacheFactory)?.let { subSources.add(it) }
-        }
-
-        // (b) Local subtitles saved by HlsDownloadHelper — uses the SAME naming convention.
+        // (a) Local subtitles saved by HlsDownloadHelper — uses the SAME naming convention.
         val localFiles = HlsDownloadHelper.listLocalSubtitles(this, videoTitle!!)
         val localDs = androidx.media3.datasource.DefaultDataSource.Factory(this)
         for (f in localFiles) {
@@ -122,9 +117,19 @@ class CustomPlayerActivity : AppCompatActivity() {
                 ?.let { subSources.add(it) }
         }
 
+        // We create an empty dummy subtitle track so the 'None' button works properly
+        val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
+            .setMimeType(MimeTypes.TEXT_VTT)
+            .setLanguage("none")
+            .setLabel("None")
+            .setSelectionFlags(0)
+            .build()
+        val emptySubtitleSource = SingleSampleMediaSource.Factory(androidx.media3.datasource.DefaultDataSource.Factory(this))
+            .createMediaSource(emptySubtitleConfig, C.TIME_UNSET)
+
         val finalSource: MediaSource =
             if (subSources.isEmpty()) baseSource
-            else MergingMediaSource(baseSource, *subSources.toTypedArray())
+            else MergingMediaSource(baseSource, emptySubtitleSource, *subSources.toTypedArray())
 
         player?.setMediaSource(finalSource)
 
@@ -149,10 +154,35 @@ class CustomPlayerActivity : AppCompatActivity() {
         player?.playWhenReady = true
 
         // Async background subtitle fetch for live streaming
-        if (isHls) { // We always want to fetch them to see if we have them all
-            lifecycleScope.launch(Dispatchers.IO) {
-                try {
-                    // Fetch subtitles using HlsDownloadHelper
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 1. Process EXTRA_SUBTITLE_URL as a regular downloaded file so it merges properly without being hardcoded to "English"
+                val intentSubUrl = intent.getStringExtra(EXTRA_SUBTITLE_URL)
+                if (!intentSubUrl.isNullOrBlank() && localFiles.isEmpty()) {
+                    val bytes = HlsDownloadHelper.httpGetBytes(intentSubUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentCookie)
+                    if (bytes != null) {
+                        val contentString = String(bytes, Charsets.UTF_8)
+                        var detectedLang = "und"
+                        if (contentString.contains("thank", ignoreCase = true)) {
+                            detectedLang = "en"
+                        } else if (contentString.contains("gracias", ignoreCase = true)) {
+                            detectedLang = "es"
+                        } else {
+                            detectedLang = "Detected"
+                        }
+
+                        val ext = if (intentSubUrl.contains(".srt", true)) ".srt" else ".vtt"
+                        val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, videoTitle!!)
+                        val outFile = File(outDir, "${videoTitle!!.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$detectedLang$ext")
+
+                        if (!outFile.exists()) {
+                            java.io.FileOutputStream(outFile).use { it.write(bytes) }
+                        }
+                    }
+                }
+
+                // 2. Fetch HLS Subtitles
+                if (isHls) {
                     HlsDownloadHelper.fetchAndSaveSubtitles(
                         this@CustomPlayerActivity,
                         videoUrl!!,
@@ -160,17 +190,17 @@ class CustomPlayerActivity : AppCompatActivity() {
                         HlsDownloadHelper.currentUserAgent,
                         HlsDownloadHelper.currentCookie
                     )
-
-                    val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, videoTitle!!)
-
-                    if (newLocalFiles.isNotEmpty() && newLocalFiles.size > localFiles.size) {
-                        withContext(Dispatchers.Main) {
-                            hotSwapSubtitles(newLocalFiles, cacheFactory)
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e("CustomPlayerActivity", "Background subtitle fetch failed", e)
                 }
+
+                // 3. Hot swap if we have new files
+                val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, videoTitle!!)
+                if (newLocalFiles.isNotEmpty() && newLocalFiles.size > localFiles.size) {
+                    withContext(Dispatchers.Main) {
+                        hotSwapSubtitles(newLocalFiles, cacheFactory)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("CustomPlayerActivity", "Background subtitle fetch failed", e)
             }
         }
     }
@@ -188,12 +218,7 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         val subSources = mutableListOf<MediaSource>()
 
-        // (a) Intent-provided subtitle URL
-        intent.getStringExtra(EXTRA_SUBTITLE_URL)?.takeIf { it.isNotBlank() }?.let { url ->
-            buildSubtitleSource(url, "en", "English (Default)", cacheFactory)?.let { subSources.add(it) }
-        }
-
-        // (b) Local subtitles
+        // (a) Local subtitles
         val localDs = androidx.media3.datasource.DefaultDataSource.Factory(this)
         for (f in localFiles) {
             val lang = f.nameWithoutExtension
@@ -204,7 +229,16 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
 
         if (subSources.isNotEmpty()) {
-            val finalSource = MergingMediaSource(baseSource, *subSources.toTypedArray())
+            val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
+                .setMimeType(MimeTypes.TEXT_VTT)
+                .setLanguage("none")
+                .setLabel("None")
+                .setSelectionFlags(0)
+                .build()
+            val emptySubtitleSource = SingleSampleMediaSource.Factory(androidx.media3.datasource.DefaultDataSource.Factory(this))
+                .createMediaSource(emptySubtitleConfig, C.TIME_UNSET)
+
+            val finalSource = MergingMediaSource(baseSource, emptySubtitleSource, *subSources.toTypedArray())
 
             // Save state
             val currentPos = p.currentPosition
