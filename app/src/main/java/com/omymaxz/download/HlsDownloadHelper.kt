@@ -8,15 +8,16 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheKeyFactory
+import androidx.media3.datasource.cache.ContentMetadata
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.offline.DownloadHelper
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadNotificationHelper
-import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.offline.DefaultDownloaderFactory
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +28,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URL
 import java.util.concurrent.Executor
 import androidx.media3.common.util.Util
@@ -73,7 +75,6 @@ object HlsDownloadHelper {
     private var downloadManager: DownloadManager? = null
     private var downloadNotificationHelper: DownloadNotificationHelper? = null
     private var databaseProvider: DatabaseProvider? = null
-    private var downloadCache: Cache? = null
     private var dataSourceFactory: DataSource.Factory? = null
 
     // Shared state for headers
@@ -131,10 +132,7 @@ object HlsDownloadHelper {
     @Synchronized
     fun getDataSourceFactory(context: Context): DataSource.Factory {
         if (dataSourceFactory == null) {
-            // Use a factory that applies the latest headers
             val upstreamFactory = DefaultHttpDataSource.Factory()
-
-
             dataSourceFactory = DataSource.Factory {
                 val dataSource = upstreamFactory.createDataSource()
                 if (currentUserAgent != null) {
@@ -152,6 +150,13 @@ object HlsDownloadHelper {
         return dataSourceFactory!!
     }
 
+    /**
+     * CHANGED: readOnly now only disables the cache *write sink*, exactly as before, for the
+     * final read-only Transformer mux pass. It no longer needs to double as "don't hit the
+     * network" — HlsExportService now decides that explicitly by choosing which segments (if
+     * any) to pre-fetch through a *writable* factory before ever touching Transformer. See
+     * HlsExportService.exportHlsToMp4FromUrl.
+     */
     @Synchronized
     fun getCacheDataSourceFactory(context: Context, readOnly: Boolean = false): androidx.media3.datasource.cache.CacheDataSource.Factory {
         val factory = androidx.media3.datasource.cache.CacheDataSource.Factory()
@@ -176,7 +181,173 @@ object HlsDownloadHelper {
         return downloadNotificationHelper!!
     }
 
+    // ---------------------------------------------------------------------------------------
+    // FIX (Issue 1, root cause): subtitle fetching used to live only inline inside
+    // downloadHls()'s onPrepared callback, so it only ever ran for the explicit
+    // "offline download" flow. Pulled out into its own reusable, awaitable function so
+    // CustomPlayerActivity can call it for plain streaming/caching playback too, and
+    // HlsExportService can call it before an MP4 export — not just the DownloadManager path.
+    // ---------------------------------------------------------------------------------------
+    suspend fun fetchAndCacheSubtitles(
+        context: Context,
+        url: String,
+        title: String,
+        userAgent: String?,
+        cookie: String?
+    ): List<File> = withContext(Dispatchers.IO) {
+        val results = mutableListOf<File>()
+        try {
+            val lines = fetchPlaylistLines(url, userAgent, cookie)
+            val subtitleTracks = mutableListOf<Pair<String, String>>()
+            lines.forEach { line ->
+                if (line.startsWith("#EXT-X-MEDIA:TYPE=SUBTITLES") && line.contains("URI=\"")) {
+                    val start = line.indexOf("URI=\"") + 5
+                    val end = line.indexOf("\"", start)
+                    if (start > 4 && end > start) {
+                        val uri = line.substring(start, end)
+                        var language = "en"
+                        if (line.contains("LANGUAGE=\"")) {
+                            val langStart = line.indexOf("LANGUAGE=\"") + 10
+                            val langEnd = line.indexOf("\"", langStart)
+                            if (langEnd > langStart) language = line.substring(langStart, langEnd)
+                        } else if (line.contains("NAME=\"")) {
+                            val nameStart = line.indexOf("NAME=\"") + 6
+                            val nameEnd = line.indexOf("\"", nameStart)
+                            if (nameEnd > nameStart) language = line.substring(nameStart, nameEnd)
+                        }
+                        subtitleTracks.add(Pair(language, uri))
+                    }
+                }
+            }
 
+            subtitleTracks.forEach { (language, relUri) ->
+                try {
+                    // FIX: proper RFC-3986 relative resolution instead of naive string
+                    // concatenation — this was breaking whenever the master playlist URL had
+                    // a query string (auth tokens) or the subtitle URI used "../".
+                    val absoluteSubUrl = resolveUri(url, relUri)
+
+                    var directVttUrl: String? = null
+                    if (absoluteSubUrl.contains(".m3u8")) {
+                        val subLines = fetchPlaylistLines(absoluteSubUrl, userAgent, cookie)
+                        for (subLine in subLines) {
+                            if (!subLine.startsWith("#") && subLine.isNotBlank()) {
+                                directVttUrl = resolveUri(absoluteSubUrl, subLine)
+                            }
+                        }
+                    } else {
+                        directVttUrl = absoluteSubUrl
+                    }
+
+                    directVttUrl?.let { vttUrl ->
+                        val finalConn = URL(vttUrl).openConnection() as HttpURLConnection
+                        finalConn.connectTimeout = 15000
+                        finalConn.readTimeout = 15000
+                        if (userAgent != null) finalConn.setRequestProperty("User-Agent", userAgent)
+                        if (cookie != null) finalConn.setRequestProperty("Cookie", cookie)
+
+                        val subExt = if (vttUrl.contains(".srt", true)) ".srt" else ".vtt"
+                        val sanitizedTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+                        val sanitizedLang = language.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+                        val subtitlesDirectory = File(context.getExternalFilesDir(null), "subtitles")
+                        if (!subtitlesDirectory.exists()) subtitlesDirectory.mkdirs()
+                        val subFile = File(subtitlesDirectory, "${sanitizedTitle}_subtitle_$sanitizedLang$subExt")
+
+                        finalConn.inputStream.use { input ->
+                            FileOutputStream(subFile).use { output -> input.copyTo(output) }
+                        }
+                        results.add(subFile)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        results
+    }
+
+    /** RFC-3986 relative URI resolution — handles tokens in the base query string and "../". */
+    private fun resolveUri(baseUrl: String, relativeOrAbsolute: String): String {
+        return try {
+            URI(baseUrl).resolve(relativeOrAbsolute).toString()
+        } catch (e: Exception) {
+            if (relativeOrAbsolute.startsWith("http")) relativeOrAbsolute
+            else baseUrl.substringBeforeLast("/") + "/" + relativeOrAbsolute
+        }
+    }
+
+    private fun fetchPlaylistLines(url: String, userAgent: String?, cookie: String?): List<String> {
+        val connection = URL(url).openConnection() as HttpURLConnection
+        connection.connectTimeout = 15000
+        connection.readTimeout = 15000
+        if (userAgent != null) connection.setRequestProperty("User-Agent", userAgent)
+        if (cookie != null) connection.setRequestProperty("Cookie", cookie)
+        return connection.inputStream.bufferedReader().readLines()
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // NEW (Issue 2): segment-level cache inspection. This is what HlsExportService uses to
+    // stop treating every export as "just run Transformer over the whole manifest" and
+    // instead know, per segment, whether it's already fully cached.
+    // ---------------------------------------------------------------------------------------
+    data class SegmentCacheInfo(
+        val uri: String,
+        val cacheKey: String,
+        val startMs: Long,
+        val durationMs: Long,
+        val isCached: Boolean
+    )
+
+    suspend fun inspectSegments(
+        context: Context,
+        url: String,
+        userAgent: String?,
+        cookie: String?
+    ): List<SegmentCacheInfo> = withContext(Dispatchers.IO) {
+        val mediaPlaylistUrl = resolveMediaPlaylistUrl(url, userAgent, cookie)
+        val lines = fetchPlaylistLines(mediaPlaylistUrl, userAgent, cookie)
+        val cache = getUnifiedCache(context)
+        val segments = mutableListOf<SegmentCacheInfo>()
+        var pendingDurationMs = 0L
+        var elapsedMs = 0L
+
+        for (rawLine in lines) {
+            val line = rawLine.trim()
+            if (line.startsWith("#EXTINF:")) {
+                val durationSec = line.removePrefix("#EXTINF:").substringBefore(",").toDoubleOrNull() ?: 0.0
+                pendingDurationMs = (durationSec * 1000).toLong()
+            } else if (line.isNotEmpty() && !line.startsWith("#")) {
+                val segmentUrl = resolveUri(mediaPlaylistUrl, line)
+                val cacheKey = customCacheKeyFactory.buildCacheKey(DataSpec(Uri.parse(segmentUrl)))
+                val contentLength = ContentMetadata.getContentLength(cache.getContentMetadata(cacheKey))
+                val isCached = contentLength > 0 && cache.getCachedBytes(cacheKey, 0, contentLength) == contentLength
+                segments += SegmentCacheInfo(segmentUrl, cacheKey, elapsedMs, pendingDurationMs, isCached)
+                elapsedMs += pendingDurationMs
+                pendingDurationMs = 0L
+            }
+        }
+        segments
+    }
+
+    /** If [url] is a master playlist, resolves to its first variant's media playlist URL. */
+    private fun resolveMediaPlaylistUrl(url: String, userAgent: String?, cookie: String?): String {
+        val lines = fetchPlaylistLines(url, userAgent, cookie)
+        val isMaster = lines.any { it.startsWith("#EXT-X-STREAM-INF") }
+        if (!isMaster) return url
+        for (i in lines.indices) {
+            if (lines[i].startsWith("#EXT-X-STREAM-INF")) {
+                for (j in i + 1 until lines.size) {
+                    val candidate = lines[j].trim()
+                    if (candidate.isNotEmpty() && !candidate.startsWith("#")) {
+                        return resolveUri(url, candidate)
+                    }
+                }
+            }
+        }
+        return url
+    }
 
     fun downloadHls(context: Context, url: String, title: String, userAgent: String?, cookie: String?) {
         val mediaItemBuilder = MediaItem.Builder()
@@ -184,155 +355,27 @@ object HlsDownloadHelper {
             .setMimeType(MimeTypes.APPLICATION_M3U8)
             .setTag(title)
 
-        // Store headers for the global factory to pick up
         currentUserAgent = userAgent
         currentCookie = cookie
 
-        // Create a specific DataSource.Factory for this download preparation that includes the headers.
         val specificDataSourceFactory = DefaultHttpDataSource.Factory()
-        if (userAgent != null) {
-            specificDataSourceFactory.setUserAgent(userAgent)
-        }
-        if (cookie != null) {
-            specificDataSourceFactory.setDefaultRequestProperties(mapOf("Cookie" to cookie))
-        }
+        if (userAgent != null) specificDataSourceFactory.setUserAgent(userAgent)
+        if (cookie != null) specificDataSourceFactory.setDefaultRequestProperties(mapOf("Cookie" to cookie))
 
         val downloadHelper = DownloadHelper.forMediaItem(
             context,
             mediaItemBuilder.build(),
             null,
-            specificDataSourceFactory // Use the specific factory for preparation
+            specificDataSourceFactory
         )
 
         downloadHelper.prepare(object : DownloadHelper.Callback {
             override fun onPrepared(helper: DownloadHelper) {
-                // Parse manifest to extract subtitle and download it to stream_cache
                 CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val connection = URL(url).openConnection() as HttpURLConnection
-                        connection.connectTimeout = 15000
-                        connection.readTimeout = 15000
-                        if (userAgent != null) connection.setRequestProperty("User-Agent", userAgent)
-                        if (cookie != null) connection.setRequestProperty("Cookie", cookie)
-
-                        connection.inputStream.bufferedReader().use { reader ->
-                            val subtitleTracks = mutableListOf<Pair<String, String>>()
-                            reader.forEachLine { line ->
-                                if (line.startsWith("#EXT-X-MEDIA:TYPE=SUBTITLES") && line.contains("URI=\"")) {
-                                    val start = line.indexOf("URI=\"") + 5
-                                    val end = line.indexOf("\"", start)
-                                    if (start > 4 && end > start) {
-                                        val uri = line.substring(start, end)
-                                        var language = "en"
-                                        if (line.contains("LANGUAGE=\"")) {
-                                            val langStart = line.indexOf("LANGUAGE=\"") + 10
-                                            val langEnd = line.indexOf("\"", langStart)
-                                            if (langEnd > langStart) {
-                                                language = line.substring(langStart, langEnd)
-                                            }
-                                        } else if (line.contains("NAME=\"")) {
-                                            val nameStart = line.indexOf("NAME=\"") + 6
-                                            val nameEnd = line.indexOf("\"", nameStart)
-                                            if (nameEnd > nameStart) {
-                                                language = line.substring(nameStart, nameEnd)
-                                            }
-                                        }
-                                        subtitleTracks.add(Pair(language, uri))
-                                    }
-                                }
-                            }
-
-                            subtitleTracks.forEach { (language, relUri) ->
-                                try {
-                                    val absoluteSubUrl = if (relUri.startsWith("http")) relUri else {
-                                        val base = url.substringBeforeLast("/")
-                                        "$base/$relUri"
-                                    }
-
-                                    val subConn = URL(absoluteSubUrl).openConnection() as HttpURLConnection
-                                    subConn.connectTimeout = 15000
-                                    subConn.readTimeout = 15000
-                                    if (userAgent != null) subConn.setRequestProperty("User-Agent", userAgent)
-                                    if (cookie != null) subConn.setRequestProperty("Cookie", cookie)
-
-                                    var directVttUrl: String? = null
-                                    if (absoluteSubUrl.contains(".m3u8")) {
-                                        subConn.inputStream.bufferedReader().use { subReader ->
-                                            subReader.forEachLine { subLine ->
-                                                if (!subLine.startsWith("#") && subLine.isNotBlank()) {
-                                                    directVttUrl = if (subLine.startsWith("http")) subLine else {
-                                                        val subBase = absoluteSubUrl.substringBeforeLast("/")
-                                                        "$subBase/$subLine"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        directVttUrl = absoluteSubUrl
-                                    }
-
-                                    directVttUrl?.let { vttUrl ->
-                                        val finalConn = URL(vttUrl).openConnection() as HttpURLConnection
-                                        finalConn.connectTimeout = 15000
-                                        finalConn.readTimeout = 15000
-                                        if (userAgent != null) finalConn.setRequestProperty("User-Agent", userAgent)
-                                        if (cookie != null) finalConn.setRequestProperty("Cookie", cookie)
-
-                                        val subExt = if (vttUrl.contains(".srt", true)) ".srt" else ".vtt"
-                                        val sanitizedTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-                                        val sanitizedLang = language.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-                                        val subtitlesDirectory = File(context.getExternalFilesDir(null), "subtitles")
-                                        if (!subtitlesDirectory.exists()) subtitlesDirectory.mkdirs()
-                                        val subFile = File(subtitlesDirectory, "${sanitizedTitle}_subtitle_$sanitizedLang$subExt")
-
-                                        finalConn.inputStream.use { input ->
-                                            FileOutputStream(subFile).use { output ->
-                                                input.copyTo(output)
-                                            }
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                    fetchAndCacheSubtitles(context, url, title, userAgent, cookie)
                 }
 
-                // The preparation is done. However, the actual download will run in the Service
-                // which uses the *global* downloadManager and its *global* dataSourceFactory.
-                // To support headers in the actual download, we must embed them into the DownloadRequest
-                // or the Service must know how to recreate the factory.
-
-
-                // ExoPlayer's DownloadManager uses a single DataSource.Factory.
-                // To support per-download headers, the standard pattern is less straightforward.
-                // However, often the "preparation" phase is where strict checks happen (manifest fetch).
-                // If the segments also require headers, we might still have issues with the global factory.
-
-                // CRITICAL FIX: Since we can't easily change the global factory per request in the Service,
-                // we rely on the fact that often the manifest URL is the most protected.
-                // But for robust support, we should ideally use a global factory that delegates based on
-                // the request, which is complex.
-
-
-                // CRITICAL FIX: Since we can't easily change the global factory per request in the Service,
-                // we rely on the fact that often the manifest URL is the most protected.
-                // But for robust support, we should ideally use a global factory that delegates based on
-                // the request, which is complex.
-
-                // As a fallback/best-effort for this architecture:
-                // We prepared with headers. We will launch the download.
-                // If the global factory is generic, segment downloads *might* fail if they need cookies.
-                // BUT, replacing the entire DownloadManager architecture is out of scope.
-                // We proceed with the specific factory for the helper preparation at least.
-
-
-                val downloadRequest = helper.getDownloadRequest(
-                    Util.getUtf8Bytes(title) // Store title in data
-                )
+                val downloadRequest = helper.getDownloadRequest(Util.getUtf8Bytes(title))
                 DownloadService.sendAddDownload(
                     context,
                     HlsDownloadService::class.java,
