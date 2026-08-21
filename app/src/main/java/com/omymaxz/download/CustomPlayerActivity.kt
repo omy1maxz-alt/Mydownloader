@@ -123,23 +123,28 @@ class CustomPlayerActivity : AppCompatActivity() {
             fabSave.visibility = visibility
         })
 
-        var subtitleUrl = intent.getStringExtra(EXTRA_SUBTITLE_URL)
+        var intentSubtitleUrl = intent.getStringExtra(EXTRA_SUBTITLE_URL)
+        val subtitleFiles = mutableListOf<java.io.File>()
 
-        // Check for local subtitle if none provided
-        if (subtitleUrl.isNullOrEmpty() && videoTitle != null) {
+        // Check for local subtitles if none provided explicitly
+        if (videoTitle != null) {
             val sanitizedTitle = videoTitle!!.replace(Regex("[^a-zA-Z0-9.-]"), "_")
             val cacheDir = java.io.File(getExternalFilesDir(null), "subtitles")
-            val vttFile = java.io.File(cacheDir, "${sanitizedTitle}_subtitle.vtt")
-            val srtFile = java.io.File(cacheDir, "${sanitizedTitle}_subtitle.srt")
-            if (vttFile.exists()) {
-                subtitleUrl = vttFile.absolutePath
-            } else if (srtFile.exists()) {
-                subtitleUrl = srtFile.absolutePath
+
+            if (cacheDir.exists() && cacheDir.isDirectory) {
+                // Find all subtitles starting with the sanitized title
+                val files = cacheDir.listFiles { file ->
+                    file.name.startsWith("${sanitizedTitle}_subtitle") &&
+                    (file.name.endsWith(".vtt") || file.name.endsWith(".srt"))
+                }
+                if (files != null) {
+                    subtitleFiles.addAll(files)
+                }
             }
         }
 
-        if (!subtitleUrl.isNullOrEmpty()) {
-            Toast.makeText(this, "Subtitle found!", Toast.LENGTH_SHORT).show()
+        if (subtitleFiles.isNotEmpty() || !intentSubtitleUrl.isNullOrEmpty()) {
+            Toast.makeText(this, "Subtitles found!", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "No subtitle URL found.", Toast.LENGTH_SHORT).show()
         }
@@ -156,21 +161,23 @@ class CustomPlayerActivity : AppCompatActivity() {
         } else {
             androidx.media3.exoplayer.source.ProgressiveMediaSource.Factory(cacheDataSourceFactory).createMediaSource(baseMediaItem)
         }
-        var mediaSourceToPlay: MediaSource = baseMediaSource
 
-        if (!subtitleUrl.isNullOrEmpty()) {
-            val isHttp = subtitleUrl!!.startsWith("http")
-            val subtitleFile = if (!isHttp) java.io.File(subtitleUrl) else null
+        val subtitleSources = mutableListOf<MediaSource>()
+
+        // 1. Load Intent Subtitle if exists
+        if (!intentSubtitleUrl.isNullOrEmpty()) {
+            val isHttp = intentSubtitleUrl!!.startsWith("http")
+            val subtitleFile = if (!isHttp) java.io.File(intentSubtitleUrl) else null
             if (isHttp || (subtitleFile != null && subtitleFile.exists())) {
                 try {
-                    // Determine correct mime type based on extension
-                    val mimeType = if (subtitleUrl!!.endsWith(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
+                    val mimeType = if (intentSubtitleUrl!!.endsWith(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
                     val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(
-                        if (isHttp) Uri.parse(subtitleUrl) else Uri.fromFile(subtitleFile)
+                        if (isHttp) Uri.parse(intentSubtitleUrl) else Uri.fromFile(subtitleFile)
                     )
                         .setMimeType(mimeType)
-                        .setLanguage("en")
-                        .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED) // Force it to show by default
+                        .setLanguage("en") // Default intent lang
+                        .setLabel("English (Default)")
+                        // Removed SELECTION_FLAG_FORCED so it can be toggled
                         .build()
 
                     val localDataSourceFactory = androidx.media3.datasource.DefaultDataSource.Factory(this)
@@ -180,13 +187,45 @@ class CustomPlayerActivity : AppCompatActivity() {
                         .setTreatLoadErrorsAsEndOfStream(true)
                         .createMediaSource(subtitleConfig, androidx.media3.common.C.TIME_UNSET)
 
-                    mediaSourceToPlay = MergingMediaSource(baseMediaSource, subtitleSource)
+                    subtitleSources.add(subtitleSource)
                 } catch (e: Exception) {
-                    Log.e("CustomPlayerActivity", "Failed to create subtitle source", e)
+                    Log.e("CustomPlayerActivity", "Failed to create intent subtitle source", e)
                 }
-            } else {
-                Log.e("CustomPlayerActivity", "Subtitle file does not exist: $subtitleUrl")
             }
+        }
+
+        // 2. Load all local Subtitles found
+        val localDataSourceFactory = androidx.media3.datasource.DefaultDataSource.Factory(this)
+        for (subFile in subtitleFiles) {
+            try {
+                // Extract language from filename, e.g. Title_subtitle_en.vtt -> en
+                var lang = "en"
+                val nameParts = subFile.nameWithoutExtension.split("_subtitle_")
+                if (nameParts.size > 1) {
+                    lang = nameParts[1]
+                }
+
+                val mimeType = if (subFile.name.endsWith(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
+                val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(subFile))
+                    .setMimeType(mimeType)
+                    .setLanguage(lang)
+                    .setLabel(lang.uppercase())
+                    // Removed SELECTION_FLAG_FORCED
+                    .build()
+
+                val subtitleSource = SingleSampleMediaSource.Factory(localDataSourceFactory)
+                    .setTreatLoadErrorsAsEndOfStream(true)
+                    .createMediaSource(subtitleConfig, androidx.media3.common.C.TIME_UNSET)
+
+                subtitleSources.add(subtitleSource)
+            } catch (e: Exception) {
+                Log.e("CustomPlayerActivity", "Failed to create local subtitle source for ${subFile.name}", e)
+            }
+        }
+
+        var mediaSourceToPlay: MediaSource = baseMediaSource
+        if (subtitleSources.isNotEmpty()) {
+            mediaSourceToPlay = MergingMediaSource(baseMediaSource, *subtitleSources.toTypedArray())
         }
 
         player?.setMediaSource(mediaSourceToPlay)
@@ -204,11 +243,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             }
         })
 
-        // Force track selection for text to automatically turn on subtitles if they exist
-        player?.trackSelectionParameters = player!!.trackSelectionParameters
-            .buildUpon()
-            .setPreferredTextLanguage("en")
-            .build()
+        // Keep default track selection (user can change via UI)
 
         activePlayer = player
         player?.prepare()
