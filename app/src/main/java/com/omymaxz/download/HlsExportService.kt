@@ -110,7 +110,7 @@ class HlsExportService : Service() {
         }
 
         val mediaItem = download.request.toMediaItem()
-        val cacheDataSourceFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext)
+        val cacheDataSourceFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
 
         // Setup MediaSourceFactory to read from Cache
         // Ensure Transformer reads using our cache datasource
@@ -152,7 +152,7 @@ class HlsExportService : Service() {
 
 
     private suspend fun exportHlsToMp4FromUrl(url: String, title: String) = suspendCancellableCoroutine { continuation ->
-        val cacheDataSourceFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext)
+        val cacheDataSourceFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
         val mediaItem = MediaItem.Builder().setUri(Uri.parse(url)).build()
 
         val transformer = Transformer.Builder(applicationContext)
