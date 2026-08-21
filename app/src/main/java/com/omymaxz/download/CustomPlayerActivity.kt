@@ -26,6 +26,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import androidx.lifecycle.lifecycleScope
+import android.app.PictureInPictureParams
+import android.content.res.Configuration
+import android.os.Build
+import android.util.Rational
+import android.view.View
+import android.widget.LinearLayout
 
 class CustomPlayerActivity : AppCompatActivity() {
 
@@ -53,7 +59,46 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
 
         findViewById<FloatingActionButton>(R.id.fab_save_offline).setOnClickListener { saveVideoOffline() }
+        findViewById<FloatingActionButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
         hideSystemUI()
+    }
+
+    private fun enterPipMode() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val aspectRatio = Rational(16, 9)
+            val params = PictureInPictureParams.Builder()
+                .setAspectRatio(aspectRatio)
+                .build()
+            enterPictureInPictureMode(params)
+        } else {
+            Toast.makeText(this, "Picture-in-Picture not supported on this device", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val aspectRatio = Rational(16, 9)
+            val params = PictureInPictureParams.Builder()
+                .setAspectRatio(aspectRatio)
+                .build()
+            enterPictureInPictureMode(params)
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        val pv = findViewById<PlayerView>(R.id.player_view)
+        val fabContainer = findViewById<LinearLayout>(R.id.fab_container)
+
+        if (isInPictureInPictureMode) {
+            pv.useController = false
+            fabContainer.visibility = View.GONE
+        } else {
+            pv.useController = true
+            fabContainer.visibility = View.VISIBLE
+            hideSystemUI()
+        }
     }
 
     private fun hideSystemUI() {
@@ -68,12 +113,22 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     override fun onStart()  { super.onStart();  initializePlayer() }
     override fun onResume() { super.onResume(); if (player == null) initializePlayer() }
-    override fun onPause()  { super.onPause();  player?.pause() }
+    override fun onPause()  {
+        super.onPause()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode) {
+            // Keep playing in PiP
+        } else {
+            player?.pause()
+        }
+    }
     override fun onStop()   { super.onStop();   /* keep activePlayer alive for bg playback */ }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        setIntent(intent)
+        // Keep original intent to retain EXTRA_VIDEO_URL if new intent doesn't have it
+        if (intent?.hasExtra(EXTRA_VIDEO_URL) == true) {
+            setIntent(intent)
+        }
         val newSubUrls = intent?.getStringArrayListExtra(EXTRA_SUBTITLE_URLS)
         if (!newSubUrls.isNullOrEmpty() && player != null) {
             // We just got new subtitle URLs pushed while playing. Fetch them.
@@ -314,8 +369,14 @@ class CustomPlayerActivity : AppCompatActivity() {
     private fun attachPlayerView() {
         val pv = findViewById<PlayerView>(R.id.player_view)
         pv.player = player
-        val fab = findViewById<FloatingActionButton>(R.id.fab_save_offline)
-        pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v -> fab.visibility = v })
+        val fabContainer = findViewById<LinearLayout>(R.id.fab_container)
+        pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !isInPictureInPictureMode) {
+                fabContainer.visibility = v
+            } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                fabContainer.visibility = v
+            }
+        })
     }
 
     /**
