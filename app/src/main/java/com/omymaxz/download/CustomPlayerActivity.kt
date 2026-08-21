@@ -25,6 +25,8 @@ class CustomPlayerActivity : AppCompatActivity() {
         const val EXTRA_VIDEO_URL = "extra_video_url"
         const val EXTRA_VIDEO_TITLE = "extra_video_title"
         const val EXTRA_SUBTITLE_URL = "extra_subtitle_url"
+
+        var activePlayer: ExoPlayer? = null
     }
 
     private var player: ExoPlayer? = null
@@ -87,6 +89,18 @@ class CustomPlayerActivity : AppCompatActivity() {
     }
 
     private fun initializePlayer() {
+        if (activePlayer != null) {
+            player = activePlayer
+            val playerView = findViewById<PlayerView>(R.id.player_view)
+            playerView.player = player
+
+            val fabSave = findViewById<FloatingActionButton>(R.id.fab_save_offline)
+            playerView.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
+                fabSave.visibility = visibility
+            })
+            return
+        }
+
         // Pass video URL as referer to prevent 403
         if (videoUrl != null) {
             HlsDownloadHelper.currentReferer = videoUrl
@@ -129,13 +143,20 @@ class CustomPlayerActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, "No subtitle URL found.", Toast.LENGTH_SHORT).show()
         }
+        val isHls = videoUrl?.contains(".m3u8") == true || videoUrl?.contains("m3u8") == true
         val mediaItemBuilder = MediaItem.Builder()
-            .setUri(Uri.parse(videoUrl))
-            .setMimeType(if (videoUrl?.contains(".m3u8") == true) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
+            .setUri(Uri.parse(videoUrl!!))
+            .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
 
         val baseMediaItem = mediaItemBuilder.build()
-        val hlsMediaSource = HlsMediaSource.Factory(cacheDataSourceFactory).createMediaSource(baseMediaItem)
-        var mediaSourceToPlay: MediaSource = hlsMediaSource
+
+        // Use ProgressiveMediaSource for MP4, HlsMediaSource for m3u8
+        val baseMediaSource: MediaSource = if (isHls) {
+            HlsMediaSource.Factory(cacheDataSourceFactory).createMediaSource(baseMediaItem)
+        } else {
+            androidx.media3.exoplayer.source.ProgressiveMediaSource.Factory(cacheDataSourceFactory).createMediaSource(baseMediaItem)
+        }
+        var mediaSourceToPlay: MediaSource = baseMediaSource
 
         if (!subtitleUrl.isNullOrEmpty()) {
             val isHttp = subtitleUrl!!.startsWith("http")
@@ -159,7 +180,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                         .setTreatLoadErrorsAsEndOfStream(true)
                         .createMediaSource(subtitleConfig, androidx.media3.common.C.TIME_UNSET)
 
-                    mediaSourceToPlay = MergingMediaSource(hlsMediaSource, subtitleSource)
+                    mediaSourceToPlay = MergingMediaSource(baseMediaSource, subtitleSource)
                 } catch (e: Exception) {
                     Log.e("CustomPlayerActivity", "Failed to create subtitle source", e)
                 }
@@ -189,13 +210,22 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setPreferredTextLanguage("en")
             .build()
 
+        activePlayer = player
         player?.prepare()
         player?.playWhenReady = true
     }
 
     private fun releasePlayer() {
-        player?.release()
-        player = null
+        // We do NOT release the player onStop so it can continue playing in the background
+        // activePlayer holds the instance
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) {
+            activePlayer?.release()
+            activePlayer = null
+        }
     }
 
     private fun saveVideoOffline() {
