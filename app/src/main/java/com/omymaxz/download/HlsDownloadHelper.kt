@@ -216,71 +216,83 @@ object HlsDownloadHelper {
                         if (cookie != null) connection.setRequestProperty("Cookie", cookie)
 
                         connection.inputStream.bufferedReader().use { reader ->
-                            var subtitleUri: String? = null
+                            val subtitleTracks = mutableListOf<Pair<String, String>>()
                             reader.forEachLine { line ->
                                 if (line.startsWith("#EXT-X-MEDIA:TYPE=SUBTITLES") && line.contains("URI=\"")) {
                                     val start = line.indexOf("URI=\"") + 5
                                     val end = line.indexOf("\"", start)
                                     if (start > 4 && end > start) {
                                         val uri = line.substring(start, end)
-                                        if (SubtitleUtils.isEnglishSubtitleTrack(line)) {
-                                            subtitleUri = uri
+                                        var language = "en"
+                                        if (line.contains("LANGUAGE=\"")) {
+                                            val langStart = line.indexOf("LANGUAGE=\"") + 10
+                                            val langEnd = line.indexOf("\"", langStart)
+                                            if (langEnd > langStart) {
+                                                language = line.substring(langStart, langEnd)
+                                            }
+                                        } else if (line.contains("NAME=\"")) {
+                                            val nameStart = line.indexOf("NAME=\"") + 6
+                                            val nameEnd = line.indexOf("\"", nameStart)
+                                            if (nameEnd > nameStart) {
+                                                language = line.substring(nameStart, nameEnd)
+                                            }
                                         }
+                                        subtitleTracks.add(Pair(language, uri))
                                     }
                                 }
                             }
 
-                            subtitleUri?.let { relUri ->
-                                val absoluteSubUrl = if (relUri.startsWith("http")) relUri else {
-                                    val base = url.substringBeforeLast("/")
-                                    "$base/$relUri"
-                                }
+                            subtitleTracks.forEach { (language, relUri) ->
+                                try {
+                                    val absoluteSubUrl = if (relUri.startsWith("http")) relUri else {
+                                        val base = url.substringBeforeLast("/")
+                                        "$base/$relUri"
+                                    }
 
-                                val subConn = URL(absoluteSubUrl).openConnection() as HttpURLConnection
-                                subConn.connectTimeout = 15000
-                                subConn.readTimeout = 15000
-                                if (userAgent != null) subConn.setRequestProperty("User-Agent", userAgent)
-                                if (cookie != null) subConn.setRequestProperty("Cookie", cookie)
+                                    val subConn = URL(absoluteSubUrl).openConnection() as HttpURLConnection
+                                    subConn.connectTimeout = 15000
+                                    subConn.readTimeout = 15000
+                                    if (userAgent != null) subConn.setRequestProperty("User-Agent", userAgent)
+                                    if (cookie != null) subConn.setRequestProperty("Cookie", cookie)
 
-                                // The URI in the master manifest often points to ANOTHER m3u8 playlist for subtitles,
-                                // or directly to a VTT. We need to check if it's an m3u8 playlist.
-                                var finalSubtitleUrl = absoluteSubUrl
-                                var directVttUrl: String? = null
-
-                                if (absoluteSubUrl.contains(".m3u8")) {
-                                    // Fetch the subtitle m3u8 and find the actual .vtt segment
-                                    subConn.inputStream.bufferedReader().use { subReader ->
-                                        subReader.forEachLine { subLine ->
-                                            if (!subLine.startsWith("#") && subLine.isNotBlank()) {
-                                                directVttUrl = if (subLine.startsWith("http")) subLine else {
-                                                    val subBase = absoluteSubUrl.substringBeforeLast("/")
-                                                    "$subBase/$subLine"
+                                    var directVttUrl: String? = null
+                                    if (absoluteSubUrl.contains(".m3u8")) {
+                                        subConn.inputStream.bufferedReader().use { subReader ->
+                                            subReader.forEachLine { subLine ->
+                                                if (!subLine.startsWith("#") && subLine.isNotBlank()) {
+                                                    directVttUrl = if (subLine.startsWith("http")) subLine else {
+                                                        val subBase = absoluteSubUrl.substringBeforeLast("/")
+                                                        "$subBase/$subLine"
+                                                    }
                                                 }
                                             }
                                         }
+                                    } else {
+                                        directVttUrl = absoluteSubUrl
                                     }
-                                } else {
-                                    directVttUrl = absoluteSubUrl
-                                }
 
-                                directVttUrl?.let { vttUrl ->
-                                    val finalConn = URL(vttUrl).openConnection() as HttpURLConnection
-                                    finalConn.connectTimeout = 15000
-                                    finalConn.readTimeout = 15000
-                                    if (userAgent != null) finalConn.setRequestProperty("User-Agent", userAgent)
-                                    if (cookie != null) finalConn.setRequestProperty("Cookie", cookie)
+                                    directVttUrl?.let { vttUrl ->
+                                        val finalConn = URL(vttUrl).openConnection() as HttpURLConnection
+                                        finalConn.connectTimeout = 15000
+                                        finalConn.readTimeout = 15000
+                                        if (userAgent != null) finalConn.setRequestProperty("User-Agent", userAgent)
+                                        if (cookie != null) finalConn.setRequestProperty("Cookie", cookie)
 
-                                    val subExt = if (vttUrl.contains(".srt", true)) ".srt" else ".vtt" // default to vtt for hls
-                                    val sanitizedTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-                                    val subtitlesDirectory = File(context.getExternalFilesDir(null), "subtitles")
-                                    if (!subtitlesDirectory.exists()) subtitlesDirectory.mkdirs()
-                                    val subFile = File(subtitlesDirectory, "${sanitizedTitle}_subtitle$subExt")
+                                        val subExt = if (vttUrl.contains(".srt", true)) ".srt" else ".vtt"
+                                        val sanitizedTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+                                        val sanitizedLang = language.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+                                        val subtitlesDirectory = File(context.getExternalFilesDir(null), "subtitles")
+                                        if (!subtitlesDirectory.exists()) subtitlesDirectory.mkdirs()
+                                        val subFile = File(subtitlesDirectory, "${sanitizedTitle}_subtitle_$sanitizedLang$subExt")
 
-                                    finalConn.inputStream.use { input ->
-                                        FileOutputStream(subFile).use { output ->
-                                            input.copyTo(output)
+                                        finalConn.inputStream.use { input ->
+                                            FileOutputStream(subFile).use { output ->
+                                                input.copyTo(output)
+                                            }
                                         }
                                     }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
                                 }
                             }
                         }
