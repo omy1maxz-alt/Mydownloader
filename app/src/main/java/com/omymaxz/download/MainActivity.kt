@@ -123,7 +123,6 @@ class MainActivity : AppCompatActivity() {
     private var webViewServiceBound = false
     private var currentMediaTitle: String? = null
     var isMediaPlaying = false
-    var manuallySelectedSubtitleUrl: String? = null
     private var hasNextMedia: Boolean = false
     private var hasPreviousMedia: Boolean = false
     private var duration: Double = 0.0
@@ -2136,15 +2135,21 @@ private fun injectMediaStateDetector() {
                                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
                                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, enhancedTitle)
 
-                                        // Prioritize manually selected subtitle over the web sniffer's default
-                                        val finalSubUrl = activity.manuallySelectedSubtitleUrl ?: subtitleUrl.takeIf { it.isNotEmpty() }
-                                        if (finalSubUrl != null) {
-                                            putExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URL, finalSubUrl)
+                                        // Automatically gather ALL detected subtitles from the current page
+                                        val allSubtitleUrls = synchronized(activity.detectedMediaFiles) {
+                                            activity.detectedMediaFiles
+                                                .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
+                                                .map { it.url }
+                                                .toMutableList()
+                                        }
+
+                                        if (allSubtitleUrls.isNotEmpty()) {
+                                            putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+                                        } else if (subtitleUrl.isNotEmpty()) {
+                                            putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, arrayListOf(subtitleUrl))
                                         }
                                     }
                                     activity.startActivity(intent)
-                                    // Clear it so it doesn't accidentally carry over to completely unrelated videos later
-                                    activity.manuallySelectedSubtitleUrl = null
                                 }
                             }
                         }
@@ -2710,20 +2715,16 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
         if (isSubtitle) {
             builder.setNegativeButton("Add to Player") { _, _ ->
-                manuallySelectedSubtitleUrl = mediaFile.url
-
-                // If player is active, send it immediately
                 if (CustomPlayerActivity.activePlayer != null) {
                     val intent = Intent(this, CustomPlayerActivity::class.java).apply {
                         addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                        putExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URL, mediaFile.url)
+                        putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, arrayListOf(mediaFile.url))
                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, mediaFile.title)
                     }
                     startActivity(intent)
                     Toast.makeText(this, "Subtitle sent to Custom Player", Toast.LENGTH_SHORT).show()
                 } else {
-                    // Otherwise just queue it up for the next video launch
-                    Toast.makeText(this, "Subtitle saved. It will be used for the next video.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Please play a video in the Custom Player first.", Toast.LENGTH_LONG).show()
                 }
             }
         } else {

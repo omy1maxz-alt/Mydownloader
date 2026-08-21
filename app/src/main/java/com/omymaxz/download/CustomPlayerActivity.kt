@@ -32,7 +32,7 @@ class CustomPlayerActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_VIDEO_URL     = "extra_video_url"
         const val EXTRA_VIDEO_TITLE   = "extra_video_title"
-        const val EXTRA_SUBTITLE_URL  = "extra_subtitle_url"
+        const val EXTRA_SUBTITLE_URLS = "extra_subtitle_urls" // Now an ArrayList<String>
         var activePlayer: ExoPlayer? = null
     }
 
@@ -74,32 +74,40 @@ class CustomPlayerActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-        val newSubUrl = intent?.getStringExtra(EXTRA_SUBTITLE_URL)
-        if (newSubUrl != null && player != null) {
-            // We just got a new subtitle URL pushed while playing. Fetch it.
+        val newSubUrls = intent?.getStringArrayListExtra(EXTRA_SUBTITLE_URLS)
+        if (!newSubUrls.isNullOrEmpty() && player != null) {
+            // We just got new subtitle URLs pushed while playing. Fetch them.
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
-                    val bytes = HlsDownloadHelper.httpGetBytes(newSubUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentCookie)
-                    if (bytes != null) {
-                        val contentString = String(bytes, Charsets.UTF_8)
-                        var detectedLang = "und"
-                        if (contentString.contains("thank", ignoreCase = true)) {
-                            detectedLang = "en"
-                        } else if (contentString.contains("gracias", ignoreCase = true)) {
-                            detectedLang = "es"
-                        } else {
-                            detectedLang = "Detected"
+                    var downloadedAny = false
+                    val safeTitle = videoTitle ?: "Offline_Video_${System.currentTimeMillis()}"
+                    val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, safeTitle)
+
+                    for (subUrl in newSubUrls) {
+                        val bytes = HlsDownloadHelper.httpGetBytes(subUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentCookie)
+                        if (bytes != null) {
+                            val contentString = String(bytes, Charsets.UTF_8)
+                            var detectedLang = "und"
+                            if (contentString.contains("thank", ignoreCase = true)) {
+                                detectedLang = "en"
+                            } else if (contentString.contains("gracias", ignoreCase = true)) {
+                                detectedLang = "es"
+                            } else {
+                                // Assign an arbitrary unique identifier if multiple "Detected" are found
+                                detectedLang = "Detected_${Math.abs(subUrl.hashCode())}"
+                            }
+
+                            val ext = if (subUrl.contains(".srt", true)) ".srt" else ".vtt"
+                            val outFile = File(outDir, "${safeTitle.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$detectedLang$ext")
+
+                            if (!outFile.exists()) {
+                                java.io.FileOutputStream(outFile).use { it.write(bytes) }
+                                downloadedAny = true
+                            }
                         }
+                    }
 
-                        val ext = if (newSubUrl.contains(".srt", true)) ".srt" else ".vtt"
-                        val safeTitle = videoTitle ?: "Offline_Video_${System.currentTimeMillis()}"
-                        val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, safeTitle)
-                        val outFile = File(outDir, "${safeTitle.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$detectedLang$ext")
-
-                        if (!outFile.exists()) {
-                            java.io.FileOutputStream(outFile).use { it.write(bytes) }
-                        }
-
+                    if (downloadedAny) {
                         val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this@CustomPlayerActivity)
                         val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, safeTitle)
                         withContext(Dispatchers.Main) {
@@ -198,27 +206,29 @@ class CustomPlayerActivity : AppCompatActivity() {
         // Async background subtitle fetch for live streaming
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // 1. Process EXTRA_SUBTITLE_URL as a regular downloaded file so it merges properly without being hardcoded to "English"
-                val intentSubUrl = intent.getStringExtra(EXTRA_SUBTITLE_URL)
-                if (!intentSubUrl.isNullOrBlank()) {
-                    val bytes = HlsDownloadHelper.httpGetBytes(intentSubUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentCookie)
-                    if (bytes != null) {
-                        val contentString = String(bytes, Charsets.UTF_8)
-                        var detectedLang = "und"
-                        if (contentString.contains("thank", ignoreCase = true)) {
-                            detectedLang = "en"
-                        } else if (contentString.contains("gracias", ignoreCase = true)) {
-                            detectedLang = "es"
-                        } else {
-                            detectedLang = "Detected"
-                        }
+                // 1. Process EXTRA_SUBTITLE_URLS array as regular downloaded files so they merge properly without being hardcoded to "English"
+                val intentSubUrls = intent.getStringArrayListExtra(EXTRA_SUBTITLE_URLS)
+                if (!intentSubUrls.isNullOrEmpty()) {
+                    val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, videoTitle!!)
+                    for (subUrl in intentSubUrls) {
+                        val bytes = HlsDownloadHelper.httpGetBytes(subUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentCookie)
+                        if (bytes != null) {
+                            val contentString = String(bytes, Charsets.UTF_8)
+                            var detectedLang = "und"
+                            if (contentString.contains("thank", ignoreCase = true)) {
+                                detectedLang = "en"
+                            } else if (contentString.contains("gracias", ignoreCase = true)) {
+                                detectedLang = "es"
+                            } else {
+                                detectedLang = "Detected_${Math.abs(subUrl.hashCode())}"
+                            }
 
-                        val ext = if (intentSubUrl.contains(".srt", true)) ".srt" else ".vtt"
-                        val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, videoTitle!!)
-                        val outFile = File(outDir, "${videoTitle!!.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$detectedLang$ext")
+                            val ext = if (subUrl.contains(".srt", true)) ".srt" else ".vtt"
+                            val outFile = File(outDir, "${videoTitle!!.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$detectedLang$ext")
 
-                        if (!outFile.exists()) {
-                            java.io.FileOutputStream(outFile).use { it.write(bytes) }
+                            if (!outFile.exists()) {
+                                java.io.FileOutputStream(outFile).use { it.write(bytes) }
+                            }
                         }
                     }
                 }
