@@ -248,10 +248,10 @@ object HlsDownloadHelper {
         return null
     }
 
-    private fun httpGetString(url: String, ua: String?, cookie: String?): String? =
+    fun httpGetString(url: String, ua: String?, cookie: String?): String? =
         httpGetBytes(url, ua, cookie)?.let { String(it, Charsets.UTF_8) }
 
-    private fun httpGetBytes(url: String, ua: String?, cookie: String?): ByteArray? {
+    fun httpGetBytes(url: String, ua: String?, cookie: String?): ByteArray? {
         val c = (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = 15_000; readTimeout = 15_000
             instanceFollowRedirects = true
