@@ -238,10 +238,11 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         player?.setMediaSource(finalSource)
 
-        // Set English as the default preferred subtitle language
+        // Set English as the default preferred subtitle language and explicitly enable text rendering
         player?.trackSelectionParameters = player?.trackSelectionParameters
             ?.buildUpon()
             ?.setPreferredTextLanguage("en")
+            ?.setIgnoredTextSelectionFlags(0)
             ?.build()!!
 
         player?.addListener(object : Player.Listener {
