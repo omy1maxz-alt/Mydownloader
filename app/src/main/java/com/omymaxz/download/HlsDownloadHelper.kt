@@ -217,10 +217,17 @@ object HlsDownloadHelper {
                 // A subtitle URI may itself be an m3u8 (WebVTT variant playlist).
                 val vttUrl = resolveToDirectVtt(track.uri, userAgent, cookie) ?: continue
                 val ext = if (vttUrl.contains(".srt", true)) ".srt" else ".vtt"
-                val lang = track.language.ifBlank { "und" }.replace(Regex("[^a-zA-Z0-9-]"), "_")
-                val outFile = File(outDir, "${title.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$lang$ext")
+                var lang = track.language.ifBlank { "und" }.replace(Regex("[^a-zA-Z0-9-]"), "_")
 
                 val bytes = httpGetBytes(vttUrl, userAgent, cookie) ?: continue
+
+                // Inspect the subtitle content to force English detection if it contains "thank"
+                val contentString = String(bytes, Charsets.UTF_8)
+                if (contentString.contains("thank", ignoreCase = true)) {
+                    lang = "en"
+                }
+
+                val outFile = File(outDir, "${title.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$lang$ext")
                 FileOutputStream(outFile).use { it.write(bytes) }
             } catch (t: Throwable) {
                 t.printStackTrace()
