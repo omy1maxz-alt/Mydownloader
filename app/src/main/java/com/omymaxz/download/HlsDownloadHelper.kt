@@ -228,7 +228,13 @@ object HlsDownloadHelper {
                 }
 
                 val outFile = File(outDir, "${title.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$lang$ext")
-                FileOutputStream(outFile).use { it.write(bytes) }
+                FileOutputStream(outFile).use {
+                    // Fix ExoPlayer parse failure for VTT without header
+                    if (ext == ".vtt" && !contentString.trimStart().startsWith("WEBVTT", ignoreCase = true)) {
+                        it.write("WEBVTT\n\n".toByteArray(Charsets.UTF_8))
+                    }
+                    it.write(bytes)
+                }
             } catch (t: Throwable) {
                 t.printStackTrace()
             }
