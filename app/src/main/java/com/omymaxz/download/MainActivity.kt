@@ -2732,12 +2732,14 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         if (isSubtitle) {
             builder.setNegativeButton("Add to Player") { _, _ ->
                 if (CustomPlayerActivity.activePlayer != null) {
+                    val activePlayerUrl = CustomPlayerActivity.activePlayer?.currentMediaItem?.localConfiguration?.uri?.toString()
                     val intent = Intent(this, CustomPlayerActivity::class.java).apply {
                         addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                         putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, arrayListOf(mediaFile.url))
                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, mediaFile.title)
-                        // Make sure to preserve video URL and title in case CustomPlayerActivity tries to recreate the source
-                        // CustomPlayerActivity is now robust against null videoUrl during hot-swap
+                        if (activePlayerUrl != null) {
+                            putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, activePlayerUrl)
+                        }
                     }
                     startActivity(intent)
                     Toast.makeText(this, "Subtitle sent to Custom Player", Toast.LENGTH_SHORT).show()
