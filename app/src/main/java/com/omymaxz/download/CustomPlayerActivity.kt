@@ -205,46 +205,44 @@ class CustomPlayerActivity : AppCompatActivity() {
         // --- Build base video source ---
         val isHls = videoUrl!!.contains("m3u8", ignoreCase = true)
 
-        // --- Build base video source ---
-        val baseItem = MediaItem.Builder()
-            .setUri(Uri.parse(videoUrl!!))
-            .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
-            .build()
-
-        val baseSource: MediaSource = if (isHls)
-            HlsMediaSource.Factory(cacheFactory).createMediaSource(baseItem)
-        else
-            ProgressiveMediaSource.Factory(cacheFactory).createMediaSource(baseItem)
-
-        // --- Collect subtitle sources ---
-        val subSources = mutableListOf<MediaSource>()
-
-        // (a) Local subtitles saved by HlsDownloadHelper — uses the SAME naming convention.
+        val subtitleConfigs = mutableListOf<MediaItem.SubtitleConfiguration>()
         val localFiles = HlsDownloadHelper.listLocalSubtitles(this, videoTitle!!)
-        val localDs = androidx.media3.datasource.DefaultDataSource.Factory(this)
+
+        // (a) Local subtitles
         for (f in localFiles) {
             val lang = f.nameWithoutExtension
                 .substringAfter("_subtitle_", "und")
-                .substringBeforeLast(".")   // drop extension
-            buildSubtitleSource(Uri.fromFile(f).toString(), lang, lang.uppercase(), localDs)
-                ?.let { subSources.add(it) }
+                .substringBeforeLast(".")
+            val mime = if (f.extension.equals("srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
+            val cfg = MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(f))
+                .setMimeType(mime)
+                .setLanguage(lang)
+                .setLabel(lang.uppercase())
+                .setSelectionFlags(3)
+                .build()
+            subtitleConfigs.add(cfg)
         }
 
-        // We create an empty dummy subtitle track so the 'None' button works properly
         val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
             .setMimeType(MimeTypes.TEXT_VTT)
             .setLanguage("none")
             .setLabel("None")
             .setSelectionFlags(0)
             .build()
-        val emptySubtitleSource = SingleSampleMediaSource.Factory(androidx.media3.datasource.DefaultDataSource.Factory(this))
-            .createMediaSource(emptySubtitleConfig, C.TIME_UNSET)
+        subtitleConfigs.add(emptySubtitleConfig)
 
-        val finalSource: MediaSource =
-            if (subSources.isEmpty()) baseSource
-            else MergingMediaSource(baseSource, emptySubtitleSource, *subSources.toTypedArray())
+        val newBaseItem = MediaItem.Builder()
+            .setUri(Uri.parse(videoUrl!!))
+            .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
+            .setSubtitleConfigurations(subtitleConfigs)
+            .build()
 
-        player?.setMediaSource(finalSource)
+        val newBaseSource: MediaSource = if (isHls)
+            HlsMediaSource.Factory(cacheFactory).createMediaSource(newBaseItem)
+        else
+            ProgressiveMediaSource.Factory(cacheFactory).createMediaSource(newBaseItem)
+
+        player?.setMediaSource(newBaseSource)
 
         // Set English as the default preferred subtitle language and explicitly enable text rendering
         player?.trackSelectionParameters = player?.trackSelectionParameters
@@ -355,36 +353,49 @@ class CustomPlayerActivity : AppCompatActivity() {
         else
             ProgressiveMediaSource.Factory(cacheFactoryToUse).createMediaSource(baseItem)
 
-        val subSources = mutableListOf<MediaSource>()
+        val subtitleConfigs = mutableListOf<MediaItem.SubtitleConfiguration>()
 
         // (a) Local subtitles
-        val localDs = androidx.media3.datasource.DefaultDataSource.Factory(this)
         for (f in localFiles) {
             val lang = f.nameWithoutExtension
                 .substringAfter("_subtitle_", "und")
                 .substringBeforeLast(".")
-            buildSubtitleSource(Uri.fromFile(f).toString(), lang, lang.uppercase(), localDs)
-                ?.let { subSources.add(it) }
+            val mime = if (f.extension.equals("srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
+            val cfg = MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(f))
+                .setMimeType(mime)
+                .setLanguage(lang)
+                .setLabel(lang.uppercase())
+                .setSelectionFlags(3)
+                .build()
+            subtitleConfigs.add(cfg)
         }
 
-        if (subSources.isNotEmpty()) {
+        if (subtitleConfigs.isNotEmpty()) {
             val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
                 .setMimeType(MimeTypes.TEXT_VTT)
                 .setLanguage("none")
                 .setLabel("None")
                 .setSelectionFlags(0)
                 .build()
-            val emptySubtitleSource = SingleSampleMediaSource.Factory(androidx.media3.datasource.DefaultDataSource.Factory(this))
-                .createMediaSource(emptySubtitleConfig, C.TIME_UNSET)
+            subtitleConfigs.add(emptySubtitleConfig)
 
-            val finalSource = MergingMediaSource(baseSource, emptySubtitleSource, *subSources.toTypedArray())
+            val newBaseItem = MediaItem.Builder()
+                .setUri(Uri.parse(videoUrl!!))
+                .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
+                .setSubtitleConfigurations(subtitleConfigs)
+                .build()
+
+            val newBaseSource: MediaSource = if (isHls)
+                HlsMediaSource.Factory(cacheFactoryToUse).createMediaSource(newBaseItem)
+            else
+                ProgressiveMediaSource.Factory(cacheFactoryToUse).createMediaSource(newBaseItem)
 
             // Save state
             val currentPos = p.currentPosition
             val playWhenReady = p.playWhenReady
 
             // Hot swap
-            p.setMediaSource(finalSource)
+            p.setMediaSource(newBaseSource)
             p.prepare()
             p.seekTo(currentPos)
             p.playWhenReady = playWhenReady
@@ -408,7 +419,8 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     /**
      * Build a SingleSampleMediaSource for a subtitle.
-     * - NO SELECTION_FLAG_FORCED so users can toggle in ExoPlayer UI.
+     * - Enforce SELECTION_FLAG_DEFAULT and SELECTION_FLAG_FORCED (value 3)
+     *   so ExoPlayer actually prioritizes rendering this side-loaded text over empty HLS 608 tracks.
      * - C.TIME_UNSET duration prevents MergingMediaSource from trimming it.
      */
     private fun buildSubtitleSource(
@@ -422,11 +434,12 @@ class CustomPlayerActivity : AppCompatActivity() {
                 uriOrPath.endsWith(".srt", true) -> MimeTypes.APPLICATION_SUBRIP
                 else                             -> MimeTypes.TEXT_VTT
             }
+            // Use flag 3: C.SELECTION_FLAG_DEFAULT | C.SELECTION_FLAG_FORCED
             val cfg = MediaItem.SubtitleConfiguration.Builder(uri)
                 .setMimeType(mime)
                 .setLanguage(language)
                 .setLabel(label)
-                .setSelectionFlags(0)                // <-- NOT forced
+                .setSelectionFlags(3)
                 .build()
 
             SingleSampleMediaSource.Factory(dsFactory)
