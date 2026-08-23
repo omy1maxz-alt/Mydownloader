@@ -179,8 +179,8 @@ class CustomPlayerActivity : AppCompatActivity() {
                                     }
                                     it.write(bytes)
                                 }
-                                downloadedAny = true
                             }
+                            downloadedAny = true
                         }
                     }
 
@@ -234,7 +234,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 .setMimeType(mime)
                 .setLanguage(lang)
                 .setLabel(lang.uppercase())
-                .setSelectionFlags(3)
+                .setSelectionFlags(1)
                 .build()
             subtitleConfigs.add(cfg)
         }
@@ -365,7 +365,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 .setMimeType(mime)
                 .setLanguage(lang)
                 .setLabel(lang.uppercase())
-                .setSelectionFlags(3)
+                .setSelectionFlags(1)
                 .build()
             subtitleConfigs.add(cfg)
         }
@@ -395,7 +395,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             p.seekTo(currentPos)
             p.playWhenReady = playWhenReady
 
-            Toast.makeText(this, "Subtitles loaded", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Subtitles loaded: ${subtitleConfigs.size - 1} tracks", Toast.LENGTH_LONG).show()
         }
     }
 
