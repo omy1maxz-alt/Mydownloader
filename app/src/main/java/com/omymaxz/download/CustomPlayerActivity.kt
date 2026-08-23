@@ -422,11 +422,24 @@ class CustomPlayerActivity : AppCompatActivity() {
     }
 
     private fun saveVideoOffline() {
-        val intent = Intent(this, HlsExportService::class.java).apply {
-            putExtra(HlsExportService.EXTRA_URL, videoUrl)
-            putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
-        }
-        startService(intent)
-        Toast.makeText(this, "Saving video...", Toast.LENGTH_SHORT).show()
+        val input = android.widget.EditText(this)
+        input.setText(videoTitle)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Rename Video")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                val newTitle = input.text.toString().trim()
+                if (newTitle.isNotEmpty()) {
+                    videoTitle = newTitle
+                }
+                val intent = Intent(this, HlsExportService::class.java).apply {
+                    putExtra(HlsExportService.EXTRA_URL, videoUrl)
+                    putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
+                }
+                startService(intent)
+                Toast.makeText(this, "Saving video...", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 }
