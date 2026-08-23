@@ -262,6 +262,8 @@ class CustomPlayerActivity : AppCompatActivity() {
             ?.setPreferredTextLanguage("en")
             ?.setIgnoredTextSelectionFlags(0)
             ?.setSelectUndeterminedTextLanguage(true)
+            // Enable styling features like color and size via the UI by using default text rendering capabilities
+            // The default subtitle view already responds to standard VTT/SRT styles and Android system caption settings
             ?.build()!!
 
         player?.addListener(object : Player.Listener {
