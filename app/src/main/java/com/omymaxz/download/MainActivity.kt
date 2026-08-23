@@ -2160,15 +2160,23 @@ private fun injectMediaStateDetector() {
                     androidx.appcompat.app.AlertDialog.Builder(activity)
                         .setTitle("Video Action")
                         .setItems(options) { _, which ->
-                            when (which) {
-                                0 -> {
-                                    Toast.makeText(activity, "Downloading Active Video...", Toast.LENGTH_SHORT).show()
-                                    activity.downloadMediaFile(mediaFile)
-                                }
-                                1 -> {
-                                    val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
-                                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
-                                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, enhancedTitle)
+                            val input = android.widget.EditText(activity)
+                            input.setText(mediaFile.title.substringBeforeLast("."))
+                            androidx.appcompat.app.AlertDialog.Builder(activity)
+                                .setTitle("Rename File")
+                                .setView(input)
+                                .setPositiveButton("OK") { _, _ ->
+                                    val newTitle = input.text.toString() + "." + mediaFile.title.substringAfterLast(".", "")
+                                    val updatedMediaFile = mediaFile.copy(title = newTitle)
+                                    when (which) {
+                                        0 -> {
+                                            Toast.makeText(activity, "Downloading Active Video...", Toast.LENGTH_SHORT).show()
+                                            activity.downloadMediaFile(updatedMediaFile)
+                                        }
+                                        1 -> {
+                                            val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
+                                                putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
+                                                putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, newTitle)
 
                                         // Automatically gather ALL detected subtitles from the current page
                                         val allSubtitleUrls = synchronized(activity.detectedMediaFiles) {
@@ -2185,8 +2193,11 @@ private fun injectMediaStateDetector() {
                                         }
                                     }
                                     activity.startActivity(intent)
+                                        }
+                                    }
                                 }
-                            }
+                                .setNegativeButton("Cancel", null)
+                                .show()
                         }
                         .show()
                 } else {
