@@ -105,9 +105,10 @@ class HlsExportService : Service() {
         val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
 
         // Build a MediaItem the same way the downloader would.
+        val isHls = url.contains(".m3u8", ignoreCase = true)
         val mediaItem = MediaItem.Builder()
             .setUri(Uri.parse(url))
-            .setMimeType(MimeTypes.APPLICATION_M3U8)
+            .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
             .setTag(title)
             .build()
 
