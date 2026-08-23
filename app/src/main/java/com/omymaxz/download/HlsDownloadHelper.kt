@@ -9,6 +9,7 @@ import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheKeyFactory
 import androidx.media3.datasource.cache.NoOpCacheEvictor
@@ -84,7 +85,7 @@ object HlsDownloadHelper {
             androidx.media3.datasource.cache.CacheDataSource.Factory {
         val f = androidx.media3.datasource.cache.CacheDataSource.Factory()
             .setCache(getUnifiedCache(context))
-            .setUpstreamDataSourceFactory(getDataSourceFactory(context))
+            .setUpstreamDataSourceFactory(DefaultDataSource.Factory(context, getDataSourceFactory(context)))
             .setCacheKeyFactory(customCacheKeyFactory)
             .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         if (readOnly) f.setCacheWriteDataSinkFactory(null)
