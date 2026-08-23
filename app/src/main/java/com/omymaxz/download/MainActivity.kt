@@ -1263,6 +1263,25 @@ private fun checkBatteryOptimization() {
                     (binding.root as FrameLayout).addView(exitButton)
                     fullscreenExitButton = exitButton
 
+                    // Auto-hide buttons after 5 seconds
+                    val hideRunnable = Runnable {
+                        fullscreenDownloadButton?.visibility = View.GONE
+                        fullscreenExitButton?.visibility = View.GONE
+                    }
+                    val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                    handler.postDelayed(hideRunnable, 5000)
+
+                    // Show buttons on touch
+                    fullscreenView?.setOnTouchListener { _, event ->
+                        if (event.action == android.view.MotionEvent.ACTION_DOWN) {
+                            fullscreenDownloadButton?.visibility = View.VISIBLE
+                            fullscreenExitButton?.visibility = View.VISIBLE
+                            handler.removeCallbacks(hideRunnable)
+                            handler.postDelayed(hideRunnable, 5000)
+                        }
+                        false // let the video player handle the touch too
+                    }
+
                     window.decorView.systemUiVisibility = (
                         View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
