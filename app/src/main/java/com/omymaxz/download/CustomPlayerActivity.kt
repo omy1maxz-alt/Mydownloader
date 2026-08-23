@@ -125,10 +125,26 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        val newUrl = intent?.getStringExtra(EXTRA_VIDEO_URL)
+        val newTitle = intent?.getStringExtra(EXTRA_VIDEO_TITLE)
+
+        // If the new intent is playing a completely different video, re-initialize the player
+        if (newUrl != null && newUrl != videoUrl) {
+            videoUrl = newUrl
+            videoTitle = newTitle ?: "Offline_Video_${System.currentTimeMillis()}"
+            setIntent(intent)
+            player?.release()
+            player = null
+            activePlayer = null
+            initializePlayer()
+            return
+        }
+
         // Keep original intent to retain EXTRA_VIDEO_URL if new intent doesn't have it
         if (intent?.hasExtra(EXTRA_VIDEO_URL) == true) {
             setIntent(intent)
         }
+
         val newSubUrls = intent?.getStringArrayListExtra(EXTRA_SUBTITLE_URLS)
         if (!newSubUrls.isNullOrEmpty() && player != null) {
             // We just got new subtitle URLs pushed while playing. Fetch them.
@@ -237,12 +253,8 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setSubtitleConfigurations(subtitleConfigs)
             .build()
 
-        val newBaseSource: MediaSource = if (isHls)
-            HlsMediaSource.Factory(cacheFactory).createMediaSource(newBaseItem)
-        else
-            ProgressiveMediaSource.Factory(cacheFactory).createMediaSource(newBaseItem)
-
-        player?.setMediaSource(newBaseSource)
+        // Let DefaultMediaSourceFactory naturally handle HLS merging
+        player?.setMediaItem(newBaseItem)
 
         // Set English as the default preferred subtitle language and explicitly enable text rendering
         player?.trackSelectionParameters = player?.trackSelectionParameters
@@ -340,19 +352,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             }
         }
 
-        // --- Build base video source (recreate to avoid buffering issue) ---
         val isHls = videoUrl?.contains("m3u8", ignoreCase = true) == true
-
-        val baseItem = MediaItem.Builder()
-            .setUri(Uri.parse(videoUrl!!))
-            .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
-            .build()
-
-        val baseSource: MediaSource = if (isHls)
-            HlsMediaSource.Factory(cacheFactoryToUse).createMediaSource(baseItem)
-        else
-            ProgressiveMediaSource.Factory(cacheFactoryToUse).createMediaSource(baseItem)
-
         val subtitleConfigs = mutableListOf<MediaItem.SubtitleConfiguration>()
 
         // (a) Local subtitles
@@ -385,17 +385,12 @@ class CustomPlayerActivity : AppCompatActivity() {
                 .setSubtitleConfigurations(subtitleConfigs)
                 .build()
 
-            val newBaseSource: MediaSource = if (isHls)
-                HlsMediaSource.Factory(cacheFactoryToUse).createMediaSource(newBaseItem)
-            else
-                ProgressiveMediaSource.Factory(cacheFactoryToUse).createMediaSource(newBaseItem)
-
             // Save state
             val currentPos = p.currentPosition
             val playWhenReady = p.playWhenReady
 
-            // Hot swap
-            p.setMediaSource(newBaseSource)
+            // Hot swap using setMediaItem so DefaultMediaSourceFactory naturally handles HLS merging
+            p.setMediaItem(newBaseItem)
             p.prepare()
             p.seekTo(currentPos)
             p.playWhenReady = playWhenReady
@@ -415,39 +410,6 @@ class CustomPlayerActivity : AppCompatActivity() {
                 fabContainer.visibility = v
             }
         })
-    }
-
-    /**
-     * Build a SingleSampleMediaSource for a subtitle.
-     * - Enforce SELECTION_FLAG_DEFAULT and SELECTION_FLAG_FORCED (value 3)
-     *   so ExoPlayer actually prioritizes rendering this side-loaded text over empty HLS 608 tracks.
-     * - C.TIME_UNSET duration prevents MergingMediaSource from trimming it.
-     */
-    private fun buildSubtitleSource(
-        uriOrPath: String, language: String, label: String,
-        dsFactory: androidx.media3.datasource.DataSource.Factory
-    ): MediaSource? {
-        return try {
-            val isHttp = uriOrPath.startsWith("http://") || uriOrPath.startsWith("https://")
-            val uri = if (isHttp) Uri.parse(uriOrPath) else Uri.fromFile(File(uriOrPath))
-            val mime = when {
-                uriOrPath.endsWith(".srt", true) -> MimeTypes.APPLICATION_SUBRIP
-                else                             -> MimeTypes.TEXT_VTT
-            }
-            // Use flag 3: C.SELECTION_FLAG_DEFAULT | C.SELECTION_FLAG_FORCED
-            val cfg = MediaItem.SubtitleConfiguration.Builder(uri)
-                .setMimeType(mime)
-                .setLanguage(language)
-                .setLabel(label)
-                .setSelectionFlags(3)
-                .build()
-
-            SingleSampleMediaSource.Factory(dsFactory)
-                .setTreatLoadErrorsAsEndOfStream(true)
-                .createMediaSource(cfg, C.TIME_UNSET)
-        } catch (t: Throwable) {
-            Log.e("CustomPlayerActivity", "Subtitle source failed for $uriOrPath", t); null
-        }
     }
 
     private fun releasePlayer() { /* intentional no-op: activePlayer survives onStop */ }
