@@ -3773,7 +3773,13 @@ if (isDesktopMode) {
     private fun isUrlWhitelisted(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
         val sharedPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
-        val whitelist = sharedPrefs.getStringSet("WHITELIST_URLS", setOf()) ?: setOf()
+        val whitelist = sharedPrefs.getStringSet("WHITELIST_URLS", setOf())?.toMutableSet() ?: mutableSetOf()
+
+        // System-level whitelist for common authentication providers (e.g. Google Sign-In)
+        whitelist.add("google.com")
+        whitelist.add("accounts.google.com")
+        whitelist.add("accounts.youtube.com")
+
         return whitelist.any { whitelistedDomain -> host == whitelistedDomain || host.endsWith(".$whitelistedDomain") }
     }
     private fun clearCookies() {
