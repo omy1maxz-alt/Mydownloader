@@ -85,6 +85,14 @@
                     android:layout_height="40dp"
                     android:contentDescription="Forward"
                     android:src="@drawable/ic_arrow_forward" />
+
+                <ImageButton
+                    android:id="@+id/aiButton"
+                    style="?attr/borderlessButtonStyle"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="Gemini AI"
+                    android:src="@drawable/ic_ai_sparkle" />
                 
                 <ImageButton
                     android:id="@+id/fabShowMedia"

@@ -543,6 +543,10 @@ private fun checkBatteryOptimization() {
                 webView.goForward()
             }
         }
+        binding.aiButton.setOnClickListener {
+            val intent = Intent(this, GeminiChatActivity::class.java)
+            startActivity(intent)
+        }
         binding.refreshButton.setOnClickListener {
             webView.reload()
         }
@@ -3368,7 +3372,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .show()
     }
     private fun showMasterSettingsDialog() {
-        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs")
+        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings")
         AlertDialog.Builder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
@@ -3382,8 +3386,35 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         val intent = Intent(this, LogcatViewerActivity::class.java)
                         startActivity(intent)
                     }
+                    6 -> showGeminiSettingsDialog()
                 }
             }
+            .show()
+    }
+
+    private fun showGeminiSettingsDialog() {
+        val sharedPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val currentKey = sharedPrefs.getString("gemini_api_key", "") ?: ""
+
+        val input = EditText(this)
+        input.hint = "Enter Gemini API Key"
+        input.setText(currentKey)
+
+        val layout = LinearLayout(this)
+        layout.orientation = LinearLayout.VERTICAL
+        layout.setPadding(50, 40, 50, 10)
+        layout.addView(input)
+
+        AlertDialog.Builder(this)
+            .setTitle("Gemini AI Settings")
+            .setMessage("Please enter your Google Gemini API Key.")
+            .setView(layout)
+            .setPositiveButton("Save") { _, _ ->
+                val newKey = input.text.toString().trim()
+                sharedPrefs.edit().putString("gemini_api_key", newKey).apply()
+                Toast.makeText(this, "Gemini Settings Saved", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
