@@ -93,13 +93,14 @@ class GeminiChatActivity : AppCompatActivity() {
                 }
             } catch (e: SerializationException) {
                 withContext(Dispatchers.Main) {
-                    messages.add(ChatMessage("Error: The AI response was not formatted as expected or the model is unsupported.", isUser = false))
+                    messages.add(ChatMessage("Error: The AI response was not formatted as expected or the model is overloaded (503).", isUser = false))
                     chatAdapter.notifyItemInserted(messages.size - 1)
                     chatRecyclerView.scrollToPosition(messages.size - 1)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    messages.add(ChatMessage("Error: ${e.message}", isUser = false))
+                    val errorMsg = if (e.message?.contains("503") == true) "Error: The model is overloaded. Please try again later." else "Error: ${e.message}"
+                    messages.add(ChatMessage(errorMsg, isUser = false))
                     chatAdapter.notifyItemInserted(messages.size - 1)
                     chatRecyclerView.scrollToPosition(messages.size - 1)
                 }
