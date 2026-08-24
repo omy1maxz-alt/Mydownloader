@@ -1,8 +1,0 @@
-apply plugin: 'java'
-repositories {
-    google()
-    mavenCentral()
-}
-dependencies {
-    implementation 'com.google.ai.client.generativeai:generativeai:0.9.0'
-}
