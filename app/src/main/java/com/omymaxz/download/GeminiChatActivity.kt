@@ -62,7 +62,7 @@ class GeminiChatActivity : AppCompatActivity() {
             sendButton.isEnabled = false
         } else {
             generativeModel = GenerativeModel(
-                modelName = "gemini-1.5-flash",
+                modelName = "gemini-3.7-flash",
                 apiKey = apiKey
             )
         }
