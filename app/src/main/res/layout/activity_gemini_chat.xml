@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="8dp"
-        android:background="#f5f5f5">
+        android:background="?android:attr/colorBackground">
 
         <EditText
             android:id="@+id/chatInputEditText"
@@ -34,7 +34,9 @@
             android:hint="Ask Gemini something..."
             android:inputType="textMultiLine"
             android:maxLines="4"
-            android:background="@android:color/white"
+            android:background="@drawable/edit_text_custom"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textColorHint="?android:attr/textColorHint"
             android:padding="12dp"
             android:elevation="2dp" />
 

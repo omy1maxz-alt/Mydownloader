@@ -18,8 +18,11 @@ import com.google.ai.client.generativeai.GenerativeModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class GeminiChatActivity : AppCompatActivity() {
 
@@ -56,13 +59,28 @@ class GeminiChatActivity : AppCompatActivity() {
         val sharedPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val apiKey = sharedPrefs.getString("gemini_api_key", "") ?: ""
 
+        val savedChat = sharedPrefs.getString("gemini_chat_history", null)
+        if (savedChat != null) {
+            try {
+                val type = object : TypeToken<List<ChatMessage>>() {}.type
+                val savedMessages: List<ChatMessage> = Gson().fromJson(savedChat, type)
+                messages.addAll(savedMessages)
+                chatAdapter.notifyDataSetChanged()
+                if (messages.isNotEmpty()) {
+                    chatRecyclerView.scrollToPosition(messages.size - 1)
+                }
+            } catch (e: Exception) {
+                // Ignore parsing errors
+            }
+        }
+
         if (apiKey.isEmpty()) {
             Toast.makeText(this, "Please configure Gemini API Key in Settings", Toast.LENGTH_LONG).show()
             chatInputEditText.isEnabled = false
             sendButton.isEnabled = false
         } else {
             generativeModel = GenerativeModel(
-                modelName = "gemini-3.7-flash",
+                modelName = "gemini-3.6-flash",
                 apiKey = apiKey
             )
         }
@@ -80,32 +98,51 @@ class GeminiChatActivity : AppCompatActivity() {
         chatAdapter.notifyItemInserted(messages.size - 1)
         chatRecyclerView.scrollToPosition(messages.size - 1)
         chatInputEditText.text.clear()
+        saveChatHistory()
 
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                // Here we are simply using generateContent. For a true chat we would use startChat()
-                val response = generativeModel?.generateContent(query)
-                val responseText = response?.text ?: "No response from Gemini."
-                withContext(Dispatchers.Main) {
-                    messages.add(ChatMessage(responseText, isUser = false))
-                    chatAdapter.notifyItemInserted(messages.size - 1)
-                    chatRecyclerView.scrollToPosition(messages.size - 1)
-                }
-            } catch (e: SerializationException) {
-                withContext(Dispatchers.Main) {
-                    messages.add(ChatMessage("Error: The AI response was not formatted as expected or the model is overloaded (503).", isUser = false))
-                    chatAdapter.notifyItemInserted(messages.size - 1)
-                    chatRecyclerView.scrollToPosition(messages.size - 1)
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    val errorMsg = if (e.message?.contains("503") == true) "Error: The model is overloaded. Please try again later." else "Error: ${e.message}"
-                    messages.add(ChatMessage(errorMsg, isUser = false))
-                    chatAdapter.notifyItemInserted(messages.size - 1)
-                    chatRecyclerView.scrollToPosition(messages.size - 1)
+            var attempt = 0
+            val maxAttempts = 3
+            var responseText = "Error: The model is overloaded or unavailable after multiple attempts."
+            var success = false
+
+            while (attempt < maxAttempts && !success) {
+                try {
+                    val response = generativeModel?.generateContent(query)
+                    responseText = response?.text ?: "No response from Gemini."
+                    success = true
+                } catch (e: SerializationException) {
+                    attempt++
+                    if (attempt < maxAttempts) {
+                        delay(1500)
+                    }
+                } catch (e: Exception) {
+                    if (e.message?.contains("503") == true) {
+                        attempt++
+                        if (attempt < maxAttempts) {
+                            delay(1500)
+                        }
+                    } else {
+                        responseText = "Error: ${e.message}"
+                        break
+                    }
                 }
             }
+
+            withContext(Dispatchers.Main) {
+                messages.add(ChatMessage(responseText, isUser = false))
+                chatAdapter.notifyItemInserted(messages.size - 1)
+                chatRecyclerView.scrollToPosition(messages.size - 1)
+                saveChatHistory()
+            }
         }
+
+    }
+    private fun saveChatHistory() {
+        val sharedPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val messagesToSave = if (messages.size > 100) messages.takeLast(100) else messages
+        val json = Gson().toJson(messagesToSave)
+        sharedPrefs.edit().putString("gemini_chat_history", json).apply()
     }
 }
 
