@@ -544,8 +544,25 @@ private fun checkBatteryOptimization() {
             }
         }
         binding.aiButton.setOnClickListener {
-            val intent = Intent(this, GeminiChatActivity::class.java)
-            startActivity(intent)
+            // Extract webpage context before launching chat
+            WebpageContextHolder.url = webView.url
+            WebpageContextHolder.title = webView.title
+
+            webView.evaluateJavascript("(function() { return document.body ? document.body.innerText : ''; })();") { result ->
+                // The result comes back as a JSON string literal, e.g., "\"text...\""
+                // Remove the enclosing quotes and unescape newlines if it's not null/empty
+                var cleanedText = result?.trim('"')?.replace("\\n", "\n") ?: ""
+
+                // Truncate to avoid massive payloads (e.g. max 15000 chars)
+                if (cleanedText.length > 15000) {
+                    cleanedText = cleanedText.substring(0, 15000) + "... (truncated)"
+                }
+
+                WebpageContextHolder.textContent = cleanedText
+
+                val intent = Intent(this, GeminiChatActivity::class.java)
+                startActivity(intent)
+            }
         }
         binding.refreshButton.setOnClickListener {
             webView.reload()
