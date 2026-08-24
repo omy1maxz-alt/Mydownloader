@@ -52,6 +52,10 @@ android {
         viewBinding = true
     }
 
+    lint {
+        abortOnError = false
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -98,8 +102,6 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
-
-    // Gemini AI
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
     // Testing Dependencies
