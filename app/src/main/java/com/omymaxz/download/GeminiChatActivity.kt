@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 
 class GeminiChatActivity : AppCompatActivity() {
 
@@ -87,6 +88,12 @@ class GeminiChatActivity : AppCompatActivity() {
                 val responseText = response?.text ?: "No response from Gemini."
                 withContext(Dispatchers.Main) {
                     messages.add(ChatMessage(responseText, isUser = false))
+                    chatAdapter.notifyItemInserted(messages.size - 1)
+                    chatRecyclerView.scrollToPosition(messages.size - 1)
+                }
+            } catch (e: SerializationException) {
+                withContext(Dispatchers.Main) {
+                    messages.add(ChatMessage("Error: The AI response was not formatted as expected or the model is unsupported.", isUser = false))
                     chatAdapter.notifyItemInserted(messages.size - 1)
                     chatRecyclerView.scrollToPosition(messages.size - 1)
                 }
