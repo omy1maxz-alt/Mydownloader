@@ -15,6 +15,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.content
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -79,9 +80,23 @@ class GeminiChatActivity : AppCompatActivity() {
             chatInputEditText.isEnabled = false
             sendButton.isEnabled = false
         } else {
+            var systemPrompt = "You are a helpful browser assistant. The user is browsing the web inside a custom Android browser app."
+
+            val ctxUrl = WebpageContextHolder.url
+            val ctxTitle = WebpageContextHolder.title
+            val ctxText = WebpageContextHolder.textContent
+
+            if (!ctxUrl.isNullOrEmpty() || !ctxText.isNullOrEmpty()) {
+                systemPrompt += "\n\nHere is the context of the webpage the user is currently viewing:"
+                if (!ctxTitle.isNullOrEmpty()) systemPrompt += "\nTitle: $ctxTitle"
+                if (!ctxUrl.isNullOrEmpty()) systemPrompt += "\nURL: $ctxUrl"
+                if (!ctxText.isNullOrEmpty()) systemPrompt += "\nPage Text (truncated): $ctxText"
+            }
+
             generativeModel = GenerativeModel(
-                modelName = "gemini-3.6-flash",
-                apiKey = apiKey
+                modelName = "gemini-1.5-flash", // We use 1.5-flash for valid models
+                apiKey = apiKey,
+                systemInstruction = content { text(systemPrompt) }
             )
         }
 
@@ -101,6 +116,22 @@ class GeminiChatActivity : AppCompatActivity() {
         saveChatHistory()
 
         CoroutineScope(Dispatchers.IO).launch {
+            var actualQuery = query
+            val lowerQuery = query.lowercase()
+
+            // Check if user is asking for logs
+            if (lowerQuery.contains("log") || lowerQuery.contains("crash") || lowerQuery.contains("error")) {
+                try {
+                    val process = Runtime.getRuntime().exec("logcat -d -t 300")
+                    val logOutput = process.inputStream.bufferedReader().use { it.readText() }
+                    if (logOutput.isNotEmpty()) {
+                        actualQuery += "\n\n[SYSTEM LOGS ATTACHED FOR CONTEXT]\n$logOutput"
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
             var attempt = 0
             val maxAttempts = 3
             var responseText = "Error: The model is overloaded or unavailable after multiple attempts."
@@ -108,7 +139,7 @@ class GeminiChatActivity : AppCompatActivity() {
 
             while (attempt < maxAttempts && !success) {
                 try {
-                    val response = generativeModel?.generateContent(query)
+                    val response = generativeModel?.generateContent(actualQuery)
                     responseText = response?.text ?: "No response from Gemini."
                     success = true
                 } catch (e: SerializationException) {
