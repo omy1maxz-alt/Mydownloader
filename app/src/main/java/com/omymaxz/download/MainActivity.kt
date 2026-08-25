@@ -2700,6 +2700,20 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             Toast.makeText(this, "Media list cleared", Toast.LENGTH_SHORT).show()
         }
 
+        dialogBinding.analyzeSubtitlesButton.setOnClickListener {
+            val subs = synchronized(detectedMediaFiles) {
+                detectedMediaFiles.filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
+            }
+            if (subs.isEmpty()) {
+                Toast.makeText(this, "No subtitles found to analyze.", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Analyzing ${subs.size} subtitles...", Toast.LENGTH_SHORT).show()
+                for (sub in subs) {
+                    fetchSubtitleSnippet(sub)
+                }
+            }
+        }
+
         dialogBinding.mediaRecyclerView.layoutManager = LinearLayoutManager(this)
         dialogBinding.mediaRecyclerView.adapter = currentMediaListAdapter
         dialog.show()
