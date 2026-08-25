@@ -159,13 +159,20 @@ class CustomPlayerActivity : AppCompatActivity() {
                         if (bytes != null) {
                             val contentString = String(bytes, Charsets.UTF_8)
                             var detectedLang = "und"
-                            if (contentString.contains("thank", ignoreCase = true)) {
+                            val result = SubtitleUtils.extractSnippet(contentString)
+                            if (!result.snippet.isNullOrBlank()) {
+                                detectedLang = result.snippet.replace(Regex("[^a-zA-Z0-9 -]"), "").take(15)
+                                if (!result.language.isNullOrBlank()) {
+                                    detectedLang = "[${result.language}] $detectedLang"
+                                }
+                            } else if (contentString.contains("thank", ignoreCase = true)) {
                                 detectedLang = "en"
                             } else if (contentString.contains("gracias", ignoreCase = true)) {
                                 detectedLang = "es"
                             } else {
-                                // Assign an arbitrary unique identifier if multiple "Detected" are found
-                                detectedLang = "Detected_${Math.abs(subUrl.hashCode())}"
+                                // Fallback to filename segment
+                                val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
+                                detectedLang = "Track_$fileSegment"
                             }
 
                             val ext = if (subUrl.contains(".srt", true)) ".srt" else ".vtt"
@@ -292,12 +299,20 @@ class CustomPlayerActivity : AppCompatActivity() {
                         if (bytes != null) {
                             val contentString = String(bytes, Charsets.UTF_8)
                             var detectedLang = "und"
-                            if (contentString.contains("thank", ignoreCase = true)) {
+                            val result = SubtitleUtils.extractSnippet(contentString)
+                            if (!result.snippet.isNullOrBlank()) {
+                                detectedLang = result.snippet.replace(Regex("[^a-zA-Z0-9 -]"), "").take(15)
+                                if (!result.language.isNullOrBlank()) {
+                                    detectedLang = "[${result.language}] $detectedLang"
+                                }
+                            } else if (contentString.contains("thank", ignoreCase = true)) {
                                 detectedLang = "en"
                             } else if (contentString.contains("gracias", ignoreCase = true)) {
                                 detectedLang = "es"
                             } else {
-                                detectedLang = "Detected_${Math.abs(subUrl.hashCode())}"
+                                // Fallback to filename segment
+                                val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
+                                detectedLang = "Track_$fileSegment"
                             }
 
                             val ext = if (subUrl.contains(".srt", true)) ".srt" else ".vtt"
