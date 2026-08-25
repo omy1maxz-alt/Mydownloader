@@ -1563,8 +1563,24 @@ private fun checkBatteryOptimization() {
         }
 
         @JavascriptInterface
-        fun showPreview(text: String, filename: String, mimeType: String) {
+        fun showPreview(text: String, filename: String, mimeType: String, url: String?) {
             runOnUiThread {
+                var currentFilename = filename
+
+                // If this is a subtitle, extract the snippet and update the Detection List title
+                if (mimeType.contains("text/") || filename.endsWith(".vtt") || filename.endsWith(".srt")) {
+                    val result = SubtitleUtils.extractSnippet(text)
+                    if (!result.snippet.isNullOrBlank()) {
+                        val ext = if (filename.endsWith(".srt")) ".srt" else ".vtt"
+                        val prefix = if (!result.language.isNullOrBlank()) "[${result.language}] " else ""
+                        val snippetTitle = "$prefix${result.snippet}$ext"
+                        if (url != null) {
+                            updateMediaTitle(url, snippetTitle)
+                        }
+                        currentFilename = snippetTitle
+                    }
+                }
+
                 val scrollView = ScrollView(this@MainActivity)
                 val textView = TextView(this@MainActivity).apply {
                     this.text = text
@@ -1578,7 +1594,21 @@ private fun checkBatteryOptimization() {
                     .setView(scrollView)
                     .setNegativeButton("Close", null)
                     .setPositiveButton("Download") { _, _ ->
-                        saveToDownloads(text.toByteArray(), filename, mimeType)
+                        // Show rename prompt before saving
+                        val input = EditText(this@MainActivity).apply {
+                            setText(currentFilename.substringBeforeLast('.'))
+                            selectAll()
+                        }
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("Rename File")
+                            .setView(input)
+                            .setNegativeButton("Cancel", null)
+                            .setPositiveButton("Save") { _, _ ->
+                                val newName = input.text.toString().trim()
+                                val finalName = if (newName.isNotEmpty()) "$newName.${currentFilename.substringAfterLast('.')}" else currentFilename
+                                saveToDownloads(text.toByteArray(), finalName, mimeType)
+                            }
+                            .show()
                     }
                     .show()
             }
@@ -1633,7 +1663,7 @@ private fun checkBatteryOptimization() {
                     val text = connection.inputStream.bufferedReader().use { it.readText() }
 
                     withContext(Dispatchers.Main) {
-                        showPreview(text.take(20000), filename, mimeType)
+                        showPreview(text.take(20000), filename, mimeType, url)
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
@@ -2864,7 +2894,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 val js = getBlobContentScript(
                     mediaFile.url,
                     false,
-                    "function(text) { AndroidWebAPI.showPreview(text.substring(0, 20000), \"$safeTitle\", \"$safeMime\"); }",
+                    "function(text) { AndroidWebAPI.showPreview(text.substring(0, 20000), \"$safeTitle\", \"$safeMime\", \"$safeUrl\"); }",
                     "function(err) { AndroidWebAPI.onPreviewFallback(\"$safeUrl\", \"$safeTitle\", \"$safeMime\"); }"
                 )
                 webView.evaluateJavascript(js, null)
