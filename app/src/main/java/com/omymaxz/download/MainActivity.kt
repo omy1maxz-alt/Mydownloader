@@ -1035,6 +1035,14 @@ private fun checkBatteryOptimization() {
                 private var navigationCount = 0
 
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    // Auto-clear detected media on new page load to prevent stale episode links
+                    synchronized(detectedMediaFiles) {
+                        detectedMediaFiles.clear()
+                    }
+                    runOnUiThread {
+                        updateFabVisibility()
+                    }
+
                     // Restore UI if trapped in fullscreen
                     if (fullscreenView != null) {
                         webView.webChromeClient?.onHideCustomView()
