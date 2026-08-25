@@ -175,8 +175,12 @@ class CustomPlayerActivity : AppCompatActivity() {
                                 detectedLang = "Track_$fileSegment"
                             }
 
+                            // Append a unique hash to the filename to prevent overwriting when snippets are identical,
+                            // but format it predictably so hotSwapSubtitles can strip it for the UI label.
+                            val hash = Math.abs(subUrl.hashCode())
+
                             val ext = if (subUrl.contains(".srt", true)) ".srt" else ".vtt"
-                            val outFile = File(outDir, "${safeTitle.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$detectedLang$ext")
+                            val outFile = File(outDir, "${safeTitle.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_${detectedLang}_HASH_${hash}$ext")
 
                             if (!outFile.exists()) {
                                 java.io.FileOutputStream(outFile).use {
@@ -315,8 +319,10 @@ class CustomPlayerActivity : AppCompatActivity() {
                                 detectedLang = "Track_$fileSegment"
                             }
 
+                            val hash = Math.abs(subUrl.hashCode())
+
                             val ext = if (subUrl.contains(".srt", true)) ".srt" else ".vtt"
-                            val outFile = File(outDir, "${videoTitle!!.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$detectedLang$ext")
+                            val outFile = File(outDir, "${videoTitle!!.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_${detectedLang}_HASH_${hash}$ext")
 
                             if (!outFile.exists()) {
                                 java.io.FileOutputStream(outFile).use {
@@ -376,6 +382,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         for (f in localFiles) {
             val lang = f.nameWithoutExtension
                 .substringAfter("_subtitle_", "und")
+                .substringBeforeLast("_HASH_")
                 .substringBeforeLast(".")
             val mime = if (f.extension.equals("srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
             val cfg = MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(f))
