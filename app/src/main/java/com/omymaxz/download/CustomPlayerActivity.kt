@@ -46,6 +46,9 @@ class CustomPlayerActivity : AppCompatActivity() {
     private var videoUrl: String? = null
     private var videoTitle: String? = null
 
+    private val cacheProgressHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var hasNotifiedCacheComplete = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_custom_player)
@@ -423,6 +426,26 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
     }
 
+    private val cacheProgressRunnable = object : Runnable {
+        override fun run() {
+            val p = player ?: return
+            val duration = p.duration
+            val buffered = p.bufferedPosition
+
+            if (duration > 0 && buffered > 0) {
+                // Consider it fully cached if buffered position is within 1.5 seconds of duration
+                if (!hasNotifiedCacheComplete && buffered >= duration - 1500) {
+                    hasNotifiedCacheComplete = true
+                    val fab = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab_save_offline)
+                    // Tint FAB green to indicate it's safe to save
+                    fab.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
+                    Toast.makeText(this@CustomPlayerActivity, "Video fully cached! Safe to Save Offline.", Toast.LENGTH_LONG).show()
+                }
+            }
+            cacheProgressHandler.postDelayed(this, 1000)
+        }
+    }
+
     private fun attachPlayerView() {
         val pv = findViewById<PlayerView>(R.id.player_view)
         pv.player = player
@@ -434,12 +457,17 @@ class CustomPlayerActivity : AppCompatActivity() {
                 fabContainer.visibility = v
             }
         })
+
+        hasNotifiedCacheComplete = false
+        cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
+        cacheProgressHandler.postDelayed(cacheProgressRunnable, 2000)
     }
 
     private fun releasePlayer() { /* intentional no-op: activePlayer survives onStop */ }
 
     override fun onDestroy() {
         super.onDestroy()
+        cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
         if (isFinishing) { activePlayer?.release(); activePlayer = null }
     }
 
