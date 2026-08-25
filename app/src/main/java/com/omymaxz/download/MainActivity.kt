@@ -1594,10 +1594,11 @@ private fun checkBatteryOptimization() {
                     .setView(scrollView)
                     .setNegativeButton("Close", null)
                     .setPositiveButton("Download") { _, _ ->
-                        // Show rename prompt before saving
+                        // Show rename prompt before saving. Prompt user with a blank input box
+                        // so they can freely type the name rather than deleting the long snippet.
                         val input = EditText(this@MainActivity).apply {
-                            setText(currentFilename.substringBeforeLast('.'))
-                            selectAll()
+                            hint = currentFilename.substringBeforeLast('.')
+                            // Leave it empty so they don't have to backspace the long snippet
                         }
                         AlertDialog.Builder(this@MainActivity)
                             .setTitle("Rename File")
@@ -2674,13 +2675,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val dialogBinding = DialogMediaListBinding.inflate(layoutInflater)
         val dialog = AlertDialog.Builder(this).setView(dialogBinding.root).create()
         currentMediaListAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
-            // Tap to download
+            // Tap to download (do not dismiss to keep scroll position)
             showRenameDialog(mediaFile)
-            dialog.dismiss()
         }, { mediaFile ->
-            // Long press to "Open With"
+            // Long press to "Open With" (do not dismiss to keep scroll position)
             openMediaWith(mediaFile)
-            dialog.dismiss()
         })
         dialog.setOnDismissListener {
             currentMediaListAdapter = null

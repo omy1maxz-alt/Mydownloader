@@ -96,6 +96,8 @@ object SubtitleUtils {
     fun extractSnippet(content: String): SubtitleResult {
         val lines = content.lines()
         var language: String? = null
+        val accumulatedSnippet = java.lang.StringBuilder()
+
         for (raw in lines) {
             var line = raw.replace("\uFEFF", "").trim()
             if (line.isEmpty()) continue
@@ -119,12 +121,40 @@ object SubtitleUtils {
             clean = TAG_PATTERN.matcher(clean).replaceAll("").trim()
             if (clean.isEmpty()) continue
 
-            val snippet = if (clean.length > 50) {
-                val cut = clean.lastIndexOf(' ', 50)
-                if (cut > 0) clean.substring(0, cut) + "..." else clean.substring(0, 50) + "..."
-            } else clean
-            return SubtitleResult(snippet, language)
+            if (accumulatedSnippet.isNotEmpty()) accumulatedSnippet.append(" ")
+            accumulatedSnippet.append(clean)
+
+            if (accumulatedSnippet.length > 120) break
         }
-        return SubtitleResult(null, language)
+
+        var finalSnippet = accumulatedSnippet.toString()
+        if (finalSnippet.isEmpty()) {
+            return SubtitleResult(null, language)
+        }
+
+        // Smart Language Detection Heuristics
+        if (language.isNullOrBlank()) {
+            val lowerText = finalSnippet.lowercase()
+            val words = lowerText.split(Regex("\\W+"))
+
+            val englishCount = words.count { it in setOf("the", "be", "to", "of", "and", "a", "in", "that", "have", "i", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at") }
+            val spanishCount = words.count { it in setOf("el", "la", "de", "que", "y", "en", "un", "una", "los", "las", "por", "con", "para", "como", "su") }
+            val tagalogCount = words.count { it in setOf("ang", "ng", "sa", "na", "at", "mga", "ay", "ako", "ito", "si", "mo", "ni", "niya", "kami", "kaya") }
+
+            if (englishCount >= 2 && englishCount > spanishCount && englishCount > tagalogCount) {
+                language = "English"
+            } else if (spanishCount >= 2 && spanishCount > englishCount && spanishCount > tagalogCount) {
+                language = "Spanish"
+            } else if (tagalogCount >= 2 && tagalogCount > englishCount && tagalogCount > spanishCount) {
+                language = "Tagalog"
+            }
+        }
+
+        val snippetText = if (finalSnippet.length > 120) {
+            val cut = finalSnippet.lastIndexOf(' ', 120)
+            if (cut > 0) finalSnippet.substring(0, cut) + "..." else finalSnippet.substring(0, 120) + "..."
+        } else finalSnippet
+
+        return SubtitleResult(snippetText, language)
     }
 }
