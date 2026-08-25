@@ -20,12 +20,16 @@
         android:background="@android:color/darker_gray"
         android:layout_marginVertical="8dp" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/mediaRecyclerView"
+    <!-- A fixed height wrapper for the RecyclerView to ensure it scrolls and doesn't push the button off screen -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:maxHeight="400dp"
-        android:scrollbars="vertical" />
+        android:layout_height="350dp">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/mediaRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="vertical" />
+    </FrameLayout>
 
     <TextView
         android:layout_width="match_parent"

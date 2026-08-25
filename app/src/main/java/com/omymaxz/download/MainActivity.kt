@@ -2365,15 +2365,27 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         else -> "${category.displayName}_"
     }
 
-    // Capture the webpage title at the time of detection
-    val pageTitle = webView.title?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(50)
+    // Capture the webpage title at the time of detection safely
+    var titleSnapshot: String? = null
+    val latch = java.util.concurrent.CountDownLatch(1)
+    runOnUiThread {
+        titleSnapshot = webView.title?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(50)
+        latch.countDown()
+    }
+    try {
+        latch.await(500, java.util.concurrent.TimeUnit.MILLISECONDS)
+    } catch (e: Exception) {
+        // Ignore timeout
+    }
+
+    val finalPageTitle = titleSnapshot
 
     val fileNameFromUrl = uri.lastPathSegment?.substringBeforeLast("?")
 
     val baseName = when {
-        !pageTitle.isNullOrBlank() && pageTitle.length > 3 -> {
+        !finalPageTitle.isNullOrBlank() && finalPageTitle.length > 3 -> {
             // Prioritize the Webpage Title (e.g. "Anime Episode 2") to make lists readable
-            pageTitle.replace(" ", "_")
+            finalPageTitle.replace(" ", "_")
         }
         !fileNameFromUrl.isNullOrBlank() && fileNameFromUrl.contains('.') && fileNameFromUrl.length > 5 -> {
             fileNameFromUrl.substringBeforeLast('.')
@@ -2502,14 +2514,25 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 val text = connection.inputStream.bufferedReader().use { it.readText() }
                 val result = SubtitleUtils.extractSnippet(text)
 
+                val detectedFormat = detectVideoFormat(mediaFile.url)
                 if (!result.snippet.isNullOrBlank()) {
-                     val detectedFormat = detectVideoFormat(mediaFile.url)
                      val prefix = if (!result.language.isNullOrBlank()) "[${result.language}] " else ""
                      val newTitle = "$prefix${result.snippet}${detectedFormat.extension}"
                      updateMediaTitle(mediaFile.url, newTitle)
+                } else {
+                     // Fallback if extraction fails but we know it's a subtitle
+                     val pageTitle = withContext(Dispatchers.Main) { webView.title }?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(30) ?: "Track"
+                     val fileExtract = android.net.Uri.parse(mediaFile.url).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
+                     val fallbackTitle = "[Subtitle] $pageTitle - $fileExtract" + detectedFormat.extension
+                     updateMediaTitle(mediaFile.url, fallbackTitle)
                 }
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed to fetch subtitle snippet: ${e.message}")
+                val detectedFormat = detectVideoFormat(mediaFile.url)
+                val pageTitle = withContext(Dispatchers.Main) { webView.title }?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(30) ?: "Track"
+                val fileExtract = android.net.Uri.parse(mediaFile.url).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
+                val fallbackTitle = "[Subtitle] $pageTitle - $fileExtract" + detectedFormat.extension
+                updateMediaTitle(mediaFile.url, fallbackTitle)
             }
         }
     }
