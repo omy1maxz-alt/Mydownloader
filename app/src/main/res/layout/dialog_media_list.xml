@@ -36,4 +36,13 @@
         android:gravity="center"
         android:padding="8dp" />
 
+    <Button
+        android:id="@+id/clearListButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Clear List"
+        android:layout_marginTop="8dp"
+        style="?android:attr/borderlessButtonStyle"
+        android:textColor="@color/error_color" />
+
 </LinearLayout>
