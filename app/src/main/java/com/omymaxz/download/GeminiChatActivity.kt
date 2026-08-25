@@ -51,7 +51,9 @@ class GeminiChatActivity : AppCompatActivity() {
         chatInputEditText = findViewById(R.id.chatInputEditText)
         sendButton = findViewById(R.id.sendButton)
 
-        chatAdapter = ChatAdapter(messages)
+        chatAdapter = ChatAdapter(messages) { position ->
+            handleMessageLongClick(position)
+        }
         chatRecyclerView.layoutManager = LinearLayoutManager(this).apply {
             stackFromEnd = true
         }
@@ -137,9 +139,34 @@ class GeminiChatActivity : AppCompatActivity() {
             var responseText = "Error: The model is overloaded or unavailable after multiple attempts."
             var success = false
 
+            // Build the conversational history from all preceding messages.
+            // Gemini strictly requires alternating user/model roles. If edits caused consecutive
+            // messages from the same role, we must merge their text.
+            val rawHistory = messages.dropLast(1)
+            val mergedHistory = mutableListOf<com.google.ai.client.generativeai.type.Content>()
+            var currentRole = ""
+            var currentText = StringBuilder()
+
+            for (msg in rawHistory) {
+                val role = if (msg.isUser) "user" else "model"
+                if (role == currentRole) {
+                    currentText.append("\n\n").append(msg.text)
+                } else {
+                    if (currentRole.isNotEmpty()) {
+                        mergedHistory.add(content(currentRole) { text(currentText.toString()) })
+                    }
+                    currentRole = role
+                    currentText = StringBuilder(msg.text)
+                }
+            }
+            if (currentRole.isNotEmpty()) {
+                mergedHistory.add(content(currentRole) { text(currentText.toString()) })
+            }
+
             while (attempt < maxAttempts && !success) {
                 try {
-                    val response = generativeModel?.generateContent(actualQuery)
+                    val chat = generativeModel?.startChat(mergedHistory)
+                    val response = chat?.sendMessage(actualQuery)
                     responseText = response?.text ?: "No response from Gemini."
                     success = true
                 } catch (e: SerializationException) {
@@ -169,6 +196,53 @@ class GeminiChatActivity : AppCompatActivity() {
         }
 
     }
+    private fun handleMessageLongClick(position: Int) {
+        val message = messages[position]
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Chat Options")
+            .setItems(arrayOf("Edit & Restart From Here", "Delete From Here")) { _, which ->
+                when (which) {
+                    0 -> {
+                        // Edit & Restart
+                        val input = EditText(this).apply {
+                            setText(message.text)
+                            selectAll()
+                        }
+                        androidx.appcompat.app.AlertDialog.Builder(this)
+                            .setTitle("Edit Message")
+                            .setView(input)
+                            .setPositiveButton("Send") { _, _ ->
+                                val newText = input.text.toString()
+                                if (newText.isNotBlank()) {
+                                    // Remove this message and everything after it safely
+                                    val removeCount = messages.size - position
+                                    while (messages.size > position) {
+                                        messages.removeAt(messages.size - 1)
+                                    }
+                                    chatAdapter.notifyItemRangeRemoved(position, removeCount)
+                                    saveChatHistory()
+                                    sendMessage(newText)
+                                }
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                    }
+                    1 -> {
+                        // Delete From Here
+                        val removeCount = messages.size - position
+                        while (messages.size > position) {
+                            messages.removeAt(messages.size - 1)
+                        }
+                        chatAdapter.notifyItemRangeRemoved(position, removeCount)
+                        saveChatHistory()
+                        Toast.makeText(this, "Messages deleted.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun saveChatHistory() {
         val sharedPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val messagesToSave = if (messages.size > 100) messages.takeLast(100) else messages
@@ -179,8 +253,10 @@ class GeminiChatActivity : AppCompatActivity() {
 
 data class ChatMessage(val text: String, val isUser: Boolean)
 
-class ChatAdapter(private val messages: List<ChatMessage>) :
-    RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
+class ChatAdapter(
+    private val messages: List<ChatMessage>,
+    private val onMessageLongClick: (Int) -> Unit
+) : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
 
     class ChatViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val messageContainer: LinearLayout = view.findViewById(R.id.messageContainer)
@@ -208,6 +284,11 @@ class ChatAdapter(private val messages: List<ChatMessage>) :
             layoutParams.gravity = android.view.Gravity.START
         }
         holder.messageTextView.layoutParams = layoutParams
+
+        holder.messageContainer.setOnLongClickListener {
+            onMessageLongClick(holder.adapterPosition)
+            true
+        }
     }
 
     override fun getItemCount() = messages.size
