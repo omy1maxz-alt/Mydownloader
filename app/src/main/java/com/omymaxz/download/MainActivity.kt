@@ -2358,10 +2358,17 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         else -> "${category.displayName}_"
     }
 
+    // Capture the webpage title at the time of detection
+    val pageTitle = webView.title?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(50)
+
     val fileNameFromUrl = uri.lastPathSegment?.substringBeforeLast("?")
 
     val baseName = when {
-        !fileNameFromUrl.isNullOrBlank() && fileNameFromUrl.contains('.') -> {
+        !pageTitle.isNullOrBlank() && pageTitle.length > 3 -> {
+            // Prioritize the Webpage Title (e.g. "Anime Episode 2") to make lists readable
+            pageTitle.replace(" ", "_")
+        }
+        !fileNameFromUrl.isNullOrBlank() && fileNameFromUrl.contains('.') && fileNameFromUrl.length > 5 -> {
             fileNameFromUrl.substringBeforeLast('.')
         }
         lowerUrl.contains("youtube.com") || lowerUrl.contains("youtu.be") -> {
@@ -2617,6 +2624,15 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         dialog.setOnDismissListener {
             currentMediaListAdapter = null
         }
+
+        dialogBinding.clearListButton.setOnClickListener {
+            synchronized(detectedMediaFiles) {
+                detectedMediaFiles.clear()
+            }
+            dialog.dismiss()
+            Toast.makeText(this, "Media list cleared", Toast.LENGTH_SHORT).show()
+        }
+
         dialogBinding.mediaRecyclerView.layoutManager = LinearLayoutManager(this)
         dialogBinding.mediaRecyclerView.adapter = currentMediaListAdapter
         dialog.show()
