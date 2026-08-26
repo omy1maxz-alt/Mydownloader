@@ -13,6 +13,8 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.offline.DownloadRequest
+import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
@@ -70,11 +72,18 @@ class CustomPlayerActivity : AppCompatActivity() {
         findViewById<FloatingActionButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
         hideSystemUI()
 
-        // Start aggressive background caching
-        val cacheIntent = android.content.Intent(this, BackgroundCacheService::class.java).apply {
-            putExtra(EXTRA_VIDEO_URL, videoUrl)
-        }
-        startService(cacheIntent)
+        // Start aggressive background caching using DownloadManager to fully parse HLS playlists
+        val downloadRequest = DownloadRequest.Builder(
+            "cache_${videoUrl.hashCode()}",
+            Uri.parse(videoUrl)
+        ).build()
+
+        DownloadService.sendAddDownload(
+            this,
+            HlsDownloadService::class.java,
+            downloadRequest,
+            false // don't start in foreground, just silently cache
+        )
     }
 
     private fun enterPipMode() {
@@ -497,7 +506,17 @@ class CustomPlayerActivity : AppCompatActivity() {
         cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
 
         // Stop aggressive background caching when leaving the player
-        stopService(android.content.Intent(this, BackgroundCacheService::class.java))
+        try {
+            val downloadId = "cache_${videoUrl.hashCode()}"
+            DownloadService.sendRemoveDownload(
+                this,
+                HlsDownloadService::class.java,
+                downloadId,
+                false
+            )
+        } catch (e: Exception) {
+            Log.e("CustomPlayerActivity", "Failed to cancel background cache", e)
+        }
 
         if (isFinishing) { activePlayer?.release(); activePlayer = null }
     }
