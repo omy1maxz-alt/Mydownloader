@@ -12,7 +12,7 @@ import java.util.*
 import android.net.Uri
 
 class MediaListAdapter(
-    private val mediaFiles: List<MediaFile>,
+    var mediaFiles: MutableList<MediaFile>,
     private val onItemClicked: (MediaFile) -> Unit,
     private val onItemLongClicked: (MediaFile) -> Unit
 ) : RecyclerView.Adapter<MediaListAdapter.MediaViewHolder>() {
