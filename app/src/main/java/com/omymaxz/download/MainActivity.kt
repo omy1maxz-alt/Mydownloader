@@ -958,7 +958,7 @@ private fun checkBatteryOptimization() {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.databaseEnabled = true
-            settings.mediaPlaybackRequiresUserGesture = false
+            settings.mediaPlaybackRequiresUserGesture = true // Aggressively block auto-play to prevent background audio
 
             // --- PERFORMANCE SETTINGS ---
             settings.allowFileAccess = true
@@ -2677,7 +2677,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             return
         }
         val mediaFilesCopy = synchronized(detectedMediaFiles) {
-            detectedMediaFiles.toList()
+            detectedMediaFiles.toMutableList()
         }
         val dialogBinding = DialogMediaListBinding.inflate(layoutInflater)
         val dialog = AlertDialog.Builder(this).setView(dialogBinding.root).create()
@@ -2728,7 +2728,14 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     val newFile = oldFile.copy(title = newTitle)
                     detectedMediaFiles[index] = newFile
                     runOnUiThread {
-                        currentMediaListAdapter?.notifyItemChanged(index)
+                        // Update the adapter's snapshot list explicitly before notifying
+                        currentMediaListAdapter?.mediaFiles?.let { snapshot ->
+                            val snapshotIndex = snapshot.indexOfFirst { it.url == url }
+                            if (snapshotIndex != -1) {
+                                snapshot[snapshotIndex] = newFile
+                                currentMediaListAdapter?.notifyItemChanged(snapshotIndex)
+                            }
+                        }
                     }
                 }
             }
