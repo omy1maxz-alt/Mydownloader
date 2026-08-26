@@ -151,21 +151,9 @@ class HlsExportService : Service() {
     private suspend fun ensureFullyCached(dm: DownloadManager, download: Download) {
         if (download.state == Download.STATE_COMPLETED) return
 
-        // Ask the cache how many bytes we already have for this key.
-        val cache: Cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
-        val key = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(
-            androidx.media3.datasource.DataSpec(Uri.parse(download.request.uri.toString()))
-        )
-        val cachedBytes = cache.getCachedBytes(key, 0, androidx.media3.common.C.LENGTH_UNSET.toLong())
-        val totalBytes  = download.bytesDownloaded.coerceAtLeast(1L)
-        Log.i(TAG, "Cache coverage for ${download.request.id}: $cachedBytes / $totalBytes")
+        Log.i(TAG, "Download ${download.request.id} not fully completed. Sending to DownloadManager to resume/verify.")
 
-        if (cachedBytes >= totalBytes - 1024) {
-            // Close enough — treat as complete.
-            return
-        }
-
-        // Otherwise, (re-)add the download so DownloadManager resumes from cache.
+        // Unconditionally add the download so DownloadManager resumes from cache or verifies completion.
         DownloadService.sendAddDownload(
             applicationContext, HlsDownloadService::class.java, download.request, true
         )
