@@ -68,6 +68,12 @@ class CustomPlayerActivity : AppCompatActivity() {
         findViewById<FloatingActionButton>(R.id.fab_save_offline).setOnClickListener { saveVideoOffline() }
         findViewById<FloatingActionButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
         hideSystemUI()
+
+        // Start aggressive background caching
+        val cacheIntent = android.content.Intent(this, BackgroundCacheService::class.java).apply {
+            putExtra(EXTRA_VIDEO_URL, videoUrl)
+        }
+        startService(cacheIntent)
     }
 
     private fun enterPipMode() {
@@ -475,6 +481,10 @@ class CustomPlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
+
+        // Stop aggressive background caching when leaving the player
+        stopService(android.content.Intent(this, BackgroundCacheService::class.java))
+
         if (isFinishing) { activePlayer?.release(); activePlayer = null }
     }
 
