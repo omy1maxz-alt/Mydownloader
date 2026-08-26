@@ -108,22 +108,6 @@ object HlsDownloadHelper {
                 DefaultDownloaderFactory(cacheFactory, Executor { it.run() })
             ).apply {
                 maxParallelDownloads = 3
-                addListener(object : DownloadManager.Listener {
-                    override fun onDownloadChanged(
-                        dm: DownloadManager,
-                        download: Download,
-                        finalException: Exception?
-                    ) {
-                        if (download.state == Download.STATE_COMPLETED) {
-                            val title = String(download.request.data)
-                            val intent = android.content.Intent(app, HlsExportService::class.java).apply {
-                                putExtra(HlsExportService.EXTRA_DOWNLOAD_ID, download.request.id)
-                                putExtra(HlsExportService.EXTRA_TITLE, title)
-                            }
-                            app.startService(intent)
-                        }
-                    }
-                })
             }
         }
         return downloadManager!!
