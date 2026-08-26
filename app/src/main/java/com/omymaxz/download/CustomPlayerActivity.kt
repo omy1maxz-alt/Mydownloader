@@ -51,6 +51,10 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Prevent screen timeout while playing video
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         setContentView(R.layout.activity_custom_player)
 
         videoUrl   = intent.getStringExtra(EXTRA_VIDEO_URL)
