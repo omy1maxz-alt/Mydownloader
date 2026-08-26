@@ -435,10 +435,13 @@ class CustomPlayerActivity : AppCompatActivity() {
             val p = player ?: return
             val duration = p.duration
             val buffered = p.bufferedPosition
+            val bufferedPercentage = p.bufferedPercentage
 
             if (duration > 0 && buffered > 0) {
-                // Consider it fully cached if buffered position is within 1.5 seconds of duration
-                if (!hasNotifiedCacheComplete && buffered >= duration - 1500) {
+                // Consider it fully cached if buffered position reaches the end AND the buffered percentage is 100.
+                // Checking bufferedPercentage == 100 prevents false positives when the user skips/fast-forwards to the end,
+                // which leaves missing chunks in the middle of the cache.
+                if (!hasNotifiedCacheComplete && buffered >= duration - 1500 && bufferedPercentage >= 99) {
                     hasNotifiedCacheComplete = true
                     val fab = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab_save_offline)
                     // Tint FAB green to indicate it's safe to save
