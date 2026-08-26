@@ -11,6 +11,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -236,8 +237,21 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this)
 
+        // Aggressive caching setup: ignoring standard 32MB size thresholds
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                50_000,             // minBufferMs
+                12_000_000,         // maxBufferMs (approx 3.3 hours)
+                2_500,              // bufferForPlaybackMs
+                5_000               // bufferForPlaybackAfterRebufferMs
+            )
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .setTargetBufferBytes(androidx.media3.common.C.LENGTH_UNSET) // Uncapped RAM usage
+            .build()
+
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(cacheFactory))
+            .setLoadControl(loadControl)
             .build()
 
         attachPlayerView()
