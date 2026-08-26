@@ -138,6 +138,10 @@
             android:name=".GeminiChatActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+
+        <service
+            android:name=".BackgroundCacheService"
+            android:exported="false" />
     </application>
 
 </manifest>
