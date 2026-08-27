@@ -970,7 +970,9 @@ private fun checkBatteryOptimization() {
             settings.loadWithOverviewMode = false
             settings.userAgentString = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 
-            settings.javaScriptCanOpenWindowsAutomatically = false
+            val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+            val blockPopups = prefs.getBoolean("block_popups_redirects", true)
+            settings.javaScriptCanOpenWindowsAutomatically = !blockPopups
             settings.setSupportMultipleWindows(true)
 
             addJavascriptInterface(WebAPIPolyfill(this@MainActivity), "AndroidWebAPI")
@@ -1379,6 +1381,7 @@ private fun checkBatteryOptimization() {
                         settings.setSupportMultipleWindows(true)
                         settings.javaScriptCanOpenWindowsAutomatically = false
                         settings.domStorageEnabled = true
+                        settings.userAgentString = this@MainActivity.webView.settings.userAgentString
                         layoutParams = FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT
@@ -1426,8 +1429,9 @@ private fun checkBatteryOptimization() {
                         setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
                         setBackgroundColor(android.graphics.Color.TRANSPARENT)
                         setOnClickListener {
+                            popupWrapper.removeView(newWebView)
                             rootLayout.removeView(popupWrapper)
-                            newWebView.destroy()
+                            newWebView.postDelayed({ newWebView.destroy() }, 500)
                         }
                     }
 
@@ -1452,8 +1456,9 @@ private fun checkBatteryOptimization() {
 
                     newWebView.webChromeClient = object : WebChromeClient() {
                         override fun onCloseWindow(window: WebView?) {
-                            rootLayout.removeView(newWebView)
-                            newWebView.destroy()
+                            popupWrapper.removeView(newWebView)
+                            rootLayout.removeView(popupWrapper)
+                            newWebView.postDelayed({ newWebView.destroy() }, 500)
                         }
                     }
 
