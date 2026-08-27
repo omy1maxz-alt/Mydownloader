@@ -42,6 +42,8 @@ class CustomPlayerActivity : AppCompatActivity() {
         const val EXTRA_VIDEO_URL     = "extra_video_url"
         const val EXTRA_VIDEO_TITLE   = "extra_video_title"
         const val EXTRA_SUBTITLE_URLS = "extra_subtitle_urls" // Now an ArrayList<String>
+        const val EXTRA_USER_AGENT    = "extra_user_agent"
+        const val EXTRA_REFERER       = "extra_referer"
         var activePlayer: ExoPlayer? = null
     }
 
@@ -63,6 +65,9 @@ class CustomPlayerActivity : AppCompatActivity() {
         videoUrl   = intent.getStringExtra(EXTRA_VIDEO_URL)
         videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE)
             ?: "Offline_Video_${System.currentTimeMillis()}"
+
+        intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
+        intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
 
         if (videoUrl == null) {
             Toast.makeText(this, "No video URL provided", Toast.LENGTH_SHORT).show(); finish(); return
@@ -154,6 +159,9 @@ class CustomPlayerActivity : AppCompatActivity() {
         val newUrl = intent?.getStringExtra(EXTRA_VIDEO_URL)
         val newTitle = intent?.getStringExtra(EXTRA_VIDEO_TITLE)
 
+        intent?.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
+        intent?.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
+
         // If the new intent is playing a completely different video, re-initialize the player
         if (newUrl != null && newUrl != videoUrl) {
             videoUrl = newUrl
@@ -243,7 +251,9 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
 
         // Seed global headers so any lazy HTTP request the cache makes uses them.
-        HlsDownloadHelper.currentReferer    = videoUrl
+        // HlsDownloadHelper.currentReferer and currentUserAgent might already be set from the Intent.
+        // If not, we fall back to defaults or the video URL.
+        HlsDownloadHelper.currentReferer    = HlsDownloadHelper.currentReferer ?: videoUrl
         HlsDownloadHelper.currentUserAgent  = HlsDownloadHelper.currentUserAgent
             ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
 

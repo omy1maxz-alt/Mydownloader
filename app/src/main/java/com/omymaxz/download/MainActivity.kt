@@ -2244,6 +2244,8 @@ private fun injectMediaStateDetector() {
                                             val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, newTitle)
+                                                putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, activity.webView.settings.userAgentString)
+                                                putExtra(CustomPlayerActivity.EXTRA_REFERER, activity.webView.url)
 
                                         // Automatically gather ALL detected subtitles from the current page
                                         val allSubtitleUrls = synchronized(activity.detectedMediaFiles) {
