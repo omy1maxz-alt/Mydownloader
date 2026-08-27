@@ -1129,6 +1129,9 @@ private fun checkBatteryOptimization() {
                 }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
+                    val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                    if (!prefs.getBoolean("block_popups_redirects", true)) return false
+
                     if (redirectLogic.shouldOverrideUrlLoading(request, view?.url)) {
                         if (url.contains("perchance.org")) {
                             openInCustomTab(url)
@@ -1354,17 +1357,21 @@ private fun checkBatteryOptimization() {
                     customViewCallback = null
                 }
                 override fun onCreateWindow(view: WebView, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message): Boolean {
+                    val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
                     val currentUrl = view.url
                     val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
                     val blockPopups = settingsPrefs.getBoolean("BLOCK_ALL_POPUPS", true)
 
-                    // Allow popups if user gesture is present OR if the URL is whitelisted
-                    if (!isUserGesture && (currentUrl == null || !isUrlWhitelisted(currentUrl))) {
-                        val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
-                        if (showNotice) {
-                            Toast.makeText(applicationContext, "Malicious Pop-up blocked", Toast.LENGTH_SHORT).show()
+                    // Gate the entire blocking logic behind the master toggle
+                    if (prefs.getBoolean("block_popups_redirects", true)) {
+                        // Allow popups if user gesture is present OR if the URL is whitelisted
+                        if (!isUserGesture && (currentUrl == null || !isUrlWhitelisted(currentUrl))) {
+                            val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
+                            if (showNotice) {
+                                Toast.makeText(applicationContext, "Malicious Pop-up blocked", Toast.LENGTH_SHORT).show()
+                            }
+                            return false // Aggressively kill the popup
                         }
-                        return false // Aggressively kill the popup
                     }
 
                     val newWebView = WebView(this@MainActivity).apply {
@@ -1676,6 +1683,9 @@ private fun checkBatteryOptimization() {
     }
 
     private fun injectAntiHijackingScripts(view: WebView?) {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("block_popups_redirects", true)) return
+
         val url = view?.url ?: ""
         val host = android.net.Uri.parse(url).host?.lowercase() ?: ""
         // Do not inject anti-hijacking script on whitelisted domains
@@ -3533,7 +3543,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .show()
     }
     private fun showMasterSettingsDialog() {
-        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache")
+        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache", "Popup & Redirect Blocker")
         AlertDialog.Builder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
@@ -3552,8 +3562,36 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         HlsDownloadHelper.clearUnifiedCache(this)
                         Toast.makeText(this, "Video cache cleared", Toast.LENGTH_SHORT).show()
                     }
+                    8 -> showPopupBlockerSettingsDialog()
                 }
             }
+            .show()
+    }
+
+    private fun showPopupBlockerSettingsDialog() {
+        val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val isEnabled = settingsPrefs.getBoolean("block_popups_redirects", true)
+
+        val switchView = com.google.android.material.switchmaterial.SwitchMaterial(this)
+        switchView.text = "Block pop-ups & forced redirects"
+        switchView.isChecked = isEnabled
+
+        val container = FrameLayout(this)
+        val params = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        val margin = (20 * resources.displayMetrics.density).toInt()
+        params.setMargins(margin, margin, margin, margin)
+        switchView.layoutParams = params
+        container.addView(switchView)
+
+        AlertDialog.Builder(this)
+            .setTitle("Popup & Redirect Blocker")
+            .setMessage("Turn this off to allow login popups (like Google Sign-In) to work properly on some sites.")
+            .setView(container)
+            .setPositiveButton("Save") { _, _ ->
+                settingsPrefs.edit().putBoolean("block_popups_redirects", switchView.isChecked).apply()
+                Toast.makeText(this, "Settings saved. Reload page to apply fully.", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 

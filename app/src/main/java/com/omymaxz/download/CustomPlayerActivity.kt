@@ -35,6 +35,7 @@ import android.os.Build
 import android.util.Rational
 import android.view.View
 import android.widget.LinearLayout
+import androidx.media3.session.MediaSession
 
 class CustomPlayerActivity : AppCompatActivity() {
 
@@ -51,6 +52,8 @@ class CustomPlayerActivity : AppCompatActivity() {
     private var player: ExoPlayer? = null
     private var videoUrl: String? = null
     private var videoTitle: String? = null
+
+    private var mediaSession: MediaSession? = null
 
     private val cacheProgressHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private var hasNotifiedCacheComplete = false
@@ -160,13 +163,29 @@ class CustomPlayerActivity : AppCompatActivity() {
     override fun onResume() { super.onResume(); if (player == null) initializePlayer() }
     override fun onPause()  {
         super.onPause()
+        savePlaybackPosition()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode) {
             // Keep playing in PiP
         } else {
-            player?.pause()
+            // Remove pause here to enable background playback when screen is off
+            // player?.pause()
         }
     }
-    override fun onStop()   { super.onStop();   /* keep activePlayer alive for bg playback */ }
+    override fun onStop()   {
+        super.onStop()
+        savePlaybackPosition()
+        /* keep activePlayer alive for bg playback */
+    }
+
+    private fun savePlaybackPosition() {
+        if (player != null && videoUrl != null) {
+            val position = player!!.currentPosition
+            if (position > 0) {
+                val prefs = getSharedPreferences("VideoPlaybackPositions", android.content.Context.MODE_PRIVATE)
+                prefs.edit().putLong(videoUrl!!, position).apply()
+            }
+        }
+    }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
@@ -291,6 +310,10 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setLoadControl(loadControl)
             .build()
 
+        if (mediaSession == null && player != null) {
+            mediaSession = MediaSession.Builder(this, player!!).build()
+        }
+
         attachPlayerView()
 
         // --- Build base video source ---
@@ -353,6 +376,14 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         activePlayer = player
         player?.prepare()
+
+        val prefs = getSharedPreferences("VideoPlaybackPositions", android.content.Context.MODE_PRIVATE)
+        val savedPosition = prefs.getLong(videoUrl!!, 0L)
+        if (savedPosition > 0L) {
+            player?.seekTo(savedPosition)
+            Toast.makeText(this, "Resuming playback", Toast.LENGTH_SHORT).show()
+        }
+
         player?.playWhenReady = true
 
         // Async background subtitle fetch for live streaming
@@ -532,6 +563,8 @@ class CustomPlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
+        mediaSession?.release()
+        mediaSession = null
 
         // Stop aggressive background caching when leaving the player by pausing it, not removing (which deletes cache)
         try {
