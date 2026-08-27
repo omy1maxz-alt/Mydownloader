@@ -73,10 +73,13 @@ class CustomPlayerActivity : AppCompatActivity() {
         hideSystemUI()
 
         // Start aggressive background caching using DownloadManager to fully parse HLS playlists
+        val safeTitle = videoTitle ?: "Unknown_Video_${System.currentTimeMillis()}"
         val downloadRequest = DownloadRequest.Builder(
             "cache_${videoUrl.hashCode()}",
             Uri.parse(videoUrl)
-        ).build()
+        )
+        .setData(safeTitle.toByteArray(Charsets.UTF_8))
+        .build()
 
         DownloadService.sendAddDownload(
             this,
@@ -505,13 +508,14 @@ class CustomPlayerActivity : AppCompatActivity() {
         super.onDestroy()
         cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
 
-        // Stop aggressive background caching when leaving the player
+        // Stop aggressive background caching when leaving the player by pausing it, not removing (which deletes cache)
         try {
             val downloadId = "cache_${videoUrl.hashCode()}"
-            DownloadService.sendRemoveDownload(
+            DownloadService.sendSetStopReason(
                 this,
                 HlsDownloadService::class.java,
                 downloadId,
+                1, // STOP_REASON_NONE + 1 = paused
                 false
             )
         } catch (e: Exception) {
