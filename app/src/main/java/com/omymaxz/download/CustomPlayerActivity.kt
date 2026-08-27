@@ -77,6 +77,7 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         findViewById<FloatingActionButton>(R.id.fab_save_offline).setOnClickListener { saveVideoOffline() }
         findViewById<FloatingActionButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
+        findViewById<FloatingActionButton>(R.id.fab_settings).setOnClickListener { showTrackSelectionDialog() }
         hideSystemUI()
 
         // Start aggressive background caching using DownloadManager to fully parse HLS playlists
@@ -94,6 +95,17 @@ class CustomPlayerActivity : AppCompatActivity() {
             downloadRequest,
             false // don't start in foreground, just silently cache
         )
+    }
+
+    private fun showTrackSelectionDialog() {
+        if (player == null) return
+        val trackSelectionDialog = androidx.media3.ui.TrackSelectionDialogBuilder(
+            this,
+            "Video Quality",
+            player!!,
+            C.TRACK_TYPE_VIDEO
+        ).build()
+        trackSelectionDialog.show()
     }
 
     private fun enterPipMode() {
