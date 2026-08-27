@@ -2246,6 +2246,10 @@ private fun injectMediaStateDetector() {
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, newTitle)
                                                 putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, activity.webView.settings.userAgentString)
                                                 putExtra(CustomPlayerActivity.EXTRA_REFERER, activity.webView.url)
+                                                val cookie = android.webkit.CookieManager.getInstance().getCookie(activity.webView.url)
+                                                if (cookie != null) {
+                                                    putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                                                }
 
                                         // Automatically gather ALL detected subtitles from the current page
                                         val allSubtitleUrls = synchronized(activity.detectedMediaFiles) {

@@ -44,6 +44,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         const val EXTRA_SUBTITLE_URLS = "extra_subtitle_urls" // Now an ArrayList<String>
         const val EXTRA_USER_AGENT    = "extra_user_agent"
         const val EXTRA_REFERER       = "extra_referer"
+        const val EXTRA_COOKIE        = "extra_cookie"
         var activePlayer: ExoPlayer? = null
     }
 
@@ -68,6 +69,7 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
         intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
+        intent.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
 
         if (videoUrl == null) {
             Toast.makeText(this, "No video URL provided", Toast.LENGTH_SHORT).show(); finish(); return
@@ -161,6 +163,7 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         intent?.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
         intent?.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
+        intent?.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
 
         // If the new intent is playing a completely different video, re-initialize the player
         if (newUrl != null && newUrl != videoUrl) {
