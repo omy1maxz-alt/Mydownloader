@@ -1678,8 +1678,8 @@ private fun checkBatteryOptimization() {
     private fun injectAntiHijackingScripts(view: WebView?) {
         val url = view?.url ?: ""
         val host = android.net.Uri.parse(url).host?.lowercase() ?: ""
-        // Do not inject anti-hijacking script on whitelisted auth domains like Google
-        if (host.endsWith("google.com") || host.endsWith("youtube.com")) {
+        // Do not inject anti-hijacking script on whitelisted domains
+        if (isUrlWhitelisted(url)) {
             return
         }
 
