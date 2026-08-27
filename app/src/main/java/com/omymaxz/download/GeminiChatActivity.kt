@@ -96,7 +96,7 @@ class GeminiChatActivity : AppCompatActivity() {
             }
 
             generativeModel = GenerativeModel(
-                modelName = "gemini-1.5-flash", // We use 1.5-flash for valid models
+                modelName = "gemini-1.5-flash-latest", // We use 1.5-flash-latest for valid models
                 apiKey = apiKey,
                 systemInstruction = content { text(systemPrompt) }
             )
