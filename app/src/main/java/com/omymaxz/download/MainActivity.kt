@@ -1431,7 +1431,7 @@ private fun checkBatteryOptimization() {
                         setOnClickListener {
                             popupWrapper.removeView(newWebView)
                             rootLayout.removeView(popupWrapper)
-                            newWebView.postDelayed({ newWebView.destroy() }, 500)
+                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ newWebView.destroy() }, 500)
                         }
                     }
 
@@ -1458,7 +1458,7 @@ private fun checkBatteryOptimization() {
                         override fun onCloseWindow(window: WebView?) {
                             popupWrapper.removeView(newWebView)
                             rootLayout.removeView(popupWrapper)
-                            newWebView.postDelayed({ newWebView.destroy() }, 500)
+                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ newWebView.destroy() }, 500)
                         }
                     }
 
@@ -2258,33 +2258,34 @@ private fun injectMediaStateDetector() {
                                         1 -> {
                                             if (url.startsWith("blob:")) {
                                                 Toast.makeText(activity, "Cannot play Blob URLs directly. Please select the real video stream (.m3u8/.mp4) from the Media List.", Toast.LENGTH_LONG).show()
-                                                return@setPositiveButton
-                                            }
-                                            val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
+                                                // Skipping normal return label since it's nested. Use an if-block to bypass instead.
+                                            } else {
+                                                val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, newTitle)
                                                 putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, activity.webView.settings.userAgentString)
                                                 putExtra(CustomPlayerActivity.EXTRA_REFERER, activity.webView.url)
                                                 val cookie = android.webkit.CookieManager.getInstance().getCookie(activity.webView.url)
-                                                if (cookie != null) {
-                                                    putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                                                }
+                                                    if (cookie != null) {
+                                                        putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                                                    }
 
-                                        // Automatically gather ALL detected subtitles from the current page
-                                        val allSubtitleUrls = synchronized(activity.detectedMediaFiles) {
-                                            activity.detectedMediaFiles
-                                                .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
-                                                .map { it.url }
-                                                .toMutableList()
-                                        }
+                                            // Automatically gather ALL detected subtitles from the current page
+                                            val allSubtitleUrls = synchronized(activity.detectedMediaFiles) {
+                                                activity.detectedMediaFiles
+                                                    .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
+                                                    .map { it.url }
+                                                    .toMutableList()
+                                            }
 
-                                        if (allSubtitleUrls.isNotEmpty()) {
-                                            putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
-                                        } else if (subtitleUrl.isNotEmpty()) {
-                                            putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, arrayListOf(subtitleUrl))
+                                            if (allSubtitleUrls.isNotEmpty()) {
+                                                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+                                            } else if (subtitleUrl.isNotEmpty()) {
+                                                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, arrayListOf(subtitleUrl))
+                                            }
                                         }
-                                    }
-                                    activity.startActivity(intent)
+                                        activity.startActivity(intent)
+                                            }
                                         }
                                     }
                                 }
