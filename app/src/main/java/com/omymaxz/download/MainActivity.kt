@@ -3493,7 +3493,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .show()
     }
     private fun showMasterSettingsDialog() {
-        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings")
+        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache")
         AlertDialog.Builder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
@@ -3508,6 +3508,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         startActivity(intent)
                     }
                     6 -> showGeminiSettingsDialog()
+                    7 -> {
+                        HlsDownloadHelper.clearUnifiedCache(this)
+                        Toast.makeText(this, "Video cache cleared", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             .show()

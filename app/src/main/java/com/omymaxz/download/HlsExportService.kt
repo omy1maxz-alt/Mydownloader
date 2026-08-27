@@ -96,7 +96,7 @@ class HlsExportService : Service() {
         val mediaItem = download.request.toMediaItem()
         muxToMp4(mediaItem, title) {
             // Success: optionally drop the offline entry since we now have a standalone MP4.
-            try { dm.removeDownload(downloadId) } catch (_: Throwable) {}
+            // try { dm.removeDownload(downloadId) } catch (_: Throwable) {} // Removed to keep cache active for playback
         }
     }
 
@@ -143,7 +143,7 @@ class HlsExportService : Service() {
             return
         }
         muxToMp4(mediaItem, title, onMuxSuccess = {
-            try { HlsDownloadHelper.clearUnifiedCache(applicationContext) } catch (_: Throwable) {}
+            // try { HlsDownloadHelper.clearUnifiedCache(applicationContext) } catch (_: Throwable) {} // Removed to keep cache active for playback
         })
     }
 
