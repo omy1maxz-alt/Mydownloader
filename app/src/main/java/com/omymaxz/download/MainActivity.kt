@@ -2241,6 +2241,10 @@ private fun injectMediaStateDetector() {
                                             activity.downloadMediaFile(updatedMediaFile)
                                         }
                                         1 -> {
+                                            if (url.startsWith("blob:")) {
+                                                Toast.makeText(activity, "Cannot play Blob URLs directly. Please select the real video stream (.m3u8/.mp4) from the Media List.", Toast.LENGTH_LONG).show()
+                                                return@setPositiveButton
+                                            }
                                             val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, newTitle)
@@ -2909,7 +2913,37 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 }
             }
         } else {
-            builder.setNegativeButton("Cancel", null)
+            // For videos/audio, add Play in App button
+            builder.setNegativeButton("Play in App") { _, _ ->
+                if (mediaFile.url.startsWith("blob:")) {
+                    Toast.makeText(this, "Cannot play Blob URLs directly. Please select the real video stream (.m3u8/.mp4) or use Download.", Toast.LENGTH_LONG).show()
+                } else {
+                    val newName = input.text.toString().trim()
+                    val finalName = if (newName.isNotEmpty()) "$newName.${mediaFile.title.substringAfterLast('.')}" else mediaFile.title
+
+                    val intent = Intent(this, CustomPlayerActivity::class.java).apply {
+                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
+                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
+                        putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
+                        putExtra(CustomPlayerActivity.EXTRA_REFERER, webView.url)
+                        val cookie = CookieManager.getInstance().getCookie(mediaFile.url) ?: CookieManager.getInstance().getCookie(webView.url)
+                        if (cookie != null) {
+                            putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                        }
+
+                        val allSubtitleUrls = synchronized(detectedMediaFiles) {
+                            detectedMediaFiles
+                                .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
+                                .map { it.url }
+                                .toMutableList()
+                        }
+                        if (allSubtitleUrls.isNotEmpty()) {
+                            putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+                        }
+                    }
+                    startActivity(intent)
+                }
+            }
         }
 
         if (mediaFile.url.startsWith("blob:") || mediaFile.mimeType.startsWith("text/") || isSubtitle) {
