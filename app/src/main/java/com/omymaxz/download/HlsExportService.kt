@@ -36,19 +36,20 @@ import kotlin.coroutines.resume
 class HlsExportService : Service() {
 
     companion object {
-        const val EXTRA_DOWNLOAD_ID    = "com.omymaxz.download.extra.DOWNLOAD_ID"
-        const val EXTRA_TITLE          = "com.omymaxz.download.extra.TITLE"
-        const val EXTRA_URL            = "com.omymaxz.download.extra.URL"
-        const val EXTRA_USER_AGENT     = "com.omymaxz.download.extra.USER_AGENT"
-        const val EXTRA_REFERER        = "com.omymaxz.download.extra.REFERER"
-        const val EXTRA_COOKIE         = "com.omymaxz.download.extra.COOKIE"
-        const val EXTRA_TRACK_ID       = "com.omymaxz.download.extra.TRACK_ID"
-        const val EXTRA_TRACK_WIDTH    = "com.omymaxz.download.extra.TRACK_WIDTH"
-        const val EXTRA_TRACK_HEIGHT   = "com.omymaxz.download.extra.TRACK_HEIGHT"
-        const val EXTRA_TRACK_BITRATE  = "com.omymaxz.download.extra.TRACK_BITRATE"
-        const val CHANNEL_ID           = "hls_export_channel"
-        const val NOTIFICATION_ID      = 3000
-        private const val TAG          = "HlsExportService"
+        const val EXTRA_MEDIA_ITEM_BUNDLE = "com.omymaxz.download.extra.MEDIA_ITEM_BUNDLE"
+        const val EXTRA_DOWNLOAD_ID       = "com.omymaxz.download.extra.DOWNLOAD_ID"
+        const val EXTRA_TITLE             = "com.omymaxz.download.extra.TITLE"
+        const val EXTRA_URL               = "com.omymaxz.download.extra.URL"
+        const val EXTRA_USER_AGENT        = "com.omymaxz.download.extra.USER_AGENT"
+        const val EXTRA_REFERER           = "com.omymaxz.download.extra.REFERER"
+        const val EXTRA_COOKIE            = "com.omymaxz.download.extra.COOKIE"
+        const val EXTRA_TRACK_ID          = "com.omymaxz.download.extra.TRACK_ID"
+        const val EXTRA_TRACK_WIDTH       = "com.omymaxz.download.extra.TRACK_WIDTH"
+        const val EXTRA_TRACK_HEIGHT      = "com.omymaxz.download.extra.TRACK_HEIGHT"
+        const val EXTRA_TRACK_BITRATE     = "com.omymaxz.download.extra.TRACK_BITRATE"
+        const val CHANNEL_ID              = "hls_export_channel"
+        const val NOTIFICATION_ID         = 3000
+        private const val TAG             = "HlsExportService"
     }
 
     private val serviceJob = Job()
@@ -70,6 +71,14 @@ class HlsExportService : Service() {
             return START_NOT_STICKY
         }
 
+        // Reconstruct MediaItem from Bundle
+        val mediaItemBundle = intent.getBundleExtra(EXTRA_MEDIA_ITEM_BUNDLE)
+        val mediaItem = if (mediaItemBundle != null) {
+            androidx.media3.common.MediaItem.fromBundle(mediaItemBundle)
+        } else {
+            null
+        }
+
         val downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
         val url        = intent.getStringExtra(EXTRA_URL)
         val title      = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
@@ -82,7 +91,7 @@ class HlsExportService : Service() {
         intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
         intent.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
 
-        if (downloadId == null && url == null) {
+        if (mediaItem == null && downloadId == null && url == null) {
             if (activeExports.get() == 0) stopSelf(startId)
             return START_NOT_STICKY
         }
@@ -93,6 +102,7 @@ class HlsExportService : Service() {
         serviceScope.launch {
             try {
                 when {
+                    mediaItem != null -> muxToMp4(mediaItem, title)
                     downloadId != null -> exportFromDownloadId(downloadId, title)
                     url != null        -> exportFromUrl(url, title, trackId, width, height, bitrate)
                 }
