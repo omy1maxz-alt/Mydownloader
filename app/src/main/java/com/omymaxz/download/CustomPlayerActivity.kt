@@ -576,43 +576,42 @@ class CustomPlayerActivity : AppCompatActivity() {
                     videoTitle = newTitle
                 }
 
-                var activeTrackId: String? = null
-                var activeWidth = -1
-                var activeHeight = -1
-                var activeBitrate = -1
+                // 1. Get the currently playing MediaItem which has resolved stream keys
+                val currentMediaItem = player?.currentMediaItem
 
-                if (player != null && videoUrl?.contains(".m3u8", ignoreCase = true) == true) {
-                    val tracks = player!!.currentTracks
-                    for (group in tracks.groups) {
-                        if (group.type == C.TRACK_TYPE_VIDEO && group.isSelected) {
-                            for (i in 0 until group.length) {
-                                if (group.isTrackSelected(i)) {
-                                    val format = group.getTrackFormat(i)
-                                    activeTrackId = format.id
-                                    activeWidth = format.width
-                                    activeHeight = format.height
-                                    activeBitrate = format.bitrate
-                                    break
-                                }
+                // 2. Explicitly restrict to the currently selected tracks (e.g., 480p)
+                // using forEachIndexed to safely get the groupIndex.
+                val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
+                val tracks = player?.currentTracks
+                if (tracks != null) {
+                    tracks.groups.forEachIndexed { groupIndex, group ->
+                        for (i in 0 until group.length) {
+                            if (group.isTrackSelected(i)) {
+                                streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
                             }
                         }
                     }
                 }
 
-                val intent = Intent(this, HlsExportService::class.java).apply {
-                    putExtra(HlsExportService.EXTRA_URL, videoUrl)
-                    putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
-                    putExtra(HlsExportService.EXTRA_TRACK_ID, activeTrackId)
-                    putExtra(HlsExportService.EXTRA_TRACK_WIDTH, activeWidth)
-                    putExtra(HlsExportService.EXTRA_TRACK_HEIGHT, activeHeight)
-                    putExtra(HlsExportService.EXTRA_TRACK_BITRATE, activeBitrate)
+                val exportMediaItem = currentMediaItem?.buildUpon()
+                    ?.setStreamKeys(streamKeys)
+                    ?.build()
 
+                val intent = Intent(this, HlsExportService::class.java).apply {
+                    if (exportMediaItem != null) {
+                        // Pass as Bundle since MediaItem implements Bundleable
+                        putExtra(HlsExportService.EXTRA_MEDIA_ITEM_BUNDLE, exportMediaItem.toBundle())
+                    } else {
+                        // Fallback
+                        putExtra(HlsExportService.EXTRA_URL, videoUrl)
+                        putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
+                    }
                     putExtra(HlsExportService.EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
                     putExtra(HlsExportService.EXTRA_REFERER, HlsDownloadHelper.currentReferer)
                     putExtra(HlsExportService.EXTRA_COOKIE, HlsDownloadHelper.currentCookie)
                 }
                 startService(intent)
-                Toast.makeText(this, "Saving video...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Exporting cached video...", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
