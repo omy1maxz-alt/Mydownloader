@@ -83,21 +83,9 @@ class CustomPlayerActivity : AppCompatActivity() {
         findViewById<FloatingActionButton>(R.id.fab_settings).setOnClickListener { showTrackSelectionDialog() }
         hideSystemUI()
 
-        // Start aggressive background caching using DownloadManager to fully parse HLS playlists
-        val safeTitle = videoTitle ?: "Unknown_Video_${System.currentTimeMillis()}"
-        val downloadRequest = DownloadRequest.Builder(
-            "cache_${videoUrl.hashCode()}",
-            Uri.parse(videoUrl)
-        )
-        .setData(safeTitle.toByteArray(Charsets.UTF_8))
-        .build()
-
-        DownloadService.sendAddDownload(
-            this,
-            HlsDownloadService::class.java,
-            downloadRequest,
-            false // don't start in foreground, just silently cache
-        )
+        // Removed aggressive background caching using DownloadManager on startup.
+        // It was causing double-quota usage by automatically downloading the 1080p master playlist
+        // while the user might be actively streaming 480p via the CacheDataSource.
     }
 
     private fun showTrackSelectionDialog() {
