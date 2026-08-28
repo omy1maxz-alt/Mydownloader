@@ -576,41 +576,31 @@ class CustomPlayerActivity : AppCompatActivity() {
                     videoTitle = newTitle
                 }
 
-                // 1. Get the currently playing MediaItem to extract the URI and Mime Type
+                // 1. Extract MIME type from the current player
                 val currentMediaItem = player?.currentMediaItem
-                val videoUri = currentMediaItem?.localConfiguration?.uri ?: android.net.Uri.parse(videoUrl)
-                val mimeType = currentMediaItem?.localConfiguration?.mimeType ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
+                val mimeType = currentMediaItem?.localConfiguration?.mimeType
+                    ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
 
-                // 2. Explicitly restrict to the currently selected tracks (e.g., 480p)
-                val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
+                // 2. Extract StreamKeys as primitive strings to avoid Parcelable/Bundleable serialization bugs
+                val streamKeyStrings = ArrayList<String>()
                 val tracks = player?.currentTracks
                 if (tracks != null) {
                     tracks.groups.forEachIndexed { groupIndex, group ->
                         for (i in 0 until group.length) {
                             if (group.isTrackSelected(i)) {
-                                streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
+                                streamKeyStrings.add("$groupIndex,$i")
                             }
                         }
                     }
                 }
 
-                // 3. Build a CLEAN MediaItem. Do NOT use buildUpon() on currentMediaItem,
-                // as it carries over localConfiguration which causes Transformer to crash with NPE.
-                val exportMediaItem = androidx.media3.common.MediaItem.Builder()
-                    .setUri(videoUri)
-                    .setMimeType(mimeType)
-                    .setStreamKeys(streamKeys)
-                    .build()
-
+                // 3. Pass primitives to the Service
                 val intent = Intent(this, HlsExportService::class.java).apply {
-                    if (exportMediaItem != null) {
-                        // Pass as Bundle since MediaItem implements Bundleable
-                        putExtra(HlsExportService.EXTRA_MEDIA_ITEM_BUNDLE, exportMediaItem.toBundle())
-                    } else {
-                        // Fallback
-                        putExtra(HlsExportService.EXTRA_URL, videoUrl)
-                        putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
-                    }
+                    putExtra(HlsExportService.EXTRA_VIDEO_URL, videoUrl)
+                    putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
+                    putExtra(HlsExportService.EXTRA_MIME_TYPE, mimeType)
+                    putStringArrayListExtra(HlsExportService.EXTRA_STREAM_KEYS, streamKeyStrings)
+
                     putExtra(HlsExportService.EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
                     putExtra(HlsExportService.EXTRA_REFERER, HlsDownloadHelper.currentReferer)
                     putExtra(HlsExportService.EXTRA_COOKIE, HlsDownloadHelper.currentCookie)
