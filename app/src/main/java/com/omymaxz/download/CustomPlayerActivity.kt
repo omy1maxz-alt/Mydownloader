@@ -155,8 +155,8 @@ class CustomPlayerActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode) {
             // Keep playing in PiP
         } else {
-            // Remove pause here to enable background playback when screen is off
-            // player?.pause()
+            // Restore pause to prevent rogue background audio without a proper Foreground Service Notification
+            player?.pause()
         }
     }
     override fun onStop()   {
@@ -583,22 +583,15 @@ class CustomPlayerActivity : AppCompatActivity() {
                     videoTitle = newTitle
                 }
 
-                var activeTrackId: String? = null
-                var activeWidth = -1
-                var activeHeight = -1
-                var activeBitrate = -1
-
+                // Capture the variant index instead of the track ID
+                var activeVariantIndex: Int? = null
                 if (player != null && videoUrl?.contains(".m3u8", ignoreCase = true) == true) {
                     val tracks = player!!.currentTracks
                     for (group in tracks.groups) {
-                        if (group.type == C.TRACK_TYPE_VIDEO && group.isSelected) {
+                        if (group.type == C.TRACK_TYPE_VIDEO) {
                             for (i in 0 until group.length) {
                                 if (group.isTrackSelected(i)) {
-                                    val format = group.getTrackFormat(i)
-                                    activeTrackId = format.id
-                                    activeWidth = format.width
-                                    activeHeight = format.height
-                                    activeBitrate = format.bitrate
+                                    activeVariantIndex = i // This index maps directly to the HLS variant index
                                     break
                                 }
                             }
@@ -609,10 +602,12 @@ class CustomPlayerActivity : AppCompatActivity() {
                 val intent = Intent(this, HlsExportService::class.java).apply {
                     putExtra(HlsExportService.EXTRA_URL, videoUrl)
                     putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
-                    putExtra(HlsExportService.EXTRA_TRACK_ID, activeTrackId)
-                    putExtra(HlsExportService.EXTRA_TRACK_WIDTH, activeWidth)
-                    putExtra(HlsExportService.EXTRA_TRACK_HEIGHT, activeHeight)
-                    putExtra(HlsExportService.EXTRA_TRACK_BITRATE, activeBitrate)
+
+                    // Pass the variant index
+                    if (activeVariantIndex != null) {
+                        putExtra(HlsExportService.EXTRA_VARIANT_INDEX, activeVariantIndex)
+                    }
+
                     putExtra(HlsExportService.EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
                     putExtra(HlsExportService.EXTRA_REFERER, HlsDownloadHelper.currentReferer)
                     putExtra(HlsExportService.EXTRA_COOKIE, HlsDownloadHelper.currentCookie)
