@@ -12,13 +12,20 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
-import androidx.media3.datasource.cache.Cache
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.TrackSelectionParameters
+import androidx.media3.common.util.Util
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadHelper
 import androidx.media3.exoplayer.offline.DownloadManager
+import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
+import androidx.media3.transformer.DefaultAssetLoaderFactory
+import androidx.media3.transformer.DefaultDecoderFactory
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
@@ -29,16 +36,19 @@ import kotlin.coroutines.resume
 class HlsExportService : Service() {
 
     companion object {
-        const val EXTRA_DOWNLOAD_ID = "com.omymaxz.download.extra.DOWNLOAD_ID"
-        const val EXTRA_TITLE      = "com.omymaxz.download.extra.TITLE"
-        const val EXTRA_URL        = "com.omymaxz.download.extra.URL"
-        const val EXTRA_USER_AGENT = "com.omymaxz.download.extra.USER_AGENT"
-        const val EXTRA_REFERER    = "com.omymaxz.download.extra.REFERER"
-        const val EXTRA_COOKIE     = "com.omymaxz.download.extra.COOKIE"
-        const val EXTRA_TRACK_ID   = "com.omymaxz.download.extra.TRACK_ID"
-        const val CHANNEL_ID       = "hls_export_channel"
-        const val NOTIFICATION_ID  = 3000
-        private const val TAG      = "HlsExportService"
+        const val EXTRA_DOWNLOAD_ID    = "com.omymaxz.download.extra.DOWNLOAD_ID"
+        const val EXTRA_TITLE          = "com.omymaxz.download.extra.TITLE"
+        const val EXTRA_URL            = "com.omymaxz.download.extra.URL"
+        const val EXTRA_USER_AGENT     = "com.omymaxz.download.extra.USER_AGENT"
+        const val EXTRA_REFERER        = "com.omymaxz.download.extra.REFERER"
+        const val EXTRA_COOKIE         = "com.omymaxz.download.extra.COOKIE"
+        const val EXTRA_TRACK_ID       = "com.omymaxz.download.extra.TRACK_ID"
+        const val EXTRA_TRACK_WIDTH    = "com.omymaxz.download.extra.TRACK_WIDTH"
+        const val EXTRA_TRACK_HEIGHT   = "com.omymaxz.download.extra.TRACK_HEIGHT"
+        const val EXTRA_TRACK_BITRATE  = "com.omymaxz.download.extra.TRACK_BITRATE"
+        const val CHANNEL_ID           = "hls_export_channel"
+        const val NOTIFICATION_ID      = 3000
+        private const val TAG          = "HlsExportService"
     }
 
     private val serviceJob = Job()
@@ -55,12 +65,18 @@ class HlsExportService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent == null) { if (activeExports.get() == 0) stopSelf(startId); return START_NOT_STICKY }
+        if (intent == null) {
+            if (activeExports.get() == 0) stopSelf(startId)
+            return START_NOT_STICKY
+        }
 
         val downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
         val url        = intent.getStringExtra(EXTRA_URL)
         val title      = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
         val trackId    = intent.getStringExtra(EXTRA_TRACK_ID)
+        val width      = intent.getIntExtra(EXTRA_TRACK_WIDTH, -1)
+        val height     = intent.getIntExtra(EXTRA_TRACK_HEIGHT, -1)
+        val bitrate    = intent.getIntExtra(EXTRA_TRACK_BITRATE, -1)
 
         intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
         intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
@@ -78,7 +94,7 @@ class HlsExportService : Service() {
             try {
                 when {
                     downloadId != null -> exportFromDownloadId(downloadId, title)
-                    url != null        -> exportFromUrl(url, title, trackId)
+                    url != null        -> exportFromUrl(url, title, trackId, width, height, bitrate)
                 }
             } catch (t: Throwable) {
                 Log.e(TAG, "Export failed", t)
@@ -90,7 +106,6 @@ class HlsExportService : Service() {
         return START_NOT_STICKY
     }
 
-    // ---------- Path A: we already have a DownloadManager entry ----------
     private suspend fun exportFromDownloadId(downloadId: String, title: String) {
         val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
         val download = dm.downloadIndex.getDownload(downloadId)
@@ -99,110 +114,110 @@ class HlsExportService : Service() {
                 return
             }
 
-        // Ensure the asset is fully cached before muxing. DownloadManager will resume, not restart.
         ensureFullyCached(dm, download)
-
         val mediaItem = download.request.toMediaItem()
-        muxToMp4(mediaItem, title) {
-            // Success: optionally drop the offline entry since we now have a standalone MP4.
-            // try { dm.removeDownload(downloadId) } catch (_: Throwable) {} // Removed to keep cache active for playback
-        }
+        muxToMp4(mediaItem, title)
     }
 
-    // ---------- Path B: direct URL (e.g. from the player's "Save" FAB) ----------
-    private suspend fun exportFromUrl(url: String, title: String, trackId: String?) {
+    private suspend fun exportFromUrl(
+        url: String,
+        title: String,
+        trackId: String?,
+        targetWidth: Int,
+        targetHeight: Int,
+        targetBitrate: Int
+    ) {
         val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
-
-        // Build a MediaItem the same way the downloader would.
         val isHls = url.contains(".m3u8", ignoreCase = true)
-        val mediaItem = MediaItem.Builder()
+
+        val baseMediaItem = MediaItem.Builder()
             .setUri(Uri.parse(url))
             .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
             .setTag(title)
             .build()
 
-        // Prepare a DownloadRequest, then push it through DownloadManager so the
-        // unified cache is filled (resuming from whatever is already cached).
-        val helper = androidx.media3.exoplayer.offline.DownloadHelper.forMediaItem(
-            applicationContext, mediaItem,
+        val helper = DownloadHelper.forMediaItem(
+            applicationContext,
+            baseMediaItem,
             null,
             HlsDownloadHelper.getDataSourceFactory(applicationContext)
         )
+
         val req = withContext(Dispatchers.IO) {
-            suspendCancellableCoroutine<androidx.media3.exoplayer.offline.DownloadRequest> { cont ->
-                helper.prepare(object : androidx.media3.exoplayer.offline.DownloadHelper.Callback {
-                    override fun onPrepared(h: androidx.media3.exoplayer.offline.DownloadHelper) {
-                        // If a specific track ID was provided (e.g., user selected 360p),
-                        // instruct the DownloadHelper to only select that track for download.
-                        if (trackId != null) {
-                            for (periodIndex in 0 until h.periodCount) {
-                                val trackGroups = h.getTrackGroups(periodIndex)
-                                for (groupIndex in 0 until trackGroups.length) {
-                                    val trackGroup = trackGroups.get(groupIndex) // This is a TrackGroup, not Tracks.Group
-                                    // DownloadHelper trackGroups don't have .type, we use .type off of something else or assume it.
-                                    // Actually, we can use TrackSelectionOverride directly on the TrackGroup.
-                                    // To find the video group, check the format types inside.
-                                    var isVideoGroup = false
-                                    val validIndices = mutableListOf<Int>()
+            suspendCancellableCoroutine<DownloadRequest> { cont ->
+                helper.prepare(object : DownloadHelper.Callback {
+                    override fun onPrepared(h: DownloadHelper) {
+                        for (periodIndex in 0 until h.periodCount) {
+                            // 1. Clear ExoPlayer default track selections (which default to 1080p)
+                            h.clearTrackSelections(periodIndex)
+
+                            val trackGroups = h.getTrackGroups(periodIndex)
+                            val overrides = mutableListOf<TrackSelectionOverride>()
+
+                            for (groupIndex in 0 until trackGroups.length) {
+                                val trackGroup = trackGroups.get(groupIndex)
+                                val firstFormat = trackGroup.getFormat(0)
+
+                                if (MimeTypes.isVideo(firstFormat.sampleMimeType)) {
+                                    val matchedIndices = mutableListOf<Int>()
                                     for (i in 0 until trackGroup.length) {
                                         val format = trackGroup.getFormat(i)
-                                        if (androidx.media3.common.MimeTypes.isVideo(format.sampleMimeType)) {
-                                            isVideoGroup = true
-                                        }
-                                        if (format.id == trackId) {
-                                            validIndices.add(i)
+                                        val isIdMatch = trackId != null && format.id == trackId
+                                        val isResMatch = targetWidth > 0 && targetHeight > 0 &&
+                                                format.width == targetWidth && format.height == targetHeight
+                                        val isBitrateMatch = targetBitrate > 0 && format.bitrate == targetBitrate
+
+                                        if (isIdMatch || isResMatch || isBitrateMatch) {
+                                            matchedIndices.add(i)
+                                            break
                                         }
                                     }
 
-                                    if (isVideoGroup && validIndices.isNotEmpty()) {
-                                        val trackOverride = androidx.media3.common.TrackSelectionOverride(
-                                            trackGroup,
-                                            validIndices.toList()
-                                        )
-
-                                        h.addTrackSelection(
-                                            periodIndex,
-                                            androidx.media3.common.TrackSelectionParameters.Builder(applicationContext)
-                                                .clearOverridesOfType(androidx.media3.common.C.TRACK_TYPE_VIDEO)
-                                                .addOverride(trackOverride)
-                                                .build()
-                                        )
+                                    if (matchedIndices.isNotEmpty()) {
+                                        overrides.add(TrackSelectionOverride(trackGroup, matchedIndices))
                                     }
+                                } else if (MimeTypes.isAudio(firstFormat.sampleMimeType)) {
+                                    // Retain audio tracks
+                                    overrides.add(TrackSelectionOverride(trackGroup, listOf(0)))
                                 }
                             }
+
+                            val paramsBuilder = TrackSelectionParameters.Builder(applicationContext)
+                            for (override in overrides) {
+                                paramsBuilder.addOverride(override)
+                            }
+                            h.addTrackSelection(periodIndex, paramsBuilder.build())
                         }
 
-                        val r = h.getDownloadRequest(androidx.media3.common.util.Util.getUtf8Bytes(title))
+                        val downloadRequest = h.getDownloadRequest(Util.getUtf8Bytes(title))
                         h.release()
-                        cont.resume(r)
+                        cont.resume(downloadRequest)
                     }
-                    override fun onPrepareError(h: androidx.media3.exoplayer.offline.DownloadHelper, e: java.io.IOException) {
+
+                    override fun onPrepareError(h: DownloadHelper, e: java.io.IOException) {
                         h.release()
                         cont.cancel(e)
                     }
                 })
             }
         }
+
         DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, req, true)
 
-        // Wait for DownloadManager to finish (it will reuse cached segments).
         val completed = waitForCompletion(dm, req.id)
         if (!completed) {
             Toast.makeText(applicationContext, "Download did not complete", Toast.LENGTH_LONG).show()
             return
         }
-        muxToMp4(mediaItem, title, onMuxSuccess = {
-            // try { HlsDownloadHelper.clearUnifiedCache(applicationContext) } catch (_: Throwable) {} // Removed to keep cache active for playback
-        })
+
+        // Pass req.toMediaItem() so StreamKeys enforce the 480p variant in Transformer
+        muxToMp4(req.toMediaItem(), title)
     }
 
-    // ---------- Cache coverage check + DownloadManager resume ----------
     private suspend fun ensureFullyCached(dm: DownloadManager, download: Download) {
         if (download.state == Download.STATE_COMPLETED) return
 
-        Log.i(TAG, "Download ${download.request.id} not fully completed. Sending to DownloadManager to resume/verify.")
-
-        // Unconditionally add the download so DownloadManager resumes from cache or verifies completion.
+        Log.i(TAG, "Download ${download.request.id} incomplete. Sending to DownloadManager to resume.")
         DownloadService.sendAddDownload(
             applicationContext, HlsDownloadService::class.java, download.request, true
         )
@@ -219,42 +234,40 @@ class HlsExportService : Service() {
                         if (d.request.id != id) return
                         when (d.state) {
                             Download.STATE_COMPLETED -> {
-                                dm.removeListener(this); if (cont.isActive) cont.resume(true)
+                                dm.removeListener(this)
+                                if (cont.isActive) cont.resume(true)
                             }
                             Download.STATE_FAILED -> {
-                                dm.removeListener(this); if (cont.isActive) cont.resume(false)
+                                dm.removeListener(this)
+                                if (cont.isActive) cont.resume(false)
                             }
                             else -> Unit
                         }
                     }
                 }
                 dm.addListener(listener)
-                // Seed check in case it already completed.
                 runCatching {
                     val cur = dm.downloadIndex.getDownload(id)
                     if (cur?.state == Download.STATE_COMPLETED) {
-                        dm.removeListener(listener); if (cont.isActive) cont.resume(true)
+                        dm.removeListener(listener)
+                        if (cont.isActive) cont.resume(true)
                     }
                 }
                 cont.invokeOnCancellation { dm.removeListener(listener) }
             }
         }
 
-    // ---------- The actual MP4 mux ----------
-    private suspend fun muxToMp4(mediaItem: MediaItem, title: String, onMuxSuccess: () -> Unit) =
+    private suspend fun muxToMp4(mediaItem: MediaItem, title: String) =
         suspendCancellableCoroutine<Unit> { cont ->
-
-            // IMPORTANT: use the unified CacheDataSource (read-only is fine here because
-            // ensureFullyCached() guarantees the bytes are present).
             val cacheFactory: CacheDataSource.Factory =
                 HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
 
             val transformer = Transformer.Builder(applicationContext)
                 .setAssetLoaderFactory(
-                    androidx.media3.transformer.DefaultAssetLoaderFactory(
+                    DefaultAssetLoaderFactory(
                         applicationContext,
-                        androidx.media3.transformer.DefaultDecoderFactory(applicationContext),
-                        /* forceAudioTrack= */ false,
+                        DefaultDecoderFactory(applicationContext),
+                        false,
                         androidx.media3.common.util.Clock.DEFAULT,
                         androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
                             .setDataSourceFactory(cacheFactory),
@@ -264,7 +277,6 @@ class HlsExportService : Service() {
                 .addListener(object : Transformer.Listener {
                     override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
                         Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
-                        onMuxSuccess()
                         if (cont.isActive) cont.resume(Unit)
                     }
                     override fun onError(
@@ -278,10 +290,10 @@ class HlsExportService : Service() {
                 })
                 .build()
 
-            val safe = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+            val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
             val out = File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "$safe.mp4"
+                "$safeTitle.mp4"
             )
             transformer.start(mediaItem, out.absolutePath)
             cont.invokeOnCancellation { transformer.cancel() }
@@ -289,7 +301,7 @@ class HlsExportService : Service() {
 
     private fun buildNotification(title: String) =
         NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Exporting Video to Downloads Folder")
+            .setContentTitle("Exporting Video to Downloads")
             .setContentText(title)
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setOngoing(true)
@@ -305,5 +317,8 @@ class HlsExportService : Service() {
         }
     }
 
-    override fun onDestroy() { super.onDestroy(); serviceJob.cancel() }
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceJob.cancel()
+    }
 }
