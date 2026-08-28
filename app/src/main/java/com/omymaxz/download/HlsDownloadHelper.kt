@@ -55,8 +55,32 @@ object HlsDownloadHelper {
 
     @Synchronized
     fun clearUnifiedCache(context: Context) {
-        val cache = getUnifiedCache(context)
-        cache.keys.toList().forEach { cache.removeResource(it) }
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                // 1. Release the cache to unlock the files
+                val cache = streamCache
+                if (cache != null) {
+                    cache.release()
+                    streamCache = null
+                }
+
+                // 2. Delete the directory recursively (instant compared to file-by-file deletion)
+                val dir = java.io.File(context.getExternalFilesDir(null), "unified_video_cache")
+                if (dir.exists()) {
+                    dir.deleteRecursively()
+                }
+
+                // 3. Notify the user on the main thread
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    android.widget.Toast.makeText(context, "Video cache cleared successfully", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    android.widget.Toast.makeText(context, "Failed to clear cache: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     // ---- Unified HTTP factory (headers applied per-request via thread-local-ish state) ----
