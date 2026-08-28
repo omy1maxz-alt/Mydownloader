@@ -35,6 +35,7 @@ class HlsExportService : Service() {
         const val EXTRA_USER_AGENT = "com.omymaxz.download.extra.USER_AGENT"
         const val EXTRA_REFERER    = "com.omymaxz.download.extra.REFERER"
         const val EXTRA_COOKIE     = "com.omymaxz.download.extra.COOKIE"
+        const val EXTRA_TRACK_ID   = "com.omymaxz.download.extra.TRACK_ID"
         const val CHANNEL_ID       = "hls_export_channel"
         const val NOTIFICATION_ID  = 3000
         private const val TAG      = "HlsExportService"
@@ -59,6 +60,7 @@ class HlsExportService : Service() {
         val downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
         val url        = intent.getStringExtra(EXTRA_URL)
         val title      = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
+        val trackId    = intent.getStringExtra(EXTRA_TRACK_ID)
 
         intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
         intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
@@ -76,7 +78,7 @@ class HlsExportService : Service() {
             try {
                 when {
                     downloadId != null -> exportFromDownloadId(downloadId, title)
-                    url != null        -> exportFromUrl(url, title)
+                    url != null        -> exportFromUrl(url, title, trackId)
                 }
             } catch (t: Throwable) {
                 Log.e(TAG, "Export failed", t)
@@ -108,7 +110,7 @@ class HlsExportService : Service() {
     }
 
     // ---------- Path B: direct URL (e.g. from the player's "Save" FAB) ----------
-    private suspend fun exportFromUrl(url: String, title: String) {
+    private suspend fun exportFromUrl(url: String, title: String, trackId: String?) {
         val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
 
         // Build a MediaItem the same way the downloader would.
@@ -130,6 +132,46 @@ class HlsExportService : Service() {
             suspendCancellableCoroutine<androidx.media3.exoplayer.offline.DownloadRequest> { cont ->
                 helper.prepare(object : androidx.media3.exoplayer.offline.DownloadHelper.Callback {
                     override fun onPrepared(h: androidx.media3.exoplayer.offline.DownloadHelper) {
+                        // If a specific track ID was provided (e.g., user selected 360p),
+                        // instruct the DownloadHelper to only select that track for download.
+                        if (trackId != null) {
+                            for (periodIndex in 0 until h.periodCount) {
+                                val trackGroups = h.getTrackGroups(periodIndex)
+                                for (groupIndex in 0 until trackGroups.length) {
+                                    val trackGroup = trackGroups.get(groupIndex) // This is a TrackGroup, not Tracks.Group
+                                    // DownloadHelper trackGroups don't have .type, we use .type off of something else or assume it.
+                                    // Actually, we can use TrackSelectionOverride directly on the TrackGroup.
+                                    // To find the video group, check the format types inside.
+                                    var isVideoGroup = false
+                                    val validIndices = mutableListOf<Int>()
+                                    for (i in 0 until trackGroup.length) {
+                                        val format = trackGroup.getFormat(i)
+                                        if (androidx.media3.common.MimeTypes.isVideo(format.sampleMimeType)) {
+                                            isVideoGroup = true
+                                        }
+                                        if (format.id == trackId) {
+                                            validIndices.add(i)
+                                        }
+                                    }
+
+                                    if (isVideoGroup && validIndices.isNotEmpty()) {
+                                        val trackOverride = androidx.media3.common.TrackSelectionOverride(
+                                            trackGroup,
+                                            validIndices.toList()
+                                        )
+
+                                        h.addTrackSelection(
+                                            periodIndex,
+                                            androidx.media3.common.TrackSelectionParameters.Builder(applicationContext)
+                                                .clearOverridesOfType(androidx.media3.common.C.TRACK_TYPE_VIDEO)
+                                                .addOverride(trackOverride)
+                                                .build()
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         val r = h.getDownloadRequest(androidx.media3.common.util.Util.getUtf8Bytes(title))
                         h.release()
                         cont.resume(r)
