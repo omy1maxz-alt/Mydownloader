@@ -53,8 +53,6 @@ class CustomPlayerActivity : AppCompatActivity() {
     private var videoUrl: String? = null
     private var videoTitle: String? = null
 
-    private var mediaSession: MediaSession? = null
-
     private val cacheProgressHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private var hasNotifiedCacheComplete = false
 
@@ -162,7 +160,6 @@ class CustomPlayerActivity : AppCompatActivity() {
     override fun onStop()   {
         super.onStop()
         savePlaybackPosition()
-        /* keep activePlayer alive for bg playback */
     }
 
     private fun savePlaybackPosition() {
@@ -298,9 +295,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setLoadControl(loadControl)
             .build()
 
-        if (mediaSession == null && player != null) {
-            mediaSession = MediaSession.Builder(this, player!!).build()
-        }
+        activePlayer = player
 
         attachPlayerView()
 
@@ -551,8 +546,6 @@ class CustomPlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
-        mediaSession?.release()
-        mediaSession = null
 
         // Stop aggressive background caching when leaving the player by pausing it, not removing (which deletes cache)
         try {
@@ -583,15 +576,22 @@ class CustomPlayerActivity : AppCompatActivity() {
                     videoTitle = newTitle
                 }
 
-                // Capture the variant index instead of the track ID
-                var activeVariantIndex: Int? = null
+                var activeTrackId: String? = null
+                var activeWidth = -1
+                var activeHeight = -1
+                var activeBitrate = -1
+
                 if (player != null && videoUrl?.contains(".m3u8", ignoreCase = true) == true) {
                     val tracks = player!!.currentTracks
                     for (group in tracks.groups) {
-                        if (group.type == C.TRACK_TYPE_VIDEO) {
+                        if (group.type == C.TRACK_TYPE_VIDEO && group.isSelected) {
                             for (i in 0 until group.length) {
                                 if (group.isTrackSelected(i)) {
-                                    activeVariantIndex = i // This index maps directly to the HLS variant index
+                                    val format = group.getTrackFormat(i)
+                                    activeTrackId = format.id
+                                    activeWidth = format.width
+                                    activeHeight = format.height
+                                    activeBitrate = format.bitrate
                                     break
                                 }
                             }
@@ -602,11 +602,10 @@ class CustomPlayerActivity : AppCompatActivity() {
                 val intent = Intent(this, HlsExportService::class.java).apply {
                     putExtra(HlsExportService.EXTRA_URL, videoUrl)
                     putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
-
-                    // Pass the variant index
-                    if (activeVariantIndex != null) {
-                        putExtra(HlsExportService.EXTRA_VARIANT_INDEX, activeVariantIndex)
-                    }
+                    putExtra(HlsExportService.EXTRA_TRACK_ID, activeTrackId)
+                    putExtra(HlsExportService.EXTRA_TRACK_WIDTH, activeWidth)
+                    putExtra(HlsExportService.EXTRA_TRACK_HEIGHT, activeHeight)
+                    putExtra(HlsExportService.EXTRA_TRACK_BITRATE, activeBitrate)
 
                     putExtra(HlsExportService.EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
                     putExtra(HlsExportService.EXTRA_REFERER, HlsDownloadHelper.currentReferer)
