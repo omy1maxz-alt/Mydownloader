@@ -576,11 +576,12 @@ class CustomPlayerActivity : AppCompatActivity() {
                     videoTitle = newTitle
                 }
 
-                // 1. Get the currently playing MediaItem which has resolved stream keys
+                // 1. Get the currently playing MediaItem to extract the URI and Mime Type
                 val currentMediaItem = player?.currentMediaItem
+                val videoUri = currentMediaItem?.localConfiguration?.uri ?: android.net.Uri.parse(videoUrl)
+                val mimeType = currentMediaItem?.localConfiguration?.mimeType ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
 
                 // 2. Explicitly restrict to the currently selected tracks (e.g., 480p)
-                // using forEachIndexed to safely get the groupIndex.
                 val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
                 val tracks = player?.currentTracks
                 if (tracks != null) {
@@ -593,9 +594,13 @@ class CustomPlayerActivity : AppCompatActivity() {
                     }
                 }
 
-                val exportMediaItem = currentMediaItem?.buildUpon()
-                    ?.setStreamKeys(streamKeys)
-                    ?.build()
+                // 3. Build a CLEAN MediaItem. Do NOT use buildUpon() on currentMediaItem,
+                // as it carries over localConfiguration which causes Transformer to crash with NPE.
+                val exportMediaItem = androidx.media3.common.MediaItem.Builder()
+                    .setUri(videoUri)
+                    .setMimeType(mimeType)
+                    .setStreamKeys(streamKeys)
+                    .build()
 
                 val intent = Intent(this, HlsExportService::class.java).apply {
                     if (exportMediaItem != null) {
