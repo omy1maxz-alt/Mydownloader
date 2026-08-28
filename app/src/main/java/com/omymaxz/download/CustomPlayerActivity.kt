@@ -594,9 +594,34 @@ class CustomPlayerActivity : AppCompatActivity() {
                 if (newTitle.isNotEmpty()) {
                     videoTitle = newTitle
                 }
+
+                // Determine the exact variant URL currently playing to ensure the exported MP4
+                // matches the chosen quality and has a video track (preventing blank videos).
+                var exportUrl = videoUrl
+                if (player != null && exportUrl?.contains(".m3u8", ignoreCase = true) == true) {
+                    val tracks = player!!.currentTracks
+                    for (group in tracks.groups) {
+                        if (group.type == C.TRACK_TYPE_VIDEO && group.isSelected) {
+                            for (i in 0 until group.length) {
+                                if (group.isTrackSelected(i)) {
+                                    val format = group.getTrackFormat(i)
+                                    // ExoPlayer often embeds the original variant URL or ID in the format for HLS
+                                    if (format.id != null && format.id!!.startsWith("http")) {
+                                        exportUrl = format.id
+                                    }
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+
                 val intent = Intent(this, HlsExportService::class.java).apply {
-                    putExtra(HlsExportService.EXTRA_URL, videoUrl)
+                    putExtra(HlsExportService.EXTRA_URL, exportUrl)
                     putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
+                    putExtra(HlsExportService.EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
+                    putExtra(HlsExportService.EXTRA_REFERER, HlsDownloadHelper.currentReferer)
+                    putExtra(HlsExportService.EXTRA_COOKIE, HlsDownloadHelper.currentCookie)
                 }
                 startService(intent)
                 Toast.makeText(this, "Saving video...", Toast.LENGTH_SHORT).show()
