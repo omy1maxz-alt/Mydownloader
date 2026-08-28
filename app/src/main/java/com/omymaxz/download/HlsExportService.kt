@@ -42,10 +42,7 @@ class HlsExportService : Service() {
         const val EXTRA_USER_AGENT     = "com.omymaxz.download.extra.USER_AGENT"
         const val EXTRA_REFERER        = "com.omymaxz.download.extra.REFERER"
         const val EXTRA_COOKIE         = "com.omymaxz.download.extra.COOKIE"
-        const val EXTRA_TRACK_ID       = "com.omymaxz.download.extra.TRACK_ID"
-        const val EXTRA_TRACK_WIDTH    = "com.omymaxz.download.extra.TRACK_WIDTH"
-        const val EXTRA_TRACK_HEIGHT   = "com.omymaxz.download.extra.TRACK_HEIGHT"
-        const val EXTRA_TRACK_BITRATE  = "com.omymaxz.download.extra.TRACK_BITRATE"
+        const val EXTRA_VARIANT_INDEX  = "com.omymaxz.download.extra.VARIANT_INDEX"
         const val CHANNEL_ID           = "hls_export_channel"
         const val NOTIFICATION_ID      = 3000
         private const val TAG          = "HlsExportService"
@@ -73,10 +70,7 @@ class HlsExportService : Service() {
         val downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
         val url        = intent.getStringExtra(EXTRA_URL)
         val title      = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
-        val trackId    = intent.getStringExtra(EXTRA_TRACK_ID)
-        val width      = intent.getIntExtra(EXTRA_TRACK_WIDTH, -1)
-        val height     = intent.getIntExtra(EXTRA_TRACK_HEIGHT, -1)
-        val bitrate    = intent.getIntExtra(EXTRA_TRACK_BITRATE, -1)
+        val variantIndex = intent.getIntExtra(EXTRA_VARIANT_INDEX, -1).let { if (it >= 0) it else null }
 
         intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
         intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
@@ -94,7 +88,7 @@ class HlsExportService : Service() {
             try {
                 when {
                     downloadId != null -> exportFromDownloadId(downloadId, title)
-                    url != null        -> exportFromUrl(url, title, trackId, width, height, bitrate)
+                    url != null        -> exportFromUrl(url, title, variantIndex)
                 }
             } catch (t: Throwable) {
                 Log.e(TAG, "Export failed", t)
@@ -119,26 +113,30 @@ class HlsExportService : Service() {
         muxToMp4(mediaItem, title)
     }
 
-    private suspend fun exportFromUrl(
-        url: String,
-        title: String,
-        trackId: String?,
-        targetWidth: Int,
-        targetHeight: Int,
-        targetBitrate: Int
-    ) {
+    private suspend fun exportFromUrl(url: String, title: String, variantIndex: Int?) {
         val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
         val isHls = url.contains(".m3u8", ignoreCase = true)
 
-        val baseMediaItem = MediaItem.Builder()
+        val mediaItemBuilder = MediaItem.Builder()
             .setUri(Uri.parse(url))
             .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
             .setTag(title)
-            .build()
 
+        // If a specific variant (quality) was selected, restrict the MediaItem to ONLY that stream
+        if (isHls && variantIndex != null && variantIndex >= 0) {
+            val streamKey = androidx.media3.common.StreamKey(
+                androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist.GROUP_INDEX_VARIANT,
+                variantIndex
+            )
+            mediaItemBuilder.setStreamKeys(listOf(streamKey))
+        }
+
+        val mediaItem = mediaItemBuilder.build()
+
+        // Prepare a DownloadRequest.
+        // NO complex TrackSelectionOverride needed! The StreamKey automatically restricts the helper.
         val helper = DownloadHelper.forMediaItem(
-            applicationContext,
-            baseMediaItem,
+            applicationContext, mediaItem,
             null,
             HlsDownloadHelper.getDataSourceFactory(applicationContext)
         )
@@ -147,48 +145,6 @@ class HlsExportService : Service() {
             suspendCancellableCoroutine<DownloadRequest> { cont ->
                 helper.prepare(object : DownloadHelper.Callback {
                     override fun onPrepared(h: DownloadHelper) {
-                        for (periodIndex in 0 until h.periodCount) {
-                            // 1. Clear ExoPlayer default track selections (which default to 1080p)
-                            h.clearTrackSelections(periodIndex)
-
-                            val trackGroups = h.getTrackGroups(periodIndex)
-                            val overrides = mutableListOf<TrackSelectionOverride>()
-
-                            for (groupIndex in 0 until trackGroups.length) {
-                                val trackGroup = trackGroups.get(groupIndex)
-                                val firstFormat = trackGroup.getFormat(0)
-
-                                if (MimeTypes.isVideo(firstFormat.sampleMimeType)) {
-                                    val matchedIndices = mutableListOf<Int>()
-                                    for (i in 0 until trackGroup.length) {
-                                        val format = trackGroup.getFormat(i)
-                                        val isIdMatch = trackId != null && format.id == trackId
-                                        val isResMatch = targetWidth > 0 && targetHeight > 0 &&
-                                                format.width == targetWidth && format.height == targetHeight
-                                        val isBitrateMatch = targetBitrate > 0 && format.bitrate == targetBitrate
-
-                                        if (isIdMatch || isResMatch || isBitrateMatch) {
-                                            matchedIndices.add(i)
-                                            break
-                                        }
-                                    }
-
-                                    if (matchedIndices.isNotEmpty()) {
-                                        overrides.add(TrackSelectionOverride(trackGroup, matchedIndices))
-                                    }
-                                } else if (MimeTypes.isAudio(firstFormat.sampleMimeType)) {
-                                    // Retain audio tracks
-                                    overrides.add(TrackSelectionOverride(trackGroup, listOf(0)))
-                                }
-                            }
-
-                            val paramsBuilder = TrackSelectionParameters.Builder(applicationContext)
-                            for (override in overrides) {
-                                paramsBuilder.addOverride(override)
-                            }
-                            h.addTrackSelection(periodIndex, paramsBuilder.build())
-                        }
-
                         val downloadRequest = h.getDownloadRequest(Util.getUtf8Bytes(title))
                         h.release()
                         cont.resume(downloadRequest)
