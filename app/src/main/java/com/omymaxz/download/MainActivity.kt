@@ -2183,7 +2183,46 @@ private fun injectMediaStateDetector() {
                 if (match != null) {
                     val iframeUrl = match.groupValues[1]
                     activity.runOnUiThread {
-                        activity.binding.webView.loadUrl(iframeUrl)
+                        IframeSniffer(activity) { url ->
+                            activity.runOnUiThread {
+                                try {
+                                    val category = MediaCategory.fromUrl(url)
+                                    val isMainContent = isMainVideoContent(url)
+                                    if (category == MediaCategory.VIDEO && isMainContent) {
+                                        currentVideoUrl = url
+                                    }
+                                    val detectedFormat = activity.detectVideoFormat(url)
+                                    val quality = activity.extractQualityFromUrl(url)
+                                    val enhancedTitle = activity.generateSmartFileName(url, detectedFormat.extension, quality, category)
+                                    val fileSize = activity.estimateFileSize(url, category)
+                                    val language = extractLanguageFromUrl(url)
+                                    val mediaFile = MediaFile(
+                                        url = url,
+                                        title = enhancedTitle,
+                                        mimeType = detectedFormat.mimeType,
+                                        quality = quality,
+                                        category = category,
+                                        fileSize = fileSize,
+                                        language = language,
+                                        isMainContent = isMainContent
+                                    )
+                                    val existsAlready = synchronized(detectedMediaFiles) {
+                                        detectedMediaFiles.any { it.url == url }
+                                    }
+                                    if (!existsAlready) {
+                                        synchronized(detectedMediaFiles) {
+                                            detectedMediaFiles.add(mediaFile)
+                                        }
+                                        updateFabVisibility()
+                                        if (category == MediaCategory.SUBTITLE) {
+                                            fetchSubtitleSnippet(mediaFile)
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("MainActivity", "Error processing sniffed media URL: ${e.message}")
+                                }
+                            }
+                        }.sniff(iframeUrl)
                     }
                 }
             } catch (e: Exception) {
