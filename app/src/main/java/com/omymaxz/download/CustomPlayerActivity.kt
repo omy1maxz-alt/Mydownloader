@@ -29,8 +29,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import androidx.lifecycle.lifecycleScope
+import android.app.PendingIntent
 import android.app.PictureInPictureParams
+import android.app.RemoteAction
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import android.content.res.Configuration
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.util.Rational
 import android.view.View
@@ -55,6 +61,29 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     private val cacheProgressHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private var hasNotifiedCacheComplete = false
+
+    private val ACTION_BACKGROUND_PLAY = "com.omymaxz.download.ACTION_BACKGROUND_PLAY"
+
+    private val pipReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ACTION_BACKGROUND_PLAY) {
+                val serviceIntent = Intent(this@CustomPlayerActivity, PlaybackService::class.java).apply {
+                    action = "com.omymaxz.download.START_BACKGROUND_AUDIO"
+                    putExtra("video_url", videoUrl)
+                    putExtra("video_title", videoTitle)
+                    putExtra("current_position", player?.currentPosition ?: 0L)
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent)
+                } else {
+                    startService(serviceIntent)
+                }
+
+                finish() // Close UI since it is now running in background
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,7 +113,16 @@ class CustomPlayerActivity : AppCompatActivity() {
         // Removed aggressive background caching using DownloadManager on startup.
         // It was causing double-quota usage by automatically downloading the 1080p master playlist
         // while the user might be actively streaming 480p via the CacheDataSource.
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(pipReceiver, IntentFilter(ACTION_BACKGROUND_PLAY), Context.RECEIVER_EXPORTED)
+            } else {
+                registerReceiver(pipReceiver, IntentFilter(ACTION_BACKGROUND_PLAY))
+            }
+        }
     }
+
 
     private fun showTrackSelectionDialog() {
         if (player == null) return
@@ -100,8 +138,18 @@ class CustomPlayerActivity : AppCompatActivity() {
     private fun enterPipMode() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val aspectRatio = Rational(16, 9)
+
+            val intent = Intent(ACTION_BACKGROUND_PLAY).setPackage(packageName)
+            val pendingIntent = PendingIntent.getBroadcast(
+                this, 0, intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            val icon = Icon.createWithResource(this, R.drawable.ic_headset)
+            val action = RemoteAction(icon, "Listen in Background", "Listen to audio in background", pendingIntent)
+
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(aspectRatio)
+                .setActions(listOf(action))
                 .build()
             enterPictureInPictureMode(params)
         } else {
@@ -113,8 +161,18 @@ class CustomPlayerActivity : AppCompatActivity() {
         super.onUserLeaveHint()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val aspectRatio = Rational(16, 9)
+
+            val intent = Intent(ACTION_BACKGROUND_PLAY).setPackage(packageName)
+            val pendingIntent = PendingIntent.getBroadcast(
+                this, 0, intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            val icon = Icon.createWithResource(this, R.drawable.ic_headset)
+            val action = RemoteAction(icon, "Listen in Background", "Listen to audio in background", pendingIntent)
+
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(aspectRatio)
+                .setActions(listOf(action))
                 .build()
             enterPictureInPictureMode(params)
         }
@@ -545,6 +603,11 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        try {
+            unregisterReceiver(pipReceiver)
+        } catch (e: Exception) {
+            // Ignored
+        }
         cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
 
         // Stop aggressive background caching when leaving the player by pausing it, not removing (which deletes cache)
