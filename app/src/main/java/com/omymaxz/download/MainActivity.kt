@@ -1891,6 +1891,22 @@ private fun checkBatteryOptimization() {
                         };
                     },
 
+                    scanBase64Iframes: function() {
+                        const selects = document.querySelectorAll('select.mirror, select[name="mirror"]');
+                        selects.forEach(select => {
+                            if (select.dataset.scanned) return;
+                            select.dataset.scanned = "true";
+                            if (select.value && window.AndroidMediaState && window.AndroidMediaState.onBase64IframeFound) {
+                                window.AndroidMediaState.onBase64IframeFound(select.value);
+                            }
+                            select.addEventListener('change', (e) => {
+                                if (e.target.value && window.AndroidMediaState && window.AndroidMediaState.onBase64IframeFound) {
+                                    window.AndroidMediaState.onBase64IframeFound(e.target.value);
+                                }
+                            });
+                        });
+                    },
+
                     scanDOM: function() {
                         document.querySelectorAll('video, audio, source').forEach(el => {
                             if (el.src) {
@@ -1898,6 +1914,7 @@ private fun checkBatteryOptimization() {
                                 this.checkUrl(el.src, type);
                             }
                         });
+                        this.scanBase64Iframes();
                     },
 
                     init: function() {
@@ -2153,6 +2170,25 @@ private fun injectMediaStateDetector() {
 
         fun clearState() {
             lastSubtitleUrl = ""
+        }
+
+        @JavascriptInterface
+        fun onBase64IframeFound(base64Str: String) {
+            try {
+                val decodedBytes = android.util.Base64.decode(base64Str, android.util.Base64.DEFAULT)
+                val decodedString = String(decodedBytes)
+                // Match <iframe src="URL" ...>
+                val regex = Regex("<iframe[^>]+src=[\"']([^\"']+)[\"'][^>]*>")
+                val match = regex.find(decodedString)
+                if (match != null) {
+                    val iframeUrl = match.groupValues[1]
+                    activity.runOnUiThread {
+                        activity.binding.webView.loadUrl(iframeUrl)
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MediaStateInterface", "Error decoding Base64 iframe: ${e.message}")
+            }
         }
 
         @JavascriptInterface

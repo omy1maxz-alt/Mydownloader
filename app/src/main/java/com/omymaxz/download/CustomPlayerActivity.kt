@@ -61,6 +61,7 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     private val cacheProgressHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private var hasNotifiedCacheComplete = false
+    private var mediaSession: MediaSession? = null
 
     private val ACTION_BACKGROUND_PLAY = "com.omymaxz.download.ACTION_BACKGROUND_PLAY"
 
@@ -353,6 +354,8 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setLoadControl(loadControl)
             .build()
 
+        mediaSession = MediaSession.Builder(this, player!!).build()
+
         activePlayer = player
 
         attachPlayerView()
@@ -602,6 +605,8 @@ class CustomPlayerActivity : AppCompatActivity() {
     private fun releasePlayer() { /* intentional no-op: activePlayer survives onStop */ }
 
     override fun onDestroy() {
+        mediaSession?.release()
+        mediaSession = null
         super.onDestroy()
         try {
             unregisterReceiver(pipReceiver)
