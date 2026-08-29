@@ -25,7 +25,6 @@ import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.transformer.DefaultAssetLoaderFactory
-import androidx.media3.transformer.DefaultDecoderFactory
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
@@ -272,8 +271,15 @@ class HlsExportService : Service() {
                 .setAssetLoaderFactory(
                     DefaultAssetLoaderFactory(
                         applicationContext,
-                        DefaultDecoderFactory(applicationContext),
-                        false,
+                        object : androidx.media3.transformer.Codec.DecoderFactory {
+                            override fun createForAudioDecoding(format: androidx.media3.common.Format): androidx.media3.transformer.Codec {
+                                throw UnsupportedOperationException("No decoder factory configured")
+                            }
+                            override fun createForVideoDecoding(format: androidx.media3.common.Format, surface: android.view.Surface, enableRequestSdrToneMapping: Boolean): androidx.media3.transformer.Codec {
+                                throw UnsupportedOperationException("No decoder factory configured")
+                            }
+                        },
+                        /* forceTrackForV21= */ false,
                         androidx.media3.common.util.Clock.DEFAULT,
                         androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
                             .setDataSourceFactory(cacheFactory),
