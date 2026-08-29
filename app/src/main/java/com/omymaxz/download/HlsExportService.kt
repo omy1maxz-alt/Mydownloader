@@ -267,22 +267,19 @@ class HlsExportService : Service() {
             val cacheFactory: CacheDataSource.Factory =
                 HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
 
+            // Use setMediaSourceFactory to inject the cache factory.
+            // This keeps the Transformer's default DecoderFactory intact, fixing the "No decoder factory configured" error.
+            val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
+                .setDataSourceFactory(cacheFactory)
+
             val transformer = Transformer.Builder(applicationContext)
                 .setAssetLoaderFactory(
-                    DefaultAssetLoaderFactory(
+                    androidx.media3.transformer.DefaultAssetLoaderFactory(
                         applicationContext,
-                        object : androidx.media3.transformer.Codec.DecoderFactory {
-                            override fun createForAudioDecoding(format: androidx.media3.common.Format): androidx.media3.transformer.Codec {
-                                throw UnsupportedOperationException("No decoder factory configured")
-                            }
-                            override fun createForVideoDecoding(format: androidx.media3.common.Format, surface: android.view.Surface, enableRequestSdrToneMapping: Boolean): androidx.media3.transformer.Codec {
-                                throw UnsupportedOperationException("No decoder factory configured")
-                            }
-                        },
+                        androidx.media3.transformer.DefaultDecoderFactory(applicationContext),
                         /* forceTrackForV21= */ false,
                         androidx.media3.common.util.Clock.DEFAULT,
-                        androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
-                            .setDataSourceFactory(cacheFactory),
+                        mediaSourceFactory,
                         androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
                     )
                 )
