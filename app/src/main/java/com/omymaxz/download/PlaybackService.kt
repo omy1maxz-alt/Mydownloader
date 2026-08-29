@@ -37,6 +37,7 @@ class PlaybackService : MediaSessionService() {
             .build()
 
         mediaSession = MediaSession.Builder(this, player!!)
+            .setId("PlaybackServiceSession")
             .build()
     }
 

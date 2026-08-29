@@ -354,7 +354,9 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setLoadControl(loadControl)
             .build()
 
-        mediaSession = MediaSession.Builder(this, player!!).build()
+        mediaSession = MediaSession.Builder(this, player!!)
+            .setId("CustomPlayerSession")
+            .build()
 
         activePlayer = player
 
@@ -661,6 +663,9 @@ class CustomPlayerActivity : AppCompatActivity() {
                         }
                     }
                 }
+
+                // Release the hardware decoder before starting Transformer
+                player?.pause()
 
                 // 3. Pass primitives to the Service
                 val intent = Intent(this, HlsExportService::class.java).apply {
