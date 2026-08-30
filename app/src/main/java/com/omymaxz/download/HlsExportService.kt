@@ -67,7 +67,7 @@ class HlsExportService : Service() {
             return START_NOT_STICKY
         }
 
-        val downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
+        val extraDownloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
         val videoUrl   = intent.getStringExtra(EXTRA_VIDEO_URL)
         val title      = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
         val mimeType   = intent.getStringExtra(EXTRA_MIME_TYPE) ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
@@ -77,7 +77,7 @@ class HlsExportService : Service() {
         intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
         intent.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
 
-        if (downloadId == null && videoUrl == null) {
+        if (extraDownloadId == null && videoUrl == null) {
             if (activeExports.get() == 0) stopSelf(startId)
             return START_NOT_STICKY
         }
@@ -88,7 +88,7 @@ class HlsExportService : Service() {
         serviceScope.launch {
             try {
                 when {
-                    downloadId != null -> exportFromDownloadId(downloadId, title)
+                    extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title)
                     videoUrl != null -> {
                         // Rebuild MediaItem from primitives to guarantee localConfiguration is never null
                         val streamKeys = streamKeyStrings?.map {
@@ -96,13 +96,34 @@ class HlsExportService : Service() {
                             androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt())
                         } ?: emptyList()
 
-                        val mediaItem = androidx.media3.common.MediaItem.Builder()
-                            .setUri(android.net.Uri.parse(videoUrl))
+                        val downloadId = videoUrl.hashCode().toString()
+
+                        val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
+
+                        val downloadRequest = androidx.media3.exoplayer.offline.DownloadRequest.Builder(downloadId, android.net.Uri.parse(videoUrl))
                             .setMimeType(mimeType)
                             .setStreamKeys(streamKeys)
+                            .setData(title.toByteArray(Charsets.UTF_8))
                             .build()
 
-                        muxToMp4(mediaItem, title)
+                        androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(
+                            applicationContext,
+                            HlsDownloadService::class.java,
+                            downloadRequest,
+                            true
+                        )
+
+                        val completed = waitForCompletion(dm, downloadRequest.id)
+                        if (!completed) {
+                            Toast.makeText(applicationContext, "Download failed or incomplete", Toast.LENGTH_LONG).show()
+                            return@launch
+                        }
+
+                        // Retrieve the updated MediaItem directly from the successful request
+                        val dmDownload = dm.downloadIndex.getDownload(downloadRequest.id)
+                        val exportMediaItem = dmDownload?.request?.toMediaItem() ?: downloadRequest.toMediaItem()
+
+                        muxToMp4(exportMediaItem, title)
                     }
                 }
             } catch (t: Throwable) {
@@ -273,6 +294,7 @@ class HlsExportService : Service() {
                 .setDataSourceFactory(cacheFactory)
             val mediaSourceFactory = com.omymaxz.download.format.FormatSuppressingMediaSourceFactory(defaultMediaSourceFactory)
 
+            @Suppress("DEPRECATION")
             val transformer = Transformer.Builder(applicationContext)
                 .setAssetLoaderFactory(
                     androidx.media3.transformer.DefaultAssetLoaderFactory(
