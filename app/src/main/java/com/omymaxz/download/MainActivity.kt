@@ -1116,6 +1116,7 @@ private fun checkBatteryOptimization() {
                     }
                     injectMediaStateDetector()
                     injectAdvancedMediaDetector()
+                    view?.evaluateJavascript("(function() { AndroidMediaState.parseHtmlForHiddenM3u8(document.documentElement.innerHTML); })();", null)
                     if (url?.contains("jules.google.com", ignoreCase = true) == true) {
                         injectJulesLongPress(view)
                     }
@@ -2170,6 +2171,31 @@ private fun injectMediaStateDetector() {
 
         fun clearState() {
             lastSubtitleUrl = ""
+        }
+
+        @JavascriptInterface
+        fun parseHtmlForHiddenM3u8(htmlSource: String) {
+            try {
+                // 1. Check for the MacCMS player_aaaa JSON variable
+                val macCmsRegex = """"url"\s*:\s*"(https?:\\\\/\\\\/[^"]+\.m3u8[^"]*)"""".toRegex()
+                val macCmsMatch = macCmsRegex.find(htmlSource)
+                if (macCmsMatch != null) {
+                    val rawUrl = macCmsMatch.groupValues[1]
+                    // Unescape the URL
+                    val cleanUrl = rawUrl.replace("\\/", "/")
+                    onMediaDetected(cleanUrl, "application/x-mpegURL")
+                }
+
+                // 2. Fallback: Check for iframe src with a ?url= parameter containing m3u8
+                val iframeRegex = """<iframe[^>]+src=["']([^"']*?\?url=(https?://[^"']+\.m3u8[^"']*?)?)["']""".toRegex(RegexOption.IGNORE_CASE)
+                val iframeMatch = iframeRegex.find(htmlSource)
+                if (iframeMatch != null && iframeMatch.groupValues.size >= 3) {
+                    val cleanIframeUrl = iframeMatch.groupValues[2]
+                    onMediaDetected(cleanIframeUrl, "application/x-mpegURL")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MediaStateInterface", "Error parsing HTML for hidden m3u8: ${e.message}")
+            }
         }
 
         @JavascriptInterface
