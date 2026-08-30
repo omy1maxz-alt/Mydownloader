@@ -269,8 +269,9 @@ class HlsExportService : Service() {
 
             // Use setMediaSourceFactory to inject the cache factory.
             // This keeps the Transformer's default DecoderFactory intact, fixing the "No decoder factory configured" error.
-            val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
+            val defaultMediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
                 .setDataSourceFactory(cacheFactory)
+            val mediaSourceFactory = com.omymaxz.download.format.FormatSuppressingMediaSourceFactory(defaultMediaSourceFactory)
 
             val transformer = Transformer.Builder(applicationContext)
                 .setAssetLoaderFactory(
