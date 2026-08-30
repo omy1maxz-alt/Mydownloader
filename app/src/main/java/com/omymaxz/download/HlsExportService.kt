@@ -277,7 +277,6 @@ class HlsExportService : Service() {
                     androidx.media3.transformer.DefaultAssetLoaderFactory(
                         applicationContext,
                         androidx.media3.transformer.DefaultDecoderFactory(applicationContext),
-                        /* forceTrackForV21= */ true,
                         androidx.media3.common.util.Clock.DEFAULT,
                         mediaSourceFactory,
                         androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
