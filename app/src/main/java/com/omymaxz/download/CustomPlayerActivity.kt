@@ -29,14 +29,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import androidx.lifecycle.lifecycleScope
-import android.app.PendingIntent
 import android.app.PictureInPictureParams
-import android.app.RemoteAction
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.IntentFilter
 import android.content.res.Configuration
-import android.graphics.drawable.Icon
 import android.os.Build
 import android.util.Rational
 import android.view.View
@@ -61,30 +55,6 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     private val cacheProgressHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private var hasNotifiedCacheComplete = false
-    private var mediaSession: MediaSession? = null
-
-    private val ACTION_BACKGROUND_PLAY = "com.omymaxz.download.ACTION_BACKGROUND_PLAY"
-
-    private val pipReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == ACTION_BACKGROUND_PLAY) {
-                val serviceIntent = Intent(this@CustomPlayerActivity, PlaybackService::class.java).apply {
-                    action = "com.omymaxz.download.START_BACKGROUND_AUDIO"
-                    putExtra("video_url", videoUrl)
-                    putExtra("video_title", videoTitle)
-                    putExtra("current_position", player?.currentPosition ?: 0L)
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(serviceIntent)
-                } else {
-                    startService(serviceIntent)
-                }
-
-                finish() // Close UI since it is now running in background
-            }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -114,16 +84,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         // Removed aggressive background caching using DownloadManager on startup.
         // It was causing double-quota usage by automatically downloading the 1080p master playlist
         // while the user might be actively streaming 480p via the CacheDataSource.
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(pipReceiver, IntentFilter(ACTION_BACKGROUND_PLAY), Context.RECEIVER_EXPORTED)
-            } else {
-                registerReceiver(pipReceiver, IntentFilter(ACTION_BACKGROUND_PLAY))
-            }
-        }
     }
-
 
     private fun showTrackSelectionDialog() {
         if (player == null) return
@@ -139,18 +100,8 @@ class CustomPlayerActivity : AppCompatActivity() {
     private fun enterPipMode() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val aspectRatio = Rational(16, 9)
-
-            val intent = Intent(ACTION_BACKGROUND_PLAY).setPackage(packageName)
-            val pendingIntent = PendingIntent.getBroadcast(
-                this, 0, intent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            val icon = Icon.createWithResource(this, R.drawable.ic_headset)
-            val action = RemoteAction(icon, "Listen in Background", "Listen to audio in background", pendingIntent)
-
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(aspectRatio)
-                .setActions(listOf(action))
                 .build()
             enterPictureInPictureMode(params)
         } else {
@@ -162,18 +113,8 @@ class CustomPlayerActivity : AppCompatActivity() {
         super.onUserLeaveHint()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val aspectRatio = Rational(16, 9)
-
-            val intent = Intent(ACTION_BACKGROUND_PLAY).setPackage(packageName)
-            val pendingIntent = PendingIntent.getBroadcast(
-                this, 0, intent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            val icon = Icon.createWithResource(this, R.drawable.ic_headset)
-            val action = RemoteAction(icon, "Listen in Background", "Listen to audio in background", pendingIntent)
-
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(aspectRatio)
-                .setActions(listOf(action))
                 .build()
             enterPictureInPictureMode(params)
         }
@@ -352,10 +293,6 @@ class CustomPlayerActivity : AppCompatActivity() {
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(cacheFactory))
             .setLoadControl(loadControl)
-            .build()
-
-        mediaSession = MediaSession.Builder(this, player!!)
-            .setId("CustomPlayerSession")
             .build()
 
         activePlayer = player
@@ -607,14 +544,7 @@ class CustomPlayerActivity : AppCompatActivity() {
     private fun releasePlayer() { /* intentional no-op: activePlayer survives onStop */ }
 
     override fun onDestroy() {
-        mediaSession?.release()
-        mediaSession = null
         super.onDestroy()
-        try {
-            unregisterReceiver(pipReceiver)
-        } catch (e: Exception) {
-            // Ignored
-        }
         cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
 
         // Stop aggressive background caching when leaving the player by pausing it, not removing (which deletes cache)
@@ -646,58 +576,43 @@ class CustomPlayerActivity : AppCompatActivity() {
                     videoTitle = newTitle
                 }
 
-                // 1. Extract MIME type from the current player
-                val currentMediaItem = player?.currentMediaItem
-                val mimeType = currentMediaItem?.localConfiguration?.mimeType
-                    ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
+                var activeTrackId: String? = null
+                var activeWidth = -1
+                var activeHeight = -1
+                var activeBitrate = -1
 
-                // 2. Extract StreamKeys as primitive strings to avoid Parcelable/Bundleable serialization bugs
-                val streamKeyStrings = ArrayList<String>()
-                val tracks = player?.currentTracks
-                if (tracks != null) {
-                    tracks.groups.forEachIndexed { groupIndex, group ->
-                        var bestVideoIndex = -1
-                        var bestVideoBitrate = -1
-                        var hasVideo = false
-
-                        for (i in 0 until group.length) {
-                            if (group.isTrackSelected(i)) {
-                                val format = group.getTrackFormat(i)
-                                if (format.sampleMimeType?.startsWith("video/") == true) {
-                                    hasVideo = true
-                                    if (format.bitrate > bestVideoBitrate) {
-                                        bestVideoBitrate = format.bitrate
-                                        bestVideoIndex = i
-                                    }
-                                } else {
-                                    streamKeyStrings.add("$groupIndex,$i")
+                if (player != null && videoUrl?.contains(".m3u8", ignoreCase = true) == true) {
+                    val tracks = player!!.currentTracks
+                    for (group in tracks.groups) {
+                        if (group.type == C.TRACK_TYPE_VIDEO && group.isSelected) {
+                            for (i in 0 until group.length) {
+                                if (group.isTrackSelected(i)) {
+                                    val format = group.getTrackFormat(i)
+                                    activeTrackId = format.id
+                                    activeWidth = format.width
+                                    activeHeight = format.height
+                                    activeBitrate = format.bitrate
+                                    break
                                 }
                             }
-                        }
-                        // To prevent "Format changes are not supported" Transformer crash on Adaptive streams,
-                        // force the selection of a single video track (the highest bitrate among the selected ones).
-                        if (hasVideo && bestVideoIndex != -1) {
-                            streamKeyStrings.add("$groupIndex,$bestVideoIndex")
                         }
                     }
                 }
 
-                // Release the hardware decoder before starting Transformer
-                player?.pause()
-
-                // 3. Pass primitives to the Service
                 val intent = Intent(this, HlsExportService::class.java).apply {
-                    putExtra(HlsExportService.EXTRA_VIDEO_URL, videoUrl)
+                    putExtra(HlsExportService.EXTRA_URL, videoUrl)
                     putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
-                    putExtra(HlsExportService.EXTRA_MIME_TYPE, mimeType)
-                    putStringArrayListExtra(HlsExportService.EXTRA_STREAM_KEYS, streamKeyStrings)
+                    putExtra(HlsExportService.EXTRA_TRACK_ID, activeTrackId)
+                    putExtra(HlsExportService.EXTRA_TRACK_WIDTH, activeWidth)
+                    putExtra(HlsExportService.EXTRA_TRACK_HEIGHT, activeHeight)
+                    putExtra(HlsExportService.EXTRA_TRACK_BITRATE, activeBitrate)
 
                     putExtra(HlsExportService.EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
                     putExtra(HlsExportService.EXTRA_REFERER, HlsDownloadHelper.currentReferer)
                     putExtra(HlsExportService.EXTRA_COOKIE, HlsDownloadHelper.currentCookie)
                 }
                 startService(intent)
-                Toast.makeText(this, "Exporting cached video...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Saving video...", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
