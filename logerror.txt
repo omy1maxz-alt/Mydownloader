@@ -1,0 +1,721 @@
+[2026-08-30 14:40:16.263 Uid(value=10806):30150:8745 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dea2a28 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 799/805 (recycle/alloc) - 8/805 (fetch/transfer)
+
+[2026-08-30 14:40:16.901 Uid(value=10806):30150:8890 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dec5e68 : 5(40960 size) total buffers - 1(8192 size) used buffers - 1237/1242 (recycle/alloc) - 13/1241 (fetch/transfer)
+
+[2026-08-30 14:40:19.634 Uid(value=10806):30150:8881 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5037ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:124(Avg:40ms),DQin:0/0,Render:126(Avg:39ms),Drop:0,DQout:0/0
+
+[2026-08-30 14:40:20.443 Uid(value=10806):30150:8865 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35001 m:0 s:0 k:0 z:0) : pid 30150 uid 10806 sessionId 40289 sr 44100 ch 2 fmt 1 maxAmplitude 2909
+
+[2026-08-30 14:40:20.592 Uid(value=10806):30150:8890 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:221,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-08-30 14:40:21.414 Uid(value=10806):30150:8745 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dea2a28 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 927/933 (recycle/alloc) - 8/933 (fetch/transfer)
+
+[2026-08-30 14:40:22.393 Uid(value=10806):30150:8890 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dec5e68 : 5(40960 size) total buffers - 1(8192 size) used buffers - 1474/1479 (recycle/alloc) - 13/1478 (fetch/transfer)
+
+[2026-08-30 14:40:22.487 Uid(value=10806):30150:8978 E/ExoPlayerImplInternal]
+Playback error
+  androidx.media3.exoplayer.ExoPlaybackException: Unexpected runtime error
+      at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:701)
+      at android.os.Handler.dispatchMessage(Handler.java:103)
+      at android.os.Looper.loopOnce(Looper.java:249)
+      at android.os.Looper.loop(Looper.java:337)
+      at android.os.HandlerThread.run(HandlerThread.java:85)
+  Caused by: java.lang.IllegalStateException: Format changes are not supported.
+      at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.readInput(ExoAssetLoaderBaseRenderer.java:349)
+      at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.feedConsumerFromInput(ExoAssetLoaderBaseRenderer.java:314)
+      at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.render(ExoAssetLoaderBaseRenderer.java:117)
+      at androidx.media3.exoplayer.ExoPlayerImplInternal.doSomeWork(ExoPlayerImplInternal.java:1112)
+      at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:544)
+      ... 4 more
+
+[2026-08-30 14:40:22.519 Uid(value=10806):30150:8977 I/ExoPlayerImpl]
+Release 9d6ea7f [AndroidXMedia3/1.3.1] [marble, 23049PCD8G, Xiaomi, 35] [media3.common, media3.ui, media3.exoplayer, media3.decoder, media3.database, media3.session, media3.exoplayer.hls, media3.datasource, media3.extractor, media3.transformer]
+
+[2026-08-30 14:40:22.550 Uid(value=10806):30150:8977 D/MPEG4Writer]
+reset()
+
+[2026-08-30 14:40:22.550 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Audio track stopping. Stop source
+
+[2026-08-30 14:40:22.550 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Audio track source stopping
+
+[2026-08-30 14:40:22.550 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Audio track source stopped
+
+[2026-08-30 14:40:22.556 Uid(value=10806):30150:8985 V/MediaWriter]
+Track event err/info msg:101, trackId:1, type:1000,val:-1011
+
+[2026-08-30 14:40:22.556 Uid(value=10806):30150:8985 I/MPEG4Writer]
+Received total/0-length (12409/0) buffers and encoded 12409 frames. - Video
+
+[2026-08-30 14:40:22.558 Uid(value=10806):30150:8986 V/MediaWriter]
+Track event err/info msg:101, trackId:2, type:1000,val:-1011
+
+[2026-08-30 14:40:22.558 Uid(value=10806):30150:8986 I/MPEG4Writer]
+Received total/0-length (21333/0) buffers and encoded 21333 frames. - Audio
+
+[2026-08-30 14:40:22.559 Uid(value=10806):30150:8986 I/MPEG4Writer]
+Audio track drift time: 0 us
+
+[2026-08-30 14:40:22.560 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Audio track stopped. Status:0. Stop source
+
+[2026-08-30 14:40:22.560 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Video track stopping. Stop source
+
+[2026-08-30 14:40:22.560 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Video track source stopping
+
+[2026-08-30 14:40:22.560 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Video track source stopped
+
+[2026-08-30 14:40:22.560 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Video track stopped. Status:0. Stop source
+
+[2026-08-30 14:40:22.560 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Duration from tracks range is [497183623, 497689067] us
+
+[2026-08-30 14:40:22.560 Uid(value=10806):30150:8983 D/MPEG4Writer]
+0 chunks are written in the last batch
+
+[2026-08-30 14:40:22.560 Uid(value=10806):30150:8977 D/MPEG4Writer]
+WriterThread stopped. Status:0
+
+[2026-08-30 14:40:22.562 Uid(value=10806):30150:8977 I/MPEG4Writer]
+Adjust the moov start time from 16777 us -> -103423 us
+
+[2026-08-30 14:40:22.563 Uid(value=10806):30150:8977 I/MPEG4Writer]
+The mp4 file will not be streamable.
+
+[2026-08-30 14:40:22.563 Uid(value=10806):30150:8977 I/MPEG4Writer]
+MOOV atom was written to the file
+
+[2026-08-30 14:40:22.563 Uid(value=10806):30150:8977 D/MPEG4Writer]
+release()
+
+[2026-08-30 14:40:22.563 Uid(value=10806):30150:8977 D/MPEG4Writer]
+ftruncate mPreAllocateFileEndOffset:67893201 mOffset:67868938 mMdatEndOffset:67564838 diff:24263
+
+[2026-08-30 14:40:22.668 Uid(value=10806):30150:8977 D/MPEG4Writer]
+final fsync() takes 104 ms, file size 67868938
+
+[2026-08-30 14:40:22.669 Uid(value=10806):30150:8977 D/MPEG4Writer]
+MP4WtrCtrlHlpLooper stopped
+
+[2026-08-30 14:40:22.669 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Top 5 write durations(microseconds): #1:5571 #2:5725 #3:6323 #4:7233 #5:12265
+
+[2026-08-30 14:40:22.669 Uid(value=10806):30150:8977 D/MPEG4Writer]
+reset()
+
+[2026-08-30 14:40:22.669 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Video track stopping. Stop source
+
+[2026-08-30 14:40:22.669 Uid(value=10806):30150:8977 E/MPEG4Writer]
+Stop() called but track is not started or stopped
+
+[2026-08-30 14:40:22.669 Uid(value=10806):30150:8977 D/MPEG4Writer]
+Audio track stopping. Stop source
+
+[2026-08-30 14:40:22.669 Uid(value=10806):30150:8977 E/MPEG4Writer]
+Stop() called but track is not started or stopped
+
+[2026-08-30 14:40:22.674 Uid(value=10806):30150:30150 E/HlsExportService]
+Transformer error
+androidx.media3.transformer.ExportException: Asset loader error
+	at androidx.media3.transformer.ExoPlayerAssetLoader$PlayerListener.onPlayerError(ExoPlayerAssetLoader.java:371)
+	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$updatePlaybackInfo$16(ExoPlayerImpl.java:2084)
+	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda14.invoke(D8$$SyntheticClass:0)
+	at androidx.media3.common.util.ListenerSet$ListenerHolder.invoke(ListenerSet.java:339)
+	at androidx.media3.common.util.ListenerSet.lambda$queueEvent$0(ListenerSet.java:223)
+	at androidx.media3.common.util.ListenerSet$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+	at androidx.media3.common.util.ListenerSet.flushEvents(ListenerSet.java:245)
+	at androidx.media3.exoplayer.ExoPlayerImpl.updatePlaybackInfo(ExoPlayerImpl.java:2145)
+	at androidx.media3.exoplayer.ExoPlayerImpl.handlePlaybackInfo(ExoPlayerImpl.java:1979)
+	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$new$1$androidx-media3-exoplayer-ExoPlayerImpl(ExoPlayerImpl.java:345)
+	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda23.run(D8$$SyntheticClass:0)
+	at android.os.Handler.handleCallback(Handler.java:959)
+	at android.os.Handler.dispatchMessage(Handler.java:100)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:337)
+	at android.os.HandlerThread.run(HandlerThread.java:85)
+Caused by: androidx.media3.exoplayer.ExoPlaybackException: Unexpected runtime error
+	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:701)
+	at android.os.Handler.dispatchMessage(Handler.java:103)
+	... 3 more
+Caused by: java.lang.IllegalStateException: Format changes are not supported.
+	at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.readInput(ExoAssetLoaderBaseRenderer.java:349)
+	at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.feedConsumerFromInput(ExoAssetLoaderBaseRenderer.java:314)
+	at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.render(ExoAssetLoaderBaseRenderer.java:117)
+	at androidx.media3.exoplayer.ExoPlayerImplInternal.doSomeWork(ExoPlayerImplInternal.java:1112)
+	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:544)
+	... 4 more
+
+[2026-08-30 14:40:24.648 Uid(value=10806):30150:8881 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5015ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:125(Avg:40ms),DQin:0/0,Render:124(Avg:40ms),Drop:0,DQout:0/0
+
+[2026-08-30 14:40:25.489 Uid(value=10806):30150:8865 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40007 m:0 s:0 k:0 z:0) : pid 30150 uid 10806 sessionId 40289 sr 44100 ch 2 fmt 1 maxAmplitude 5379
+
+[2026-08-30 14:40:25.594 Uid(value=10806):30150:8890 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:213,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-08-30 14:40:26.108 Uid(value=10806):30150:8865 E/MediaCodecAudioRenderer]
+Audio sink error
+  androidx.media3.exoplayer.audio.AudioSink$UnexpectedDiscontinuityException: Unexpected audio track timestamp discontinuity: expected 1001347948750, got 1001348152788
+      at androidx.media3.exoplayer.audio.DefaultAudioSink.handleBuffer(DefaultAudioSink.java:994)
+      at androidx.media3.exoplayer.audio.MediaCodecAudioRenderer.processOutputBuffer(MediaCodecAudioRenderer.java:744)
+      at androidx.media3.exoplayer.mediacodec.MediaCodecRenderer.drainOutputBuffer(MediaCodecRenderer.java:2010)
+      at androidx.media3.exoplayer.mediacodec.MediaCodecRenderer.render(MediaCodecRenderer.java:827)
+      at androidx.media3.exoplayer.ExoPlayerImplInternal.doSomeWork(ExoPlayerImplInternal.java:1112)
+      at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:544)
+      at android.os.Handler.dispatchMessage(Handler.java:103)
+      at android.os.Looper.loopOnce(Looper.java:249)
+      at android.os.Looper.loop(Looper.java:337)
+      at android.os.HandlerThread.run(HandlerThread.java:85)
+
+[2026-08-30 14:40:26.672 Uid(value=10806):30150:8745 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dea2a28 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 1058/1064 (recycle/alloc) - 8/1064 (fetch/transfer)
+
+[2026-08-30 14:40:27.889 Uid(value=10806):30150:8890 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dec5e68 : 5(40960 size) total buffers - 2(16384 size) used buffers - 1715/1720 (recycle/alloc) - 13/1719 (fetch/transfer)
+
+[2026-08-30 14:40:29.682 Uid(value=10806):30150:8881 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5032ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:131(Avg:38ms),DQin:0/0,Render:127(Avg:39ms),Drop:4,DQout:0/0
+
+[2026-08-30 14:40:30.533 Uid(value=10806):30150:8865 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45007 m:0 s:0 k:0 z:0) : pid 30150 uid 10806 sessionId 40289 sr 44100 ch 2 fmt 1 maxAmplitude 12613
+
+[2026-08-30 14:40:30.594 Uid(value=10806):30150:8890 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-08-30 14:40:32.022 Uid(value=10806):30150:8745 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dea2a28 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 1198/1204 (recycle/alloc) - 8/1204 (fetch/transfer)
+
+[2026-08-30 14:40:33.462 Uid(value=10806):30150:8890 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dec5e68 : 5(40960 size) total buffers - 1(8192 size) used buffers - 1951/1956 (recycle/alloc) - 13/1955 (fetch/transfer)
+
+[2026-08-30 14:40:34.683 Uid(value=10806):30150:8881 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:124(Avg:40ms),DQin:0/0,Render:125(Avg:40ms),Drop:0,DQout:0/0
+
+[2026-08-30 14:40:35.571 Uid(value=10806):30150:8865 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50006 m:0 s:0 k:0 z:0) : pid 30150 uid 10806 sessionId 40289 sr 44100 ch 2 fmt 1 maxAmplitude 27091
+
+[2026-08-30 14:40:35.621 Uid(value=10806):30150:8890 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5026ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-08-30 14:40:37.199 Uid(value=10806):30150:8745 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dea2a28 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 1327/1333 (recycle/alloc) - 8/1333 (fetch/transfer)
+
+[2026-08-30 14:40:38.540 Uid(value=10806):30150:8890 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dec5e68 : 5(40960 size) total buffers - 1(8192 size) used buffers - 2169/2174 (recycle/alloc) - 13/2173 (fetch/transfer)
+
+[2026-08-30 14:40:39.688 Uid(value=10806):30150:8881 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:126(Avg:39ms),DQin:0/0,Render:125(Avg:40ms),Drop:0,DQout:0/0
+
+[2026-08-30 14:40:40.601 Uid(value=10806):30150:8865 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55006 m:0 s:0 k:0 z:0) : pid 30150 uid 10806 sessionId 40289 sr 44100 ch 2 fmt 1 maxAmplitude 25706
+
+[2026-08-30 14:40:40.621 Uid(value=10806):30150:8890 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-08-30 14:40:42.633 Uid(value=10806):30150:8745 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dea2a28 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 1462/1468 (recycle/alloc) - 8/1468 (fetch/transfer)
+
+[2026-08-30 14:40:42.778 Uid(value=10806):30150:30150 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@17966a7, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.8 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 14:40:42.781 Uid(value=10806):30150:30150 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@17966a7, reason: AppDarkModeEnable
+
+[2026-08-30 14:40:42.783 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+
+[2026-08-30 14:40:42.801 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4423 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+
+[2026-08-30 14:40:42.810 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+
+[2026-08-30 14:40:42.810 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#32
+
+[2026-08-30 14:40:42.828 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+vri.reportDrawFinished
+
+[2026-08-30 14:40:42.833 Uid(value=10806):30150:8884 D/InsetsController]
+default animation onReady types: 3 controller=android.view.InsetsAnimationControlImpl@4f8d613
+
+[2026-08-30 14:40:42.833 Uid(value=10806):30150:8884 D/ViewRootImplStubImpl]
+requestedTypes: 3
+
+[2026-08-30 14:40:42.854 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+
+[2026-08-30 14:40:42.856 Uid(value=10806):30150:30150 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-08-30 14:40:42.856 Uid(value=10806):30150:30150 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-08-30 14:40:42.859 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#35
+
+[2026-08-30 14:40:42.868 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+vri.reportDrawFinished
+
+[2026-08-30 14:40:43.184 Uid(value=10806):30150:8884 D/InsetsAnimationCtrlImpl]
+notifyFinished shown: false, currentAlpha: 1.000000, currentInsets: Insets{left=0, top=0, right=0, bottom=0}
+
+[2026-08-30 14:40:43.185 Uid(value=10806):30150:30150 D/InsetsController]
+cancelAnimation of types:3 animType=1 host:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity invokeCallback=false
+
+[2026-08-30 14:40:43.185 Uid(value=10806):30150:8884 D/InsetsAnimationCtrlImpl]
+Animation finished abruptly.
+
+[2026-08-30 14:40:43.185 Uid(value=10806):30150:8884 D/InsetsController]
+onAnimationFinish showOnFinish: false
+
+[2026-08-30 14:40:43.185 Uid(value=10806):30150:30150 D/InsetsController]
+notifyFinished. shown: false runner=android.view.InsetsAnimationThreadControlRunner@16a968
+
+[2026-08-30 14:40:43.348 Uid(value=10806):30150:30150 D/Activity]
+Activity = ActivityInfo{52c16c com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 14:40:43.349 Uid(value=10806):30150:30150 D/SecurityManager]
+checkAccessControl flag0
+
+[2026-08-30 14:40:43.584 Uid(value=10806):30150:8890 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dec5e68 : 5(40960 size) total buffers - 1(8192 size) used buffers - 2386/2391 (recycle/alloc) - 13/2390 (fetch/transfer)
+
+[2026-08-30 14:40:43.815 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=128903573, downTime=128903573, phoneEventTime=14:40:43.813 } moveCount:0
+
+[2026-08-30 14:40:43.816 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 14:40:43.886 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=128903644, downTime=128903573, phoneEventTime=14:40:43.883 } moveCount:0
+
+[2026-08-30 14:40:44.702 Uid(value=10806):30150:8881 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5015ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:123(Avg:40ms),DQin:0/0,Render:126(Avg:39ms),Drop:0,DQout:0/0
+
+[2026-08-30 14:40:44.805 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=128904564, downTime=128904537, phoneEventTime=14:40:44.804 } moveCount:0
+
+[2026-08-30 14:40:44.806 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 14:40:44.921 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=128904679, downTime=128904537, phoneEventTime=14:40:44.919 } moveCount:14
+
+[2026-08-30 14:40:45.662 Uid(value=10806):30150:8890 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5040ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-08-30 14:40:45.682 Uid(value=10806):30150:8865 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60007 m:0 s:0 k:0 z:0) : pid 30150 uid 10806 sessionId 40289 sr 44100 ch 2 fmt 1 maxAmplitude 10781
+
+[2026-08-30 14:40:47.898 Uid(value=10806):30150:8745 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dea2a28 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 1595/1601 (recycle/alloc) - 8/1599 (fetch/transfer)
+
+[2026-08-30 14:40:49.061 Uid(value=10806):30150:8890 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dec5e68 : 5(40960 size) total buffers - 1(8192 size) used buffers - 2622/2627 (recycle/alloc) - 13/2626 (fetch/transfer)
+
+[2026-08-30 14:40:49.285 Uid(value=10806):30150:8884 D/InsetsController]
+default animation onReady types: 3 controller=android.view.InsetsAnimationControlImpl@d0e167b
+
+[2026-08-30 14:40:49.285 Uid(value=10806):30150:8884 D/ViewRootImplStubImpl]
+requestedTypes: 3
+
+[2026-08-30 14:40:49.298 Uid(value=10806):30150:30150 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-08-30 14:40:49.298 Uid(value=10806):30150:30150 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-08-30 14:40:49.630 Uid(value=10806):30150:8884 D/InsetsAnimationCtrlImpl]
+notifyFinished shown: false, currentAlpha: 1.000000, currentInsets: Insets{left=0, top=0, right=0, bottom=0}
+
+[2026-08-30 14:40:49.630 Uid(value=10806):30150:8884 D/InsetsAnimationCtrlImpl]
+Animation finished abruptly.
+
+[2026-08-30 14:40:49.630 Uid(value=10806):30150:8884 D/InsetsController]
+onAnimationFinish showOnFinish: false
+
+[2026-08-30 14:40:49.630 Uid(value=10806):30150:30150 D/InsetsController]
+cancelAnimation of types:3 animType=1 host:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity invokeCallback=false
+
+[2026-08-30 14:40:49.631 Uid(value=10806):30150:30150 D/InsetsController]
+notifyFinished. shown: false runner=android.view.InsetsAnimationThreadControlRunner@7ff4cf1
+
+[2026-08-30 14:40:49.720 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=128909478, downTime=128909478, phoneEventTime=14:40:49.717 } moveCount:0
+
+[2026-08-30 14:40:49.720 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 14:40:49.723 Uid(value=10806):30150:8881 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5021ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:126(Avg:39ms),DQin:0/0,Render:124(Avg:40ms),Drop:0,DQout:0/0
+
+[2026-08-30 14:40:49.816 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=128909574, downTime=128909478, phoneEventTime=14:40:49.814 } moveCount:0
+
+[2026-08-30 14:40:50.670 Uid(value=10806):30150:8890 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5009ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-08-30 14:40:50.690 Uid(value=10806):30150:8865 D/AudioTrackImpl]
+[audioTrackData][fine] 5s(f:5007 m:0 s:0 k:0 z:0) : pid 30150 uid 10806 sessionId 40289 sr 44100 ch 2 fmt 1 maxAmplitude 331
+
+[2026-08-30 14:40:50.976 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=128910733, downTime=128910733, phoneEventTime=14:40:50.973 } moveCount:0
+
+[2026-08-30 14:40:50.976 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 14:40:51.048 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=128910805, downTime=128910733, phoneEventTime=14:40:51.044 } moveCount:0
+
+[2026-08-30 14:40:51.050 Uid(value=10806):30150:8865 I/AudioTrack]
+pause(sessionID=40289) pause(12504): prior state:STATE_ACTIVE packageName: com.omymaxz.download.debug
+
+[2026-08-30 14:40:51.914 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=128911672, downTime=128911672, phoneEventTime=14:40:51.912 } moveCount:0
+
+[2026-08-30 14:40:51.915 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 14:40:51.953 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=128911710, downTime=128911672, phoneEventTime=14:40:51.949 } moveCount:1
+
+[2026-08-30 14:40:51.980 Uid(value=10806):30150:30150 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@17966a7, reason: AppDarkModeEnable
+
+[2026-08-30 14:40:52.000 Uid(value=10806):30150:30150 W/libc]
+Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
+
+[2026-08-30 14:40:51.997 Uid(value=10806):30150:30150 W/.download.debug]
+type=1400 audit(0.0:108557): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-08-30 14:40:52.001 Uid(value=10806):30150:30150 W/libc]
+Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+
+[2026-08-30 14:40:52.001 Uid(value=10806):30150:30150 I/.download.debug]
+【MiuiBoosterUtils】checkUtil disable.
+
+[2026-08-30 14:40:52.001 Uid(value=10806):30150:30150 I/.download.debug]
+【MiuiBoosterUtils】package permission check disable.
+
+[2026-08-30 14:40:52.001 Uid(value=10806):30150:30150 I/.download.debug]
+【MiuiBoosterUtils】get Service disable.
+
+[2026-08-30 14:40:51.997 Uid(value=10806):30150:30150 W/.download.debug]
+type=1400 audit(0.0:108558): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-08-30 14:40:52.002 Uid(value=10806):30150:30150 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@17966a7, reason: AppDarkModeEnable
+
+[2026-08-30 14:40:52.003 Uid(value=10806):30150:30150 D/VRI[PopupWindow:7fb7be0]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+
+[2026-08-30 14:40:52.003 Uid(value=10806):30150:30150 D/VRI[PopupWindow:7fb7be0]]
+vri.Setup new sync=wmsSync-VRI[PopupWindow:7fb7be0]#37
+
+[2026-08-30 14:40:52.003 Uid(value=10806):30150:10164 I/.download.debug]
+【MiuiBoosterUtils】improve disable.
+
+[2026-08-30 14:40:52.008 Uid(value=10806):30150:30150 D/VRI[PopupWindow:7fb7be0]]
+vri.reportDrawFinished
+
+[2026-08-30 14:40:52.014 Uid(value=10806):30150:30150 D/VRI[PopupWindow:7fb7be0]]
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+
+[2026-08-30 14:40:52.018 Uid(value=10806):30150:30150 D/VRI[PopupWindow:7fb7be0]]
+vri.Setup new sync=wmsSync-VRI[PopupWindow:7fb7be0]#39
+
+[2026-08-30 14:40:52.023 Uid(value=10806):30150:30150 D/VRI[PopupWindow:7fb7be0]]
+vri.reportDrawFinished
+
+[2026-08-30 14:40:52.049 Uid(value=10806):30150:30150 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-08-30 14:40:52.049 Uid(value=10806):30150:30150 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-08-30 14:40:52.058 Uid(value=10806):30150:8865 W/MediaCodec]
+[mId: 1] [video-debug-dec] queueInputBuffer: Input time interval reaches 1048ms before pts: 1001373640000
+
+[2026-08-30 14:40:52.058 Uid(value=10806):30150:8865 I/MediaCodec]
+[mId: 1] [video-debug-dec] queueInputBuffer: index: 0 pts: 1001373640000 timediff: 1048
+
+[2026-08-30 14:40:52.058 Uid(value=10806):30150:8881 D/VideoCodecInfo]
+[-6607588339132399615] input buffer PTS 1001373640000 us, interverl is 1049 ms
+
+[2026-08-30 14:40:52.059 Uid(value=10806):30150:8881 I/MiMediaCodec]
+send last fps
+
+[2026-08-30 14:40:52.059 Uid(value=10806):30150:8881 I/MiMediaCodec]
+send fps to display with mLastSendedFps:25.000000 state:1 id:1
+
+[2026-08-30 14:40:52.072 Uid(value=10806):30150:30150 D/VRI[PopupWindow:7fb7be0]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 14:40:52.893 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'PopupWindow:7fb7be0', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=128912648, downTime=128912648, phoneEventTime=14:40:52.888 } moveCount:0
+
+[2026-08-30 14:40:52.895 Uid(value=10806):30150:30150 W/WindowOnBackDispatcher]
+sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@7cc760c
+
+[2026-08-30 14:40:52.925 Uid(value=10806):30150:30150 W/InputEventReceiver]
+Attempted to finish an input event but the input event receiver has already been disposed.
+
+[2026-08-30 14:40:52.943 Uid(value=10806):30150:30150 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-08-30 14:40:52.943 Uid(value=10806):30150:30150 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-08-30 14:40:53.541 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=128913298, downTime=128913298, phoneEventTime=14:40:53.538 } moveCount:0
+
+[2026-08-30 14:40:53.541 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 14:40:53.646 Uid(value=10806):30150:30150 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=128913404, downTime=128913298, phoneEventTime=14:40:53.644 } moveCount:12
+
+[2026-08-30 14:40:54.329 Uid(value=10806):30150:30150 D/VRI[CustomPlayerActivity]]
+visibilityChanged oldVisibility=true newVisibility=false
+
+[2026-08-30 14:40:54.345 Uid(value=10806):30150:30150 W/ExoPlayer:Playb]
+type=1400 audit(0.0:108561): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-08-30 14:40:54.349 Uid(value=10806):30150:8865 W/libc]
+Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+
+[2026-08-30 14:40:54.349 Uid(value=10806):30150:8881 I/MediaCodec]
+[mId: 1] [video-debug-dec] connectToSurface: surface 0xb40000767dec9620, mSurface 0xb40000767de8dc60
+
+[2026-08-30 14:40:54.349 Uid(value=10806):30150:8881 D/SurfaceUtils]
+connecting to surface 0xb40000767dec9630, reason connectToSurface
+
+[2026-08-30 14:40:54.349 Uid(value=10806):30150:8881 I/MediaCodec]
+[c2.qti.avc.decoder] setting surface generation to 30873606
+
+[2026-08-30 14:40:54.349 Uid(value=10806):30150:8881 D/SurfaceUtils]
+disconnecting from surface 0xb40000767dec9630, reason connectToSurface(reconnect)
+
+[2026-08-30 14:40:54.349 Uid(value=10806):30150:8881 D/SurfaceUtils]
+connecting to surface 0xb40000767dec9620, reason connectToSurface(reconnect-with-listener)
+
+[2026-08-30 14:40:54.351 Uid(value=10806):30150:8881 D/Codec2-OutputBufferQueue]
+remote graphic buffer migration 14/14
+
+[2026-08-30 14:40:54.351 Uid(value=10806):30150:8881 D/Codec2Client]
+setOutputSurface -- failed to set consumer usage (6/BAD_INDEX)
+
+[2026-08-30 14:40:54.351 Uid(value=10806):30150:8881 D/Codec2Client]
+setOutputSurface -- generation=30873606 consumer usage=0x900
+
+[2026-08-30 14:40:54.351 Uid(value=10806):30150:8881 D/qdgralloc]
+Falling back to default YUV format - no camera/video specific format defined, usage 0x100
+
+[2026-08-30 14:40:54.353 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 1 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.353 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 11 is not owned by the producer (state = ACQUIRED)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 19 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 20 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 21 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 22 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 23 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 24 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 25 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 26 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 27 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 28 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 29 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.354 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 30 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 31 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 32 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 33 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 34 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 35 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 36 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 37 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 38 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 39 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 40 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 41 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 42 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 43 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 44 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 45 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 46 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 47 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 48 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 49 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 50 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 51 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 52 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 53 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 54 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 55 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.355 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 56 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.356 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 57 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.356 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 58 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.356 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 59 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.356 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 60 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.356 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 61 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.356 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 62 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.356 Uid(value=10806):30150:8881 W/BufferQueueProducer]
+[SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#10(BLAST Consumer)10](id:75c60000000d,api:3,p:30150,c:30150) detachBuffer: slot 63 is not owned by the producer (state = FREE)
+
+[2026-08-30 14:40:54.357 Uid(value=10806):30150:8881 D/Codec2Client]
+Surface configure completed
+
+[2026-08-30 14:40:54.357 Uid(value=10806):30150:8881 I/MediaCodec]
+[mId: 1] [video-debug-dec] disconnectFromSurface: mSurface 0xb40000767de8dc60
+
+[2026-08-30 14:40:54.357 Uid(value=10806):30150:8881 D/SurfaceUtils]
+disconnecting from surface 0xb40000767de8dc70, reason disconnectFromSurface
+
+[2026-08-30 14:40:54.503 Uid(value=10806):30150:8881 D/VideoCodecInfo]
+[-6607588339132399615] output buffer PTS 1001373320000 us, interverl is 3328 ms
+
+[2026-08-30 14:40:54.504 Uid(value=10806):30150:8745 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dea2a28 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 1676/1682 (recycle/alloc) - 9/1682 (fetch/transfer)
+
+[2026-08-30 14:40:55.060 Uid(value=10806):30150:8881 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5336ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:36(Avg:148ms),DQin:0/0,Render:34(Avg:156ms),Drop:0,DQout:0/0
+
+[2026-08-30 14:40:55.362 Uid(value=10806):30150:8865 W/MediaCodec]
+[mId: 1] [video-debug-dec] queueInputBuffer: Input time interval reaches 3303ms before pts: 1001373600000
+
+[2026-08-30 14:40:55.362 Uid(value=10806):30150:8865 I/MediaCodec]
+[mId: 1] [video-debug-dec] queueInputBuffer: index: 1 pts: 1001373600000 timediff: 3303
+
+[2026-08-30 14:40:55.364 Uid(value=10806):30150:8881 D/VideoCodecInfo]
+[-6607588339132399615] input buffer PTS 1001373600000 us, interverl is 3306 ms
+
+[2026-08-30 14:40:55.366 Uid(value=10806):30150:8881 I/MiMediaCodec]
+send last fps
+
+[2026-08-30 14:40:55.366 Uid(value=10806):30150:8881 I/MiMediaCodec]
+send fps to display with mLastSendedFps:25.000000 state:1 id:1
+
+[2026-08-30 14:40:56.363 Uid(value=10806):30150:8865 D/AudioTrackImpl]
+[audioTrackData][fine] 10s(f:10680 m:0 s:0 k:0 z:0) : pid 30150 uid 10806 sessionId 40289 sr 44100 ch 2 fmt 1 maxAmplitude 305
+
+[2026-08-30 14:40:56.577 Uid(value=10806):30150:8744 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dec5e68 : 5(40960 size) total buffers - 0(0 size) used buffers - 2709/2714 (recycle/alloc) - 13/2714 (fetch/transfer)
+
+[2026-08-30 14:40:56.577 Uid(value=10806):30150:8744 D/BufferPoolAccessor2.0]
+evictor expired: 1, evicted: 1
+
+[2026-08-30 14:40:59.577 Uid(value=10806):30150:8744 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000778dea2a28 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 1676/1682 (recycle/alloc) - 10/1683 (fetch/transfer)
+
+[2026-08-30 14:40:59.578 Uid(value=10806):30150:8744 D/BufferPoolAccessor2.0]
+evictor expired: 1, evicted: 1
+
+[2026-08-30 14:41:01.370 Uid(value=10806):30150:8865 D/AudioTrackImpl]
+[audioTrackData][fine] 15s(f:15687 m:0 s:0 k:0 z:0) : pid 30150 uid 10806 sessionId 40289 sr 44100 ch 2 fmt 1 maxAmplitude 305
+
