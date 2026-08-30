@@ -656,10 +656,28 @@ class CustomPlayerActivity : AppCompatActivity() {
                 val tracks = player?.currentTracks
                 if (tracks != null) {
                     tracks.groups.forEachIndexed { groupIndex, group ->
+                        var bestVideoIndex = -1
+                        var bestVideoBitrate = -1
+                        var hasVideo = false
+
                         for (i in 0 until group.length) {
                             if (group.isTrackSelected(i)) {
-                                streamKeyStrings.add("$groupIndex,$i")
+                                val format = group.getTrackFormat(i)
+                                if (format.sampleMimeType?.startsWith("video/") == true) {
+                                    hasVideo = true
+                                    if (format.bitrate > bestVideoBitrate) {
+                                        bestVideoBitrate = format.bitrate
+                                        bestVideoIndex = i
+                                    }
+                                } else {
+                                    streamKeyStrings.add("$groupIndex,$i")
+                                }
                             }
+                        }
+                        // To prevent "Format changes are not supported" Transformer crash on Adaptive streams,
+                        // force the selection of a single video track (the highest bitrate among the selected ones).
+                        if (hasVideo && bestVideoIndex != -1) {
+                            streamKeyStrings.add("$groupIndex,$bestVideoIndex")
                         }
                     }
                 }
