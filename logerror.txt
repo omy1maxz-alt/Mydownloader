@@ -1,371 +1,342 @@
-[2026-08-30 20:11:21.968 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-visibilityChanged oldVisibility=false newVisibility=true
-
-[2026-08-30 20:11:21.973 Uid(value=10806):6616:6616 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
-
-[2026-08-30 20:11:21.974 Uid(value=10806):6616:6616 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
-
-[2026-08-30 20:11:21.976 Uid(value=10806):6616:9423 D/AppScoutStateMachine]
-6616-ScoutStateMachinecreated
-
-[2026-08-30 20:11:22.018 Uid(value=10806):6616:6616 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 20:11:22.019 Uid(value=10806):6616:6616 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 20:11:22.019 Uid(value=10806):6616:6616 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 20:11:22.019 Uid(value=10806):6616:6616 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 20:11:22.019 Uid(value=10806):6616:6616 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 20:11:22.014 Uid(value=10806):6616:6616 W/.download.debug]
-type=1400 audit(0.0:133249): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-
-[2026-08-30 20:11:22.014 Uid(value=10806):6616:6616 W/.download.debug]
-type=1400 audit(0.0:133250): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-
-[2026-08-30 20:11:22.022 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
-
-[2026-08-30 20:11:22.022 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#53
-
-[2026-08-30 20:11:22.023 Uid(value=10806):6616:11460 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 20:11:22.055 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 20:11:22.080 Uid(value=10806):6616:6616 D/Activity]
-Activity = ActivityInfo{185f200 com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
-
-[2026-08-30 20:11:22.081 Uid(value=10806):6616:6616 D/SecurityManager]
-checkAccessControl flag0
-
-[2026-08-30 20:11:22.105 Uid(value=10806):6616:6616 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 20:11:22.102 Uid(value=10806):6616:6616 W/.download.debug]
-type=1400 audit(0.0:133251): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-
-[2026-08-30 20:11:22.106 Uid(value=10806):6616:6616 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 20:11:22.102 Uid(value=10806):6616:6616 W/.download.debug]
-type=1400 audit(0.0:133252): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-
-[2026-08-30 20:11:22.106 Uid(value=10806):6616:6616 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 20:11:22.106 Uid(value=10806):6616:6616 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 20:11:22.108 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
-
-[2026-08-30 20:11:22.108 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#55
-
-[2026-08-30 20:11:22.109 Uid(value=10806):6616:11463 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 20:11:22.146 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 20:11:23.185 Uid(value=10806):6616:6616 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=148741481, downTime=148741481, phoneEventTime=20:11:23.182 } moveCount:0
-
-[2026-08-30 20:11:23.186 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-08-30 20:11:23.476 Uid(value=10806):6616:6616 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=148741770, downTime=148741481, phoneEventTime=20:11:23.471 } moveCount:33
-
-[2026-08-30 20:11:24.834 Uid(value=10806):6616:6616 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=148743131, downTime=148743131, phoneEventTime=20:11:24.832 } moveCount:0
-
-[2026-08-30 20:11:24.834 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-08-30 20:11:24.882 Uid(value=10806):6616:6616 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=148743179, downTime=148743131, phoneEventTime=20:11:24.880 } moveCount:0
-
-[2026-08-30 20:11:24.906 Uid(value=10806):6616:6616 D/ScrollerOptimizationManager]
-registerConfigChangedListener
-
-[2026-08-30 20:11:24.910 Uid(value=10806):6616:6616 D/ScrollerOptimizationManager]
-registerConfigChangedListener
-
-[2026-08-30 20:11:24.927 Uid(value=10806):6616:6616 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
-
-[2026-08-30 20:11:24.950 Uid(value=10806):6616:6616 D/DecorViewImmersiveImpl]
-onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-08-30 20:11:24.950 Uid(value=10806):6616:6616 D/DecorViewImmersiveImpl]
-getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-08-30 20:11:24.950 Uid(value=10806):6616:6616 D/DecorViewImmersiveImpl]
-window type: 2
-
-[2026-08-30 20:11:24.950 Uid(value=10806):6616:6616 D/MiuiNBIManagerImpl]
-mRemote has create
-
-[2026-08-30 20:11:24.950 Uid(value=10806):6616:6616 D/DecorViewImmersiveImpl]
-isNBIEnable=false
-
-[2026-08-30 20:11:24.964 Uid(value=10806):6616:6616 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 20:11:24.965 Uid(value=10806):6616:6616 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 20:11:24.965 Uid(value=10806):6616:6616 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 20:11:24.965 Uid(value=10806):6616:6616 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 20:11:24.965 Uid(value=10806):6616:6616 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 20:11:24.962 Uid(value=10806):6616:6616 W/.download.debug]
-type=1400 audit(0.0:133254): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-
-[2026-08-30 20:11:24.966 Uid(value=10806):6616:6616 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
-
-[2026-08-30 20:11:24.967 Uid(value=10806):6616:11513 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 20:11:24.972 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
-
-[2026-08-30 20:11:24.972 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#57
-
-[2026-08-30 20:11:24.987 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 20:11:25.043 Uid(value=10806):6616:6616 I/HandWritingStubImpl]
-refreshLastKeyboardType: 1
-
-[2026-08-30 20:11:25.043 Uid(value=10806):6616:6616 I/HandWritingStubImpl]
-getCurrentKeyboardType: 1
-
-[2026-08-30 20:11:25.678 Uid(value=10806):6616:6616 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=148743974, downTime=148743974, phoneEventTime=20:11:25.674 } moveCount:0
-
-[2026-08-30 20:11:25.678 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-08-30 20:11:25.732 Uid(value=10806):6616:6616 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=148744028, downTime=148743974, phoneEventTime=20:11:25.729 } moveCount:0
-
-[2026-08-30 20:11:25.761 Uid(value=10806):6616:6616 W/WindowOnBackDispatcher]
-sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@c5020cd
-
-[2026-08-30 20:11:25.763 Uid(value=10806):6616:6616 D/DecorViewImmersiveImpl]
-onDetachedFromWindow
-
-[2026-08-30 20:11:25.764 Uid(value=10806):6616:8356 D/HWUI]
-endAllActiveAnimators on 0xb4000076bdec11c0 (RippleDrawable) with handle 0xb40000775ded41e0
-
-[2026-08-30 20:11:27.104 Uid(value=10806):6616:6616 I/TransformerInternal]
-Init 2866a92 [AndroidXMedia3/1.4.0] [marble, 23049PCD8G, Xiaomi, 35]
-
-[2026-08-30 20:11:27.107 Uid(value=10806):6616:6616 I/ExoPlayerImpl]
-Init 6a00c63 [AndroidXMedia3/1.4.0] [marble, 23049PCD8G, Xiaomi, 35]
-
-[2026-08-30 20:11:27.235 Uid(value=10806):6616:11552 D/MPEG4Writer]
-PreAllocation enabled
-
-[2026-08-30 20:11:27.247 Uid(value=10806):6616:11552 E/Utils]
-csd0 too small
-
-[2026-08-30 20:11:27.247 Uid(value=10806):6616:11552 E/ExtendedUtils]
-csd0 too small
-
-[2026-08-30 20:11:27.248 Uid(value=10806):6616:11552 D/MPEG4Writer]
-fpathconf _PC_FILESIZEBITS:64
-
-[2026-08-30 20:11:27.248 Uid(value=10806):6616:11552 D/MPEG4Writer]
-File size limit set to 4503599627370495 bytes implicitly
-
-[2026-08-30 20:11:27.248 Uid(value=10806):6616:11552 D/MPEG4Writer]
-MP4WtrCtrlHlpLooper Started
-
-[2026-08-30 20:11:27.248 Uid(value=10806):6616:11552 I/MPEG4Writer]
-limits: 4503599627370495/0 bytes/us, bit rate: -1 bps and the estimated moov size 3248 bytes
-
-[2026-08-30 20:11:27.249 Uid(value=10806):6616:11552 I/MPEG4Writer]
-Time taken by video Track Source to start : 0ms
-
-[2026-08-30 20:11:27.249 Uid(value=10806):6616:11552 I/MPEG4Writer]
-Time taken by audio Track Source to start : 0ms
-
-[2026-08-30 20:11:27.252 Uid(value=10806):6616:11566 I/MPEG4Writer]
-setStartTimestampUs: 16777
-
-[2026-08-30 20:11:27.252 Uid(value=10806):6616:11566 I/MPEG4Writer]
-Earliest track starting time: 16777
-
-[2026-08-30 20:11:27.273 Uid(value=10806):6616:11564 I/MPEG4Writer]
-setStartTimestampUs: 80000
-
-[2026-08-30 20:11:28.244 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-visibilityChanged oldVisibility=true newVisibility=false
-
-[2026-08-30 20:11:28.244 Uid(value=10806):6616:6616 D/VRI[MainActivity]]
-visibilityChanged oldVisibility=true newVisibility=false
-
-[2026-08-30 20:11:56.022 Uid(value=10806):6616:11553 E/ExoPlayerImplInternal]
-Playback error
-  androidx.media3.exoplayer.ExoPlaybackException: Unexpected runtime error
-      at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:720)
-      at android.os.Handler.dispatchMessage(Handler.java:103)
-      at android.os.Looper.loopOnce(Looper.java:249)
-      at android.os.Looper.loop(Looper.java:337)
-      at android.os.HandlerThread.run(HandlerThread.java:85)
-  Caused by: java.lang.IllegalStateException: Format changes are not supported.
-      at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.readInput(ExoAssetLoaderBaseRenderer.java:355)
-      at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.feedConsumerFromInput(ExoAssetLoaderBaseRenderer.java:320)
-      at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.render(ExoAssetLoaderBaseRenderer.java:117)
-      at androidx.media3.exoplayer.ExoPlayerImplInternal.doSomeWork(ExoPlayerImplInternal.java:1136)
-      at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:561)
-      ... 4 more
-
-[2026-08-30 20:11:56.032 Uid(value=10806):6616:11552 I/TransformerInternal]
-Release 2866a92 [AndroidXMedia3/1.4.0] [marble, 23049PCD8G, Xiaomi, 35] [media3.common, media3.ui, media3.exoplayer, media3.database, media3.decoder, media3.session, media3.exoplayer.hls, media3.datasource, media3.extractor, media3.transformer]
-
-[2026-08-30 20:11:56.032 Uid(value=10806):6616:11552 I/ExoPlayerImpl]
-Release 6a00c63 [AndroidXMedia3/1.4.0] [marble, 23049PCD8G, Xiaomi, 35] [media3.common, media3.ui, media3.exoplayer, media3.database, media3.decoder, media3.session, media3.exoplayer.hls, media3.datasource, media3.extractor, media3.transformer]
-
-[2026-08-30 20:11:56.082 Uid(value=10806):6616:11552 D/MPEG4Writer]
-reset()
-
-[2026-08-30 20:11:56.082 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Audio track stopping. Stop source
-
-[2026-08-30 20:11:56.082 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Audio track source stopping
-
-[2026-08-30 20:11:56.082 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Audio track source stopped
-
-[2026-08-30 20:11:56.082 Uid(value=10806):6616:11564 V/MediaWriter]
-Track event err/info msg:101, trackId:1, type:1000,val:-1011
-
-[2026-08-30 20:11:56.082 Uid(value=10806):6616:11566 V/MediaWriter]
-Track event err/info msg:101, trackId:2, type:1000,val:-1011
-
-[2026-08-30 20:11:56.082 Uid(value=10806):6616:11566 I/MPEG4Writer]
-Received total/0-length (21316/0) buffers and encoded 21316 frames. - Audio
-
-[2026-08-30 20:11:56.082 Uid(value=10806):6616:11564 I/MPEG4Writer]
-Received total/0-length (12419/0) buffers and encoded 12419 frames. - Video
-
-[2026-08-30 20:11:56.087 Uid(value=10806):6616:11566 I/MPEG4Writer]
-Audio track drift time: 0 us
-
-[2026-08-30 20:11:56.087 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Audio track stopped. Status:0. Stop source
-
-[2026-08-30 20:11:56.087 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Video track stopping. Stop source
-
-[2026-08-30 20:11:56.087 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Video track source stopping
-
-[2026-08-30 20:11:56.087 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Video track source stopped
-
-[2026-08-30 20:11:56.087 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Video track stopped. Status:0. Stop source
-
-[2026-08-30 20:11:56.087 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Duration from tracks range is [496783623, 497294313] us
-
-[2026-08-30 20:11:56.088 Uid(value=10806):6616:11562 D/MPEG4Writer]
-0 chunks are written in the last batch
-
-[2026-08-30 20:11:56.088 Uid(value=10806):6616:11552 D/MPEG4Writer]
-WriterThread stopped. Status:0
-
-[2026-08-30 20:11:56.088 Uid(value=10806):6616:11552 I/MPEG4Writer]
-Adjust the moov start time from 16777 us -> -103423 us
-
-[2026-08-30 20:11:56.089 Uid(value=10806):6616:11552 I/MPEG4Writer]
-The mp4 file will not be streamable.
-
-[2026-08-30 20:11:56.089 Uid(value=10806):6616:11552 I/MPEG4Writer]
-MOOV atom was written to the file
-
-[2026-08-30 20:11:56.089 Uid(value=10806):6616:11552 D/MPEG4Writer]
-release()
-
-[2026-08-30 20:11:56.089 Uid(value=10806):6616:11552 D/MPEG4Writer]
-ftruncate mPreAllocateFileEndOffset:67891686 mOffset:67867541 mMdatEndOffset:67563405 diff:24145
-
-[2026-08-30 20:11:56.147 Uid(value=10806):6616:11552 D/MPEG4Writer]
-final fsync() takes 57 ms, file size 67867541
-
-[2026-08-30 20:11:56.148 Uid(value=10806):6616:11552 D/MPEG4Writer]
-MP4WtrCtrlHlpLooper stopped
-
-[2026-08-30 20:11:56.148 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Top 5 write durations(microseconds): #1:3679 #2:4883 #3:5450 #4:6113 #5:46389
-
-[2026-08-30 20:11:56.148 Uid(value=10806):6616:11552 D/MPEG4Writer]
-reset()
-
-[2026-08-30 20:11:56.148 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Video track stopping. Stop source
-
-[2026-08-30 20:11:56.148 Uid(value=10806):6616:11552 E/MPEG4Writer]
-Stop() called but track is not started or stopped
-
-[2026-08-30 20:11:56.150 Uid(value=10806):6616:11552 D/MPEG4Writer]
-Audio track stopping. Stop source
-
-[2026-08-30 20:11:56.150 Uid(value=10806):6616:11552 E/MPEG4Writer]
-Stop() called but track is not started or stopped
-
-[2026-08-30 20:11:56.152 Uid(value=10806):6616:6616 E/HlsExportService]
-Transformer error
-androidx.media3.transformer.ExportException: Asset loader error
-	at androidx.media3.transformer.ExoPlayerAssetLoader$PlayerListener.onPlayerError(ExoPlayerAssetLoader.java:356)
-	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$updatePlaybackInfo$16(ExoPlayerImpl.java:2119)
-	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda26.invoke(D8$$SyntheticClass:0)
-	at androidx.media3.common.util.ListenerSet$ListenerHolder.invoke(ListenerSet.java:339)
-	at androidx.media3.common.util.ListenerSet.lambda$queueEvent$0(ListenerSet.java:223)
-	at androidx.media3.common.util.ListenerSet$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
-	at androidx.media3.common.util.ListenerSet.flushEvents(ListenerSet.java:245)
-	at androidx.media3.exoplayer.ExoPlayerImpl.updatePlaybackInfo(ExoPlayerImpl.java:2182)
-	at androidx.media3.exoplayer.ExoPlayerImpl.handlePlaybackInfo(ExoPlayerImpl.java:2016)
-	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$new$1$androidx-media3-exoplayer-ExoPlayerImpl(ExoPlayerImpl.java:351)
-	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda10.run(D8$$SyntheticClass:0)
-	at android.os.Handler.handleCallback(Handler.java:959)
-	at android.os.Handler.dispatchMessage(Handler.java:100)
-	at android.os.Looper.loopOnce(Looper.java:249)
-	at android.os.Looper.loop(Looper.java:337)
-	at android.os.HandlerThread.run(HandlerThread.java:85)
-Caused by: androidx.media3.exoplayer.ExoPlaybackException: Unexpected runtime error
-	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:720)
-	at android.os.Handler.dispatchMessage(Handler.java:103)
-	... 3 more
-Caused by: java.lang.IllegalStateException: Format changes are not supported.
-	at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.readInput(ExoAssetLoaderBaseRenderer.java:355)
-	at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.feedConsumerFromInput(ExoAssetLoaderBaseRenderer.java:320)
-	at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.render(ExoAssetLoaderBaseRenderer.java:117)
-	at androidx.media3.exoplayer.ExoPlayerImplInternal.doSomeWork(ExoPlayerImplInternal.java:1136)
-	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:561)
-	... 4 more
+The log shows that Qualcomm's hardware decoder (c2.qti.avc.decoder) and Surface pipeline are stalling during export due to a massive base presentation timestamp (PTS: 1000059720000 µs / ~11.5 days) embedded in the MPEG-TS segments of index.m3u8, combined with the fact that [https://svip.ryplay17.com/.../index.m3u8](https://svip.ryplay17.com/.../index.m3u8) is a single-variant media playlist rather than a multi-bitrate master playlist.
+Root Cause Analysis
+ * MPEG-TS 90kHz PTS Clock Offset: The HLS stream does not start at PTS 0. The unshifted PTS values (~1,000,000 seconds) cause Qualcomm's PipelineWatcher to desynchronize frame indices (frameIndex not found; ignored), forcing the decoder surface to throttle output buffer releases to ~130ms per frame and exhausting the hardware buffer pool (BufferPoolAccessor2.0: 5/5 buffers used).
+ * Single-Variant HLS Override Mismatch: Because index.m3u8 contains only a single direct stream without sub-variants, matching against format.id or bitrate returns no match. Calling clearTrackSelections() without a fallback leaves the stream unconfigured or forces an unstable transcoding path.
+Updated Solution
+package com.omymaxz.download
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.os.IBinder
+import android.util.Log
+import android.widget.Toast
+import androidx.core.app.NotificationCompat
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.TrackSelectionParameters
+import androidx.media3.common.util.Util
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadHelper
+import androidx.media3.exoplayer.offline.DownloadManager
+import androidx.media3.exoplayer.offline.DownloadRequest
+import androidx.media3.exoplayer.offline.DownloadService
+import androidx.media3.transformer.DefaultAssetLoaderFactory
+import androidx.media3.transformer.DefaultDecoderFactory
+import androidx.media3.transformer.DefaultMuxer
+import androidx.media3.transformer.EditedMediaItem
+import androidx.media3.transformer.ExportException
+import androidx.media3.transformer.ExportResult
+import androidx.media3.transformer.Transformer
+import kotlinx.coroutines.*
+import java.io.File
+import kotlin.coroutines.resume
+
+class HlsExportService : Service() {
+
+    companion object {
+        const val EXTRA_DOWNLOAD_ID    = "com.omymaxz.download.extra.DOWNLOAD_ID"
+        const val EXTRA_TITLE          = "com.omymaxz.download.extra.TITLE"
+        const val EXTRA_URL            = "com.omymaxz.download.extra.URL"
+        const val EXTRA_USER_AGENT     = "com.omymaxz.download.extra.USER_AGENT"
+        const val EXTRA_REFERER        = "com.omymaxz.download.extra.REFERER"
+        const val EXTRA_COOKIE         = "com.omymaxz.download.extra.COOKIE"
+        const val EXTRA_TRACK_ID       = "com.omymaxz.download.extra.TRACK_ID"
+        const val EXTRA_TRACK_WIDTH    = "com.omymaxz.download.extra.TRACK_WIDTH"
+        const val EXTRA_TRACK_HEIGHT   = "com.omymaxz.download.extra.TRACK_HEIGHT"
+        const val EXTRA_TRACK_BITRATE  = "com.omymaxz.download.extra.TRACK_BITRATE"
+        const val CHANNEL_ID           = "hls_export_channel"
+        const val NOTIFICATION_ID      = 3000
+        private const val TAG          = "HlsExportService"
+    }
+
+    private val serviceJob = Job()
+    private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
+    private var notificationManager: NotificationManager? = null
+    private val activeExports = java.util.concurrent.atomic.AtomicInteger(0)
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        createNotificationChannel()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent == null) {
+            if (activeExports.get() == 0) stopSelf(startId)
+            return START_NOT_STICKY
+        }
+
+        val downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
+        val url        = intent.getStringExtra(EXTRA_URL)
+        val title      = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
+        val trackId    = intent.getStringExtra(EXTRA_TRACK_ID)
+        val width      = intent.getIntExtra(EXTRA_TRACK_WIDTH, -1)
+        val height     = intent.getIntExtra(EXTRA_TRACK_HEIGHT, -1)
+        val bitrate    = intent.getIntExtra(EXTRA_TRACK_BITRATE, -1)
+
+        intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
+        intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
+        intent.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
+
+        if (downloadId == null && url == null) {
+            if (activeExports.get() == 0) stopSelf(startId)
+            return START_NOT_STICKY
+        }
+
+        startForeground(NOTIFICATION_ID, buildNotification(title))
+        activeExports.incrementAndGet()
+
+        serviceScope.launch {
+            try {
+                when {
+                    downloadId != null -> exportFromDownloadId(downloadId, title)
+                    url != null        -> exportFromUrl(url, title, trackId, width, height, bitrate)
+                }
+            } catch (t: Throwable) {
+                Log.e(TAG, "Export failed", t)
+                Toast.makeText(applicationContext, "Export failed: ${t.message}", Toast.LENGTH_LONG).show()
+            } finally {
+                if (activeExports.decrementAndGet() == 0) stopSelf()
+            }
+        }
+        return START_NOT_STICKY
+    }
+
+    private suspend fun exportFromDownloadId(downloadId: String, title: String) {
+        val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
+        val download = dm.downloadIndex.getDownload(downloadId)
+            ?: run {
+                Toast.makeText(applicationContext, "Video cache not found", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+        ensureFullyCached(dm, download)
+        val mediaItem = download.request.toMediaItem()
+        muxToMp4(mediaItem, title)
+    }
+
+    private suspend fun exportFromUrl(
+        url: String,
+        title: String,
+        trackId: String?,
+        targetWidth: Int,
+        targetHeight: Int,
+        targetBitrate: Int
+    ) {
+        val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
+        val isHls = url.contains(".m3u8", ignoreCase = true)
+
+        val baseMediaItem = MediaItem.Builder()
+            .setUri(Uri.parse(url))
+            .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
+            .setTag(title)
+            .build()
+
+        val helper = DownloadHelper.forMediaItem(
+            applicationContext,
+            baseMediaItem,
+            null,
+            HlsDownloadHelper.getDataSourceFactory(applicationContext)
+        )
+
+        val req = withContext(Dispatchers.IO) {
+            suspendCancellableCoroutine<DownloadRequest> { cont ->
+                helper.prepare(object : DownloadHelper.Callback {
+                    override fun onPrepared(h: DownloadHelper) {
+                        for (periodIndex in 0 until h.periodCount) {
+                            val trackGroups = h.getTrackGroups(periodIndex)
+                            val overrides = mutableListOf<TrackSelectionOverride>()
+                            var videoMatched = false
+
+                            for (groupIndex in 0 until trackGroups.length) {
+                                val trackGroup = trackGroups.get(groupIndex)
+                                val firstFormat = trackGroup.getFormat(0)
+
+                                if (MimeTypes.isVideo(firstFormat.sampleMimeType)) {
+                                    val matchedIndices = mutableListOf<Int>()
+                                    for (i in 0 until trackGroup.length) {
+                                        val format = trackGroup.getFormat(i)
+                                        val isIdMatch = trackId != null && format.id == trackId
+                                        val isResMatch = targetWidth > 0 && targetHeight > 0 &&
+                                                format.width == targetWidth && format.height == targetHeight
+                                        val isBitrateMatch = targetBitrate > 0 && format.bitrate == targetBitrate
+
+                                        if (isIdMatch || isResMatch || isBitrateMatch) {
+                                            matchedIndices.add(i)
+                                            videoMatched = true
+                                            break
+                                        }
+                                    }
+
+                                    // Fallback for single-variant playlists: select first track index if no specific match
+                                    if (matchedIndices.isNotEmpty()) {
+                                        overrides.add(TrackSelectionOverride(trackGroup, matchedIndices))
+                                    } else if (!videoMatched) {
+                                        overrides.add(TrackSelectionOverride(trackGroup, listOf(0)))
+                                        videoMatched = true
+                                    }
+                                } else if (MimeTypes.isAudio(firstFormat.sampleMimeType)) {
+                                    overrides.add(TrackSelectionOverride(trackGroup, listOf(0)))
+                                }
+                            }
+
+                            if (overrides.isNotEmpty()) {
+                                h.clearTrackSelections(periodIndex)
+                                val paramsBuilder = TrackSelectionParameters.Builder(applicationContext)
+                                for (override in overrides) {
+                                    paramsBuilder.addOverride(override)
+                                }
+                                h.addTrackSelection(periodIndex, paramsBuilder.build())
+                            }
+                        }
+
+                        val downloadRequest = h.getDownloadRequest(Util.getUtf8Bytes(title))
+                        h.release()
+                        cont.resume(downloadRequest)
+                    }
+
+                    override fun onPrepareError(h: DownloadHelper, e: java.io.IOException) {
+                        h.release()
+                        cont.cancel(e)
+                    }
+                })
+            }
+        }
+
+        DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, req, true)
+
+        val completed = waitForCompletion(dm, req.id)
+        if (!completed) {
+            Toast.makeText(applicationContext, "Download did not complete", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        muxToMp4(req.toMediaItem(), title)
+    }
+
+    private suspend fun ensureFullyCached(dm: DownloadManager, download: Download) {
+        if (download.state == Download.STATE_COMPLETED) return
+
+        Log.i(TAG, "Download ${download.request.id} incomplete. Resuming...")
+        DownloadService.sendAddDownload(
+            applicationContext, HlsDownloadService::class.java, download.request, true
+        )
+        waitForCompletion(dm, download.request.id)
+    }
+
+    private suspend fun waitForCompletion(dm: DownloadManager, id: String): Boolean =
+        withContext(Dispatchers.IO) {
+            suspendCancellableCoroutine { cont ->
+                val listener = object : DownloadManager.Listener {
+                    override fun onDownloadChanged(
+                        dm: DownloadManager, d: Download, finalException: Exception?
+                    ) {
+                        if (d.request.id != id) return
+                        when (d.state) {
+                            Download.STATE_COMPLETED -> {
+                                dm.removeListener(this)
+                                if (cont.isActive) cont.resume(true)
+                            }
+                            Download.STATE_FAILED -> {
+                                dm.removeListener(this)
+                                if (cont.isActive) cont.resume(false)
+                            }
+                            else -> Unit
+                        }
+                    }
+                }
+                dm.addListener(listener)
+                runCatching {
+                    val cur = dm.downloadIndex.getDownload(id)
+                    if (cur?.state == Download.STATE_COMPLETED) {
+                        dm.removeListener(listener)
+                        if (cont.isActive) cont.resume(true)
+                    }
+                }
+                cont.invokeOnCancellation { dm.removeListener(listener) }
+            }
+        }
+
+    private suspend fun muxToMp4(mediaItem: MediaItem, title: String) =
+        suspendCancellableCoroutine<Unit> { cont ->
+            val cacheFactory: CacheDataSource.Factory =
+                HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
+
+            // EditedMediaItem normalizes timestamps and prevents PTS desynchronization
+            val editedMediaItem = EditedMediaItem.Builder(mediaItem)
+                .setFlattenForSlowMotion(false)
+                .build()
+
+            val transformer = Transformer.Builder(applicationContext)
+                .setMuxerFactory(DefaultMuxer.Factory())
+                .setAssetLoaderFactory(
+                    DefaultAssetLoaderFactory(
+                        applicationContext,
+                        DefaultDecoderFactory(applicationContext),
+                        /* forceAudioTrack= */ false,
+                        androidx.media3.common.util.Clock.DEFAULT,
+                        androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
+                            .setDataSourceFactory(cacheFactory),
+                        androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
+                    )
+                )
+                .addListener(object : Transformer.Listener {
+                    override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
+                        Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
+                        if (cont.isActive) cont.resume(Unit)
+                    }
+                    override fun onError(
+                        composition: androidx.media3.transformer.Composition,
+                        result: ExportResult, ex: ExportException
+                    ) {
+                        Log.e(TAG, "Transformer error", ex)
+                        Toast.makeText(applicationContext, "Export error: ${ex.message}", Toast.LENGTH_LONG).show()
+                        if (cont.isActive) cont.resume(Unit)
+                    }
+                })
+                .build()
+
+            val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+            val out = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "$safeTitle.mp4"
+            )
+            transformer.start(editedMediaItem, out.absolutePath)
+            cont.invokeOnCancellation { transformer.cancel() }
+        }
+
+    private fun buildNotification(title: String) =
+        NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Exporting Video to Downloads")
+            .setContentText(title)
+            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setOngoing(true)
+            .setProgress(100, 0, true)
+            .build()
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val ch = NotificationChannel(CHANNEL_ID, "Video Export", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "Shows progress of exporting downloaded videos"
+            }
+            notificationManager?.createNotificationChannel(ch)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceJob.cancel()
+    }
+}
 
