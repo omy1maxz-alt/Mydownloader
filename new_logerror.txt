@@ -1,143 +1,20 @@
-[2026-08-30 17:03:23.031 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.LogcatViewerActivity@344d054, reason: AppDarkModeEnable
-
-[2026-08-30 17:03:23.039 Uid(value=10806):26294:32443 D/AppScoutStateMachine]
-26294-ScoutStateMachinecreated
-
-[2026-08-30 17:03:23.076 Uid(value=10806):26294:26294 D/Activity]
-Activity = ActivityInfo{6edf799 com.omymaxz.download.LogcatViewerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
-
-[2026-08-30 17:03:23.077 Uid(value=10806):26294:26294 D/SecurityManager]
-checkAccessControl flag0
-
-[2026-08-30 17:03:23.090 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:23.090 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:23.091 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:23.091 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:23.091 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:23.092 Uid(value=10806):26294:26294 D/VRI[LogcatViewerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:23.093 Uid(value=10806):26294:26294 D/VRI[LogcatViewerActivity]]
-vri.Setup new sync=wmsSync-VRI[LogcatViewerActivity]#37
-
-[2026-08-30 17:03:23.093 Uid(value=10806):26294:4825 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 17:03:23.136 Uid(value=10806):26294:26294 D/VRI[LogcatViewerActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:23.160 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-refreshLastKeyboardType: 1
-
-[2026-08-30 17:03:23.161 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-getCurrentKeyboardType: 1
-
-[2026-08-30 17:03:23.772 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=137463522, downTime=137463522, phoneEventTime=17:03:23.762 } moveCount:0
-
-[2026-08-30 17:03:23.773 Uid(value=10806):26294:26294 D/VRI[LogcatViewerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-08-30 17:03:23.837 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=137463595, downTime=137463522, phoneEventTime=17:03:23.834 } moveCount:0
-
-[2026-08-30 17:03:24.917 Uid(value=10806):26294:26294 I/MIUIInput]
-[KeyEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity', KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_BACK, scanCode=0, metaState=0, flags=0x48, repeatCount=0, eventTime=137464588000000, downTime=137464588000000, deviceId=-1, source=0x101, displayId=0 }, phoneEventTime=17:03:24.828
-
-[2026-08-30 17:03:24.928 Uid(value=10806):26294:26294 I/MIUIInput]
-[KeyEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity', KeyEvent { action=ACTION_UP, keyCode=KEYCODE_BACK, scanCode=0, metaState=0, flags=0x48, repeatCount=0, eventTime=137464673000000, downTime=137464588000000, deviceId=-1, source=0x101, displayId=0 }, phoneEventTime=17:03:24.912
-
-[2026-08-30 17:03:24.931 Uid(value=10806):26294:26294 W/MIUIInput]
-Back key is intercepted by the app
-
 [2026-08-30 17:03:24.962 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
 
 [2026-08-30 17:03:24.979 Uid(value=10806):26294:26294 D/Activity]
 Activity = ActivityInfo{f582e2c com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
 
-[2026-08-30 17:03:24.980 Uid(value=10806):26294:26294 D/SecurityManager]
-checkAccessControl flag0
-
-[2026-08-30 17:03:25.014 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:25.015 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:25.015 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:25.016 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:25.016 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:25.019 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:25.020 Uid(value=10806):26294:4881 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 17:03:25.021 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#39
-
-[2026-08-30 17:03:25.074 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
 [2026-08-30 17:03:25.123 Uid(value=10806):26294:26294 D/UserSceneDetector]
 invoke error.
-
-[2026-08-30 17:03:25.142 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-refreshLastKeyboardType: 1
-
-[2026-08-30 17:03:25.143 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-getCurrentKeyboardType: 1
-
-[2026-08-30 17:03:25.207 Uid(value=10806):26294:32501 W/RenderInspector]
-DequeueBuffer time out on com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity, count=37, avg=14 ms, max=24 ms.
 
 [2026-08-30 17:03:25.378 Uid(value=10806):26294:26294 D/UserSceneDetector]
 invoke error.
 
-[2026-08-30 17:03:25.618 Uid(value=10806):26294:26294 D/VRI[LogcatViewerActivity]]
-visibilityChanged oldVisibility=true newVisibility=false
-
-[2026-08-30 17:03:25.631 Uid(value=10806):26294:26294 W/WindowOnBackDispatcher]
-sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@41137a4
-
 [2026-08-30 17:03:25.632 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 onDetachedFromWindow
 
-[2026-08-30 17:03:27.790 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=137467546, downTime=137467546, phoneEventTime=17:03:27.785 } moveCount:0
-
 [2026-08-30 17:03:27.791 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
 getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-08-30 17:03:27.870 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=137467627, downTime=137467546, phoneEventTime=17:03:27.867 } moveCount:0
-
-[2026-08-30 17:03:27.892 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
-
-[2026-08-30 17:03:27.921 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
-
-[2026-08-30 17:03:27.926 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
 
 [2026-08-30 17:03:27.944 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
@@ -157,41 +34,11 @@ mRemote has create
 [2026-08-30 17:03:27.961 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 isNBIEnable=false
 
-[2026-08-30 17:03:28.004 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:28.005 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:28.005 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:28.005 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:28.005 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:28.015 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#41
-
-[2026-08-30 17:03:28.028 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:28.871 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=137468627, downTime=137468627, phoneEventTime=17:03:28.867 } moveCount:0
+[2026-08-30 17:03:28.007 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
 
 [2026-08-30 17:03:28.873 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
 getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-08-30 17:03:28.916 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=137468671, downTime=137468627, phoneEventTime=17:03:28.910 } moveCount:0
-
-[2026-08-30 17:03:28.939 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
-
-[2026-08-30 17:03:28.943 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
 
 [2026-08-30 17:03:28.958 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
@@ -211,74 +58,20 @@ mRemote has create
 [2026-08-30 17:03:28.973 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 isNBIEnable=false
 
-[2026-08-30 17:03:28.998 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:28.999 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:28.999 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:28.999 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
 [2026-08-30 17:03:29.001 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
-
-[2026-08-30 17:03:29.002 Uid(value=10806):26294:4997 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 17:03:29.007 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:29.008 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#43
-
-[2026-08-30 17:03:29.021 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:29.089 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-refreshLastKeyboardType: 1
-
-[2026-08-30 17:03:29.089 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-getCurrentKeyboardType: 1
-
-[2026-08-30 17:03:29.733 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=137469490, downTime=137469490, phoneEventTime=17:03:29.730 } moveCount:0
 
 [2026-08-30 17:03:29.734 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
 getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
 
-[2026-08-30 17:03:29.781 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=137469538, downTime=137469490, phoneEventTime=17:03:29.778 } moveCount:0
-
-[2026-08-30 17:03:29.849 Uid(value=10806):26294:26294 W/WindowOnBackDispatcher]
-sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@edc4ab
-
 [2026-08-30 17:03:29.851 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 onDetachedFromWindow
-
-[2026-08-30 17:03:29.853 Uid(value=10806):26294:32501 D/HWUI]
-endAllActiveAnimators on 0xb4000076bdff4e70 (RippleDrawable) with handle 0xb40000775def1b20
 
 [2026-08-30 17:03:29.904 Uid(value=10806):26294:32457 I/ActivityThread]
 HardwareRenderer preload  done
 
-[2026-08-30 17:03:29.962 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
-
-[2026-08-30 17:03:29.975 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
-
-[2026-08-30 17:03:30.005 Uid(value=10806):26294:26294 I/ExoPlayerImpl]
-Init f4d8f74 [AndroidXMedia3/1.3.1] [marble, 23049PCD8G, Xiaomi, 35]
-
 [2026-08-30 17:03:30.099 Uid(value=10806):26294:26294 D/Activity]
 Activity = ActivityInfo{5722ed1 com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
-
-[2026-08-30 17:03:30.100 Uid(value=10806):26294:26294 D/SecurityManager]
-checkAccessControl flag0
 
 [2026-08-30 17:03:30.106 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@51e34bd, reason: AppDarkModeEnable
@@ -301,144 +94,6 @@ mRemote has create
 [2026-08-30 17:03:30.123 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 isNBIEnable=false
 
-[2026-08-30 17:03:30.148 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:30.149 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:30.149 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:30.149 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:30.149 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:30.157 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:30.157 Uid(value=10806):26294:26294 D/SurfaceView]
-UPDATE null, mIsCastMode = false
-
-[2026-08-30 17:03:30.160 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:30.161 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:30.161 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:30.161 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:30.162 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#46
-
-[2026-08-30 17:03:30.181 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:30.204 Uid(value=10806):26294:26294 D/SurfaceView]
-UPDATE Surface(name=SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#81342)/@0xf9e34b, mIsProjectionMode = false
-
-[2026-08-30 17:03:30.208 Uid(value=10806):26294:3276 D/InsetsController]
-default animation onReady types: 3 controller=android.view.InsetsAnimationControlImpl@800ea17
-
-[2026-08-30 17:03:30.208 Uid(value=10806):26294:3276 D/ViewRootImplStubImpl]
-requestedTypes: 3
-
-[2026-08-30 17:03:30.209 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59
-
-[2026-08-30 17:03:30.214 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#48
-
-[2026-08-30 17:03:30.232 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:30.245 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-refreshLastKeyboardType: 1
-
-[2026-08-30 17:03:30.246 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-getCurrentKeyboardType: 1
-
-[2026-08-30 17:03:30.557 Uid(value=10806):26294:3276 D/InsetsAnimationCtrlImpl]
-notifyFinished shown: false, currentAlpha: 1.000000, currentInsets: Insets{left=0, top=0, right=0, bottom=0}
-
-[2026-08-30 17:03:30.558 Uid(value=10806):26294:3276 D/InsetsAnimationCtrlImpl]
-Animation finished abruptly.
-
-[2026-08-30 17:03:30.558 Uid(value=10806):26294:3276 D/InsetsController]
-onAnimationFinish showOnFinish: false
-
-[2026-08-30 17:03:30.558 Uid(value=10806):26294:26294 D/InsetsController]
-cancelAnimation of types:3 animType=1 host:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity invokeCallback=false
-
-[2026-08-30 17:03:30.558 Uid(value=10806):26294:26294 D/InsetsController]
-notifyFinished. shown: false runner=android.view.InsetsAnimationThreadControlRunner@4715946
-
-[2026-08-30 17:03:30.720 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-visibilityChanged oldVisibility=true newVisibility=false
-
-[2026-08-30 17:03:30.720 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-visibilityChanged oldVisibility=true newVisibility=false
-
-[2026-08-30 17:03:34.174 Uid(value=10806):26294:5029 E/ExoPlayerImplInternal]
-Playback error
-  androidx.media3.exoplayer.ExoPlaybackException: Source error
-      at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
-      at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
-      at android.os.Handler.dispatchMessage(Handler.java:103)
-      at android.os.Looper.loopOnce(Looper.java:249)
-      at android.os.Looper.loop(Looper.java:337)
-      at android.os.HandlerThread.run(HandlerThread.java:85)
-  Caused by: androidx.media3.datasource.HttpDataSource$InvalidResponseCodeException: Response code: 404
-      at androidx.media3.datasource.DefaultHttpDataSource.open(DefaultHttpDataSource.java:436)
-      at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
-      at androidx.media3.datasource.TeeDataSource.open(TeeDataSource.java:54)
-      at androidx.media3.datasource.cache.CacheDataSource.openNextSource(CacheDataSource.java:799)
-      at androidx.media3.datasource.cache.CacheDataSource.open(CacheDataSource.java:612)
-      at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
-      at androidx.media3.datasource.DataSourceInputStream.checkOpened(DataSourceInputStream.java:101)
-      at androidx.media3.datasource.DataSourceInputStream.open(DataSourceInputStream.java:64)
-      at androidx.media3.exoplayer.upstream.ParsingLoadable.load(ParsingLoadable.java:182)
-      at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
-      at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1100)
-      at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
-      at java.lang.Thread.run(Thread.java:1572)
-
-[2026-08-30 17:03:34.184 Uid(value=10806):26294:26294 E/CustomPlayerActivity]
-Player error
-androidx.media3.exoplayer.ExoPlaybackException: Source error
-	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
-	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
-	at android.os.Handler.dispatchMessage(Handler.java:103)
-	at android.os.Looper.loopOnce(Looper.java:249)
-	at android.os.Looper.loop(Looper.java:337)
-	at android.os.HandlerThread.run(HandlerThread.java:85)
-Caused by: androidx.media3.datasource.HttpDataSource$InvalidResponseCodeException: Response code: 404
-	at androidx.media3.datasource.DefaultHttpDataSource.open(DefaultHttpDataSource.java:436)
-	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
-	at androidx.media3.datasource.TeeDataSource.open(TeeDataSource.java:54)
-	at androidx.media3.datasource.cache.CacheDataSource.openNextSource(CacheDataSource.java:799)
-	at androidx.media3.datasource.cache.CacheDataSource.open(CacheDataSource.java:612)
-	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
-	at androidx.media3.datasource.DataSourceInputStream.checkOpened(DataSourceInputStream.java:101)
-	at androidx.media3.datasource.DataSourceInputStream.open(DataSourceInputStream.java:64)
-	at androidx.media3.exoplayer.upstream.ParsingLoadable.load(ParsingLoadable.java:182)
-	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
-	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1100)
-	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
-	at java.lang.Thread.run(Thread.java:1572)
-
-[2026-08-30 17:03:34.202 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
-
-[2026-08-30 17:03:34.212 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
-
 [2026-08-30 17:03:34.229 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@51e34bd, reason: AppDarkModeEnable
 
@@ -457,35 +112,8 @@ mRemote has create
 [2026-08-30 17:03:34.253 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 isNBIEnable=false
 
-[2026-08-30 17:03:34.278 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:34.279 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:34.279 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:34.279 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:34.279 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
 [2026-08-30 17:03:34.281 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@51e34bd, reason: AppDarkModeEnable
-
-[2026-08-30 17:03:34.284 Uid(value=10806):26294:5457 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 17:03:34.294 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:34.294 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#50
-
-[2026-08-30 17:03:34.295 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportDrawFinished
 
 [2026-08-30 17:03:34.447 Uid(value=10806):26294:26294 D/ActivityThread]
 Activity = com.omymaxz.download.CustomPlayerActivity@51e34bd, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw122dp w216dp h122dp 440dpi smll hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(441, 1891 - 1036, 2226) mAppBounds=Rect(441, 1891 - 1036, 2226) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=pinned mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.6 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
@@ -493,35 +121,8 @@ Activity = com.omymaxz.download.CustomPlayerActivity@51e34bd, onConfigurationCha
 [2026-08-30 17:03:34.449 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@51e34bd, reason: AppDarkModeEnable
 
-[2026-08-30 17:03:34.450 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59
-
 [2026-08-30 17:03:34.453 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@51e34bd, reason: AppDarkModeEnable
-
-[2026-08-30 17:03:34.453 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59
-
-[2026-08-30 17:03:34.474 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4423 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:34.477 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:34.477 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#53
-
-[2026-08-30 17:03:34.486 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:34.508 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:34.508 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#56
-
-[2026-08-30 17:03:34.519 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportDrawFinished
 
 [2026-08-30 17:03:42.230 Uid(value=10806):26294:26294 D/ActivityThread]
 Activity = com.omymaxz.download.CustomPlayerActivity@51e34bd, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.7 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
@@ -529,17 +130,8 @@ Activity = com.omymaxz.download.CustomPlayerActivity@51e34bd, onConfigurationCha
 [2026-08-30 17:03:42.232 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@51e34bd, reason: AppDarkModeEnable
 
-[2026-08-30 17:03:42.300 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-visibilityChanged oldVisibility=true newVisibility=false
-
 [2026-08-30 17:03:42.621 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
-
-[2026-08-30 17:03:42.637 Uid(value=10806):26294:32443 D/AppScoutStateMachine]
-26294-ScoutStateMachinecreated
-
-[2026-08-30 17:03:42.671 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-visibilityChanged oldVisibility=false newVisibility=true
 
 [2026-08-30 17:03:42.671 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
@@ -547,80 +139,11 @@ setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, re
 [2026-08-30 17:03:42.732 Uid(value=10806):26294:26294 D/Activity]
 Activity = ActivityInfo{f582e2c com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
 
-[2026-08-30 17:03:42.734 Uid(value=10806):26294:26294 D/SecurityManager]
-checkAccessControl flag0
-
-[2026-08-30 17:03:42.769 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:42.769 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:42.769 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:42.769 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:42.769 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:42.771 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:42.771 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#58
-
-[2026-08-30 17:03:42.771 Uid(value=10806):26294:6255 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 17:03:42.787 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:42.834 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:42.834 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:42.834 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:42.834 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:42.835 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:42.837 Uid(value=10806):26294:6256 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 17:03:42.837 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:42.837 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#60
-
-[2026-08-30 17:03:42.869 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
 [2026-08-30 17:03:42.944 Uid(value=10806):26294:26294 D/UserSceneDetector]
 invoke error.
 
-[2026-08-30 17:03:44.000 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=137483754, downTime=137483754, phoneEventTime=17:03:43.994 } moveCount:0
-
 [2026-08-30 17:03:44.001 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
 getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-08-30 17:03:44.061 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=137483820, downTime=137483754, phoneEventTime=17:03:44.060 } moveCount:0
-
-[2026-08-30 17:03:44.090 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
-
-[2026-08-30 17:03:44.097 Uid(value=10806):26294:26294 D/ScrollerOptimizationManager]
-registerConfigChangedListener
 
 [2026-08-30 17:03:44.113 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
@@ -640,359 +163,38 @@ mRemote has create
 [2026-08-30 17:03:44.132 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 isNBIEnable=false
 
-[2026-08-30 17:03:44.151 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:44.152 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:44.152 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
 [2026-08-30 17:03:44.154 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
-
-[2026-08-30 17:03:44.155 Uid(value=10806):26294:6349 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 17:03:44.161 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:44.161 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#62
-
-[2026-08-30 17:03:44.174 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:44.247 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-refreshLastKeyboardType: 1
-
-[2026-08-30 17:03:44.247 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-getCurrentKeyboardType: 1
-
-[2026-08-30 17:03:44.797 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=137484554, downTime=137484554, phoneEventTime=17:03:44.793 } moveCount:0
 
 [2026-08-30 17:03:44.798 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
 getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
 
-[2026-08-30 17:03:44.846 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=137484603, downTime=137484554, phoneEventTime=17:03:44.843 } moveCount:0
-
-[2026-08-30 17:03:44.909 Uid(value=10806):26294:26294 W/WindowOnBackDispatcher]
-sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@3ad1520
-
 [2026-08-30 17:03:44.911 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 onDetachedFromWindow
 
-[2026-08-30 17:03:44.912 Uid(value=10806):26294:32501 D/HWUI]
-endAllActiveAnimators on 0xb4000076bdfba290 (RippleDrawable) with handle 0xb40000775df16000
-
 [2026-08-30 17:03:45.005 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@51e34bd, reason: AppDarkModeEnable
 
-[2026-08-30 17:03:45.005 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-visibilityChanged oldVisibility=false newVisibility=true
-
 [2026-08-30 17:03:45.005 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@51e34bd, reason: AppDarkModeEnable
-
-[2026-08-30 17:03:45.046 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:45.046 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:45.046 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:45.046 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
 
 [2026-08-30 17:03:45.049 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@51e34bd, reason: AppDarkModeEnable
 
-[2026-08-30 17:03:45.050 Uid(value=10806):26294:6376 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 17:03:45.050 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:45.050 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#64
-
-[2026-08-30 17:03:45.057 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportDrawFinished
-
 [2026-08-30 17:03:45.060 Uid(value=10806):26294:26294 D/Activity]
 Activity = ActivityInfo{5722ed1 com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
-
-[2026-08-30 17:03:45.060 Uid(value=10806):26294:26294 D/SecurityManager]
-checkAccessControl flag0
-
-[2026-08-30 17:03:45.108 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:45.109 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:45.109 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:45.109 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:45.109 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:45.112 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:45.113 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:45.113 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:45.113 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:45.113 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:45.116 Uid(value=10806):26294:26294 D/SurfaceView]
-UPDATE Surface(name=SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#81429)/@0xeb25fe, mIsProjectionMode = false
-
-[2026-08-30 17:03:45.117 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:45.117 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#67
-
-[2026-08-30 17:03:45.127 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:45.150 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59
-
-[2026-08-30 17:03:45.156 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#69
-
-[2026-08-30 17:03:45.163 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:45.173 Uid(value=10806):26294:3276 D/InsetsController]
-default animation onReady types: 3 controller=android.view.InsetsAnimationControlImpl@f68aa62
-
-[2026-08-30 17:03:45.173 Uid(value=10806):26294:3276 D/ViewRootImplStubImpl]
-requestedTypes: 3
-
-[2026-08-30 17:03:45.367 Uid(value=10806):26294:32443 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.376 Uid(value=10806):26294:32443 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.384 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.400 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.409 Uid(value=10806):26294:32443 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.418 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.427 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.434 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.442 Uid(value=10806):26294:32455 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.451 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.459 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.468 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.477 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.485 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.501 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.509 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.517 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.519 Uid(value=10806):26294:3276 D/InsetsAnimationCtrlImpl]
-notifyFinished shown: false, currentAlpha: 1.000000, currentInsets: Insets{left=0, top=0, right=0, bottom=0}
-
-[2026-08-30 17:03:45.519 Uid(value=10806):26294:3276 D/InsetsAnimationCtrlImpl]
-Animation finished abruptly.
-
-[2026-08-30 17:03:45.519 Uid(value=10806):26294:3276 D/InsetsController]
-onAnimationFinish showOnFinish: false
-
-[2026-08-30 17:03:45.519 Uid(value=10806):26294:26294 D/InsetsController]
-cancelAnimation of types:3 animType=1 host:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity invokeCallback=false
-
-[2026-08-30 17:03:45.520 Uid(value=10806):26294:26294 D/InsetsController]
-notifyFinished. shown: false runner=android.view.InsetsAnimationThreadControlRunner@24cecb0
-
-[2026-08-30 17:03:45.526 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.535 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.550 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.559 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.568 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.576 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.592 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.601 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.609 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.617 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.626 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.633 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.642 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.651 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.659 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.667 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.677 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.684 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.693 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.701 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.717 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.734 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.742 Uid(value=10806):26294:300 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.767 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.776 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.785 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.812 Uid(value=10806):26294:32455 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.817 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-visibilityChanged oldVisibility=true newVisibility=false
-
-[2026-08-30 17:03:45.817 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-visibilityChanged oldVisibility=true newVisibility=false
-
-[2026-08-30 17:03:45.819 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:45.834 Uid(value=10806):26294:3207 E/FrameEvents]
-addRelease: Did not find frame.
-
-[2026-08-30 17:03:46.673 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=137486431, downTime=137486431, phoneEventTime=17:03:46.671 } moveCount:0
 
 [2026-08-30 17:03:46.676 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
 getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
 
-[2026-08-30 17:03:46.747 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=137486505, downTime=137486431, phoneEventTime=17:03:46.744 } moveCount:0
-
-[2026-08-30 17:03:46.773 Uid(value=10806):26294:26294 W/WindowOnBackDispatcher]
-sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@f44bc06
-
 [2026-08-30 17:03:46.774 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 onDetachedFromWindow
-
-[2026-08-30 17:03:46.777 Uid(value=10806):26294:32501 D/HWUI]
-endAllActiveAnimators on 0xb4000076bdfcb760 (RippleDrawable) with handle 0xb40000775df1cff0
-
-[2026-08-30 17:03:46.818 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-refreshLastKeyboardType: 1
-
-[2026-08-30 17:03:46.818 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-getCurrentKeyboardType: 1
-
-[2026-08-30 17:03:48.480 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=137488234, downTime=137488234, phoneEventTime=17:03:48.473 } moveCount:0
 
 [2026-08-30 17:03:48.481 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
 getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
 
-[2026-08-30 17:03:48.609 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=137488365, downTime=137488234, phoneEventTime=17:03:48.605 } moveCount:6
-
-[2026-08-30 17:03:49.050 Uid(value=10806):26294:26294 I/MIUIInput]
-[KeyEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_BACK, scanCode=0, metaState=0, flags=0x48, repeatCount=0, eventTime=137488756000000, downTime=137488756000000, deviceId=-1, source=0x101, displayId=0 }, phoneEventTime=17:03:48.996
-
-[2026-08-30 17:03:49.063 Uid(value=10806):26294:26294 I/MIUIInput]
-[KeyEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', KeyEvent { action=ACTION_UP, keyCode=KEYCODE_BACK, scanCode=0, metaState=0, flags=0x48, repeatCount=0, eventTime=137488805000000, downTime=137488756000000, deviceId=-1, source=0x101, displayId=0 }, phoneEventTime=17:03:49.045
-
-[2026-08-30 17:03:49.068 Uid(value=10806):26294:26294 W/MIUIInput]
-Back key is intercepted by the app
-
 [2026-08-30 17:03:49.118 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
-
-[2026-08-30 17:03:49.118 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-visibilityChanged oldVisibility=false newVisibility=true
 
 [2026-08-30 17:03:49.118 Uid(value=10806):26294:26294 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
@@ -1000,101 +202,1417 @@ setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, re
 [2026-08-30 17:03:49.127 Uid(value=10806):26294:26294 D/Activity]
 Activity = ActivityInfo{f582e2c com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
 
-[2026-08-30 17:03:49.128 Uid(value=10806):26294:26294 D/SecurityManager]
-checkAccessControl flag0
-
-[2026-08-30 17:03:49.149 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:49.150 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-
-[2026-08-30 17:03:49.150 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:49.150 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:49.150 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:49.152 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:49.152 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#71
-
-[2026-08-30 17:03:49.153 Uid(value=10806):26294:6441 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 17:03:49.168 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:49.201 Uid(value=10806):26294:26294 W/libc]
-Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-
-[2026-08-30 17:03:49.202 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】checkUtil disable.
-
-[2026-08-30 17:03:49.202 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】package permission check disable.
-
-[2026-08-30 17:03:49.202 Uid(value=10806):26294:26294 I/.download.debug]
-【MiuiBoosterUtils】get Service disable.
-
-[2026-08-30 17:03:49.203 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
-
-[2026-08-30 17:03:49.203 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.Setup new sync=wmsSync-VRI[MainActivity]#73
-
-[2026-08-30 17:03:49.203 Uid(value=10806):26294:6444 I/.download.debug]
-【MiuiBoosterUtils】improve disable.
-
-[2026-08-30 17:03:49.211 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-vri.reportDrawFinished
-
-[2026-08-30 17:03:50.003 Uid(value=10806):26294:26294 D/VRI[CustomPlayerActivity]]
-visibilityChanged oldVisibility=true newVisibility=false
-
-[2026-08-30 17:03:50.042 Uid(value=10806):26294:26294 I/ExoPlayerImpl]
-Release f4d8f74 [AndroidXMedia3/1.3.1] [marble, 23049PCD8G, Xiaomi, 35] [media3.common, media3.ui, media3.database, media3.exoplayer, media3.decoder, media3.session, media3.exoplayer.hls, media3.datasource]
-
-[2026-08-30 17:03:50.044 Uid(value=10806):26294:26294 W/WindowOnBackDispatcher]
-sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@4c91d3c
-
 [2026-08-30 17:03:50.046 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 onDetachedFromWindow
-
-[2026-08-30 17:03:50.264 Uid(value=10806):26294:32501 W/RenderInspector]
-DequeueBuffer time out on com.omymaxz.download.debug/com.omymaxz.download.MainActivity, count=5, avg=10 ms, max=14 ms.
-
-[2026-08-30 17:03:50.583 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=137490340, downTime=137490340, phoneEventTime=17:03:50.580 } moveCount:0
 
 [2026-08-30 17:03:50.584 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
 getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
 
-[2026-08-30 17:03:50.657 Uid(value=10806):26294:26294 I/MIUIInput]
-[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=137490414, downTime=137490340, phoneEventTime=17:03:50.654 } moveCount:0
-
-[2026-08-30 17:03:50.662 Uid(value=10806):26294:26294 W/WindowOnBackDispatcher]
-sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@d829cb6
-
 [2026-08-30 17:03:50.665 Uid(value=10806):26294:26294 D/DecorViewImmersiveImpl]
 onDetachedFromWindow
 
-[2026-08-30 17:03:50.686 Uid(value=10806):26294:26294 W/InputEventReceiver]
-Attempted to finish an input event but the input event receiver has already been disposed.
+[2026-08-30 17:04:39.870 Uid(value=10806):435:8986 I/ActivityThread]
+TrafficStats init done
 
-[2026-08-30 17:03:50.728 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-refreshLastKeyboardType: 1
+[2026-08-30 17:04:39.872 Uid(value=10806):435:435 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
 
-[2026-08-30 17:03:50.729 Uid(value=10806):26294:26294 I/HandWritingStubImpl]
-getCurrentKeyboardType: 1
+[2026-08-30 17:04:39.897 Uid(value=10806):435:8986 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
 
-[2026-08-30 17:03:51.578 Uid(value=10806):26294:26294 D/VRI[MainActivity]]
-visibilityChanged oldVisibility=true newVisibility=false
+[2026-08-30 17:04:39.897 Uid(value=10806):435:8986 I/ActivityThread]
+Miui Feature Init done
 
-[2026-08-30 17:03:55.292 Uid(value=10806):26294:32429 W/.download.debug]
-Cleared Reference was only reachable from finalizer (only reported once)
+[2026-08-30 17:04:39.942 Uid(value=10806):435:435 D/FramePredict]
+FramePredict init: false
+
+[2026-08-30 17:04:39.945 Uid(value=10806):435:8986 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-08-30 17:04:40.547 Uid(value=10806):435:435 W/MessageMonitor]
+PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.MainActivity onCreate took 555ms
+
+[2026-08-30 17:04:40.573 Uid(value=10806):435:435 D/Activity]
+Activity = ActivityInfo{55f771 com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:04:40.591 Uid(value=10806):435:435 D/FramePredict]
+init success
+
+[2026-08-30 17:04:40.600 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:04:40.648 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:04:40.649 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:04:40.649 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-08-30 17:04:40.650 Uid(value=10806):435:435 D/MiuiNBIManagerImpl]
+init success,pkgName=com.omymaxz.download.debug mIsNBIEnable=false mActivityRules=ActivityRules{}}
+
+[2026-08-30 17:04:40.650 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:04:40.692 Uid(value=10806):435:9096 E/FramePredict]
+registerContentObserver fail
+
+[2026-08-30 17:04:40.854 Uid(value=10806):435:435 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:04:40.987 Uid(value=10806):435:435 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:04:41.185 Uid(value=10806):435:9105 W/BpBinder]
+PerfMonitor binderTransact: time=513ms interface=android.content.IContentProvider code=21
+
+[2026-08-30 17:04:42.266 Uid(value=10806):435:435 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:04:44.469 Uid(value=10806):435:9270 W/BpBinder]
+PerfMonitor binderTransact: time=1829ms interface=android.speech.tts.ITextToSpeechService code=15
+
+[2026-08-30 17:04:45.370 Uid(value=10806):435:435 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:04:45.507 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:04:45.520 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:04:45.520 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:04:45.520 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:04:45.520 Uid(value=10806):435:435 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:04:45.520 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:04:45.568 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:04:46.516 Uid(value=10806):435:435 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:04:46.687 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:04:46.710 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:04:46.710 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:04:46.710 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:04:46.710 Uid(value=10806):435:435 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:04:46.710 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:04:46.755 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:04:47.511 Uid(value=10806):435:435 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:04:47.712 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:04:47.794 Uid(value=10806):435:8986 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-08-30 17:04:48.318 Uid(value=10806):435:435 W/MessageMonitor]
+PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onStart took 308ms
+
+[2026-08-30 17:04:48.321 Uid(value=10806):435:435 D/Activity]
+Activity = ActivityInfo{a539101 com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:04:48.329 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@154e514, reason: AppDarkModeEnable
+
+[2026-08-30 17:04:48.340 Uid(value=10806):435:435 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:04:48.344 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:04:48.345 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:04:48.345 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-08-30 17:04:48.345 Uid(value=10806):435:435 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:04:48.345 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:04:48.532 Uid(value=10806):435:435 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:04:55.752 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@154e514, reason: AppDarkModeEnable
+
+[2026-08-30 17:04:55.783 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:04:55.783 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:04:55.783 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:04:55.783 Uid(value=10806):435:435 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:04:55.783 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:04:55.803 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@154e514, reason: AppDarkModeEnable
+
+[2026-08-30 17:04:57.813 Uid(value=10806):435:435 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:04:57.916 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:04:58.163 Uid(value=10806):435:435 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:04:59.216 Uid(value=10806):435:435 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:04:59.668 Uid(value=10806):435:435 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:05:03.872 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@154e514, reason: AppDarkModeEnable
+
+[2026-08-30 17:05:03.895 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:05:03.895 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:05:03.895 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:05:03.895 Uid(value=10806):435:435 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:05:03.895 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:05:03.912 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@154e514, reason: AppDarkModeEnable
+
+[2026-08-30 17:05:06.811 Uid(value=10806):435:435 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:05:06.919 Uid(value=10806):435:435 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:05:07.393 Uid(value=10806):435:435 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:05:08.059 Uid(value=10806):435:435 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:05:09.397 Uid(value=10806):435:435 W/BpBinder]
+PerfMonitor binderTransact: time=228ms interface=android.app.IActivityClientController code=4
+
+[2026-08-30 17:05:11.202 Uid(value=10806):435:435 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@154e514, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw122dp w216dp h122dp 440dpi smll hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(441, 1891 - 1036, 2226) mAppBounds=Rect(441, 1891 - 1036, 2226) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=pinned mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.6 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:05:11.204 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@154e514, reason: AppDarkModeEnable
+
+[2026-08-30 17:05:13.176 Uid(value=10806):435:435 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@154e514, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.7 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:05:13.178 Uid(value=10806):435:435 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@154e514, reason: AppDarkModeEnable
+
+[2026-08-30 17:29:39.171 Uid(value=10806):25772:29693 I/ActivityThread]
+TrafficStats init done
+
+[2026-08-30 17:29:39.173 Uid(value=10806):25772:25772 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-08-30 17:29:39.211 Uid(value=10806):25772:29693 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-08-30 17:29:39.211 Uid(value=10806):25772:29693 I/ActivityThread]
+Miui Feature Init done
+
+[2026-08-30 17:29:48.184 Uid(value=10806):29169:30358 I/ActivityThread]
+TrafficStats init done
+
+[2026-08-30 17:29:48.186 Uid(value=10806):29169:29169 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-08-30 17:29:48.200 Uid(value=10806):29169:30358 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-08-30 17:29:48.201 Uid(value=10806):29169:30358 I/ActivityThread]
+Miui Feature Init done
+
+[2026-08-30 17:29:48.220 Uid(value=10806):29169:29169 D/FramePredict]
+FramePredict init: false
+
+[2026-08-30 17:29:48.223 Uid(value=10806):29169:30358 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-08-30 17:29:49.079 Uid(value=10806):29169:29169 W/MessageMonitor]
+PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.MainActivity onCreate took 780ms
+
+[2026-08-30 17:29:49.111 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{27041df com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:29:49.165 Uid(value=10806):29169:29169 D/FramePredict]
+init success
+
+[2026-08-30 17:29:49.175 Uid(value=10806):29169:30514 E/FramePredict]
+registerContentObserver fail
+
+[2026-08-30 17:29:49.187 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:29:49.327 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:29:49.332 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:29:49.335 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:29:49.335 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-08-30 17:29:49.338 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+init success,pkgName=com.omymaxz.download.debug mIsNBIEnable=false mActivityRules=ActivityRules{}}
+
+[2026-08-30 17:29:49.338 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:29:49.430 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:29:49.629 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:29:52.782 Uid(value=10806):29169:30656 W/BpBinder]
+PerfMonitor binderTransact: time=567ms interface=android.speech.tts.ITextToSpeechService code=15
+
+[2026-08-30 17:29:54.233 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:29:54.414 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:29:54.434 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:29:54.434 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:29:54.434 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:29:54.434 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:29:54.434 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:29:54.484 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:29:56.313 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:29:56.454 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:29:56.471 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:29:56.471 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:29:56.471 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:29:56.471 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:29:56.471 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:29:56.505 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:29:57.297 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:29:57.441 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:29:57.533 Uid(value=10806):29169:30358 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-08-30 17:29:58.134 Uid(value=10806):29169:29169 W/MessageMonitor]
+PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onStart took 453ms
+
+[2026-08-30 17:29:58.136 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{c6419fb com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:29:58.143 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@bbe9d6, reason: AppDarkModeEnable
+
+[2026-08-30 17:29:58.160 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:29:58.164 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:29:58.164 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:29:58.164 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-08-30 17:29:58.164 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:29:58.164 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:29:58.228 Uid(value=10806):29169:30571 D/ActivityThread]
+invoke error.
+
+[2026-08-30 17:29:58.336 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:03.481 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@bbe9d6, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:03.497 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:03.497 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:03.497 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:30:03.497 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:03.497 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:03.512 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@bbe9d6, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:04.679 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:04.781 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:05.184 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:05.795 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:06.441 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:06.441 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:06.452 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{27041df com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:30:06.639 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:06.792 Uid(value=10806):29169:30851 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:07.146 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:07.493 Uid(value=10806):29169:30354 D/ActivityThread]
+invoke error.
+
+[2026-08-30 17:30:07.699 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:07.774 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:09.089 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:09.271 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:09.343 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:10.636 Uid(value=10806):29169:29169 D/VRI[PopupWindow:4af40e2]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:10.759 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:10.782 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:30:10.782 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:30:10.783 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:30:10.783 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:10.783 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:10.864 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:12.068 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:14.833 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:16.276 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:16.489 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:16.561 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:30:16.561 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:30:16.561 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:30:16.561 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:16.561 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:16.808 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:16.872 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:17.744 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:17.945 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:18.041 Uid(value=10806):29169:30358 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-08-30 17:30:18.335 Uid(value=10806):29169:29169 W/MessageMonitor]
+PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onStart took 108ms
+
+[2026-08-30 17:30:18.336 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{d5ada83 com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:30:18.343 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e7c9d22, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:18.359 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:18.362 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:18.362 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:18.362 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-08-30 17:30:18.362 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:18.362 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:22.546 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e7c9d22, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:22.565 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:22.565 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:22.565 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:30:22.565 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:22.565 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:22.584 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e7c9d22, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:23.738 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:23.834 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:24.368 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:25.064 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:25.065 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:25.106 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{27041df com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:30:25.313 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:25.874 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:25.912 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:26.169 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:26.288 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:26.303 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:30:26.303 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:30:26.303 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:30:26.304 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:26.304 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:26.338 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:27.073 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:27.184 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:27.307 Uid(value=10806):29169:30358 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-08-30 17:30:27.521 Uid(value=10806):29169:29169 W/MessageMonitor]
+PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onStart took 120ms
+
+[2026-08-30 17:30:27.524 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{b6c6c8f com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:30:27.532 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@8486f5c, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:27.553 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:27.556 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:27.557 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:27.557 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-08-30 17:30:27.557 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:27.557 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:27.689 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:28.608 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@8486f5c, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:28.632 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:28.633 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:28.633 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:30:28.633 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:28.633 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:28.657 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@8486f5c, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:29.930 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:30.059 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:30.578 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:32.745 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:32.745 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:32.776 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{27041df com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:30:32.947 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:33.558 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:33.625 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:34.791 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:35.778 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:35.924 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:35.946 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:30:35.946 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:30:35.946 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:30:35.946 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:35.946 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:35.979 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:36.828 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:36.945 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:37.009 Uid(value=10806):29169:30358 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-08-30 17:30:37.218 Uid(value=10806):29169:29169 W/MessageMonitor]
+PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onStart took 110ms
+
+[2026-08-30 17:30:37.220 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{5e4bc87 com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:30:37.229 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:37.247 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:30:37.250 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:37.250 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:37.250 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-08-30 17:30:37.250 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:37.251 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:40.544 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:42.502 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:42.640 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:42.651 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:42.652 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:42.652 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:30:42.652 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:42.652 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:42.672 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:43.796 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:44.440 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:44.552 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:30:45.470 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:46.110 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:47.372 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:49.346 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:49.466 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:49.600 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:49.705 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:49.933 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:50.070 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:50.200 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:50.314 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:50.455 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:50.577 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:50.715 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:50.853 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:50.971 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:51.113 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:54.595 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:54.728 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:54.737 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:54.738 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:30:54.738 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:30:54.738 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:30:54.738 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:30:54.754 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:30:56.914 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:30:57.021 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:31:00.662 Uid(value=10806):29169:29169 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@e9914b4, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w785dp h393dp 440dpi nrml long hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 2400, 1080) mAppBounds=Rect(130, 0 - 2289, 1080) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_270 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_270 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.3 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:31:00.663 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:31:00.677 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:31:01.977 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:35:11.344 Uid(value=10806):29169:29169 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@e9914b4, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 0 - 1080, 2159) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_180 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_180 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.4 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:35:11.370 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:35:11.466 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:35:14.601 Uid(value=10806):29169:29169 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@e9914b4, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w785dp h393dp 440dpi nrml long hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 2400, 1080) mAppBounds=Rect(130, 0 - 2289, 1080) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_270 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_270 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.5 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:35:14.602 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:35:14.611 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:35:21.476 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:35:22.544 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:35:22.710 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:35:23.620 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:35:23.757 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:35:25.097 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:35:25.208 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:35:26.434 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:39:32.270 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:39:34.719 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:39:36.381 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:39:39.191 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:40:36.818 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:40:37.760 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:40:38.016 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:40:38.412 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:40:39.814 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:40:40.296 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:43:05.562 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:43:06.509 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:43:06.665 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:43:06.689 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:43:06.689 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:43:06.689 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:43:06.689 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:43:06.689 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:43:06.703 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:43:07.961 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:43:08.062 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:43:09.966 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:43:10.635 Uid(value=10806):29169:31671 W/BpBinder]
+PerfMonitor binderTransact: time=585ms interface=android.media.IAudioTrack code=2
+
+[2026-08-30 17:43:44.686 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:43:45.342 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:43:46.200 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:43:48.412 Uid(value=10806):29169:29169 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@e9914b4, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.9 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:43:48.490 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:43:48.618 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:43:49.304 Uid(value=10806):29169:29169 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@e9914b4, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw122dp w216dp h122dp 440dpi smll hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(441, 1891 - 1036, 2226) mAppBounds=Rect(441, 1891 - 1036, 2226) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=pinned mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.11 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:43:49.305 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:43:49.305 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:44:05.464 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:13.817 Uid(value=10806):29169:29169 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@e9914b4, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.14 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:44:13.818 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:14.431 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{5e4bc87 com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:44:14.702 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:15.358 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:20.614 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:20.759 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:20.773 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:44:20.773 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-08-30 17:44:20.773 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:44:20.773 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:44:20.773 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:44:20.794 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:21.949 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:22.019 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:44:29.404 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:32.509 Uid(value=10806):29169:29169 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@e9914b4, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w785dp h393dp 440dpi nrml long hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 2400, 1080) mAppBounds=Rect(130, 0 - 2289, 1080) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_270 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_270 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.17 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:44:32.511 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@e9914b4, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:32.516 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:43.577 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:47.940 Uid(value=10806):29169:29169 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:48.702 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:48.702 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:48.706 Uid(value=10806):29169:29169 D/ActivityThread]
+Activity = com.omymaxz.download.MainActivity@95e3e0, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w785dp h393dp 440dpi nrml long hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 2400, 1080) mAppBounds=Rect(130, 0 - 2289, 1080) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_270 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_270 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.7 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:44:48.715 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:48.728 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{27041df com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w785dp h393dp 440dpi nrml long hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 2400, 1080) mAppBounds=Rect(130, 0 - 2289, 1080) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_270 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_270 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.17 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:44:48.758 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:48.966 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:44:49.004 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:49.092 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:49.170 Uid(value=10806):29169:30851 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:44:49.187 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:49.472 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:44:49.483 Uid(value=10806):29169:29169 D/ActivityThread]
+Activity = com.omymaxz.download.MainActivity@95e3e0, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.8 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:44:49.485 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:49.486 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:49.565 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:49.682 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:49.902 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:44:49.985 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:50.035 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:44:50.218 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:44:50.520 Uid(value=10806):29169:29169 W/MessageMonitor]
+PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onDestroy took 136ms
+
+[2026-08-30 17:44:50.524 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:44:50.536 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:44:50.981 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:51.429 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:51.519 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:51.528 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:44:51.528 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:44:51.528 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:44:51.528 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:44:51.528 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:44:51.542 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:44:52.461 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:44:52.531 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:45:05.144 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:45:29.118 Uid(value=10806):29169:29169 D/UserSceneDetector]
+invoke error.
+
+[2026-08-30 17:45:49.887 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:45:49.888 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:45:50.003 Uid(value=10806):29169:29169 D/Activity]
+Activity = ActivityInfo{27041df com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-08-30 17:45:50.655 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:45:52.440 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:45:52.554 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:45:52.565 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:45:52.565 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-08-30 17:45:52.565 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-08-30 17:45:52.565 Uid(value=10806):29169:29169 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-08-30 17:45:52.565 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-08-30 17:45:52.581 Uid(value=10806):29169:29169 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@95e3e0, reason: AppDarkModeEnable
+
+[2026-08-30 17:45:53.539 Uid(value=10806):29169:29169 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-08-30 17:45:53.640 Uid(value=10806):29169:29169 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-08-30 17:46:22.186 Uid(value=10806):29169:18309 E/ExoPlayerImplInternal]
+Playback error
+  androidx.media3.exoplayer.ExoPlaybackException: Unexpected runtime error
+      at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:701)
+      at android.os.Handler.dispatchMessage(Handler.java:103)
+      at android.os.Looper.loopOnce(Looper.java:249)
+      at android.os.Looper.loop(Looper.java:337)
+      at android.os.HandlerThread.run(HandlerThread.java:85)
+  Caused by: java.lang.IllegalStateException: Format changes are not supported.
+      at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.readInput(ExoAssetLoaderBaseRenderer.java:349)
+      at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.feedConsumerFromInput(ExoAssetLoaderBaseRenderer.java:314)
+      at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.render(ExoAssetLoaderBaseRenderer.java:117)
+      at androidx.media3.exoplayer.ExoPlayerImplInternal.doSomeWork(ExoPlayerImplInternal.java:1112)
+      at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:544)
+      ... 4 more
+
+[2026-08-30 17:46:22.193 Uid(value=10806):29169:18308 I/ExoPlayerImpl]
+Release fe4e256 [AndroidXMedia3/1.3.1] [marble, 23049PCD8G, Xiaomi, 35] [media3.common, media3.ui, media3.database, media3.exoplayer, media3.decoder, media3.session, media3.exoplayer.hls, media3.datasource, media3.extractor, media3.transformer]
+
+[2026-08-30 17:46:22.219 Uid(value=10806):29169:18308 D/MPEG4Writer]
+reset()
+
+[2026-08-30 17:46:22.219 Uid(value=10806):29169:18316 V/MediaWriter]
+Track event err/info msg:101, trackId:1, type:1000,val:-1011
+
+[2026-08-30 17:46:22.219 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Audio track stopping. Stop source
+
+[2026-08-30 17:46:22.219 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Audio track source stopping
+
+[2026-08-30 17:46:22.219 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Audio track source stopped
+
+[2026-08-30 17:46:22.219 Uid(value=10806):29169:18316 I/MPEG4Writer]
+Received total/0-length (12399/0) buffers and encoded 12399 frames. - Video
+
+[2026-08-30 17:46:22.223 Uid(value=10806):29169:18317 V/MediaWriter]
+Track event err/info msg:101, trackId:2, type:1000,val:-1011
+
+[2026-08-30 17:46:22.223 Uid(value=10806):29169:18317 I/MPEG4Writer]
+Received total/0-length (21316/0) buffers and encoded 21316 frames. - Audio
+
+[2026-08-30 17:46:22.224 Uid(value=10806):29169:18317 I/MPEG4Writer]
+Audio track drift time: 0 us
+
+[2026-08-30 17:46:22.224 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Audio track stopped. Status:0. Stop source
+
+[2026-08-30 17:46:22.224 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Video track stopping. Stop source
+
+[2026-08-30 17:46:22.224 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Video track source stopping
+
+[2026-08-30 17:46:22.224 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Video track source stopped
+
+[2026-08-30 17:46:22.224 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Video track stopped. Status:0. Stop source
+
+[2026-08-30 17:46:22.224 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Duration from tracks range is [496783623, 497294313] us
+
+[2026-08-30 17:46:22.224 Uid(value=10806):29169:18314 D/MPEG4Writer]
+0 chunks are written in the last batch
+
+[2026-08-30 17:46:22.224 Uid(value=10806):29169:18308 D/MPEG4Writer]
+WriterThread stopped. Status:0
+
+[2026-08-30 17:46:22.224 Uid(value=10806):29169:18308 I/MPEG4Writer]
+Adjust the moov start time from 16777 us -> -103423 us
+
+[2026-08-30 17:46:22.225 Uid(value=10806):29169:18308 I/MPEG4Writer]
+The mp4 file will not be streamable.
+
+[2026-08-30 17:46:22.225 Uid(value=10806):29169:18308 I/MPEG4Writer]
+MOOV atom was written to the file
+
+[2026-08-30 17:46:22.225 Uid(value=10806):29169:18308 D/MPEG4Writer]
+release()
+
+[2026-08-30 17:46:22.225 Uid(value=10806):29169:18308 D/MPEG4Writer]
+ftruncate mPreAllocateFileEndOffset:67861943 mOffset:67837698 mMdatEndOffset:67533854 diff:24245
+
+[2026-08-30 17:46:23.872 Uid(value=10806):29169:18308 D/MPEG4Writer]
+final fsync() takes 1646 ms, file size 67837698
+
+[2026-08-30 17:46:23.872 Uid(value=10806):29169:18308 D/MPEG4Writer]
+MP4WtrCtrlHlpLooper stopped
+
+[2026-08-30 17:46:23.872 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Top 5 write durations(microseconds): #1:3680 #2:3785 #3:6571 #4:121396 #5:149260
+
+[2026-08-30 17:46:23.872 Uid(value=10806):29169:18308 D/MPEG4Writer]
+reset()
+
+[2026-08-30 17:46:23.872 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Video track stopping. Stop source
+
+[2026-08-30 17:46:23.872 Uid(value=10806):29169:18308 E/MPEG4Writer]
+Stop() called but track is not started or stopped
+
+[2026-08-30 17:46:23.873 Uid(value=10806):29169:18308 D/MPEG4Writer]
+Audio track stopping. Stop source
+
+[2026-08-30 17:46:23.873 Uid(value=10806):29169:18308 E/MPEG4Writer]
+Stop() called but track is not started or stopped
+
+[2026-08-30 17:46:23.876 Uid(value=10806):29169:29169 E/HlsExportService]
+Transformer error
+androidx.media3.transformer.ExportException: Asset loader error
+	at androidx.media3.transformer.ExoPlayerAssetLoader$PlayerListener.onPlayerError(ExoPlayerAssetLoader.java:371)
+	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$updatePlaybackInfo$16(ExoPlayerImpl.java:2084)
+	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda14.invoke(D8$$SyntheticClass:0)
+	at androidx.media3.common.util.ListenerSet$ListenerHolder.invoke(ListenerSet.java:339)
+	at androidx.media3.common.util.ListenerSet.lambda$queueEvent$0(ListenerSet.java:223)
+	at androidx.media3.common.util.ListenerSet$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+	at androidx.media3.common.util.ListenerSet.flushEvents(ListenerSet.java:245)
+	at androidx.media3.exoplayer.ExoPlayerImpl.updatePlaybackInfo(ExoPlayerImpl.java:2145)
+	at androidx.media3.exoplayer.ExoPlayerImpl.handlePlaybackInfo(ExoPlayerImpl.java:1979)
+	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$new$1$androidx-media3-exoplayer-ExoPlayerImpl(ExoPlayerImpl.java:345)
+	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda23.run(D8$$SyntheticClass:0)
+	at android.os.Handler.handleCallback(Handler.java:959)
+	at android.os.Handler.dispatchMessage(Handler.java:100)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:337)
+	at android.os.HandlerThread.run(HandlerThread.java:85)
+Caused by: androidx.media3.exoplayer.ExoPlaybackException: Unexpected runtime error
+	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:701)
+	at android.os.Handler.dispatchMessage(Handler.java:103)
+	... 3 more
+Caused by: java.lang.IllegalStateException: Format changes are not supported.
+	at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.readInput(ExoAssetLoaderBaseRenderer.java:349)
+	at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.feedConsumerFromInput(ExoAssetLoaderBaseRenderer.java:314)
+	at androidx.media3.transformer.ExoAssetLoaderBaseRenderer.render(ExoAssetLoaderBaseRenderer.java:117)
+	at androidx.media3.exoplayer.ExoPlayerImplInternal.doSomeWork(ExoPlayerImplInternal.java:1112)
+	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:544)
+	... 4 more
