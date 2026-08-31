@@ -31,6 +31,15 @@
             app:tint="@android:color/white" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_bubble"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:src="@android:drawable/ic_dialog_dialer"
+            android:contentDescription="Floating Bubble Shortcut"
+            app:tint="@android:color/white" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_pip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

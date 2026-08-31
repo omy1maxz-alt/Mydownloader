@@ -109,6 +109,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         findViewById<FloatingActionButton>(R.id.fab_save_offline).setOnClickListener { saveVideoOffline() }
         findViewById<FloatingActionButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
         findViewById<FloatingActionButton>(R.id.fab_settings).setOnClickListener { showTrackSelectionDialog() }
+        findViewById<FloatingActionButton>(R.id.fab_bubble).setOnClickListener { startFloatingBubble() }
         hideSystemUI()
 
         // Removed aggressive background caching using DownloadManager on startup.
@@ -134,6 +135,27 @@ class CustomPlayerActivity : AppCompatActivity() {
             C.TRACK_TYPE_VIDEO
         ).build()
         trackSelectionDialog.show()
+    }
+
+    private fun startFloatingBubble() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !android.provider.Settings.canDrawOverlays(this)) {
+            val intent = Intent(
+                android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                android.net.Uri.parse("package:$packageName")
+            )
+            startActivity(intent)
+            Toast.makeText(this, "Please grant overlay permission for the floating bubble", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val serviceIntent = Intent(this, FloatingBubbleService::class.java).apply {
+            putExtra("video_url", videoUrl)
+            putExtra("video_title", videoTitle)
+            putExtra("current_position", player?.currentPosition ?: 0L)
+        }
+        startService(serviceIntent)
+
+        moveTaskToBack(true)
     }
 
     private fun enterPipMode() {

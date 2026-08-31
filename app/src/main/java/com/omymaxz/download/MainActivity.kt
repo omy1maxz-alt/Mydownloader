@@ -1703,6 +1703,45 @@ private fun checkBatteryOptimization() {
         javascript:(function() {
             // Override window.open to do nothing
             window.open = function() { return null; };
+
+            // Override EventTarget.addEventListener to block suspicious click bindings on links
+            var originalAddEventListener = EventTarget.prototype.addEventListener;
+            EventTarget.prototype.addEventListener = function(type, listener, options) {
+                if (type === 'click') {
+                    // Try to guess if this element is an episode link or button
+                    var isLink = this.tagName === 'A' || (this.className && typeof this.className === 'string' && this.className.indexOf('episode') !== -1);
+                    if (isLink) {
+                        return; // Drop the listener to prevent hijacking
+                    }
+                }
+                return originalAddEventListener.call(this, type, listener, options);
+            };
+
+            // Aggressive continuous sweep to clean up links
+            setInterval(function() {
+                var links = document.querySelectorAll('a');
+                for (var i = 0; i < links.length; i++) {
+                    var link = links[i];
+                    if (link.getAttribute('data-cleaned') === 'true') continue;
+
+                    // Remove inline onclick
+                    if (link.hasAttribute('onclick')) {
+                        link.removeAttribute('onclick');
+                    }
+
+                    // Clone and replace to strip existing invisible event listeners (like jQuery/React)
+                    if (link.href && link.href.startsWith('http')) {
+                        var clone = link.cloneNode(true);
+                        clone.setAttribute('data-cleaned', 'true');
+                        if (link.parentNode) {
+                            link.parentNode.replaceChild(clone, link);
+                        }
+                    } else {
+                         link.setAttribute('data-cleaned', 'true');
+                    }
+                }
+            }, 1500);
+
             // Intercept and prevent click-jacking overlays
             document.addEventListener('click', function(e) {
                 var target = e.target;
