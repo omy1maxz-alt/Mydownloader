@@ -105,6 +105,9 @@ dependencies {
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
+    // FFmpeg
+    implementation("io.github.maitrungduc1410:ffmpeg-kit-https:8.1.2")
+
     // Testing Dependencies
     testImplementation("junit:junit:4.13.2")
     testImplementation("androidx.test.ext:junit:1.1.5")
