@@ -1,5 +1,4 @@
 package com.omymaxz.download.format
-import java.util.concurrent.ConcurrentHashMap
 
 import android.content.Context
 import androidx.media3.exoplayer.source.MediaSource
@@ -15,6 +14,7 @@ import androidx.media3.exoplayer.source.SampleStream
 import androidx.media3.exoplayer.FormatHolder
 import androidx.media3.decoder.DecoderInputBuffer
 import androidx.media3.common.C
+import java.util.concurrent.ConcurrentHashMap
 
 class FormatSuppressingMediaSourceFactory(
     private val defaultFactory: DefaultMediaSourceFactory
@@ -24,10 +24,6 @@ class FormatSuppressingMediaSourceFactory(
         return FormatSuppressingMediaSource(original)
     }
 }
-
-
-
-
 
 class FormatSuppressingMediaSource(mediaSource: MediaSource) : WrappingMediaSource(mediaSource) {
     // Shared format cache across all periods and streams for this source
