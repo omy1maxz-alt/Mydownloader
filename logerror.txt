@@ -1,342 +1,1782 @@
-The log shows that Qualcomm's hardware decoder (c2.qti.avc.decoder) and Surface pipeline are stalling during export due to a massive base presentation timestamp (PTS: 1000059720000 µs / ~11.5 days) embedded in the MPEG-TS segments of index.m3u8, combined with the fact that [https://svip.ryplay17.com/.../index.m3u8](https://svip.ryplay17.com/.../index.m3u8) is a single-variant media playlist rather than a multi-bitrate master playlist.
-Root Cause Analysis
- * MPEG-TS 90kHz PTS Clock Offset: The HLS stream does not start at PTS 0. The unshifted PTS values (~1,000,000 seconds) cause Qualcomm's PipelineWatcher to desynchronize frame indices (frameIndex not found; ignored), forcing the decoder surface to throttle output buffer releases to ~130ms per frame and exhausting the hardware buffer pool (BufferPoolAccessor2.0: 5/5 buffers used).
- * Single-Variant HLS Override Mismatch: Because index.m3u8 contains only a single direct stream without sub-variants, matching against format.id or bitrate returns no match. Calling clearTrackSelections() without a fallback leaves the stream unconfigured or forces an unstable transcoding path.
-Updated Solution
-package com.omymaxz.download
+[2026-09-01 09:33:41.781 Uid(value=10300):7032:16086 I/ActivityThread]
+TrafficStats init done
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import android.os.IBinder
-import android.util.Log
-import android.widget.Toast
-import androidx.core.app.NotificationCompat
-import androidx.media3.common.C
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
-import androidx.media3.common.TrackSelectionOverride
-import androidx.media3.common.TrackSelectionParameters
-import androidx.media3.common.util.Util
-import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.exoplayer.offline.Download
-import androidx.media3.exoplayer.offline.DownloadHelper
-import androidx.media3.exoplayer.offline.DownloadManager
-import androidx.media3.exoplayer.offline.DownloadRequest
-import androidx.media3.exoplayer.offline.DownloadService
-import androidx.media3.transformer.DefaultAssetLoaderFactory
-import androidx.media3.transformer.DefaultDecoderFactory
-import androidx.media3.transformer.DefaultMuxer
-import androidx.media3.transformer.EditedMediaItem
-import androidx.media3.transformer.ExportException
-import androidx.media3.transformer.ExportResult
-import androidx.media3.transformer.Transformer
-import kotlinx.coroutines.*
-import java.io.File
-import kotlin.coroutines.resume
+[2026-09-01 09:33:41.786 Uid(value=10300):7032:7032 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
 
-class HlsExportService : Service() {
+[2026-09-01 09:33:41.809 Uid(value=10300):7032:16086 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
 
-    companion object {
-        const val EXTRA_DOWNLOAD_ID    = "com.omymaxz.download.extra.DOWNLOAD_ID"
-        const val EXTRA_TITLE          = "com.omymaxz.download.extra.TITLE"
-        const val EXTRA_URL            = "com.omymaxz.download.extra.URL"
-        const val EXTRA_USER_AGENT     = "com.omymaxz.download.extra.USER_AGENT"
-        const val EXTRA_REFERER        = "com.omymaxz.download.extra.REFERER"
-        const val EXTRA_COOKIE         = "com.omymaxz.download.extra.COOKIE"
-        const val EXTRA_TRACK_ID       = "com.omymaxz.download.extra.TRACK_ID"
-        const val EXTRA_TRACK_WIDTH    = "com.omymaxz.download.extra.TRACK_WIDTH"
-        const val EXTRA_TRACK_HEIGHT   = "com.omymaxz.download.extra.TRACK_HEIGHT"
-        const val EXTRA_TRACK_BITRATE  = "com.omymaxz.download.extra.TRACK_BITRATE"
-        const val CHANNEL_ID           = "hls_export_channel"
-        const val NOTIFICATION_ID      = 3000
-        private const val TAG          = "HlsExportService"
-    }
+[2026-09-01 09:33:41.809 Uid(value=10300):7032:16086 I/ActivityThread]
+Miui Feature Init done
 
-    private val serviceJob = Job()
-    private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
-    private var notificationManager: NotificationManager? = null
-    private val activeExports = java.util.concurrent.atomic.AtomicInteger(0)
+[2026-09-01 09:33:41.877 Uid(value=10300):7032:7032 D/FramePredict]
+FramePredict init: false
 
-    override fun onBind(intent: Intent?): IBinder? = null
+[2026-09-01 09:33:41.880 Uid(value=10300):7032:16086 I/ActivityThread]
+HardwareRenderer preload  done
 
-    override fun onCreate() {
-        super.onCreate()
-        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        createNotificationChannel()
-    }
+[2026-09-01 09:33:41.997 Uid(value=10300):7032:7032 D/Activity]
+Activity = ActivityInfo{3d7baee idm.internet.download.manager.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=2 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent == null) {
-            if (activeExports.get() == 0) stopSelf(startId)
-            return START_NOT_STICKY
-        }
+[2026-09-01 09:33:42.010 Uid(value=10300):7032:7032 D/FramePredict]
+init success
 
-        val downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
-        val url        = intent.getStringExtra(EXTRA_URL)
-        val title      = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
-        val trackId    = intent.getStringExtra(EXTRA_TRACK_ID)
-        val width      = intent.getIntExtra(EXTRA_TRACK_WIDTH, -1)
-        val height     = intent.getIntExtra(EXTRA_TRACK_HEIGHT, -1)
-        val bitrate    = intent.getIntExtra(EXTRA_TRACK_BITRATE, -1)
+[2026-09-01 09:33:42.015 Uid(value=10300):7032:16168 E/FramePredict]
+registerContentObserver fail
 
-        intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
-        intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
-        intent.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
+[2026-09-01 09:33:42.028 Uid(value=10300):7032:7032 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for idm.internet.download.manager.MainActivity@adb00b2, reason: DarkModeEnabled
 
-        if (downloadId == null && url == null) {
-            if (activeExports.get() == 0) stopSelf(startId)
-            return START_NOT_STICKY
-        }
+[2026-09-01 09:33:42.037 Uid(value=10300):7032:7032 D/DecorViewImmersiveImpl]
+onAttachedToWindow:idm.internet.download.manager.plus/idm.internet.download.manager.MainActivity
 
-        startForeground(NOTIFICATION_ID, buildNotification(title))
-        activeExports.incrementAndGet()
+[2026-09-01 09:33:42.038 Uid(value=10300):7032:7032 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:idm.internet.download.manager.plus/idm.internet.download.manager.MainActivity
 
-        serviceScope.launch {
-            try {
-                when {
-                    downloadId != null -> exportFromDownloadId(downloadId, title)
-                    url != null        -> exportFromUrl(url, title, trackId, width, height, bitrate)
-                }
-            } catch (t: Throwable) {
-                Log.e(TAG, "Export failed", t)
-                Toast.makeText(applicationContext, "Export failed: ${t.message}", Toast.LENGTH_LONG).show()
-            } finally {
-                if (activeExports.decrementAndGet() == 0) stopSelf()
-            }
-        }
-        return START_NOT_STICKY
-    }
+[2026-09-01 09:33:42.038 Uid(value=10300):7032:7032 D/DecorViewImmersiveImpl]
+window type: 1
 
-    private suspend fun exportFromDownloadId(downloadId: String, title: String) {
-        val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
-        val download = dm.downloadIndex.getDownload(downloadId)
-            ?: run {
-                Toast.makeText(applicationContext, "Video cache not found", Toast.LENGTH_SHORT).show()
-                return
-            }
+[2026-09-01 09:33:42.041 Uid(value=10300):7032:7032 D/MiuiNBIManagerImpl]
+init success,pkgName=idm.internet.download.manager.plus mIsNBIEnable=false mActivityRules=ActivityRules{}}
 
-        ensureFullyCached(dm, download)
-        val mediaItem = download.request.toMediaItem()
-        muxToMp4(mediaItem, title)
-    }
+[2026-09-01 09:33:42.041 Uid(value=10300):7032:7032 D/DecorViewImmersiveImpl]
+isNBIEnable=false
 
-    private suspend fun exportFromUrl(
-        url: String,
-        title: String,
-        trackId: String?,
-        targetWidth: Int,
-        targetHeight: Int,
-        targetBitrate: Int
-    ) {
-        val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
-        val isHls = url.contains(".m3u8", ignoreCase = true)
+[2026-09-01 09:33:42.087 Uid(value=10300):7032:7032 D/UserSceneDetector]
+invoke error.
 
-        val baseMediaItem = MediaItem.Builder()
-            .setUri(Uri.parse(url))
-            .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
-            .setTag(title)
-            .build()
+[2026-09-01 09:33:42.110 Uid(value=10300):16136:16155 I/ActivityThread]
+TrafficStats init done
 
-        val helper = DownloadHelper.forMediaItem(
-            applicationContext,
-            baseMediaItem,
-            null,
-            HlsDownloadHelper.getDataSourceFactory(applicationContext)
-        )
+[2026-09-01 09:33:42.113 Uid(value=10300):16136:16136 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
 
-        val req = withContext(Dispatchers.IO) {
-            suspendCancellableCoroutine<DownloadRequest> { cont ->
-                helper.prepare(object : DownloadHelper.Callback {
-                    override fun onPrepared(h: DownloadHelper) {
-                        for (periodIndex in 0 until h.periodCount) {
-                            val trackGroups = h.getTrackGroups(periodIndex)
-                            val overrides = mutableListOf<TrackSelectionOverride>()
-                            var videoMatched = false
+[2026-09-01 09:33:42.119 Uid(value=10300):16136:16155 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
 
-                            for (groupIndex in 0 until trackGroups.length) {
-                                val trackGroup = trackGroups.get(groupIndex)
-                                val firstFormat = trackGroup.getFormat(0)
+[2026-09-01 09:33:42.120 Uid(value=10300):16136:16155 I/ActivityThread]
+Miui Feature Init done
 
-                                if (MimeTypes.isVideo(firstFormat.sampleMimeType)) {
-                                    val matchedIndices = mutableListOf<Int>()
-                                    for (i in 0 until trackGroup.length) {
-                                        val format = trackGroup.getFormat(i)
-                                        val isIdMatch = trackId != null && format.id == trackId
-                                        val isResMatch = targetWidth > 0 && targetHeight > 0 &&
-                                                format.width == targetWidth && format.height == targetHeight
-                                        val isBitrateMatch = targetBitrate > 0 && format.bitrate == targetBitrate
+[2026-09-01 09:33:42.149 Uid(value=10300):16157:16195 I/ActivityThread]
+TrafficStats init done
 
-                                        if (isIdMatch || isResMatch || isBitrateMatch) {
-                                            matchedIndices.add(i)
-                                            videoMatched = true
-                                            break
-                                        }
-                                    }
+[2026-09-01 09:33:42.175 Uid(value=10300):16157:16157 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
 
-                                    // Fallback for single-variant playlists: select first track index if no specific match
-                                    if (matchedIndices.isNotEmpty()) {
-                                        overrides.add(TrackSelectionOverride(trackGroup, matchedIndices))
-                                    } else if (!videoMatched) {
-                                        overrides.add(TrackSelectionOverride(trackGroup, listOf(0)))
-                                        videoMatched = true
-                                    }
-                                } else if (MimeTypes.isAudio(firstFormat.sampleMimeType)) {
-                                    overrides.add(TrackSelectionOverride(trackGroup, listOf(0)))
-                                }
-                            }
+[2026-09-01 09:33:42.191 Uid(value=10300):16157:16195 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
 
-                            if (overrides.isNotEmpty()) {
-                                h.clearTrackSelections(periodIndex)
-                                val paramsBuilder = TrackSelectionParameters.Builder(applicationContext)
-                                for (override in overrides) {
-                                    paramsBuilder.addOverride(override)
-                                }
-                                h.addTrackSelection(periodIndex, paramsBuilder.build())
-                            }
-                        }
+[2026-09-01 09:33:42.191 Uid(value=10300):16157:16195 I/ActivityThread]
+Miui Feature Init done
 
-                        val downloadRequest = h.getDownloadRequest(Util.getUtf8Bytes(title))
-                        h.release()
-                        cont.resume(downloadRequest)
-                    }
+[2026-09-01 09:33:42.701 Uid(value=10300):7032:7032 D/UserSceneDetector]
+invoke error.
 
-                    override fun onPrepareError(h: DownloadHelper, e: java.io.IOException) {
-                        h.release()
-                        cont.cancel(e)
-                    }
-                })
-            }
-        }
+[2026-09-01 09:35:38.926 Uid(value=10300):16770:21467 I/ActivityThread]
+TrafficStats init done
 
-        DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, req, true)
+[2026-09-01 09:35:38.932 Uid(value=10300):16770:16770 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
 
-        val completed = waitForCompletion(dm, req.id)
-        if (!completed) {
-            Toast.makeText(applicationContext, "Download did not complete", Toast.LENGTH_LONG).show()
-            return
-        }
+[2026-09-01 09:35:38.959 Uid(value=10300):16770:21467 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
 
-        muxToMp4(req.toMediaItem(), title)
-    }
+[2026-09-01 09:35:38.959 Uid(value=10300):16770:21467 I/ActivityThread]
+Miui Feature Init done
 
-    private suspend fun ensureFullyCached(dm: DownloadManager, download: Download) {
-        if (download.state == Download.STATE_COMPLETED) return
+[2026-09-01 09:35:39.113 Uid(value=10300):16770:16770 D/FramePredict]
+FramePredict init: false
 
-        Log.i(TAG, "Download ${download.request.id} incomplete. Resuming...")
-        DownloadService.sendAddDownload(
-            applicationContext, HlsDownloadService::class.java, download.request, true
-        )
-        waitForCompletion(dm, download.request.id)
-    }
+[2026-09-01 09:35:39.113 Uid(value=10300):16770:16770 D/UserSceneDetector]
+invoke error.
 
-    private suspend fun waitForCompletion(dm: DownloadManager, id: String): Boolean =
-        withContext(Dispatchers.IO) {
-            suspendCancellableCoroutine { cont ->
-                val listener = object : DownloadManager.Listener {
-                    override fun onDownloadChanged(
-                        dm: DownloadManager, d: Download, finalException: Exception?
-                    ) {
-                        if (d.request.id != id) return
-                        when (d.state) {
-                            Download.STATE_COMPLETED -> {
-                                dm.removeListener(this)
-                                if (cont.isActive) cont.resume(true)
-                            }
-                            Download.STATE_FAILED -> {
-                                dm.removeListener(this)
-                                if (cont.isActive) cont.resume(false)
-                            }
-                            else -> Unit
-                        }
-                    }
-                }
-                dm.addListener(listener)
-                runCatching {
-                    val cur = dm.downloadIndex.getDownload(id)
-                    if (cur?.state == Download.STATE_COMPLETED) {
-                        dm.removeListener(listener)
-                        if (cont.isActive) cont.resume(true)
-                    }
-                }
-                cont.invokeOnCancellation { dm.removeListener(listener) }
-            }
-        }
+[2026-09-01 09:35:39.117 Uid(value=10300):16770:21467 I/ActivityThread]
+HardwareRenderer preload  done
 
-    private suspend fun muxToMp4(mediaItem: MediaItem, title: String) =
-        suspendCancellableCoroutine<Unit> { cont ->
-            val cacheFactory: CacheDataSource.Factory =
-                HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
+[2026-09-01 09:35:39.285 Uid(value=10300):16770:16770 D/Activity]
+Activity = ActivityInfo{32ae069 idm.internet.download.manager.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=2 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
 
-            // EditedMediaItem normalizes timestamps and prevents PTS desynchronization
-            val editedMediaItem = EditedMediaItem.Builder(mediaItem)
-                .setFlattenForSlowMotion(false)
-                .build()
+[2026-09-01 09:35:39.318 Uid(value=10300):16770:16770 D/FramePredict]
+init success
 
-            val transformer = Transformer.Builder(applicationContext)
-                .setMuxerFactory(DefaultMuxer.Factory())
-                .setAssetLoaderFactory(
-                    DefaultAssetLoaderFactory(
-                        applicationContext,
-                        DefaultDecoderFactory(applicationContext),
-                        /* forceAudioTrack= */ false,
-                        androidx.media3.common.util.Clock.DEFAULT,
-                        androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
-                            .setDataSourceFactory(cacheFactory),
-                        androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
-                    )
-                )
-                .addListener(object : Transformer.Listener {
-                    override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
-                        Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
-                        if (cont.isActive) cont.resume(Unit)
-                    }
-                    override fun onError(
-                        composition: androidx.media3.transformer.Composition,
-                        result: ExportResult, ex: ExportException
-                    ) {
-                        Log.e(TAG, "Transformer error", ex)
-                        Toast.makeText(applicationContext, "Export error: ${ex.message}", Toast.LENGTH_LONG).show()
-                        if (cont.isActive) cont.resume(Unit)
-                    }
-                })
-                .build()
+[2026-09-01 09:35:39.339 Uid(value=10300):16770:21540 E/FramePredict]
+registerContentObserver fail
 
-            val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-            val out = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "$safeTitle.mp4"
-            )
-            transformer.start(editedMediaItem, out.absolutePath)
-            cont.invokeOnCancellation { transformer.cancel() }
-        }
+[2026-09-01 09:35:39.342 Uid(value=10300):16770:16770 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for idm.internet.download.manager.MainActivity@b2452bd, reason: DarkModeEnabled
 
-    private fun buildNotification(title: String) =
-        NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Exporting Video to Downloads")
-            .setContentText(title)
-            .setSmallIcon(android.R.drawable.stat_sys_download)
-            .setOngoing(true)
-            .setProgress(100, 0, true)
-            .build()
+[2026-09-01 09:35:39.363 Uid(value=10300):16770:16770 D/DecorViewImmersiveImpl]
+onAttachedToWindow:idm.internet.download.manager.plus/idm.internet.download.manager.MainActivity
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val ch = NotificationChannel(CHANNEL_ID, "Video Export", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Shows progress of exporting downloaded videos"
-            }
-            notificationManager?.createNotificationChannel(ch)
-        }
-    }
+[2026-09-01 09:35:39.365 Uid(value=10300):16770:16770 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:idm.internet.download.manager.plus/idm.internet.download.manager.MainActivity
 
-    override fun onDestroy() {
-        super.onDestroy()
-        serviceJob.cancel()
-    }
-}
+[2026-09-01 09:35:39.365 Uid(value=10300):16770:16770 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-09-01 09:35:39.368 Uid(value=10300):16770:16770 D/MiuiNBIManagerImpl]
+init success,pkgName=idm.internet.download.manager.plus mIsNBIEnable=false mActivityRules=ActivityRules{}}
+
+[2026-09-01 09:35:39.368 Uid(value=10300):16770:16770 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-09-01 09:35:39.459 Uid(value=10300):16770:16770 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:35:39.482 Uid(value=10300):21505:21548 I/ActivityThread]
+TrafficStats init done
+
+[2026-09-01 09:35:39.489 Uid(value=10300):21505:21505 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-09-01 09:35:39.525 Uid(value=10300):21505:21548 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-09-01 09:35:39.525 Uid(value=10300):21505:21548 I/ActivityThread]
+Miui Feature Init done
+
+[2026-09-01 09:35:39.558 Uid(value=10300):16770:16770 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:35:39.749 Uid(value=10300):16770:16770 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:35:40.429 Uid(value=10300):16770:16770 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:35:41.063 Uid(value=10300):16770:16770 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:36:26.792 Uid(value=10300):16770:21494 W/BpBinder]
+PerfMonitor binderTransact: time=1544ms interface=android.app.IActivityManager code=86
+
+[2026-09-01 09:36:27.798 Uid(value=10300):16770:21494 W/BpBinder]
+PerfMonitor binderTransact: time=1005ms interface=android.app.IActivityManager code=86
+
+[2026-09-01 09:40:34.277 Uid(value=10300):22571:28680 I/ActivityThread]
+TrafficStats init done
+
+[2026-09-01 09:40:34.279 Uid(value=10300):22571:22571 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-09-01 09:40:34.295 Uid(value=10300):22571:28680 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-09-01 09:40:34.295 Uid(value=10300):22571:28680 I/ActivityThread]
+Miui Feature Init done
+
+[2026-09-01 09:40:34.365 Uid(value=10300):22571:22571 D/FramePredict]
+FramePredict init: false
+
+[2026-09-01 09:40:34.381 Uid(value=10300):22571:28680 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-09-01 09:40:34.475 Uid(value=10300):22571:22571 D/Activity]
+Activity = ActivityInfo{24392f0 idm.internet.download.manager.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=2 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+
+[2026-09-01 09:40:34.489 Uid(value=10300):28713:28729 I/ActivityThread]
+TrafficStats init done
+
+[2026-09-01 09:40:34.495 Uid(value=10300):22571:22571 D/FramePredict]
+init success
+
+[2026-09-01 09:40:34.496 Uid(value=10300):28713:28713 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-09-01 09:40:34.497 Uid(value=10300):22571:28752 E/FramePredict]
+registerContentObserver fail
+
+[2026-09-01 09:40:34.510 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for idm.internet.download.manager.MainActivity@12f46d6, reason: DarkModeEnabled
+
+[2026-09-01 09:40:34.512 Uid(value=10300):28713:28729 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-09-01 09:40:34.513 Uid(value=10300):28713:28729 I/ActivityThread]
+Miui Feature Init done
+
+[2026-09-01 09:40:34.518 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+onAttachedToWindow:idm.internet.download.manager.plus/idm.internet.download.manager.MainActivity
+
+[2026-09-01 09:40:34.519 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:idm.internet.download.manager.plus/idm.internet.download.manager.MainActivity
+
+[2026-09-01 09:40:34.519 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-09-01 09:40:34.520 Uid(value=10300):22571:22571 D/MiuiNBIManagerImpl]
+init success,pkgName=idm.internet.download.manager.plus mIsNBIEnable=false mActivityRules=ActivityRules{}}
+
+[2026-09-01 09:40:34.520 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-09-01 09:40:34.543 Uid(value=10300):28732:28756 I/ActivityThread]
+TrafficStats init done
+
+[2026-09-01 09:40:34.549 Uid(value=10300):28732:28732 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-09-01 09:40:34.564 Uid(value=10300):28732:28756 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-09-01 09:40:34.564 Uid(value=10300):28732:28756 I/ActivityThread]
+Miui Feature Init done
+
+[2026-09-01 09:40:34.574 Uid(value=10300):22571:22571 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:40:34.964 Uid(value=10300):22571:22571 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:40:36.145 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:40:36.249 Uid(value=10300):22571:28680 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-09-01 09:40:36.292 Uid(value=10300):22571:22571 D/Activity]
+Activity = ActivityInfo{aeb6c3 acr.browser.lightning.activity.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=2 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+
+[2026-09-01 09:40:36.298 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:40:36.305 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+onAttachedToWindow:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:40:36.305 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:40:36.305 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-09-01 09:40:36.305 Uid(value=10300):22571:22571 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-09-01 09:40:36.305 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-09-01 09:40:36.966 Uid(value=10300):22571:22571 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:40:36.966 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:40:37.041 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:40:37.247 Uid(value=10300):22571:28886 W/BpBinder]
+PerfMonitor binderTransact: time=404ms interface=android.content.IContentProvider code=21
+
+[2026-09-01 09:40:43.866 Uid(value=10300):22571:22571 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:40:45.021 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:40:45.595 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:40:46.135 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:40:47.101 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:40:48.858 Uid(value=10300):22571:22571 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:40:51.223 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:40:51.313 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:40:51.326 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+onAttachedToWindow:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:40:51.326 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:40:51.326 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-09-01 09:40:51.326 Uid(value=10300):22571:22571 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-09-01 09:40:51.326 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-09-01 09:40:51.365 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:40:59.792 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:40:59.919 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:40:59.944 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:41:03.740 Uid(value=10300):22571:22571 D/VRI[PopupWindow:e51f610]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:41:05.476 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:41:05.629 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:41:05.637 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-09-01 09:41:05.650 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+onAttachedToWindow:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:41:05.650 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:41:05.650 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-09-01 09:41:05.650 Uid(value=10300):22571:22571 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-09-01 09:41:05.651 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-09-01 09:41:05.668 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:41:14.100 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:41:14.250 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:41:14.262 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+onAttachedToWindow:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:41:14.262 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:41:14.262 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-09-01 09:41:14.262 Uid(value=10300):22571:22571 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-09-01 09:41:14.262 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-09-01 09:41:14.271 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:41:14.348 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-09-01 09:41:14.369 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:41:14.377 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+onAttachedToWindow:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:41:14.377 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:41:14.377 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-09-01 09:41:14.377 Uid(value=10300):22571:22571 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-09-01 09:41:14.377 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-09-01 09:41:14.389 Uid(value=10300):22571:22571 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@68c3a39, reason: DarkModeEnabled
+
+[2026-09-01 09:41:14.793 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-09-01 09:41:14.811 Uid(value=10300):22571:22571 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-09-01 09:41:14.871 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:41:19.284 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:41:23.426 Uid(value=10300):22571:22571 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:24.925 Uid(value=10300):28713:29742 W/DownloadService]
+Long monitor contention with owner pool-10-thread-8 (29747) at void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo)(:-1) waiters=0 in void i.Mc.ۦ۟۬(java.lang.String, int, long, long) for 126ms
+
+[2026-09-01 09:47:33.497 Uid(value=10300):25946:25946 I/ad.manager.plus]
+Using generational CollectorTypeCMC GC.
+
+[2026-09-01 09:47:33.503 Uid(value=10300):25946:25946 D/nativeloader]
+Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+
+[2026-09-01 09:47:33.507 Uid(value=10300):25946:25946 I/MessageMonitor]
+Load libmiui_runtime
+
+[2026-09-01 09:47:33.519 Uid(value=10300):25946:25946 D/MiuiMonitorThread]
+Shared singleton Thread for stability monitor start
+
+[2026-09-01 09:47:33.523 Uid(value=10300):25946:8985 D/AppScoutStateMachine]
+25946-ScoutStateMachinecreated
+
+[2026-09-01 09:47:33.523 Uid(value=10300):25946:25946 D/CompatChangeReporter]
+Compat change id reported: 242716250; UID 10300; state: ENABLED
+
+[2026-09-01 09:47:33.531 Uid(value=10300):25946:25946 D/ActivityThread]
+setEmbeddedParam packageName=idm.internet.download.manager.plus processName=idm.internet.download.manager.plus isEmbedded=false isIsolated=false
+
+[2026-09-01 09:47:33.532 Uid(value=10300):25946:25946 D/ApplicationLoaders]
+Returning zygote-cached class loader: /system/framework/org.apache.http.legacy.jar
+
+[2026-09-01 09:47:33.551 Uid(value=10300):25946:25946 D/nativeloader]
+Configuring clns-8 for other apk /data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/lib/arm64:/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/idm.internet.download.manager.plus
+
+[2026-09-01 09:47:33.558 Uid(value=10300):25946:25946 I/Perf]
+Connecting to perf service.
+
+[2026-09-01 09:47:33.561 Uid(value=10300):25946:25946 V/GraphicsEnvironment]
+Currently set values for:
+
+[2026-09-01 09:47:33.561 Uid(value=10300):25946:25946 V/GraphicsEnvironment]
+  angle_gl_driver_selection_pkgs=[]
+
+[2026-09-01 09:47:33.561 Uid(value=10300):25946:25946 V/GraphicsEnvironment]
+  angle_gl_driver_selection_values=[]
+
+[2026-09-01 09:47:33.561 Uid(value=10300):25946:25946 V/GraphicsEnvironment]
+Global.Settings values are invalid: number of packages: 0, number of values: 0
+
+[2026-09-01 09:47:33.561 Uid(value=10300):25946:25946 V/GraphicsEnvironment]
+App is not on the allowlist for updatable production driver.
+
+[2026-09-01 09:47:33.562 Uid(value=10300):25946:8988 I/ActivityThread]
+TrafficStats init done
+
+[2026-09-01 09:47:33.564 Uid(value=10300):25946:25946 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-09-01 09:47:33.566 Uid(value=10300):25946:8988 I/ForceDarkHelperStubImpl]
+initialize for idm.internet.download.manager.plus , ForceDarkAppConfig: null
+
+[2026-09-01 09:47:33.567 Uid(value=10300):25946:8988 D/nativeloader]
+Load libforcedarkimpl.so using system ns (caller=/system_ext/framework/miui-framework.jar): ok
+
+[2026-09-01 09:47:33.567 Uid(value=10300):25946:8988 D/HWUI]
+JNI_OnLoad success
+
+[2026-09-01 09:47:33.567 Uid(value=10300):25946:8988 I/MiuiForceDarkConfig]
+setConfig density:2.750000, mainRule:0, secondaryRule:0, tertiaryRule:0
+
+[2026-09-01 09:47:33.577 Uid(value=10300):25946:8988 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-09-01 09:47:33.577 Uid(value=10300):25946:8988 I/ActivityThread]
+Miui Feature Init done
+
+[2026-09-01 09:47:33.577 Uid(value=10300):25946:25946 W/libc]
+Access denied finding property "vendor.boostfwk.frameprefetcher"
+
+[2026-09-01 09:47:33.615 Uid(value=10300):25946:25946 I/System.out]
+jlibtorrent: Trying to load jlibtorrent without version number: jlibtorrent.<so|dylib>...
+
+[2026-09-01 09:47:33.619 Uid(value=10300):25946:25946 D/nativeloader]
+Load libjlibtorrent.so using class loader ns clns-8 (caller=/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk!classes4.dex): dlopen failed: library "libjlibtorrent.so" not found
+
+[2026-09-01 09:47:33.619 Uid(value=10300):25946:25946 I/System.out]
+jlibtorrent: FAILED: Trying to load jlibtorrent with version number: jlibtorrent-1.2.19.0
+
+[2026-09-01 09:47:33.628 Uid(value=10300):25946:25946 D/nativeloader]
+Load /data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/lib/arm64/libjlibtorrent-1.2.19.0.so using class loader ns clns-8 (caller=/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk!classes4.dex): ok
+
+[2026-09-01 09:47:33.628 Uid(value=10300):25946:25946 I/System.out]
+jlibtorrent: SUCCESS: Loaded jlibtorrent-1.2.19.0
+
+[2026-09-01 09:47:33.670 Uid(value=10300):25946:25946 D/FramePredict]
+FramePredict init: false
+
+[2026-09-01 09:47:33.672 Uid(value=10300):25946:8988 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-09-01 09:47:33.679 Uid(value=10300):25946:9010 W/libc]
+Access denied finding property "vendor.migl.debug"
+
+[2026-09-01 09:47:33.679 Uid(value=10300):25946:9010 D/libMiGL]
+SuperResolution SR initSR mBaseSRWidthSize: 0, mBaseSRHeightSize: 0, mTargetSRWidthSize: 0, mTargetSRHeightSize: 0
+
+[2026-09-01 09:47:33.679 Uid(value=10300):25946:9010 I/libMiGL]
+EnableDR: 0
+
+[2026-09-01 09:47:33.679 Uid(value=10300):25946:9010 D/libMiGL]
+mDFIInterval: -1
+
+[2026-09-01 09:47:33.694 Uid(value=10300):25946:25946 D/nativeloader]
+Load /data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/lib/arm64/libarchSupport.so using class loader ns clns-8 (caller=/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk!classes8.dex): ok
+
+[2026-09-01 09:47:33.694 Uid(value=10300):25946:9010 I/AdrenoGLES-0]
+QUALCOMM build                   : c1fe339905, Id5fe42143e
+Build Date                       : 01/23/25
+OpenGL ES Shader Compiler Version: EV031.36.08.30
+Local Branch                     : 
+Remote Branch                    : refs/tags/AU_LINUX_ANDROID_LA.VENDOR.1.0.R1.11.00.00.816.269
+Remote Branch                    : NONE
+Reconstruct Branch               : NOTHING
+
+[2026-09-01 09:47:33.694 Uid(value=10300):25946:9010 I/AdrenoGLES-0]
+Build Config                     : S P 12.1.1 AArch64
+
+[2026-09-01 09:47:33.694 Uid(value=10300):25946:9010 I/AdrenoGLES-0]
+Driver Path                      : /vendor/lib64/egl/libGLESv2_adreno.so
+
+[2026-09-01 09:47:33.694 Uid(value=10300):25946:9010 I/AdrenoGLES-0]
+Driver Version                   : 0615.95
+
+[2026-09-01 09:47:33.716 Uid(value=10300):25946:9004 D/nativeloader]
+Load /data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/lib/arm64/libffmpegkit_abidetect.so using class loader ns clns-8 (caller=/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk!classes8.dex): ok
+
+[2026-09-01 09:47:33.779 Uid(value=10300):25946:9004 D/nativeloader]
+Load /data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/lib/arm64/libffmpegkit.so using class loader ns clns-8 (caller=/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk!classes8.dex): ok
+
+[2026-09-01 09:47:33.790 Uid(value=10300):25946:9014 D/ffmpeg-kit]
+Async callback block started.
+
+[2026-09-01 09:47:33.790 Uid(value=10300):25946:9014 D/ffmpeg-kit]
+Async callback block stopped.
+
+[2026-09-01 09:47:33.794 Uid(value=10300):25946:25946 E/ad.manager.plus]
+hiddenapi: Accessing hidden method Landroid/view/Window;->setExtraFlags(II)V (runtime_flags=0, domain=platform, api=blocked) from Lidm/internet/download/manager/e; (domain=app, TargetSdkVersion=34) using reflection: denied
+
+[2026-09-01 09:47:33.794 Uid(value=10300):25946:25946 E/ad.manager.plus]
+hiddenapi: Accessing hidden method Landroid/view/Window;->setExtraFlags(II)V (runtime_flags=0, domain=platform, api=blocked) from Lidm/internet/download/manager/e; (domain=app, TargetSdkVersion=34) using reflection: denied
+
+[2026-09-01 09:47:33.797 Uid(value=10300):25946:9010 I/AdrenoGLES-0]
+PFP: 0x01730158, ME: 0x00000000
+
+[2026-09-01 09:47:33.826 Uid(value=10300):25946:25946 W/libc]
+Access denied finding property "ro.vendor.df.effect.conflict"
+
+[2026-09-01 09:47:33.821 Uid(value=10300):25946:25946 W/ad.manager.plus]
+type=1400 audit(0.0:145708): avc:  denied  { read } for  name="u:object_r:vendor_displayfeature_prop:s0" dev="tmpfs" ino=463 scontext=u:r:untrusted_app:s0:c44,c257,c512,c768 tcontext=u:object_r:vendor_displayfeature_prop:s0 tclass=file permissive=0 app=idm.internet.download.manager.plus
+
+[2026-09-01 09:47:33.830 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:47:33.830 Uid(value=10300):25946:25946 W/libc]
+Access denied finding property "ro.vendor.mi_sf.new_dynamic_refresh_rate"
+
+[2026-09-01 09:47:33.825 Uid(value=10300):25946:25946 W/ad.manager.plus]
+type=1400 audit(0.0:145709): avc:  denied  { read } for  name="u:object_r:vendor_displayfeature_prop:s0" dev="tmpfs" ino=463 scontext=u:r:untrusted_app:s0:c44,c257,c512,c768 tcontext=u:object_r:vendor_displayfeature_prop:s0 tclass=file permissive=0 app=idm.internet.download.manager.plus
+
+[2026-09-01 09:47:33.831 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:47:33.860 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:47:33.861 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:47:33.862 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:47:33.862 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:47:33.871 Uid(value=10300):25946:9010 D/HWUI]
+MiShaderPrecompile handle idm.internet.download.manager.plus, isSksl: 0, isAppInPreCacheList: 0, isGpuVersionChanged: 0, isSkslChanged: 0
+
+[2026-09-01 09:47:33.878 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:47:33.887 Uid(value=10300):25946:25946 I/AbsListViewStubImpl]
+idm.internet.download.manager.plus, version: 18.2, Enable Prefetch: false
+
+[2026-09-01 09:47:33.890 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:47:33.893 Uid(value=10300):25946:25946 I/AbsListViewStubImpl]
+idm.internet.download.manager.plus, version: 18.2, Enable Prefetch: false
+
+[2026-09-01 09:47:33.896 Uid(value=10300):25946:25946 W/PhoneWindow]
+Previously focused view reported id 17 during save, but can't be found during restore.
+
+[2026-09-01 09:47:33.897 Uid(value=10300):25946:25946 D/Activity]
+Activity = ActivityInfo{f643910 acr.browser.lightning.activity.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=2 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+
+[2026-09-01 09:47:33.899 Uid(value=10300):25946:25946 D/SecurityManager]
+checkAccessControl flag0
+
+[2026-09-01 09:47:33.912 Uid(value=10300):25946:9029 I/WebViewFactory]
+Loading com.google.android.webview version 151.0.7922.199 (code 792219903)
+
+[2026-09-01 09:47:33.915 Uid(value=10300):25946:25946 D/FramePredict]
+init success
+
+[2026-09-01 09:47:33.918 Uid(value=10300):25946:9029 D/ApplicationLoaders]
+Returning zygote-cached class loader: /system/framework/android.test.base.jar
+
+[2026-09-01 09:47:33.918 Uid(value=10300):25946:9029 D/ApplicationLoaders]
+Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+
+[2026-09-01 09:47:33.918 Uid(value=10300):25946:9032 E/FramePredict]
+registerContentObserver fail
+
+[2026-09-01 09:47:33.923 Uid(value=10300):25946:9029 D/nativeloader]
+Configuring clns-9 for other apk /data/app/~~6kdR-tyJ6cBcHN4_AOpL7g==/com.google.android.webview-EVqhJDvWJJYFDfet4k0GtA==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~6kdR-tyJ6cBcHN4_AOpL7g==/com.google.android.webview-EVqhJDvWJJYFDfet4k0GtA==/lib/arm64:/data/app/~~6kdR-tyJ6cBcHN4_AOpL7g==/com.google.android.webview-EVqhJDvWJJYFDfet4k0GtA==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand
+
+[2026-09-01 09:47:33.924 Uid(value=10300):25946:25946 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@81e8826, reason: DarkModeEnabled
+
+[2026-09-01 09:47:33.929 Uid(value=10300):25946:9027 E/FeatureFlagsImplExport]
+android.os.flagging.AconfigStorageReadException: ERROR_PACKAGE_NOT_FOUND: package com.android.libcore cannot be found on the device
+
+[2026-09-01 09:47:33.954 Uid(value=10300):25946:25946 D/DecorViewImmersiveImpl]
+onAttachedToWindow:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:47:33.956 Uid(value=10300):25946:25946 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity
+
+[2026-09-01 09:47:33.956 Uid(value=10300):25946:25946 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-09-01 09:47:33.958 Uid(value=10300):25946:25946 D/MiuiNBIManagerImpl]
+init success,pkgName=idm.internet.download.manager.plus mIsNBIEnable=false mActivityRules=ActivityRules{}}
+
+[2026-09-01 09:47:33.959 Uid(value=10300):25946:25946 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-09-01 09:47:33.969 Uid(value=10300):25946:9029 I/cr_WVCFactoryProvider]
+version=151.0.7922.199 (792219903) minSdkVersion=29 multiprocess=true packageId=127 splits=<none>
+
+[2026-09-01 09:47:33.975 Uid(value=10300):25946:9029 D/nativeloader]
+Load /data/app/~~6kdR-tyJ6cBcHN4_AOpL7g==/com.google.android.webview-EVqhJDvWJJYFDfet4k0GtA==/base.apk!/lib/arm64-v8a/libwebviewchromium.so using class loader ns clns-9 (caller=/data/app/~~6kdR-tyJ6cBcHN4_AOpL7g==/com.google.android.webview-EVqhJDvWJJYFDfet4k0GtA==/base.apk): ok
+
+[2026-09-01 09:47:33.988 Uid(value=10300):25946:25946 W/libc]
+Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
+
+[2026-09-01 09:47:33.985 Uid(value=10300):25946:25946 W/ad.manager.plus]
+type=1400 audit(0.0:145710): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c44,c257,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=idm.internet.download.manager.plus
+
+[2026-09-01 09:47:33.989 Uid(value=10300):25946:25946 W/libc]
+Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+
+[2026-09-01 09:47:33.985 Uid(value=10300):25946:25946 W/ad.manager.plus]
+type=1400 audit(0.0:145711): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c44,c257,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=idm.internet.download.manager.plus
+
+[2026-09-01 09:47:33.989 Uid(value=10300):25946:25946 I/ad.manager.plus]
+【MiuiBoosterUtils】checkUtil disable.
+
+[2026-09-01 09:47:33.989 Uid(value=10300):25946:25946 I/ad.manager.plus]
+【MiuiBoosterUtils】package permission check disable.
+
+[2026-09-01 09:47:33.989 Uid(value=10300):25946:25946 I/ad.manager.plus]
+【MiuiBoosterUtils】get Service disable.
+
+[2026-09-01 09:47:33.989 Uid(value=10300):25946:9029 D/nativeloader]
+Load /system/lib64/libwebviewchromium_plat_support.so using class loader ns clns-9 (caller=/data/app/~~6kdR-tyJ6cBcHN4_AOpL7g==/com.google.android.webview-EVqhJDvWJJYFDfet4k0GtA==/base.apk): ok
+
+[2026-09-01 09:47:33.991 Uid(value=10300):25946:9039 I/ad.manager.plus]
+【MiuiBoosterUtils】improve disable.
+
+[2026-09-01 09:47:34.006 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+
+[2026-09-01 09:47:34.006 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+vri.Setup new sync=wmsSync-VRI[MainActivity]#0
+
+[2026-09-01 09:47:34.007 Uid(value=10300):25946:25946 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:47:34.091 Uid(value=10300):25946:9010 D/ad.manager.plus]
+MiuiProcessManagerServiceStub setSchedFifo
+
+[2026-09-01 09:47:34.091 Uid(value=10300):25946:9010 I/MiuiProcessManagerImpl]
+setSchedFifo pid:25946, mode:3
+
+[2026-09-01 09:47:34.102 Uid(value=10300):25946:9029 I/cr_LibraryLoader]
+Successfully loaded native library
+
+[2026-09-01 09:47:34.105 Uid(value=10300):25946:9029 I/cr_CachingUmaRecorder]
+Flushed 37 samples from 19 histograms, 0 samples were dropped.
+
+[2026-09-01 09:47:34.139 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+vri.reportDrawFinished
+
+[2026-09-01 09:47:34.150 Uid(value=10300):25946:25946 I/cr_ChildProcLH]
+ScopedServiceBindingBatch.tryActivate: false
+
+[2026-09-01 09:47:34.156 Uid(value=10300):25946:25946 I/cr_CombinedPProvider]
+#registerProvider() provider:WV.sj@654cca2 isPolicyCacheEnabled:false policyProvidersSize:0
+
+[2026-09-01 09:47:34.156 Uid(value=10300):25946:25946 I/cr_PolicyProvider]
+#setManagerAndSource() 0
+
+[2026-09-01 09:47:34.157 Uid(value=10300):25946:25946 I/cr_DisplayManager]
+Is Display Topology available: false
+
+[2026-09-01 09:47:34.161 Uid(value=10300):25946:9037 I/cr_policy]
+registerReceiver succeeded after 5ms
+
+[2026-09-01 09:47:34.206 Uid(value=10300):25946:25946 I/cr_CombinedPProvider]
+#linkNativeInternal() 1
+
+[2026-09-01 09:47:34.214 Uid(value=10300):25946:25946 I/cr_AppResProvider]
+#getApplicationRestrictionsFromUserManager() Bundle[EMPTY_PARCEL]
+
+[2026-09-01 09:47:34.214 Uid(value=10300):25946:25946 I/cr_PolicyProvider]
+#notifySettingsAvailable() 0
+
+[2026-09-01 09:47:34.214 Uid(value=10300):25946:25946 I/cr_CombinedPProvider]
+#onSettingsAvailable() 0
+
+[2026-09-01 09:47:34.214 Uid(value=10300):25946:25946 I/cr_CombinedPProvider]
+#flushPolicies()
+
+[2026-09-01 09:47:34.382 Uid(value=10300):25946:25946 I/cr_AppResProvider]
+#getApplicationRestrictionsFromUserManager() Bundle[EMPTY_PARCEL]
+
+[2026-09-01 09:47:34.382 Uid(value=10300):25946:25946 I/cr_PolicyProvider]
+#notifySettingsAvailable() 0
+
+[2026-09-01 09:47:34.382 Uid(value=10300):25946:25946 I/cr_CombinedPProvider]
+#onSettingsAvailable() 0
+
+[2026-09-01 09:47:34.382 Uid(value=10300):25946:25946 I/cr_CombinedPProvider]
+#flushPolicies()
+
+[2026-09-01 09:47:34.391 Uid(value=10300):25946:9094 I/CameraManagerGlobal]
+Connecting to camera service
+
+[2026-09-01 09:47:34.398 Uid(value=10300):25946:9080 W/cr_media]
+BLUETOOTH_CONNECT permission is missing.
+
+[2026-09-01 09:47:34.406 Uid(value=10300):25946:9080 W/cr_media]
+getBluetoothAdapter() requires BLUETOOTH permission
+
+[2026-09-01 09:47:34.406 Uid(value=10300):25946:9080 W/cr_media]
+registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+
+[2026-09-01 09:47:34.462 Uid(value=10300):25946:9094 D/CameraExtStub]
+init android.hardware.camera2.impl.CameraExtImplXiaoMi
+
+[2026-09-01 09:47:34.462 Uid(value=10300):25946:9095 W/libc]
+Access denied finding property "vendor.mivk.log.debug"
+
+[2026-09-01 09:47:34.462 Uid(value=10300):25946:9095 D/vulkan]
+searching for layers in '/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/lib/arm64'
+
+[2026-09-01 09:47:34.463 Uid(value=10300):25946:9094 D/CameraInjector]
+waitForResult: 
+
+[2026-09-01 09:47:34.463 Uid(value=10300):25946:9095 D/vulkan]
+searching for layers in '/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk!/lib/arm64-v8a'
+
+[2026-09-01 09:47:34.464 Uid(value=10300):25946:9113 D/CameraInjector]
+updateCloudCameraControllerInfoAsync: E
+
+[2026-09-01 09:47:34.489 Uid(value=10300):25946:25946 I/Choreographer]
+Skipped 63 frames!  The application may be doing too much work on its main thread.
+
+[2026-09-01 09:47:34.490 Uid(value=10300):25946:25946 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:47:34.495 Uid(value=10300):25946:25946 W/ConnectivityManager.CallbackHandler]
+callback not found for CALLBACK_AVAILABLE message
+
+[2026-09-01 09:47:34.495 Uid(value=10300):25946:25946 W/ConnectivityManager.CallbackHandler]
+callback not found for CALLBACK_AVAILABLE message
+
+[2026-09-01 09:47:34.495 Uid(value=10300):25946:25946 W/ConnectivityManager.CallbackHandler]
+callback not found for CALLBACK_AVAILABLE message
+
+[2026-09-01 09:47:34.496 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-09-01 09:47:34.497 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-09-01 09:47:34.498 Uid(value=10300):25946:9095 I/AdrenoVK-0]
+===== BEGIN DUMP OF OVERRIDDEN SETTINGS =====
+
+[2026-09-01 09:47:34.498 Uid(value=10300):25946:9095 I/AdrenoVK-0]
+===== END DUMP OF OVERRIDDEN SETTINGS =====
+
+[2026-09-01 09:47:34.503 Uid(value=10300):25946:9095 I/AdrenoVK-0]
+QUALCOMM build          : c1fe339905, Id5fe42143e
+Build Date              : 01/23/25
+Shader Compiler Version : EV031.36.08.30
+Local Branch            : 
+Remote Branch           : refs/tags/AU_LINUX_ANDROID_LA.VENDOR.1.0.R1.11.00.00.816.269
+Remote Branch           : NONE
+Reconstruct Branch      : NOTHING
+
+[2026-09-01 09:47:34.503 Uid(value=10300):25946:9095 I/AdrenoVK-0]
+Build Config            : S P 12.1.1 AArch64
+
+[2026-09-01 09:47:34.503 Uid(value=10300):25946:9095 I/AdrenoVK-0]
+Driver Path             : /vendor/lib64/hw/vulkan.adreno.so
+
+[2026-09-01 09:47:34.503 Uid(value=10300):25946:9095 I/AdrenoVK-0]
+Driver Version          : 0615.95
+
+[2026-09-01 09:47:34.503 Uid(value=10300):25946:9095 I/AdrenoVK-0]
+PFP                     : 0x01730158
+
+[2026-09-01 09:47:34.503 Uid(value=10300):25946:9095 I/AdrenoVK-0]
+ME                      : 0x00000000
+
+[2026-09-01 09:47:34.503 Uid(value=10300):25946:9095 I/AdrenoVK-0]
+Application Name    : 
+Application Version : 0x00000001
+Engine Name         : 
+Engine Version      : 0x00000001
+Api Version         : 0x00403000
+
+[2026-09-01 09:47:34.508 Uid(value=10300):25946:25946 D/CompatChangeReporter]
+Compat change id reported: 247079863; UID 10300; state: ENABLED
+
+[2026-09-01 09:47:34.541 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-09-01 09:47:34.541 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-09-01 09:47:34.549 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:34.598 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-09-01 09:47:34.726 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/alac
+
+[2026-09-01 09:47:34.726 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/x-ape
+
+[2026-09-01 09:47:34.726 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/evrc
+
+[2026-09-01 09:47:34.726 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/qcelp
+
+[2026-09-01 09:47:34.726 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/dsd
+
+[2026-09-01 09:47:34.726 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/amr-wb-plus
+
+[2026-09-01 09:47:34.726 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/x-ms-wma
+
+[2026-09-01 09:47:34.726 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/evrc
+
+[2026-09-01 09:47:34.727 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/qcelp
+
+[2026-09-01 09:47:34.728 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/alac
+
+[2026-09-01 09:47:34.728 Uid(value=10300):25946:9087 W/AudioCapabilities]
+Unsupported mime audio/x-ape
+
+[2026-09-01 09:47:34.737 Uid(value=10300):25946:9087 W/VideoCapabilities]
+Unsupported mime image/vnd.android.heic
+
+[2026-09-01 09:47:34.738 Uid(value=10300):25946:9087 W/VideoCapabilities]
+Unsupported mime image/vnd.android.heic
+
+[2026-09-01 09:47:34.740 Uid(value=10300):25946:9087 W/VideoCapabilities]
+Unsupported mime video/dolby-vision
+
+[2026-09-01 09:47:34.740 Uid(value=10300):25946:9087 W/VideoCapabilities]
+Unsupported mime video/dolby-vision
+
+[2026-09-01 09:47:34.744 Uid(value=10300):25946:9087 W/cr_VAUtil]
+Unknown level: 2048 for profile 32 of codec video/dolby-vision
+
+[2026-09-01 09:47:34.744 Uid(value=10300):25946:9087 W/cr_VAUtil]
+Unknown profile: 16 for codec video/dolby-vision
+
+[2026-09-01 09:47:34.744 Uid(value=10300):25946:9087 W/cr_VAUtil]
+Unknown level: 2048 for profile 256 of codec video/dolby-vision
+
+[2026-09-01 09:47:34.744 Uid(value=10300):25946:9087 W/cr_VAUtil]
+Unknown level: 2048 for profile 32 of codec video/dolby-vision
+
+[2026-09-01 09:47:34.744 Uid(value=10300):25946:9087 W/cr_VAUtil]
+Unknown profile: 16 for codec video/dolby-vision
+
+[2026-09-01 09:47:34.744 Uid(value=10300):25946:9087 W/cr_VAUtil]
+Unknown level: 2048 for profile 256 of codec video/dolby-vision
+
+[2026-09-01 09:47:34.813 Uid(value=10300):25946:9094 I/CameraInjector]
+waitForResult: time out waiting for sUpdateCloudCameraInfoLatch isInCloudCameraAuxPackageList
+
+[2026-09-01 09:47:34.814 Uid(value=10300):25946:9094 W/libc]
+Access denied finding property "vendor.camera.aux.packagelist"
+
+[2026-09-01 09:47:34.814 Uid(value=10300):25946:9094 W/libc]
+Access denied finding property "vendor.camera.aux.packagelistext"
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/CameraExtImplXiaoMi]
+ignore the status update of camera: 2
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 D/CameraInjector]
+updateCloudCameraControllerInfoAsync: has aleardy start update task.
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 D/CameraInjector]
+waitForResult: 
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/libc]
+Access denied finding property "vendor.camera.aux.packagelist"
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/libc]
+Access denied finding property "vendor.camera.aux.packagelistext"
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/CameraExtImplXiaoMi]
+ignore the status update of camera: 3
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 D/CameraInjector]
+updateCloudCameraControllerInfoAsync: has aleardy start update task.
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 D/CameraInjector]
+waitForResult: 
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/libc]
+Access denied finding property "vendor.camera.aux.packagelist"
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/libc]
+Access denied finding property "vendor.camera.aux.packagelistext"
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/CameraExtImplXiaoMi]
+ignore the status update of camera: 4
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 D/CameraInjector]
+updateCloudCameraControllerInfoAsync: has aleardy start update task.
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 D/CameraInjector]
+waitForResult: 
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/libc]
+Access denied finding property "vendor.camera.aux.packagelist"
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/libc]
+Access denied finding property "vendor.camera.aux.packagelistext"
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/CameraExtImplXiaoMi]
+ignore the status update of camera: 5
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 D/CameraInjector]
+updateCloudCameraControllerInfoAsync: has aleardy start update task.
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 D/CameraInjector]
+waitForResult: 
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/libc]
+Access denied finding property "vendor.camera.aux.packagelist"
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/libc]
+Access denied finding property "vendor.camera.aux.packagelistext"
+
+[2026-09-01 09:47:34.815 Uid(value=10300):25946:9094 W/CameraExtImplXiaoMi]
+ignore the status update of camera: 6
+
+[2026-09-01 09:47:34.816 Uid(value=10300):25946:8987 W/ad.manager.plus]
+Long monitor contention with owner ThreadPoolSingl (9094) at void android.hardware.camera2.CameraManager$CameraManagerGlobal.registerAvailabilityCallback(android.hardware.camera2.CameraManager$AvailabilityCallback, java.util.concurrent.Executor, boolean, int, int)(CameraManager.java:3221) waiters=0 in void android.hardware.camera2.CameraManager$CameraManagerGlobal.onTorchStatusChanged(int, java.lang.String, int) for 355ms
+
+[2026-09-01 09:47:34.816 Uid(value=10300):25946:8987 W/ad.manager.plus]
+PerfMonitor async binderTransact :  time=355ms interface=android.hardware.ICameraServiceListener code=3
+
+[2026-09-01 09:47:34.816 Uid(value=10300):25946:8987 D/CameraInjector]
+updateCloudCameraControllerInfoAsync: has aleardy start update task.
+
+[2026-09-01 09:47:34.816 Uid(value=10300):25946:8987 D/CameraInjector]
+waitForResult: 
+
+[2026-09-01 09:47:34.816 Uid(value=10300):25946:8987 W/libc]
+Access denied finding property "vendor.camera.aux.packagelist"
+
+[2026-09-01 09:47:34.816 Uid(value=10300):25946:8987 W/libc]
+Access denied finding property "vendor.camera.aux.packagelistext"
+
+[2026-09-01 09:47:34.816 Uid(value=10300):25946:8987 W/CameraManagerGlobal]
+ignore the torch status update of camera: 2
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 D/CameraInjector]
+updateCloudCameraControllerInfoAsync: has aleardy start update task.
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 D/CameraInjector]
+waitForResult: 
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 W/libc]
+Access denied finding property "vendor.camera.aux.packagelist"
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 W/libc]
+Access denied finding property "vendor.camera.aux.packagelistext"
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 W/CameraManagerGlobal]
+ignore the torch status update of camera: 3
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 D/CameraInjector]
+updateCloudCameraControllerInfoAsync: has aleardy start update task.
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 D/CameraInjector]
+waitForResult: 
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 W/libc]
+Access denied finding property "vendor.camera.aux.packagelist"
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 W/libc]
+Access denied finding property "vendor.camera.aux.packagelistext"
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 W/CameraManagerGlobal]
+ignore the torch status update of camera: 4
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 D/CameraInjector]
+updateCloudCameraControllerInfoAsync: has aleardy start update task.
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 D/CameraInjector]
+waitForResult: 
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 W/libc]
+Access denied finding property "vendor.camera.aux.packagelist"
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 W/libc]
+Access denied finding property "vendor.camera.aux.packagelistext"
+
+[2026-09-01 09:47:34.817 Uid(value=10300):25946:9089 W/CameraManagerGlobal]
+ignore the torch status update of camera: 5
+
+[2026-09-01 09:47:35.036 Uid(value=10300):25946:9113 W/BpBinder]
+PerfMonitor binderTransact: time=562ms interface=android.content.IContentProvider code=21
+
+[2026-09-01 09:47:35.036 Uid(value=10300):25946:9113 D/CameraInjector]
+updateCloudCameraControllerInfoAsync: X
+
+[2026-09-01 09:47:35.036 Uid(value=10300):25946:9113 E/CameraInjector]
+updateCloudCameraControllerInfoAsync: latch count down error
+
+[2026-09-01 09:47:35.693 Uid(value=10300):25946:8980 W/ad.manager.plus]
+Cleared Reference was only reachable from finalizer (only reported once)
+
+[2026-09-01 09:47:35.809 Uid(value=10300):25946:8980 I/ad.manager.plus]
+Background concurrent mark compact GC freed 22MB AllocSpace bytes, 50(23MB) LOS objects, 24% free, 75MB/99MB, paused 365us,1.236ms total 198.596ms
+
+[2026-09-01 09:47:35.809 Uid(value=10300):25946:25946 W/FinalizerDaemon]
+type=1400 audit(0.0:145712): avc:  denied  { getopt } for  path="/dev/socket/usap_pool_primary" scontext=u:r:untrusted_app:s0:c44,c257,c512,c768 tcontext=u:r:zygote:s0 tclass=unix_stream_socket permissive=0 app=idm.internet.download.manager.plus
+
+[2026-09-01 09:47:38.111 Uid(value=10300):25946:9056 D/libEGL]
+Post task 1
+
+[2026-09-01 09:47:38.111 Uid(value=10300):25946:9211 D/libEGL]
+Worker thread start 521704277744
+
+[2026-09-01 09:47:38.112 Uid(value=10300):25946:9211 D/libEGL]
+Run task 1
+
+[2026-09-01 09:47:39.525 Uid(value=10300):25946:25946 I/MIUIInput]
+[KeyEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_BACK, scanCode=0, metaState=0, flags=0x48, repeatCount=0, eventTime=120583498000000, downTime=120583498000000, deviceId=-1, source=0x101, displayId=0 }, phoneEventTime=09:47:39.442
+
+[2026-09-01 09:47:39.552 Uid(value=10300):25946:25946 I/MIUIInput]
+[KeyEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', KeyEvent { action=ACTION_UP, keyCode=KEYCODE_BACK, scanCode=0, metaState=0, flags=0x48, repeatCount=0, eventTime=120583565000000, downTime=120583498000000, deviceId=-1, source=0x101, displayId=0 }, phoneEventTime=09:47:39.509
+
+[2026-09-01 09:47:39.588 Uid(value=10300):25946:25946 W/MIUIInput]
+Back key is intercepted by the app
+
+[2026-09-01 09:47:39.589 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-09-01 09:47:39.589 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-09-01 09:47:39.651 Uid(value=10300):25946:9010 E/ad.manager.plus]
+FrameInsert open fail: No such file or directory
+
+[2026-09-01 09:47:40.431 Uid(value=10300):28713:29743 W/DownloadService]
+Long monitor contention with owner pool-10-thread-3 (29742) at void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo)(:-1) waiters=0 in void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo) for 407ms
+
+[2026-09-01 09:47:40.433 Uid(value=10300):28713:29740 W/DownloadService]
+Long monitor contention with owner pool-10-thread-3 (29742) at void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo)(:-1) waiters=1 in void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo) for 404ms
+
+[2026-09-01 09:47:40.436 Uid(value=10300):28713:29746 W/DownloadService]
+Long monitor contention with owner pool-10-thread-3 (29742) at void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo)(:-1) waiters=2 in void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo) for 397ms
+
+[2026-09-01 09:47:41.397 Uid(value=10300):25946:25946 W/RenderThread]
+type=1400 audit(0.0:145713): avc:  denied  { getattr } for  path="/sys/module/metis/parameters/minor_window_app" dev="sysfs" ino=69317 scontext=u:r:untrusted_app:s0:c44,c257,c512,c768 tcontext=u:object_r:sysfs_migt:s0 tclass=file permissive=0 app=idm.internet.download.manager.plus
+
+[2026-09-01 09:47:43.109 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120587157, downTime=120587157, phoneEventTime=09:47:43.100 } moveCount:0
+
+[2026-09-01 09:47:43.113 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:43.197 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=120587252, downTime=120587157, phoneEventTime=09:47:43.196 } moveCount:0
+
+[2026-09-01 09:47:43.214 Uid(value=10300):25946:25946 I/AbsListViewStubImpl]
+idm.internet.download.manager.plus, version: 18.2, Enable Prefetch: false
+
+[2026-09-01 09:47:43.235 Uid(value=10300):25946:25946 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for acr.browser.lightning.activity.MainActivity@81e8826, reason: DarkModeEnabled
+
+[2026-09-01 09:47:43.278 Uid(value=10300):25946:25946 W/libc]
+Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
+
+[2026-09-01 09:47:43.273 Uid(value=10300):25946:25946 W/ad.manager.plus]
+type=1400 audit(0.0:145714): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c44,c257,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=idm.internet.download.manager.plus
+
+[2026-09-01 09:47:43.278 Uid(value=10300):25946:25946 W/libc]
+Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+
+[2026-09-01 09:47:43.278 Uid(value=10300):25946:25946 I/ad.manager.plus]
+【MiuiBoosterUtils】checkUtil disable.
+
+[2026-09-01 09:47:43.273 Uid(value=10300):25946:25946 W/ad.manager.plus]
+type=1400 audit(0.0:145715): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c44,c257,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=idm.internet.download.manager.plus
+
+[2026-09-01 09:47:43.298 Uid(value=10300):25946:25946 D/VRI[PopupWindow:c1af23e]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+
+[2026-09-01 09:47:43.298 Uid(value=10300):25946:25946 D/VRI[PopupWindow:c1af23e]]
+vri.Setup new sync=wmsSync-VRI[PopupWindow:c1af23e]#2
+
+[2026-09-01 09:47:43.350 Uid(value=10300):25946:25946 D/VRI[PopupWindow:c1af23e]]
+vri.reportDrawFinished
+
+[2026-09-01 09:47:43.384 Uid(value=10300):25946:25946 D/VRI[PopupWindow:c1af23e]]
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+
+[2026-09-01 09:47:43.386 Uid(value=10300):25946:25946 D/VRI[PopupWindow:c1af23e]]
+vri.Setup new sync=wmsSync-VRI[PopupWindow:c1af23e]#4
+
+[2026-09-01 09:47:43.390 Uid(value=10300):25946:25946 D/VRI[PopupWindow:c1af23e]]
+vri.reportDrawFinished
+
+[2026-09-01 09:47:43.399 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-09-01 09:47:43.399 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-09-01 09:47:45.553 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'PopupWindow:c1af23e', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120589605, downTime=120589605, phoneEventTime=09:47:45.549 } moveCount:0
+
+[2026-09-01 09:47:45.555 Uid(value=10300):25946:25946 W/WindowOnBackDispatcher]
+sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@3cff44a
+
+[2026-09-01 09:47:45.573 Uid(value=10300):25946:25946 W/InputEventReceiver]
+Attempted to finish an input event but the input event receiver has already been disposed.
+
+[2026-09-01 09:47:45.604 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-09-01 09:47:45.604 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-09-01 09:47:45.608 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:45.899 Uid(value=10300):25946:25946 W/Choreographer]
+Frame time is 0.110721 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+
+[2026-09-01 09:47:47.233 Uid(value=10300):25946:9327 D/libEGL]
+Post task 2
+
+[2026-09-01 09:47:47.234 Uid(value=10300):25946:9211 D/libEGL]
+Run task 2
+
+[2026-09-01 09:47:47.491 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120591545, downTime=120591545, phoneEventTime=09:47:47.489 } moveCount:0
+
+[2026-09-01 09:47:47.492 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:47.581 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=120591635, downTime=120591545, phoneEventTime=09:47:47.579 } moveCount:0
+
+[2026-09-01 09:47:47.999 Uid(value=10300):25946:25946 W/WindowOnBackDispatcher]
+OnBackInvokedCallback is not enabled for the application.
+Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+
+[2026-09-01 09:47:48.501 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120592551, downTime=120592551, phoneEventTime=09:47:48.495 } moveCount:0
+
+[2026-09-01 09:47:48.502 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:48.641 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=120592694, downTime=120592551, phoneEventTime=09:47:48.637 } moveCount:13
+
+[2026-09-01 09:47:49.271 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120593325, downTime=120593325, phoneEventTime=09:47:49.269 } moveCount:0
+
+[2026-09-01 09:47:49.271 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:49.373 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=120593426, downTime=120593325, phoneEventTime=09:47:49.370 } moveCount:7
+
+[2026-09-01 09:47:50.278 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120594329, downTime=120594329, phoneEventTime=09:47:50.273 } moveCount:0
+
+[2026-09-01 09:47:50.279 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:50.289 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=120594344, downTime=120594329, phoneEventTime=09:47:50.288 } moveCount:0
+
+[2026-09-01 09:47:50.538 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120594589, downTime=120594589, phoneEventTime=09:47:50.533 } moveCount:0
+
+[2026-09-01 09:47:50.539 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:50.605 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=120594659, downTime=120594589, phoneEventTime=09:47:50.603 } moveCount:0
+
+[2026-09-01 09:47:50.950 Uid(value=10300):28713:29741 W/DownloadService]
+Long monitor contention with owner pool-10-thread-6 (29745) at void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo)(:-1) waiters=0 in void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo) for 647ms
+
+[2026-09-01 09:47:50.955 Uid(value=10300):28713:29747 W/DownloadService]
+Long monitor contention with owner pool-10-thread-6 (29745) at void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo)(:-1) waiters=1 in void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo) for 651ms
+
+[2026-09-01 09:47:50.959 Uid(value=10300):28713:29746 W/DownloadService]
+Long monitor contention with owner pool-10-thread-6 (29745) at void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo)(:-1) waiters=2 in void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo) for 420ms
+
+[2026-09-01 09:47:51.632 Uid(value=10300):25946:9399 D/libEGL]
+Post task 3
+
+[2026-09-01 09:47:51.634 Uid(value=10300):25946:9211 D/libEGL]
+Run task 3
+
+[2026-09-01 09:47:51.650 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120595697, downTime=120595697, phoneEventTime=09:47:51.641 } moveCount:0
+
+[2026-09-01 09:47:51.650 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:51.736 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=120595787, downTime=120595697, phoneEventTime=09:47:51.731 } moveCount:1
+
+[2026-09-01 09:47:52.151 Uid(value=10300):25946:25946 W/WindowOnBackDispatcher]
+OnBackInvokedCallback is not enabled for the application.
+Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+
+[2026-09-01 09:47:52.844 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120596895, downTime=120596895, phoneEventTime=09:47:52.839 } moveCount:0
+
+[2026-09-01 09:47:52.845 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:52.923 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=120596971, downTime=120596895, phoneEventTime=09:47:52.915 } moveCount:0
+
+[2026-09-01 09:47:53.315 Uid(value=10300):25946:25946 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:47:54.625 Uid(value=10300):25946:9503 E/FilePhenotypeFlags]
+Config package com.google.android.gms.clearcut_client#idm.internet.download.manager.plus cannot use FILE backing without declarative registration. See go/phenotype-android-integration#phenotype for more information. This will lead to stale flags.
+
+[2026-09-01 09:47:54.628 Uid(value=10300):25946:9503 E/FilePhenotypeFlags]
+Config package com.google.android.gms.clearcut_client#idm.internet.download.manager.plus cannot use FILE backing without declarative registration. See go/phenotype-android-integration#phenotype for more information. This will lead to stale flags.
+
+[2026-09-01 09:47:54.636 Uid(value=10300):25946:9503 E/FilePhenotypeFlags]
+Config package com.google.android.gms.clearcut_client#idm.internet.download.manager.plus cannot use FILE backing without declarative registration. See go/phenotype-android-integration#phenotype for more information. This will lead to stale flags.
+
+[2026-09-01 09:47:54.637 Uid(value=10300):25946:9503 E/FilePhenotypeFlags]
+Config package com.google.android.gms.clearcut_client#idm.internet.download.manager.plus cannot use FILE backing without declarative registration. See go/phenotype-android-integration#phenotype for more information. This will lead to stale flags.
+
+[2026-09-01 09:47:54.668 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120598717, downTime=120598717, phoneEventTime=09:47:54.661 } moveCount:0
+
+[2026-09-01 09:47:54.668 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:54.728 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=120598781, downTime=120598717, phoneEventTime=09:47:54.725 } moveCount:0
+
+[2026-09-01 09:47:55.149 Uid(value=10300):25946:25946 W/WindowOnBackDispatcher]
+OnBackInvokedCallback is not enabled for the application.
+Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+
+[2026-09-01 09:47:57.334 Uid(value=10300):25946:9484 D/libEGL]
+Post task 4
+
+[2026-09-01 09:47:57.334 Uid(value=10300):25946:9211 D/libEGL]
+Run task 4
+
+[2026-09-01 09:47:57.681 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=120601732, downTime=120601732, phoneEventTime=09:47:57.676 } moveCount:0
+
+[2026-09-01 09:47:57.682 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-01 09:47:57.722 Uid(value=10300):25946:25946 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'idm.internet.download.manager.plus/acr.browser.lightning.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=120601773, downTime=120601732, phoneEventTime=09:47:57.716 } moveCount:1
+
+[2026-09-01 09:47:57.752 Uid(value=10300):25946:25946 I/ImeTracker]
+idm.internet.download.manager.plus:5f1116ed: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false
+
+[2026-09-01 09:47:57.753 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-09-01 09:47:57.753 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-09-01 09:47:58.243 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+visibilityChanged oldVisibility=true newVisibility=false
+
+[2026-09-01 09:47:58.258 Uid(value=10300):25946:9010 D/HWUI]
+endAllActiveAnimators on 0xb400007d9d0b5890 (RippleDrawable) with handle 0xb400007e4d0398e0
+
+[2026-09-01 09:47:58.296 Uid(value=10300):25946:25946 W/WindowOnBackDispatcher]
+sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@f0567b8
+
+[2026-09-01 09:47:58.300 Uid(value=10300):25946:25946 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-09-01 09:47:58.499 Uid(value=10300):25946:9083 W/chromium]
+[WARNING:net/spdy/spdy_session.cc:3187] Received HEADERS for invalid stream 1
+
+[2026-09-01 09:48:00.053 Uid(value=10300):25946:8988 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-09-01 09:48:00.072 Uid(value=10300):25946:8987 D/AppScoutStateMachine]
+25946-ScoutStateMachinecreated
+
+[2026-09-01 09:48:00.089 Uid(value=10300):25946:25946 E/ad.manager.plus]
+hiddenapi: Accessing hidden method Landroid/view/Window;->setExtraFlags(II)V (runtime_flags=0, domain=platform, api=blocked) from Lidm/internet/download/manager/e; (domain=app, TargetSdkVersion=34) using reflection: denied
+
+[2026-09-01 09:48:00.092 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:48:00.092 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:48:00.096 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:48:00.105 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:48:00.139 Uid(value=10300):25946:25946 D/Activity]
+Activity = ActivityInfo{610b8a2 idm.internet.download.manager.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=2 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+
+[2026-09-01 09:48:00.145 Uid(value=10300):25946:25946 D/SecurityManager]
+checkAccessControl flag0
+
+[2026-09-01 09:48:00.154 Uid(value=10300):25946:25946 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for idm.internet.download.manager.MainActivity@7c063c8, reason: DarkModeEnabled
+
+[2026-09-01 09:48:00.161 Uid(value=10300):25946:25946 D/DecorViewImmersiveImpl]
+onAttachedToWindow:idm.internet.download.manager.plus/idm.internet.download.manager.MainActivity
+
+[2026-09-01 09:48:00.161 Uid(value=10300):25946:25946 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:idm.internet.download.manager.plus/idm.internet.download.manager.MainActivity
+
+[2026-09-01 09:48:00.161 Uid(value=10300):25946:25946 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-09-01 09:48:00.161 Uid(value=10300):25946:25946 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-09-01 09:48:00.161 Uid(value=10300):25946:25946 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-09-01 09:48:00.166 Uid(value=10300):9599:9599 I/CheckAppVersion]
+Using generational CollectorTypeCMC GC.
+
+[2026-09-01 09:48:00.177 Uid(value=10300):9599:9599 D/nativeloader]
+Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+
+[2026-09-01 09:48:00.181 Uid(value=10300):25946:25946 W/ad.manager.plus]
+type=1400 audit(0.0:145724): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c44,c257,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=idm.internet.download.manager.plus
+
+[2026-09-01 09:48:00.181 Uid(value=10300):25946:25946 W/ad.manager.plus]
+type=1400 audit(0.0:145725): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c44,c257,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=idm.internet.download.manager.plus
+
+[2026-09-01 09:48:00.184 Uid(value=10300):25946:25946 W/libc]
+Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
+
+[2026-09-01 09:48:00.184 Uid(value=10300):25946:25946 W/libc]
+Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+
+[2026-09-01 09:48:00.184 Uid(value=10300):25946:25946 I/ad.manager.plus]
+【MiuiBoosterUtils】checkUtil disable.
+
+[2026-09-01 09:48:00.184 Uid(value=10300):25946:25946 I/ad.manager.plus]
+【MiuiBoosterUtils】package permission check disable.
+
+[2026-09-01 09:48:00.184 Uid(value=10300):25946:25946 I/ad.manager.plus]
+【MiuiBoosterUtils】get Service disable.
+
+[2026-09-01 09:48:00.185 Uid(value=10300):25946:9617 I/ad.manager.plus]
+【MiuiBoosterUtils】improve disable.
+
+[2026-09-01 09:48:00.206 Uid(value=10300):9599:9599 I/MessageMonitor]
+Load libmiui_runtime
+
+[2026-09-01 09:48:00.210 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+
+[2026-09-01 09:48:00.210 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+vri.Setup new sync=wmsSync-VRI[MainActivity]#6
+
+[2026-09-01 09:48:00.216 Uid(value=10300):9599:9599 D/MiuiMonitorThread]
+Shared singleton Thread for stability monitor start
+
+[2026-09-01 09:48:00.220 Uid(value=10300):9599:9599 D/CompatChangeReporter]
+Compat change id reported: 242716250; UID 10300; state: ENABLED
+
+[2026-09-01 09:48:00.227 Uid(value=10300):9599:9599 D/ActivityThread]
+setEmbeddedParam packageName=idm.internet.download.manager.plus processName=idm.internet.download.manager.plus:CheckAppVersion isEmbedded=false isIsolated=false
+
+[2026-09-01 09:48:00.229 Uid(value=10300):9599:9599 D/ApplicationLoaders]
+Returning zygote-cached class loader: /system/framework/org.apache.http.legacy.jar
+
+[2026-09-01 09:48:00.251 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+vri.reportDrawFinished
+
+[2026-09-01 09:48:00.257 Uid(value=10300):9599:9599 D/nativeloader]
+Configuring clns-8 for other apk /data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/lib/arm64:/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/idm.internet.download.manager.plus
+
+[2026-09-01 09:48:00.280 Uid(value=10300):9599:9599 I/Perf]
+Connecting to perf service.
+
+[2026-09-01 09:48:00.291 Uid(value=10300):9599:9599 V/GraphicsEnvironment]
+Currently set values for:
+
+[2026-09-01 09:48:00.291 Uid(value=10300):9599:9599 V/GraphicsEnvironment]
+  angle_gl_driver_selection_pkgs=[]
+
+[2026-09-01 09:48:00.291 Uid(value=10300):9599:9599 V/GraphicsEnvironment]
+  angle_gl_driver_selection_values=[]
+
+[2026-09-01 09:48:00.291 Uid(value=10300):9599:9599 V/GraphicsEnvironment]
+Global.Settings values are invalid: number of packages: 0, number of values: 0
+
+[2026-09-01 09:48:00.291 Uid(value=10300):9599:9599 V/GraphicsEnvironment]
+App is not on the allowlist for updatable production driver.
+
+[2026-09-01 09:48:00.294 Uid(value=10300):9599:9621 I/ActivityThread]
+TrafficStats init done
+
+[2026-09-01 09:48:00.298 Uid(value=10300):9599:9599 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-09-01 09:48:00.305 Uid(value=10300):9599:9621 I/ForceDarkHelperStubImpl]
+initialize for idm.internet.download.manager.plus , ForceDarkAppConfig: null
+
+[2026-09-01 09:48:00.306 Uid(value=10300):9599:9621 D/nativeloader]
+Load libforcedarkimpl.so using system ns (caller=/system_ext/framework/miui-framework.jar): ok
+
+[2026-09-01 09:48:00.306 Uid(value=10300):9599:9621 D/HWUI]
+JNI_OnLoad success
+
+[2026-09-01 09:48:00.306 Uid(value=10300):9599:9621 I/MiuiForceDarkConfig]
+setConfig density:2.750000, mainRule:0, secondaryRule:0, tertiaryRule:0
+
+[2026-09-01 09:48:00.311 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-09-01 09:48:00.311 Uid(value=10300):25946:25946 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-09-01 09:48:00.320 Uid(value=10300):9599:9621 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-09-01 09:48:00.320 Uid(value=10300):9599:9621 I/ActivityThread]
+Miui Feature Init done
+
+[2026-09-01 09:48:00.538 Uid(value=10300):9599:9635 D/CompatChangeReporter]
+Compat change id reported: 247079863; UID 10300; state: ENABLED
+
+[2026-09-01 09:48:00.573 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:48:00.577 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:48:00.579 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:48:00.581 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:48:00.582 Uid(value=10300):25946:25946 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-01 09:48:00.655 Uid(value=10300):25946:9018 D/MediaPlayer]
+getCacheForType() cacheUri=content://0@settings/system/notification_sound_cache  actualDefaultRingtoneUri = content://media/internal/audio/media/262?title=WaterDrop_preview&canonical=1type = 2
+
+[2026-09-01 09:48:00.680 Uid(value=10300):25946:9018 D/MediaPlayer]
+setDataSource() actualUri=file:///system/media/audio/ui/WaterDropNotificationDay2.ogg
+
+[2026-09-01 09:48:00.688 Uid(value=10300):25946:9018 W/MediaPlayer]
+Error setting data source via ContentResolver
+java.lang.NullPointerException: uri
+	at java.util.Objects.throwNullPointerException(Objects.java:508)
+	at java.util.Objects.requireNonNull(Objects.java:250)
+	at android.content.ContentResolver.openAssetFileDescriptor(ContentResolver.java:1834)
+	at android.content.ContentResolver.openAssetFileDescriptor(ContentResolver.java:1775)
+	at android.media.MediaPlayer.attemptDataSource(MediaPlayer.java:1160)
+	at android.media.MediaPlayer.setDataSource(MediaPlayer.java:1117)
+	at android.media.MediaPlayer.setDataSource(MediaPlayer.java:1050)
+	at android.media.Ringtone.createLocalMediaPlayer(Ringtone.java:210)
+	at android.media.RingtoneManager.getRingtone(RingtoneManager.java:859)
+	at android.media.RingtoneManager.getRingtone(RingtoneManager.java:842)
+	at android.media.RingtoneManager.getRingtone(RingtoneManager.java:771)
+	at idm.internet.download.manager.k.ۦۖۘ(dex-id-f94a284bc019eed7d9cb5f8552b5677625673491:10)
+	at idm.internet.download.manager.MainActivity$g0$P.ۦۖۦ(dex-id-a984d8377c70e43342208b19b19c05ceaf575f7f:43)
+	at idm.internet.download.manager.MainActivity$g0$P.doInBackground(dex-id-a984d8377c70e43342208b19b19c05ceaf575f7f:0)
+	at i.Yk.ۦۖۢ(dex-id-60c4f94cfd64b1e5d4f58d13f1d16d8d18c3721c:5)
+	at i.Yk.ۦۖ۫(dex-id-60c4f94cfd64b1e5d4f58d13f1d16d8d18c3721c:0)
+	at i.Wk.run(dex-id-1d95721dc792f37edf45e4fe35174e4a1cdc0546:2)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:520)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1100)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:1572)
+
+[2026-09-01 09:48:00.797 Uid(value=10300):25946:25946 D/UserSceneDetector]
+invoke error.
+
+[2026-09-01 09:48:00.917 Uid(value=10300):9599:9635 I/Process]
+Process is going to kill itself!
+java.lang.Exception
+	at android.os.Process.killProcess(Process.java:1507)
+	at idm.internet.download.manager.CheckAppVersion.onHandleIntent(dex-id-71fee18d5e5da37a1df8741903da81fd06369f17:471)
+	at android.app.IntentService$ServiceHandler.handleMessage(IntentService.java:77)
+	at android.os.Handler.dispatchMessage(Handler.java:107)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:337)
+	at android.os.HandlerThread.run(HandlerThread.java:85)
+
+[2026-09-01 09:48:00.917 Uid(value=10300):9599:9635 I/Process]
+Sending signal. PID: 9599 SIG: 9
+
+[2026-09-01 09:48:00.917 Uid(value=10300):9599:9635 I/libc]
+kill: send 9 to pid 9599
+
+[2026-09-01 09:48:00.917 Uid(value=10300):9599:9635 I/libc]
+debug pid reuse, real pid 9599
+
+[2026-09-01 09:48:01.669 Uid(value=10300):25946:9018 D/Ringtone]
+Successfully created local player
+
+[2026-09-01 09:48:01.829 Uid(value=10300):28713:29740 W/DownloadService]
+Long monitor contention with owner pool-10-thread-2 (29741) at void i.Mc.ۦ۟۬(java.lang.String, int, long, long)(:-1) waiters=0 in void i.Mc.ۦۡۙ(com.aspsine.multithreaddownload.db.ThreadInfo, com.aspsine.multithreaddownload.DownloadInfo) for 696ms
+
+[2026-09-01 09:48:01.831 Uid(value=10300):28713:29746 W/DownloadService]
+Long monitor contention with owner pool-10-thread-2 (29741) at void i.Mc.ۦ۟۬(java.lang.String, int, long, long)(:-1) waiters=1 in void i.Mc.ۦ۟۬(java.lang.String, int, long, long) for 488ms
+
+[2026-09-01 09:48:01.834 Uid(value=10300):28713:29745 W/DownloadService]
+Long monitor contention with owner pool-10-thread-2 (29741) at void i.Mc.ۦ۟۬(java.lang.String, int, long, long)(:-1) waiters=2 in void i.Mc.ۦ۟۬(java.lang.String, int, long, long) for 485ms
+
+[2026-09-01 09:48:04.234 Uid(value=10300):25946:9624 D/libEGL]
+Post task 5
+
+[2026-09-01 09:48:04.234 Uid(value=10300):25946:9211 D/libEGL]
+Run task 5
+
+[2026-09-01 09:48:34.236 Uid(value=10300):25946:9211 D/libEGL]
+Worker thread exit 521704277744
+
+[2026-09-01 09:48:41.482 Uid(value=10300):25946:8980 I/ad.manager.plus]
+Background young concurrent mark compact GC freed 17MB AllocSpace bytes, 170(3592KB) LOS objects, 20% free, 80MB/101MB, paused 358us,1.179ms total 105.629ms
+
+[2026-09-01 09:48:41.496 Uid(value=10300):25946:8982 W/MediaPlayer-JNI]
+MediaPlayer finalized without being released
+
+[2026-09-01 09:48:41.508 Uid(value=10300):25946:8982 V/MediaPlayer]
+resetDrmState:  mDrmInfo=null mDrmProvisioningThread=null mPrepareDrmInProgress=false mActiveDrmScheme=false
+
+[2026-09-01 09:48:41.508 Uid(value=10300):25946:8982 V/MediaPlayer]
+cleanDrmObj: mDrmObj=null mDrmSessionId=null
+
+[2026-09-01 09:48:43.840 Uid(value=10300):28713:10184 W/BaseBundleMonitorImpl]
+Large Bundle: length=157324, bundle=64d0f07
+
+[2026-09-01 09:48:43.869 Uid(value=10300):10345:10345 I/DeletionService]
+Using generational CollectorTypeCMC GC.
+
+[2026-09-01 09:48:43.880 Uid(value=10300):10345:10345 D/nativeloader]
+Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+
+[2026-09-01 09:48:43.886 Uid(value=10300):10345:10345 I/MessageMonitor]
+Load libmiui_runtime
+
+[2026-09-01 09:48:43.902 Uid(value=10300):10345:10345 D/MiuiMonitorThread]
+Shared singleton Thread for stability monitor start
+
+[2026-09-01 09:48:43.903 Uid(value=10300):10345:10345 D/CompatChangeReporter]
+Compat change id reported: 242716250; UID 10300; state: ENABLED
+
+[2026-09-01 09:48:43.913 Uid(value=10300):28713:10370 D/ffmpeg-kit]
+Async callback block started.
+
+[2026-09-01 09:48:43.917 Uid(value=10300):10345:10345 D/ActivityThread]
+setEmbeddedParam packageName=idm.internet.download.manager.plus processName=idm.internet.download.manager.plus:TempFilesDeletionService isEmbedded=false isIsolated=false
+
+[2026-09-01 09:48:43.918 Uid(value=10300):10345:10345 D/ApplicationLoaders]
+Returning zygote-cached class loader: /system/framework/org.apache.http.legacy.jar
+
+[2026-09-01 09:48:43.938 Uid(value=10300):10345:10345 D/nativeloader]
+Configuring clns-8 for other apk /data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/lib/arm64:/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/idm.internet.download.manager.plus
+
+[2026-09-01 09:48:43.948 Uid(value=10300):10345:10345 I/Perf]
+Connecting to perf service.
+
+[2026-09-01 09:48:43.950 Uid(value=10300):10345:10345 V/GraphicsEnvironment]
+Currently set values for:
+
+[2026-09-01 09:48:43.950 Uid(value=10300):10345:10345 V/GraphicsEnvironment]
+  angle_gl_driver_selection_pkgs=[]
+
+[2026-09-01 09:48:43.950 Uid(value=10300):10345:10345 V/GraphicsEnvironment]
+  angle_gl_driver_selection_values=[]
+
+[2026-09-01 09:48:43.950 Uid(value=10300):10345:10345 V/GraphicsEnvironment]
+Global.Settings values are invalid: number of packages: 0, number of values: 0
+
+[2026-09-01 09:48:43.951 Uid(value=10300):10345:10345 V/GraphicsEnvironment]
+App is not on the allowlist for updatable production driver.
+
+[2026-09-01 09:48:43.954 Uid(value=10300):10345:10362 I/ActivityThread]
+TrafficStats init done
+
+[2026-09-01 09:48:43.958 Uid(value=10300):10345:10345 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-09-01 09:48:43.965 Uid(value=10300):10345:10362 I/ForceDarkHelperStubImpl]
+initialize for idm.internet.download.manager.plus , ForceDarkAppConfig: null
+
+[2026-09-01 09:48:43.968 Uid(value=10300):10345:10362 D/nativeloader]
+Load libforcedarkimpl.so using system ns (caller=/system_ext/framework/miui-framework.jar): ok
+
+[2026-09-01 09:48:43.969 Uid(value=10300):10345:10362 D/HWUI]
+JNI_OnLoad success
+
+[2026-09-01 09:48:43.969 Uid(value=10300):10345:10362 I/MiuiForceDarkConfig]
+setConfig density:2.750000, mainRule:0, secondaryRule:0, tertiaryRule:0
+
+[2026-09-01 09:48:43.980 Uid(value=10300):10345:10362 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-09-01 09:48:43.980 Uid(value=10300):10345:10362 I/ActivityThread]
+Miui Feature Init done
+
+[2026-09-01 09:48:44.032 Uid(value=10300):10345:10377 D/CompatChangeReporter]
+Compat change id reported: 247079863; UID 10300; state: ENABLED
+
+[2026-09-01 09:48:46.446 Uid(value=10300):28713:10370 D/ffmpeg-kit]
+Async callback block stopped.
+
+[2026-09-01 09:48:46.521 Uid(value=10300):10506:10506 I/aScannerService]
+Using generational CollectorTypeCMC GC.
+
+[2026-09-01 09:48:46.527 Uid(value=10300):10506:10506 D/nativeloader]
+Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+
+[2026-09-01 09:48:46.532 Uid(value=10300):10506:10506 I/MessageMonitor]
+Load libmiui_runtime
+
+[2026-09-01 09:48:46.547 Uid(value=10300):10506:10506 D/MiuiMonitorThread]
+Shared singleton Thread for stability monitor start
+
+[2026-09-01 09:48:46.550 Uid(value=10300):10506:10506 D/CompatChangeReporter]
+Compat change id reported: 242716250; UID 10300; state: ENABLED
+
+[2026-09-01 09:48:46.557 Uid(value=10300):10506:10506 D/ActivityThread]
+setEmbeddedParam packageName=idm.internet.download.manager.plus processName=idm.internet.download.manager.plus:MediaScannerService isEmbedded=false isIsolated=false
+
+[2026-09-01 09:48:46.559 Uid(value=10300):10506:10506 D/ApplicationLoaders]
+Returning zygote-cached class loader: /system/framework/org.apache.http.legacy.jar
+
+[2026-09-01 09:48:46.569 Uid(value=10300):10506:10506 D/nativeloader]
+Configuring clns-8 for other apk /data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/lib/arm64:/data/app/~~_wBTs_fDQcygziNLNilxow==/idm.internet.download.manager.plus-yxqe8g5X4TtrmFoZ03bXyw==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/idm.internet.download.manager.plus
+
+[2026-09-01 09:48:46.575 Uid(value=10300):10506:10506 I/Perf]
+Connecting to perf service.
+
+[2026-09-01 09:48:46.579 Uid(value=10300):10506:10506 V/GraphicsEnvironment]
+Currently set values for:
+
+[2026-09-01 09:48:46.579 Uid(value=10300):10506:10506 V/GraphicsEnvironment]
+  angle_gl_driver_selection_pkgs=[]
+
+[2026-09-01 09:48:46.579 Uid(value=10300):10506:10506 V/GraphicsEnvironment]
+  angle_gl_driver_selection_values=[]
+
+[2026-09-01 09:48:46.579 Uid(value=10300):10506:10506 V/GraphicsEnvironment]
+Global.Settings values are invalid: number of packages: 0, number of values: 0
+
+[2026-09-01 09:48:46.579 Uid(value=10300):10506:10506 V/GraphicsEnvironment]
+App is not on the allowlist for updatable production driver.
+
+[2026-09-01 09:48:46.580 Uid(value=10300):10506:10523 I/ActivityThread]
+TrafficStats init done
+
+[2026-09-01 09:48:46.583 Uid(value=10300):10506:10506 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-09-01 09:48:46.592 Uid(value=10300):10506:10523 I/ForceDarkHelperStubImpl]
+initialize for idm.internet.download.manager.plus , ForceDarkAppConfig: null
+
+[2026-09-01 09:48:46.595 Uid(value=10300):10506:10523 D/nativeloader]
+Load libforcedarkimpl.so using system ns (caller=/system_ext/framework/miui-framework.jar): ok
+
+[2026-09-01 09:48:46.595 Uid(value=10300):10506:10523 D/HWUI]
+JNI_OnLoad success
+
+[2026-09-01 09:48:46.595 Uid(value=10300):10506:10523 I/MiuiForceDarkConfig]
+setConfig density:2.750000, mainRule:0, secondaryRule:0, tertiaryRule:0
+
+[2026-09-01 09:48:46.606 Uid(value=10300):10506:10523 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-09-01 09:48:46.606 Uid(value=10300):10506:10523 I/ActivityThread]
+Miui Feature Init done
+
+[2026-09-01 09:48:46.809 Uid(value=10300):10506:10533 D/MediaScannerConnection]
+Scanned /storage/emulated/0/Download/1DMP/Videos/《心动的信号第九季（加更版）》20260831中上纯享在线观看 - 2345影视.mp4 to content://media/external_primary/video/media/1000530299
+
+[2026-09-01 09:48:48.857 Uid(value=10300):25946:25946 D/VRI[MainActivity]]
+visibilityChanged oldVisibility=true newVisibility=false
+
+[2026-09-01 09:48:49.636 Uid(value=10300):10506:10506 I/Process]
+Process is going to kill itself!
+java.lang.Exception
+	at android.os.Process.killProcess(Process.java:1507)
+	at idm.internet.download.manager.MediaScannerService.onDestroy(dex-id-561f543f3f601d1e4e469d20f60c1c1fac486e21:26)
+	at android.app.ActivityThread.handleStopService(ActivityThread.java:5647)
+	at android.app.ActivityThread.-$$Nest$mhandleStopService(ActivityThread.java:0)
+	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2759)
+	at android.os.Handler.dispatchMessage(Handler.java:107)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:337)
+	at android.app.ActivityThread.main(ActivityThread.java:9682)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:625)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:944)
+
+[2026-09-01 09:48:49.636 Uid(value=10300):10506:10506 I/Process]
+Sending signal. PID: 10506 SIG: 9
+
+[2026-09-01 09:48:49.636 Uid(value=10300):10506:10506 I/libc]
+kill: send 9 to pid 10506
+
+[2026-09-01 09:48:49.636 Uid(value=10300):10506:10506 I/libc]
+debug pid reuse, real pid 10506
 
