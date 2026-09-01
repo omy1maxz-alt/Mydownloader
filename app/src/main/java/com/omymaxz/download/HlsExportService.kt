@@ -18,10 +18,17 @@ import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.common.util.Util
+import androidx.media3.transformer.DefaultAssetLoaderFactory
+import androidx.media3.transformer.DefaultDecoderFactory
+import androidx.media3.transformer.ExportException
+import androidx.media3.transformer.ExportResult
+import androidx.media3.transformer.Transformer
+import androidx.media3.datasource.cache.CacheDataSource
 import com.arthenica.ffmpegkit.FFmpegKit
 import kotlinx.coroutines.*
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.resume
 
 class HlsExportService : Service() {
 
@@ -87,7 +94,23 @@ class HlsExportService : Service() {
                     extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title)
                     videoUrl != null -> {
                         val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                        muxToMp4(finalUrl, title)
+
+                        // Check if the exact variant is already cached. If so, use Transformer to instantly export without network usage!
+                        val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
+                        val cacheKey = androidx.media3.datasource.cache.CacheKeyFactory.DEFAULT.buildCacheKey(androidx.media3.datasource.DataSpec(android.net.Uri.parse(finalUrl)))
+
+                        // A rough check: If there's any data cached for this key, attempt Transformer export.
+                        val isCached = cache.getCachedSpans(cacheKey).isNotEmpty()
+
+                        if (isCached) {
+                            val mediaItem = MediaItem.Builder()
+                                .setUri(android.net.Uri.parse(finalUrl))
+                                .setMimeType(mimeType)
+                                .build()
+                            muxToMp4WithTransformer(mediaItem, title)
+                        } else {
+                            muxToMp4(finalUrl, title)
+                        }
                     }
                 }
             } catch (t: Throwable) {
@@ -108,11 +131,69 @@ class HlsExportService : Service() {
                 return
             }
 
-        val url = download.request.uri.toString()
-        val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
-        val finalUrl = resolveVariantUrl(url, streamKeysStr)
-        muxToMp4(finalUrl, title)
+        // Check if fully cached. If yes, use Transformer. If not, fallback to FFmpeg network download.
+        if (download.state == Download.STATE_COMPLETED) {
+            val url = download.request.uri.toString()
+            val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
+            val finalUrl = resolveVariantUrl(url, streamKeysStr)
+
+            val mediaItem = MediaItem.Builder()
+                .setUri(android.net.Uri.parse(finalUrl))
+                .setMimeType(download.request.mimeType)
+                .build()
+
+            muxToMp4WithTransformer(mediaItem, title)
+        } else {
+            val url = download.request.uri.toString()
+            val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
+            val finalUrl = resolveVariantUrl(url, streamKeysStr)
+            muxToMp4(finalUrl, title)
+        }
     }
+
+    private suspend fun muxToMp4WithTransformer(mediaItem: MediaItem, title: String) =
+        suspendCancellableCoroutine<Unit> { cont ->
+            val cacheFactory: CacheDataSource.Factory =
+                HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
+
+            val defaultMediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
+                .setDataSourceFactory(cacheFactory)
+
+            @Suppress("DEPRECATION")
+            val transformer = Transformer.Builder(applicationContext)
+                .setAssetLoaderFactory(
+                    DefaultAssetLoaderFactory(
+                        applicationContext,
+                        DefaultDecoderFactory(applicationContext),
+                        androidx.media3.common.util.Clock.DEFAULT,
+                        defaultMediaSourceFactory,
+                        androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
+                    )
+                )
+                .addListener(object : Transformer.Listener {
+                    override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
+                        Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
+                        if (cont.isActive) cont.resume(Unit)
+                    }
+                    override fun onError(
+                        composition: androidx.media3.transformer.Composition,
+                        result: ExportResult, ex: ExportException
+                    ) {
+                        Log.e(TAG, "Transformer error", ex)
+                        Toast.makeText(applicationContext, "Export error: ${ex.message}", Toast.LENGTH_LONG).show()
+                        if (cont.isActive) cont.resume(Unit)
+                    }
+                })
+                .build()
+
+            val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+            val out = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "$safeTitle.mp4"
+            )
+            transformer.start(mediaItem, out.absolutePath)
+            cont.invokeOnCancellation { transformer.cancel() }
+        }
 
     private suspend fun muxToMp4(url: String, title: String) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
@@ -185,8 +266,12 @@ class HlsExportService : Service() {
                         return@withContext if (variantLine.startsWith("http")) {
                             variantLine
                         } else {
-                            val base = masterUrl.substringBeforeLast("/")
-                            "$base/$variantLine"
+                            try {
+                                java.net.URI(masterUrl).resolve(variantLine).toString()
+                            } catch (e: Exception) {
+                                val base = masterUrl.substringBeforeLast("/")
+                                "$base/${variantLine.removePrefix("/")}"
+                            }
                         }
                     }
                     variantIndex++
