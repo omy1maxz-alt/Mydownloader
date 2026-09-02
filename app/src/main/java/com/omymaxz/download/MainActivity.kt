@@ -3287,6 +3287,19 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 openCurrentPageInExternalBrowser()
                 true
             }
+            R.id.menu_translate -> {
+                val currentUrl = webView.url
+                if (!currentUrl.isNullOrEmpty()) {
+                    val encodedUrl = java.net.URLEncoder.encode(currentUrl, "UTF-8")
+                    val translateUrl = "https://translate.google.com/translate?sl=auto&tl=en&u=$encodedUrl"
+                    webView.loadUrl(translateUrl)
+                }
+                true
+            }
+            R.id.menu_nuke_traps -> {
+                nukeAdsAndTraps()
+                true
+            }
             R.id.menu_debug_site -> {
                 showSiteDebuggingOptions()
                 true
@@ -3300,6 +3313,47 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 true
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun nukeAdsAndTraps() {
+        val script = """
+            (function() {
+                try {
+                    // 1. Remove all iframes (kills popup ad sources and hidden trackers)
+                    document.querySelectorAll('iframe').forEach(iframe => iframe.remove());
+
+                    // 2. Kill transparent/overlay divs acting as click-traps
+                    document.querySelectorAll('div').forEach(div => {
+                        const style = window.getComputedStyle(div);
+                        if ((style.position === 'absolute' || style.position === 'fixed') &&
+                            (style.zIndex > 1000 || parseFloat(style.opacity) < 0.1 || style.backgroundColor === 'rgba(0, 0, 0, 0)' || style.backgroundColor === 'transparent')) {
+                            div.remove();
+                        }
+                    });
+
+                    // 3. Force all links to open in the SAME tab to prevent popup redirects, and strip inline onClick handlers
+                    document.querySelectorAll('a').forEach(link => {
+                        if (link.hasAttribute('target')) {
+                            link.removeAttribute('target');
+                        }
+                        if (link.hasAttribute('onclick')) {
+                            link.removeAttribute('onclick');
+                        }
+                        // Replace node to kill jQuery/React bound click listeners
+                        const clone = link.cloneNode(true);
+                        link.parentNode.replaceChild(clone, link);
+                    });
+
+                    return "success";
+                } catch(e) {
+                    return "error";
+                }
+            })();
+        """.trimIndent()
+
+        webView.evaluateJavascript(script) { result ->
+            Toast.makeText(this, "Nuked Ads and Traps from page!", Toast.LENGTH_SHORT).show()
         }
     }
 
