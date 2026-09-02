@@ -3288,12 +3288,47 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 true
             }
             R.id.menu_translate -> {
-                val currentUrl = webView.url
-                if (!currentUrl.isNullOrEmpty()) {
-                    val encodedUrl = java.net.URLEncoder.encode(currentUrl, "UTF-8")
-                    val translateUrl = "https://translate.google.com/translate?sl=auto&tl=en&u=$encodedUrl"
-                    webView.loadUrl(translateUrl)
-                }
+                val translateScript = """
+                    (function() {
+                        if (document.getElementById('google_translate_element')) return;
+
+                        var translateDiv = document.createElement('div');
+                        translateDiv.id = 'google_translate_element';
+                        translateDiv.style.position = 'fixed';
+                        translateDiv.style.bottom = '10px';
+                        translateDiv.style.right = '10px';
+                        translateDiv.style.zIndex = '999999';
+                        translateDiv.style.backgroundColor = 'white';
+                        translateDiv.style.padding = '5px';
+                        translateDiv.style.border = '1px solid #ccc';
+                        translateDiv.style.borderRadius = '5px';
+                        document.body.appendChild(translateDiv);
+
+                        window.googleTranslateElementInit = function() {
+                            new google.translate.TranslateElement({
+                                pageLanguage: 'auto',
+                                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                                autoDisplay: true
+                            }, 'google_translate_element');
+
+                            // Auto-trigger translation to English
+                            setTimeout(function() {
+                                var select = document.querySelector('.goog-te-combo');
+                                if (select) {
+                                    select.value = 'en';
+                                    select.dispatchEvent(new Event('change'));
+                                }
+                            }, 1000);
+                        };
+
+                        var script = document.createElement('script');
+                        script.type = 'text/javascript';
+                        script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+                        document.head.appendChild(script);
+                    })();
+                """.trimIndent()
+                webView.evaluateJavascript(translateScript, null)
+                Toast.makeText(this, "Injecting translator...", Toast.LENGTH_SHORT).show()
                 true
             }
             R.id.menu_nuke_traps -> {
