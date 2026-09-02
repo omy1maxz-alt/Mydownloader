@@ -22,10 +22,12 @@
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
 
             <LinearLayout
+                android:id="@+id/toolbarLinearLayout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:animateLayoutChanges="true">
 
                 <ImageButton
                     android:id="@+id/homeButton"
@@ -38,13 +40,14 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="36dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    android:background="@android:color/white"
+                    android:background="@drawable/bg_search_bar_modern"
                     android:orientation="horizontal"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp">
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:gravity="center_vertical">
 
                     <EditText
                         android:id="@+id/urlEditTextToolbar"

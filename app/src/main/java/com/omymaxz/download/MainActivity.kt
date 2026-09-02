@@ -933,6 +933,24 @@ private fun checkBatteryOptimization() {
                 binding.urlEditTextToolbar.post {
                     binding.urlEditTextToolbar.selectAll()
                 }
+
+                // Modern UI: Hide other buttons to stretch the URL bar
+                binding.homeButton.visibility = View.GONE
+                binding.backButton.visibility = View.GONE
+                binding.forwardButton.visibility = View.GONE
+                binding.refreshButton.visibility = View.GONE
+                binding.translateButton.visibility = View.GONE
+                binding.aiButton.visibility = View.GONE
+                binding.tabButton.visibility = View.GONE
+            } else {
+                // Restore buttons when focus is lost
+                binding.homeButton.visibility = View.VISIBLE
+                binding.backButton.visibility = View.VISIBLE
+                binding.forwardButton.visibility = View.VISIBLE
+                binding.refreshButton.visibility = View.VISIBLE
+                binding.translateButton.visibility = View.VISIBLE
+                binding.aiButton.visibility = View.VISIBLE
+                binding.tabButton.visibility = View.VISIBLE
             }
         }
 
