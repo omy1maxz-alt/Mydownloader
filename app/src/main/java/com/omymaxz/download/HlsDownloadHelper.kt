@@ -232,7 +232,8 @@ object HlsDownloadHelper {
         context: Context, masterUrl: String, title: String,
         userAgent: String?, cookie: String?
     ) {
-        val masterText = httpGetString(masterUrl, userAgent, cookie) ?: return
+        val referer = currentReferer
+        val masterText = httpGetString(masterUrl, userAgent, referer, cookie) ?: return
         val tracks = SubtitleUtils.parseSubtitleTracks(masterText, masterUrl)
         if (tracks.isEmpty()) return
 
@@ -245,7 +246,7 @@ object HlsDownloadHelper {
                 val ext = if (vttUrl.contains(".srt", true)) ".srt" else ".vtt"
                 var lang = track.language.ifBlank { "und" }.replace(Regex("[^a-zA-Z0-9-]"), "_")
 
-                val bytes = httpGetBytes(vttUrl, userAgent, cookie) ?: continue
+                val bytes = httpGetBytes(vttUrl, userAgent, referer, cookie) ?: continue
 
                 // Inspect the subtitle content to force English detection if it contains "thank"
                 val contentString = String(bytes, Charsets.UTF_8)
@@ -270,7 +271,8 @@ object HlsDownloadHelper {
     /** If [subUrl] is an m3u8, parse it and return the first non-comment line (the .vtt). */
     private fun resolveToDirectVtt(subUrl: String, userAgent: String?, cookie: String?): String? {
         if (!subUrl.contains(".m3u8", true)) return subUrl
-        val text = httpGetString(subUrl, userAgent, cookie) ?: return null
+        val referer = currentReferer
+        val text = httpGetString(subUrl, userAgent, referer, cookie) ?: return null
         val base = subUrl.substringBeforeLast('/')
         for (raw in text.lines()) {
             val line = raw.trim()
@@ -280,15 +282,16 @@ object HlsDownloadHelper {
         return null
     }
 
-    fun httpGetString(url: String, ua: String?, cookie: String?): String? =
-        httpGetBytes(url, ua, cookie)?.let { String(it, Charsets.UTF_8) }
+    fun httpGetString(url: String, ua: String?, referer: String?, cookie: String?): String? =
+        httpGetBytes(url, ua, referer, cookie)?.let { String(it, Charsets.UTF_8) }
 
-    fun httpGetBytes(url: String, ua: String?, cookie: String?): ByteArray? {
+    fun httpGetBytes(url: String, ua: String?, referer: String?, cookie: String?): ByteArray? {
         val c = (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = 15_000; readTimeout = 15_000
             instanceFollowRedirects = true
-            ua?.let    { setRequestProperty("User-Agent", it) }
-            cookie?.let{ setRequestProperty("Cookie", it) }
+            ua?.let      { setRequestProperty("User-Agent", it) }
+            referer?.let { setRequestProperty("Referer", it) }
+            cookie?.let  { setRequestProperty("Cookie", it) }
         }
         return try { c.inputStream.use { it.readBytes() } } catch (t: Throwable) { null }
         finally { c.disconnect() }

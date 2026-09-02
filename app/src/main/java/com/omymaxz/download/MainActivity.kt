@@ -3212,9 +3212,26 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     mediaFile.mimeType == "application/x-mpegURL"
 
         if (isHls) {
-            val userAgent = webView.settings.userAgentString
-            val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
-            HlsDownloadHelper.downloadHls(this, mediaFile.url, mediaFile.title, userAgent, cookie)
+            val options = arrayOf("Normal Download (Media3)", "FFmpeg Download")
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("HLS Download Method")
+                .setItems(options) { _, which ->
+                    val userAgent = webView.settings.userAgentString
+                    val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
+                    if (which == 0) {
+                        HlsDownloadHelper.downloadHls(this, mediaFile.url, mediaFile.title, userAgent, cookie)
+                    } else {
+                        val intent = Intent(this, HlsExportService::class.java).apply {
+                            putExtra(HlsExportService.EXTRA_VIDEO_URL, mediaFile.url)
+                            putExtra(HlsExportService.EXTRA_TITLE, mediaFile.title)
+                            putExtra(HlsExportService.EXTRA_USER_AGENT, userAgent)
+                            putExtra(HlsExportService.EXTRA_REFERER, webView.url)
+                            putExtra(HlsExportService.EXTRA_COOKIE, cookie)
+                        }
+                        startService(intent)
+                    }
+                }
+                .show()
             return
         }
 

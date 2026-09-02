@@ -247,8 +247,9 @@ class HlsExportService : Service() {
         try {
             val userAgent = HlsDownloadHelper.currentUserAgent
             val cookie = HlsDownloadHelper.currentCookie
+            val referer = HlsDownloadHelper.currentReferer
 
-            val masterText = HlsDownloadHelper.httpGetString(masterUrl, userAgent, cookie) ?: return@withContext masterUrl
+            val masterText = HlsDownloadHelper.httpGetString(masterUrl, userAgent, referer, cookie) ?: return@withContext masterUrl
             val lines = masterText.lines()
 
             var variantIndex = 0
