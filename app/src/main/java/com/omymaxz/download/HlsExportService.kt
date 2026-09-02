@@ -172,6 +172,7 @@ class HlsExportService : Service() {
                         androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
                     )
                 )
+                .setVideoMimeType(MimeTypes.VIDEO_H264)
                 .addListener(object : Transformer.Listener {
                     override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
                         Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
