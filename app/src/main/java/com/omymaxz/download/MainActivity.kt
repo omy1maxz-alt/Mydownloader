@@ -344,6 +344,13 @@ private fun checkBatteryOptimization() {
         db = AppDatabase.getDatabase(this)
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        isAutoTranslateEnabled = prefs.getBoolean("auto_translate_enabled", false)
+        if (isAutoTranslateEnabled) {
+            binding.translateButton.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
+        }
+
         initializeTabs()
         setupUrlBarInToolbar()
         loadLastUsedName()
@@ -571,6 +578,9 @@ private fun checkBatteryOptimization() {
 
         binding.translateButton.setOnClickListener {
             isAutoTranslateEnabled = !isAutoTranslateEnabled
+            val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+            prefs.edit().putBoolean("auto_translate_enabled", isAutoTranslateEnabled).apply()
+
             if (isAutoTranslateEnabled) {
                 binding.translateButton.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
                 injectTranslateScript(webView)
@@ -580,6 +590,11 @@ private fun checkBatteryOptimization() {
                 Toast.makeText(this, "Auto-Translate OFF (Reloading...)", Toast.LENGTH_SHORT).show()
                 webView.reload()
             }
+        }
+
+        binding.translateButton.setOnLongClickListener {
+            showTranslateSettingsDialog()
+            true
         }
     }
 
@@ -3325,20 +3340,41 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
 
     private fun injectTranslateScript(view: WebView?) {
+
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val targetLang = prefs.getString("translate_target_lang", "en") ?: "en"
+
         val translateScript = """
             (function() {
+                // Add CSS to hide the Translate UI and banner
+                var style = document.createElement('style');
+                style.type = 'text/css';
+                style.innerHTML = `
+                    #google_translate_element, .skiptranslate, .goog-te-banner-frame {
+                        display: none !important;
+                    }
+                    body {
+                        top: 0 !important;
+                    }
+                    .goog-tooltip {
+                        display: none !important;
+                    }
+                    .goog-tooltip:hover {
+                        display: none !important;
+                    }
+                    .goog-text-highlight {
+                        background-color: transparent !important;
+                        border: none !important;
+                        box-shadow: none !important;
+                    }
+                `;
+                document.head.appendChild(style);
+
                 if (document.getElementById('google_translate_element')) return;
 
                 var translateDiv = document.createElement('div');
                 translateDiv.id = 'google_translate_element';
-                translateDiv.style.position = 'fixed';
-                translateDiv.style.bottom = '10px';
-                translateDiv.style.right = '10px';
-                translateDiv.style.zIndex = '999999';
-                translateDiv.style.backgroundColor = 'white';
-                translateDiv.style.padding = '5px';
-                translateDiv.style.border = '1px solid #ccc';
-                translateDiv.style.borderRadius = '5px';
+                // Hidden via CSS above
                 document.body.appendChild(translateDiv);
 
                 window.googleTranslateElementInit = function() {
@@ -3348,11 +3384,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         autoDisplay: true
                     }, 'google_translate_element');
 
-                    // Auto-trigger translation to English
+                    // Auto-trigger translation
                     setTimeout(function() {
                         var select = document.querySelector('.goog-te-combo');
                         if (select) {
-                            select.value = 'en';
+                            select.value = '${targetLang}';
                             select.dispatchEvent(new Event('change'));
                         }
                     }, 1000);
@@ -4328,6 +4364,62 @@ if (isDesktopMode) {
                 Toast.makeText(this, "Redirect blocked", Toast.LENGTH_SHORT).show()
                 addToBlockedList(Uri.parse(url).host ?: url)
             }
+            .show()
+    }
+
+    private fun showTranslateSettingsDialog() {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val currentLang = prefs.getString("translate_target_lang", "en") ?: "en"
+        val isAuto = prefs.getBoolean("auto_translate_enabled", false)
+
+        val languages = arrayOf("English", "Indonesian", "Spanish", "Korean", "Japanese", "Chinese (Simplified)")
+        val languageCodes = arrayOf("en", "id", "es", "ko", "ja", "zh-CN")
+
+        var selectedIndex = languageCodes.indexOf(currentLang)
+        if (selectedIndex == -1) selectedIndex = 0
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_translate_settings, null)
+        val spinner = dialogView.findViewById<android.widget.Spinner>(R.id.language_spinner)
+        val switchAuto = dialogView.findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.switch_auto_translate)
+
+        val adapter = android.widget.ArrayAdapter(this, android.R.layout.simple_spinner_item, languages)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+        spinner.setSelection(selectedIndex)
+
+        switchAuto.isChecked = isAuto
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Translation Settings")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val newLangIndex = spinner.selectedItemPosition
+                val newLangCode = languageCodes[newLangIndex]
+                val newAuto = switchAuto.isChecked
+
+                prefs.edit()
+                    .putString("translate_target_lang", newLangCode)
+                    .putBoolean("auto_translate_enabled", newAuto)
+                    .apply()
+
+                if (newAuto != isAuto) {
+                    isAutoTranslateEnabled = newAuto
+                    if (isAutoTranslateEnabled) {
+                        binding.translateButton.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
+                        injectTranslateScript(webView)
+                        Toast.makeText(this, "Auto-Translate ON", Toast.LENGTH_SHORT).show()
+                    } else {
+                        binding.translateButton.clearColorFilter()
+                        Toast.makeText(this, "Auto-Translate OFF (Reloading...)", Toast.LENGTH_SHORT).show()
+                        webView.reload()
+                    }
+                } else if (newAuto && newLangCode != currentLang) {
+                    // Language changed, re-inject translation with new language
+                    Toast.makeText(this, "Language updated", Toast.LENGTH_SHORT).show()
+                    webView.reload()
+                }
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 }
