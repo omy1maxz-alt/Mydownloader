@@ -173,6 +173,7 @@ class HlsExportService : Service() {
                     )
                 )
                 .setVideoMimeType(MimeTypes.VIDEO_H264)
+                .setAudioMimeType(MimeTypes.AUDIO_AAC)
                 .addListener(object : Transformer.Listener {
                     override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
                         Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
