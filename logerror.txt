@@ -2076,4 +2076,3 @@ Activity = com.omymaxz.download.CustomPlayerActivity@8d52058, onConfigurationCha
 
 [2026-09-02 15:34:12.104 Uid(value=10806):26547:26547 I/ForceDarkHelperStubImpl]
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@8d52058, reason: DarkModeEnabled
-
