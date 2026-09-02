@@ -220,6 +220,8 @@ class HlsExportService : Service() {
             sb.append("-headers \"${headers.joinToString("\r\n")}\r\n\" ")
         }
 
+        sb.append("-allowed_extensions ALL ")
+
         // Fast copy, no re-encoding
         sb.append("-i \"$url\" -c copy -bsf:a aac_adtstoasc \"${out.absolutePath}\"")
 
