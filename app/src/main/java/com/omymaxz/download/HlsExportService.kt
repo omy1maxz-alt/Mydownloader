@@ -211,27 +211,40 @@ class HlsExportService : Service() {
         val referer = HlsDownloadHelper.currentReferer ?: ""
         val cookie = HlsDownloadHelper.currentCookie ?: ""
 
-        val sb = StringBuilder()
+        val commandArgs = mutableListOf<String>()
+
         if (userAgent.isNotEmpty()) {
-            sb.append("-user_agent \"$userAgent\" ")
+            commandArgs.add("-user_agent")
+            commandArgs.add(userAgent)
         }
+
         val headers = mutableListOf<String>()
         if (referer.isNotEmpty()) headers.add("Referer: $referer")
         if (cookie.isNotEmpty()) headers.add("Cookie: $cookie")
 
         if (headers.isNotEmpty()) {
-            sb.append("-headers \"${headers.joinToString("\r\n")}\r\n\" ")
+            commandArgs.add("-headers")
+            commandArgs.add("${headers.joinToString("\r\n")}\r\n")
         }
 
-        sb.append("-allowed_extensions ALL ")
+        commandArgs.add("-allowed_extensions")
+        commandArgs.add("ALL")
 
-        // Fast copy, no re-encoding
-        sb.append("-i \"$url\" -c copy -bsf:a aac_adtstoasc \"${out.absolutePath}\"")
+        commandArgs.add("-i")
+        commandArgs.add(url)
 
-        val command = sb.toString()
-        Log.d(TAG, "Executing FFmpeg command: $command")
+        commandArgs.add("-c")
+        commandArgs.add("copy")
 
-        val session = FFmpegKit.execute(command)
+        commandArgs.add("-bsf:a")
+        commandArgs.add("aac_adtstoasc")
+
+        commandArgs.add(out.absolutePath)
+
+        Log.d(TAG, "Executing FFmpeg command with arguments: $commandArgs")
+
+        // Execute with safe arguments list rather than string concatenation to prevent injection
+        val session = FFmpegKit.executeWithArguments(commandArgs.toTypedArray())
 
         withContext(Dispatchers.Main) {
             if (com.arthenica.ffmpegkit.ReturnCode.isSuccess(session.returnCode)) {
