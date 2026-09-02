@@ -3407,15 +3407,39 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val script = """
             (function() {
                 try {
-                    // 1. Remove all iframes (kills popup ad sources and hidden trackers)
-                    document.querySelectorAll('iframe').forEach(iframe => iframe.remove());
+                    // 1. Remove sneaky/tracking iframes, but preserve main content iframes (like video players)
+                    document.querySelectorAll('iframe').forEach(iframe => {
+                        const style = window.getComputedStyle(iframe);
+                        const isTiny = iframe.offsetWidth < 50 || iframe.offsetHeight < 50;
+                        const isHidden = style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity) < 0.1;
+                        if (isTiny || isHidden) {
+                            iframe.remove();
+                        }
+                    });
 
-                    // 2. Kill transparent/overlay divs acting as click-traps
+                    // 2. Kill transparent/overlay divs acting as click-traps (while protecting video players)
                     document.querySelectorAll('div').forEach(div => {
                         const style = window.getComputedStyle(div);
-                        if ((style.position === 'absolute' || style.position === 'fixed') &&
-                            (style.zIndex > 1000 || parseFloat(style.opacity) < 0.1 || style.backgroundColor === 'rgba(0, 0, 0, 0)' || style.backgroundColor === 'transparent')) {
-                            div.remove();
+                        const isOverlay = style.position === 'absolute' || style.position === 'fixed';
+                        const isTransparent = parseFloat(style.opacity) < 0.1 || style.backgroundColor === 'rgba(0, 0, 0, 0)' || style.backgroundColor === 'transparent';
+                        const hasHighZIndex = parseInt(style.zIndex, 10) > 1000;
+
+                        if (isOverlay && (isTransparent || hasHighZIndex)) {
+                            // Don't remove if it contains a video, iframe, or is a video control container
+                            if (div.querySelector('video') || div.querySelector('iframe') || div.className.toLowerCase().includes('vjs') || div.className.toLowerCase().includes('jwplayer')) {
+                                return;
+                            }
+                            // Also don't remove if it's explicitly part of the media player structure
+                            if (div.closest('video') || div.closest('iframe')) {
+                                return;
+                            }
+
+                            // Only remove large invisible overlays (click traps) or obtrusive ads
+                            if (div.offsetWidth > window.innerWidth * 0.5 && div.offsetHeight > window.innerHeight * 0.5) {
+                                div.remove();
+                            } else if (hasHighZIndex && isTransparent) {
+                                div.remove();
+                            }
                         }
                     });
 
