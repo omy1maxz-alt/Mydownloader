@@ -28,11 +28,6 @@
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/menu_translate"
-        android:title="Translate Page"
-        app:showAsAction="never" />
-
-    <item
         android:id="@+id/menu_nuke_traps"
         android:title="Nuke Ads/Traps"
         app:showAsAction="never" />

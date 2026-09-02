@@ -71,6 +71,14 @@
                     android:src="@drawable/ic_refresh" />
 
                 <ImageButton
+                    android:id="@+id/translateButton"
+                    style="?attr/borderlessButtonStyle"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="Translate Page"
+                    android:src="@drawable/ic_translate" />
+
+                <ImageButton
                     android:id="@+id/backButton"
                     style="?attr/borderlessButtonStyle"
                     android:layout_width="40dp"

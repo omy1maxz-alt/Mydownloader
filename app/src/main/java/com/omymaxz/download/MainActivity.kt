@@ -75,6 +75,7 @@ class MainActivity : AppCompatActivity() {
     private var lastUsedName: String = "Video"
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
+    private var isAutoTranslateEnabled = false
     private var fullscreenDownloadButton: View? = null
     private var fullscreenExitButton: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
@@ -566,6 +567,19 @@ private fun checkBatteryOptimization() {
         }
         binding.refreshButton.setOnClickListener {
             webView.reload()
+        }
+
+        binding.translateButton.setOnClickListener {
+            isAutoTranslateEnabled = !isAutoTranslateEnabled
+            if (isAutoTranslateEnabled) {
+                binding.translateButton.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
+                injectTranslateScript(webView)
+                Toast.makeText(this, "Auto-Translate ON", Toast.LENGTH_SHORT).show()
+            } else {
+                binding.translateButton.clearColorFilter()
+                Toast.makeText(this, "Auto-Translate OFF (Reloading...)", Toast.LENGTH_SHORT).show()
+                webView.reload()
+            }
         }
     }
 
@@ -1111,6 +1125,9 @@ private fun checkBatteryOptimization() {
                     isPageLoading = false
                     binding.progressBar.visibility = View.GONE
                     updateToolbarNavButtonState()
+                    if (isAutoTranslateEnabled) {
+                        injectTranslateScript(view)
+                    }
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
@@ -3287,50 +3304,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 openCurrentPageInExternalBrowser()
                 true
             }
-            R.id.menu_translate -> {
-                val translateScript = """
-                    (function() {
-                        if (document.getElementById('google_translate_element')) return;
-
-                        var translateDiv = document.createElement('div');
-                        translateDiv.id = 'google_translate_element';
-                        translateDiv.style.position = 'fixed';
-                        translateDiv.style.bottom = '10px';
-                        translateDiv.style.right = '10px';
-                        translateDiv.style.zIndex = '999999';
-                        translateDiv.style.backgroundColor = 'white';
-                        translateDiv.style.padding = '5px';
-                        translateDiv.style.border = '1px solid #ccc';
-                        translateDiv.style.borderRadius = '5px';
-                        document.body.appendChild(translateDiv);
-
-                        window.googleTranslateElementInit = function() {
-                            new google.translate.TranslateElement({
-                                pageLanguage: 'auto',
-                                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-                                autoDisplay: true
-                            }, 'google_translate_element');
-
-                            // Auto-trigger translation to English
-                            setTimeout(function() {
-                                var select = document.querySelector('.goog-te-combo');
-                                if (select) {
-                                    select.value = 'en';
-                                    select.dispatchEvent(new Event('change'));
-                                }
-                            }, 1000);
-                        };
-
-                        var script = document.createElement('script');
-                        script.type = 'text/javascript';
-                        script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-                        document.head.appendChild(script);
-                    })();
-                """.trimIndent()
-                webView.evaluateJavascript(translateScript, null)
-                Toast.makeText(this, "Injecting translator...", Toast.LENGTH_SHORT).show()
-                true
-            }
             R.id.menu_nuke_traps -> {
                 nukeAdsAndTraps()
                 true
@@ -3349,6 +3322,49 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun injectTranslateScript(view: WebView?) {
+        val translateScript = """
+            (function() {
+                if (document.getElementById('google_translate_element')) return;
+
+                var translateDiv = document.createElement('div');
+                translateDiv.id = 'google_translate_element';
+                translateDiv.style.position = 'fixed';
+                translateDiv.style.bottom = '10px';
+                translateDiv.style.right = '10px';
+                translateDiv.style.zIndex = '999999';
+                translateDiv.style.backgroundColor = 'white';
+                translateDiv.style.padding = '5px';
+                translateDiv.style.border = '1px solid #ccc';
+                translateDiv.style.borderRadius = '5px';
+                document.body.appendChild(translateDiv);
+
+                window.googleTranslateElementInit = function() {
+                    new google.translate.TranslateElement({
+                        pageLanguage: 'auto',
+                        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                        autoDisplay: true
+                    }, 'google_translate_element');
+
+                    // Auto-trigger translation to English
+                    setTimeout(function() {
+                        var select = document.querySelector('.goog-te-combo');
+                        if (select) {
+                            select.value = 'en';
+                            select.dispatchEvent(new Event('change'));
+                        }
+                    }, 1000);
+                };
+
+                var script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+                document.head.appendChild(script);
+            })();
+        """.trimIndent()
+        view?.evaluateJavascript(translateScript, null)
     }
 
     private fun nukeAdsAndTraps() {
