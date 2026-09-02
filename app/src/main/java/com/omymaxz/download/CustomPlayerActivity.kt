@@ -289,7 +289,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                     val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, safeTitle)
 
                     for (subUrl in newSubUrls) {
-                        val bytes = HlsDownloadHelper.httpGetBytes(subUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentCookie)
+                        val bytes = HlsDownloadHelper.httpGetBytes(subUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentReferer, HlsDownloadHelper.currentCookie)
                         if (bytes != null) {
                             val contentString = String(bytes, Charsets.UTF_8)
                             var detectedLang = "und"
@@ -462,7 +462,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 if (!intentSubUrls.isNullOrEmpty()) {
                     val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, videoTitle!!)
                     for (subUrl in intentSubUrls) {
-                        val bytes = HlsDownloadHelper.httpGetBytes(subUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentCookie)
+                        val bytes = HlsDownloadHelper.httpGetBytes(subUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentReferer, HlsDownloadHelper.currentCookie)
                         if (bytes != null) {
                             val contentString = String(bytes, Charsets.UTF_8)
                             var detectedLang = "und"
