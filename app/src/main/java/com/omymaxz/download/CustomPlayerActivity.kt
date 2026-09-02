@@ -717,6 +717,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                     putExtra(HlsExportService.EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
                     putExtra(HlsExportService.EXTRA_REFERER, HlsDownloadHelper.currentReferer)
                     putExtra(HlsExportService.EXTRA_COOKIE, HlsDownloadHelper.currentCookie)
+                    putExtra(HlsExportService.EXTRA_FORCE_TRANSFORMER, true)
                 }
                 startService(intent)
                 Toast.makeText(this, "Exporting cached video...", Toast.LENGTH_SHORT).show()
