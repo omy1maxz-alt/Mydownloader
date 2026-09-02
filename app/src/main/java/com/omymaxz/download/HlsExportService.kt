@@ -45,6 +45,7 @@ class HlsExportService : Service() {
         const val EXTRA_TRACK_WIDTH = "com.omymaxz.download.extra.TRACK_WIDTH"
         const val EXTRA_TRACK_HEIGHT= "com.omymaxz.download.extra.TRACK_HEIGHT"
         const val EXTRA_TRACK_BITRATE="com.omymaxz.download.extra.TRACK_BITRATE"
+        const val EXTRA_FORCE_TRANSFORMER="com.omymaxz.download.extra.FORCE_TRANSFORMER"
 
         const val CHANNEL_ID = "hls_export_channel"
         const val NOTIFICATION_ID = 3000
@@ -75,6 +76,7 @@ class HlsExportService : Service() {
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
         val mimeType   = intent.getStringExtra(EXTRA_MIME_TYPE) ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
         val streamKeyStrings = intent.getStringArrayListExtra(EXTRA_STREAM_KEYS)
+        val forceTransformer = intent.getBooleanExtra(EXTRA_FORCE_TRANSFORMER, false)
 
         intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
         intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
@@ -102,7 +104,7 @@ class HlsExportService : Service() {
                         // A rough check: If there's any data cached for this key, attempt Transformer export.
                         val isCached = cache.getCachedSpans(cacheKey).isNotEmpty()
 
-                        if (isCached) {
+                        if (isCached || forceTransformer) {
                             val mediaItem = MediaItem.Builder()
                                 .setUri(android.net.Uri.parse(finalUrl))
                                 .setMimeType(mimeType)
