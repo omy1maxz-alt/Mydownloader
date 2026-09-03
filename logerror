@@ -1502,13 +1502,13 @@ getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
 pause(sessionID=47385) pause(14010): prior state:STATE_ACTIVE packageName: com.omymaxz.download.debug
 
 [2026-09-03 10:49:12.864 Uid(value=10806):8621:8621 I/input_focus]
-DIE in:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{e189b62 V.E...... R....... 0,0-1403,503 aid=1073741825}[CustomPlayerActivity] of Surface(name=null mNativeObject=-5476376608451035280)/@0xf9e34f3android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{e189b62 V.E...... R....... 0,0-1403,503 aid=1073741825}[CustomPlayerActivity] of Surface(name=null mNativeObject=-5476376608451035280)/@0xf9e34f3android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400
 
 [2026-09-03 10:49:12.864 Uid(value=10806):8621:8621 W/WindowOnBackDispatcher]
 sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@af44e4e
 
 [2026-09-03 10:49:12.865 Uid(value=10806):8621:8621 I/input_focus]
-dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{e189b62 V.E...... R....... 0,0-1403,503 aid=1073741825}[CustomPlayerActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{e189b62 V.E...... R....... 0,0-1403,503 aid=1073741825}[CustomPlayerActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283
 
 [2026-09-03 10:49:12.865 Uid(value=10806):8621:8621 D/DecorViewImmersiveImpl]
 onDetachedFromWindow
@@ -1622,13 +1622,13 @@ Activity = com.omymaxz.download.CustomPlayerActivity@6e37be0, onConfigurationCha
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@6e37be0, reason: DarkModeEnabled
 
 [2026-09-03 10:49:27.546 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59
 
 [2026-09-03 10:49:27.568 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
 getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
 
 [2026-09-03 10:49:27.576 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
 
 [2026-09-03 10:49:27.576 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
 vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#61
@@ -1646,13 +1646,13 @@ Activity = com.omymaxz.download.CustomPlayerActivity@6e37be0, onConfigurationCha
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@6e37be0, reason: DarkModeEnabled
 
 [2026-09-03 10:49:27.767 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59
 
 [2026-09-03 10:49:27.778 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4423 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4423 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
 
 [2026-09-03 10:49:27.781 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
 
 [2026-09-03 10:49:27.781 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
 vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#64
@@ -1817,13 +1817,13 @@ Stop() called but track is not started or stopped
 setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@6e37be0, reason: DarkModeEnabled
 
 [2026-09-03 10:50:57.449 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59
 
 [2026-09-03 10:50:57.469 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4423 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4423 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
 
 [2026-09-03 10:50:57.470 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
 
 [2026-09-03 10:50:57.470 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
 vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#67
@@ -1839,4 +1839,3 @@ vri.reportDrawFinished
 
 [2026-09-03 10:51:03.890 Uid(value=10806):8621:20518 D/AudioTrackImpl]
 [audioTrackData][fine] 55s(f:55063 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
-
