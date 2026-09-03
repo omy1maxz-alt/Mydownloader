@@ -105,10 +105,19 @@ class HlsExportService : Service() {
                         val isCached = cache.getCachedSpans(cacheKey).isNotEmpty()
 
                         if (isCached || forceTransformer) {
-                            val mediaItem = MediaItem.Builder()
+                            val builder = MediaItem.Builder()
                                 .setUri(android.net.Uri.parse(finalUrl))
                                 .setMimeType(mimeType)
-                                .build()
+
+                            if (!streamKeyStrings.isNullOrEmpty()) {
+                                val keys = streamKeyStrings.map {
+                                    val parts = it.split(",")
+                                    androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt(), parts.getOrNull(2)?.toInt() ?: 0)
+                                }
+                                builder.setStreamKeys(keys)
+                            }
+
+                            val mediaItem = builder.build()
                             muxToMp4WithTransformer(mediaItem, title)
                         } else {
                             muxToMp4(finalUrl, title)
@@ -142,6 +151,7 @@ class HlsExportService : Service() {
             val mediaItem = MediaItem.Builder()
                 .setUri(android.net.Uri.parse(finalUrl))
                 .setMimeType(download.request.mimeType)
+                .setStreamKeys(download.request.streamKeys)
                 .build()
 
             muxToMp4WithTransformer(mediaItem, title)
@@ -172,8 +182,9 @@ class HlsExportService : Service() {
                         androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
                     )
                 )
-                .setVideoMimeType(MimeTypes.VIDEO_H264)
-                .setAudioMimeType(MimeTypes.AUDIO_AAC)
+                // Do not force MimeTypes. This allows the Transformer to transmux
+                // the cached streams (copying raw bytes) instead of hardware transcoding,
+                // avoiding hardware codec crashes (like "csd0 too small") that cause black/silent videos.
                 .addListener(object : Transformer.Listener {
                     override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
                         Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
