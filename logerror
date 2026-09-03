@@ -1472,7 +1472,7 @@ setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@6e
 【MiuiBoosterUtils】improve disable.
 
 [2026-09-03 10:49:11.764 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
-vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
 
 [2026-09-03 10:49:11.765 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
 vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#58
