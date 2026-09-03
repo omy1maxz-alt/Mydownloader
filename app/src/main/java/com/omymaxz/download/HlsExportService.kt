@@ -53,6 +53,15 @@ class HlsExportService : Service() {
         private const val TAG = "HlsExportService"
     }
 
+
+    private fun writeExportLog(message: String) {
+        try {
+            val logFile = java.io.File(applicationContext.filesDir, "export_logs.txt")
+            val timestamp = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+            logFile.appendText("[$timestamp] $message\n")
+        } catch (e: Exception) {}
+    }
+
     private val activeExports = AtomicInteger(0)
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
@@ -110,6 +119,7 @@ class HlsExportService : Service() {
             return START_NOT_STICKY
         }
 
+        writeExportLog("Starting export for: $title, URL: $videoUrl, StreamKeys: $streamKeyStrings")
         startForeground(NOTIFICATION_ID, buildNotification(title))
         activeExports.incrementAndGet()
 
@@ -128,6 +138,7 @@ class HlsExportService : Service() {
                     }
                 }
             } catch (t: Throwable) {
+                writeExportLog("Export crashed: ${t.message} | ${android.util.Log.getStackTraceString(t)}")
                 Log.e(TAG, "Export failed", t)
                 withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export failed: ${t.message}", Toast.LENGTH_LONG).show() }
             } finally {
@@ -180,6 +191,7 @@ class HlsExportService : Service() {
 
                 .addListener(object : Transformer.Listener {
                     override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
+                        writeExportLog("Transformer Export complete: $title")
                         Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
                         if (cont.isActive) cont.resume(Unit)
                     }
@@ -187,6 +199,7 @@ class HlsExportService : Service() {
                         composition: androidx.media3.transformer.Composition,
                         result: ExportResult, ex: ExportException
                     ) {
+                        writeExportLog("Transformer error on $title: ${ex.message} | ${android.util.Log.getStackTraceString(ex)}")
                         Log.e(TAG, "Transformer error", ex)
                         Toast.makeText(applicationContext, "Export error: ${ex.message}", Toast.LENGTH_LONG).show()
                         if (cont.isActive) cont.resume(Unit)
@@ -253,7 +266,8 @@ class HlsExportService : Service() {
 
         withContext(Dispatchers.Main) {
             if (com.arthenica.ffmpegkit.ReturnCode.isSuccess(session.returnCode)) {
-                Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
+                writeExportLog("Transformer Export complete: $title")
+                        Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
             } else {
                 val errorLog = session.allLogsAsString
                 Log.e(TAG, "FFmpeg failed: $errorLog")
