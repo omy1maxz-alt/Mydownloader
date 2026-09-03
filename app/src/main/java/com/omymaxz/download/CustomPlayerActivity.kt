@@ -668,56 +668,38 @@ class CustomPlayerActivity : AppCompatActivity() {
                     videoTitle = newTitle
                 }
 
-                // 1. Extract MIME type from the current player
+                // 1. Get the currently playing MediaItem which has resolved stream keys
                 val currentMediaItem = player?.currentMediaItem
-                val mimeType = currentMediaItem?.localConfiguration?.mimeType
-                    ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
 
-                // 2. Extract StreamKeys as primitive strings to avoid Parcelable/Bundleable serialization bugs
-                val streamKeyStrings = ArrayList<String>()
-                val tracks = player?.currentTracks
-                if (tracks != null) {
-                    tracks.groups.forEachIndexed { groupIndex, group ->
-                        var bestVideoIndex = -1
-                        var bestVideoBitrate = -1
-                        var hasVideo = false
-
+                // 2. Explicitly restrict to the currently selected tracks (e.g., 480p)
+                // so Transformer doesn't default to the highest quality (1080p) and waste data.
+                val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
+                if (player != null) {
+                    val tracks = player!!.currentTracks
+                    for (groupIndex in 0 until tracks.groups.size) { val group = tracks.groups[groupIndex]
                         for (i in 0 until group.length) {
                             if (group.isTrackSelected(i)) {
-                                val format = group.getTrackFormat(i)
-                                if (format.sampleMimeType?.startsWith("video/") == true) {
-                                    hasVideo = true
-                                    if (format.bitrate > bestVideoBitrate) {
-                                        bestVideoBitrate = format.bitrate
-                                        bestVideoIndex = i
-                                    }
-                                } else {
-                                    streamKeyStrings.add("$groupIndex,$i")
-                                }
+                                streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
                             }
                         }
-                        // To prevent "Format changes are not supported" Transformer crash on Adaptive streams,
-                        // force the selection of a single video track (the highest bitrate among the selected ones).
-                        if (hasVideo && bestVideoIndex != -1) {
-                            streamKeyStrings.add("$groupIndex,$bestVideoIndex")
-                        }
                     }
-                }
+                    }
 
-                // Release the hardware decoder before starting Transformer
-                player?.pause()
+                val exportMediaItem = currentMediaItem?.buildUpon()
+                    ?.setStreamKeys(streamKeys)
+                    ?.build() ?: currentMediaItem
 
-                // 3. Pass primitives to the Service
                 val intent = Intent(this, HlsExportService::class.java).apply {
-                    putExtra(HlsExportService.EXTRA_VIDEO_URL, videoUrl)
-                    putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
-                    putExtra(HlsExportService.EXTRA_MIME_TYPE, mimeType)
-                    putStringArrayListExtra(HlsExportService.EXTRA_STREAM_KEYS, streamKeyStrings)
-
+                    if (exportMediaItem != null) {
+                        putExtra(HlsExportService.EXTRA_MEDIA_ITEM, exportMediaItem.toBundle())
+                    } else {
+                        // Fallback
+                        putExtra(HlsExportService.EXTRA_URL, videoUrl)
+                        putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
+                    }
                     putExtra(HlsExportService.EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
                     putExtra(HlsExportService.EXTRA_REFERER, HlsDownloadHelper.currentReferer)
                     putExtra(HlsExportService.EXTRA_COOKIE, HlsDownloadHelper.currentCookie)
-                    putExtra(HlsExportService.EXTRA_FORCE_TRANSFORMER, true)
                 }
                 startService(intent)
                 Toast.makeText(this, "Exporting cached video...", Toast.LENGTH_SHORT).show()
