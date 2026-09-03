@@ -46,6 +46,7 @@ class HlsExportService : Service() {
         const val EXTRA_TRACK_HEIGHT= "com.omymaxz.download.extra.TRACK_HEIGHT"
         const val EXTRA_TRACK_BITRATE="com.omymaxz.download.extra.TRACK_BITRATE"
         const val EXTRA_FORCE_TRANSFORMER="com.omymaxz.download.extra.FORCE_TRANSFORMER"
+        const val EXTRA_MEDIA_ITEM_BUNDLE = "com.omymaxz.download.extra.MEDIA_ITEM_BUNDLE"
 
         const val CHANNEL_ID = "hls_export_channel"
         const val NOTIFICATION_ID = 3000
@@ -77,6 +78,8 @@ class HlsExportService : Service() {
         val mimeType   = intent.getStringExtra(EXTRA_MIME_TYPE) ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
         val streamKeyStrings = intent.getStringArrayListExtra(EXTRA_STREAM_KEYS)
         val forceTransformer = intent.getBooleanExtra(EXTRA_FORCE_TRANSFORMER, false)
+        val mediaItemBundle = intent.getBundleExtra(EXTRA_MEDIA_ITEM_BUNDLE)
+        val bundledMediaItem = if (mediaItemBundle != null) androidx.media3.common.MediaItem.fromBundle(mediaItemBundle) else null
 
         intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
         intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
@@ -94,34 +97,14 @@ class HlsExportService : Service() {
             try {
                 when {
                     extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title)
+                    bundledMediaItem != null -> {
+                        // Use the bundled MediaItem directly if provided (from CustomPlayerActivity 'Play in App' export)
+                        // This preserves the exact stream keys and master URL necessary for Transformer to hit the cache
+                        muxToMp4WithTransformer(bundledMediaItem, title)
+                    }
                     videoUrl != null -> {
                         val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-
-                        // Check if the exact variant is already cached. If so, use Transformer to instantly export without network usage!
-                        val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
-                        val cacheKey = androidx.media3.datasource.cache.CacheKeyFactory.DEFAULT.buildCacheKey(androidx.media3.datasource.DataSpec(android.net.Uri.parse(finalUrl)))
-
-                        // A rough check: If there's any data cached for this key, attempt Transformer export.
-                        val isCached = cache.getCachedSpans(cacheKey).isNotEmpty()
-
-                        if (isCached || forceTransformer) {
-                            val builder = MediaItem.Builder()
-                                .setUri(android.net.Uri.parse(finalUrl))
-                                .setMimeType(mimeType)
-
-                            if (!streamKeyStrings.isNullOrEmpty()) {
-                                val keys = streamKeyStrings.map {
-                                    val parts = it.split(",")
-                                    androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt(), parts.getOrNull(2)?.toInt() ?: 0)
-                                }
-                                builder.setStreamKeys(keys)
-                            }
-
-                            val mediaItem = builder.build()
-                            muxToMp4WithTransformer(mediaItem, title)
-                        } else {
-                            muxToMp4(finalUrl, title)
-                        }
+                        muxToMp4(finalUrl, title) // Fallback to FFmpeg
                     }
                 }
             } catch (t: Throwable) {
@@ -144,16 +127,7 @@ class HlsExportService : Service() {
 
         // Check if fully cached. If yes, use Transformer. If not, fallback to FFmpeg network download.
         if (download.state == Download.STATE_COMPLETED) {
-            val url = download.request.uri.toString()
-            val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
-            val finalUrl = resolveVariantUrl(url, streamKeysStr)
-
-            val mediaItem = MediaItem.Builder()
-                .setUri(android.net.Uri.parse(finalUrl))
-                .setMimeType(download.request.mimeType)
-                .setStreamKeys(download.request.streamKeys)
-                .build()
-
+            val mediaItem = download.request.toMediaItem()
             muxToMp4WithTransformer(mediaItem, title)
         } else {
             val url = download.request.uri.toString()
@@ -171,10 +145,8 @@ class HlsExportService : Service() {
             val defaultMediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
                 .setDataSourceFactory(cacheFactory)
 
-            @Suppress("DEPRECATION")
-            val transformationRequest = androidx.media3.transformer.TransformationRequest.Builder().setAudioMimeType(MimeTypes.AUDIO_AAC).setVideoMimeType(MimeTypes.VIDEO_H264).build()
             val transformer = Transformer.Builder(applicationContext)
-                .setTransformationRequest(transformationRequest)
+                // Removed forced MimeTypes to allow direct Remuxing instead of Transcoding
                 .setAssetLoaderFactory(
                     DefaultAssetLoaderFactory(
                         applicationContext,

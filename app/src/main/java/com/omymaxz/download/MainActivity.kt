@@ -542,6 +542,23 @@ private fun checkBatteryOptimization() {
             val color = android.graphics.Color.parseColor(hexColor)
             binding.toolbar.setBackgroundColor(color)
 
+            // Also apply theme color to the status bar and popup menu
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+                // Strip the alpha channel to make the status bar solid, as some OS versions don't render translucent well.
+                val solidColor = android.graphics.Color.rgb(
+                    android.graphics.Color.red(color),
+                    android.graphics.Color.green(color),
+                    android.graphics.Color.blue(color)
+                )
+                window.statusBarColor = solidColor
+            }
+            // Update the popup menu background programmatically to follow the glossy theme
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                binding.toolbar.popupTheme = R.style.GlassyPopupMenu
+            }
+            binding.toolbar.setPopupTheme(R.style.GlassyPopupMenu)
+
             // On Android 12+, we can apply a hardware-accelerated background blur
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 try {
