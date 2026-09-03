@@ -145,10 +145,9 @@ class HlsExportService : Service() {
             val defaultMediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
                 .setDataSourceFactory(cacheFactory)
 
-            @Suppress("DEPRECATION")
-            val transformationRequest = androidx.media3.transformer.TransformationRequest.Builder().setAudioMimeType(MimeTypes.AUDIO_AAC).setVideoMimeType(MimeTypes.VIDEO_H264).build()
             val transformer = Transformer.Builder(applicationContext)
-                .setTransformationRequest(transformationRequest)
+                .setVideoMimeType(MimeTypes.VIDEO_H264)
+                .setAudioMimeType(MimeTypes.AUDIO_AAC)
                 .setAssetLoaderFactory(
                     DefaultAssetLoaderFactory(
                         applicationContext,
