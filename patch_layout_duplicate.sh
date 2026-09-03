@@ -1,0 +1,1 @@
+sed -i 's/                app:popupBackground="#A0000000"\n                app:popupBackground="#A0000000">/                app:popupBackground="#A0000000">/g' app/src/main/res/layout/activity_main.xml
