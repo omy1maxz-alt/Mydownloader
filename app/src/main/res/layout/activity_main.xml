@@ -26,7 +26,7 @@
                 android:id="@+id/bookmarkRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:paddingTop="48dp"
+                android:paddingTop="52dp"
                 android:clipToPadding="false"
                 android:visibility="visible" />
 
@@ -46,7 +46,7 @@
                 android:background="?attr/colorPrimary"
                 android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
                 app:contentInsetStart="0dp"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+                app:popupTheme="@style/GlassyPopupMenu">
 
             <LinearLayout
                 android:id="@+id/toolbarLinearLayout"

@@ -25,4 +25,12 @@
     <style name="Theme.MyDownloader.Fullscreen" parent="Theme.MyDownloader.NoActionBar">
         <item name="android:windowFullscreen">true</item>
     </style>
+
+    <!-- Glassy Popup Menu Style -->
+    <style name="GlassyPopupMenu" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:colorBackground">#A0000000</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:itemBackground">?attr/selectableItemBackground</item>
+        <item name="android:popupElevation">4dp</item>
+    </style>
 </resources>

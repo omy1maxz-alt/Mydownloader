@@ -1026,8 +1026,10 @@ private fun checkBatteryOptimization() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView(webView: WebView) {
-        // Apply padding to WebView so content isn't hidden under the transparent toolbar
-        webView.setPadding(0, 140, 0, 0)
+        // Dynamically apply padding to WebView so content isn't hidden under the transparent toolbar
+        val density = resources.displayMetrics.density
+        val topPadding = (52 * density).toInt() // Toolbar height (48dp) + slightly extra (4dp)
+        webView.setPadding(0, topPadding, 0, 0)
         webView.clipToPadding = false
 
         // --- PERFORMANCE OPTIMIZATIONS ---
