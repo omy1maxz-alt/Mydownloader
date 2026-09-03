@@ -1,0 +1,153 @@
+[2026-09-04 00:00:50.310 Uid(value=10806):735:6788 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f4e8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 4378/4383 (recycle/alloc) - 7/4383 (fetch/transfer)
+
+[2026-09-04 00:00:50.961 Uid(value=10806):735:7908 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5038ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:124(Avg:40ms),DQin:0/0,Render:126(Avg:39ms),Drop:0,DQout:0/0
+
+[2026-09-04 00:00:51.523 Uid(value=10806):735:7928 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-04 00:00:53.047 Uid(value=10806):735:7928 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f738 : 5(40960 size) total buffers - 2(16384 size) used buffers - 7347/7352 (recycle/alloc) - 19/7349 (fetch/transfer)
+
+[2026-09-04 00:00:53.979 Uid(value=10806):735:7891 D/AudioTrackImpl]
+[audioTrackData][fine] 30s(f:30007 m:0 s:0 k:0 z:0) : pid 735 uid 10806 sessionId 50937 sr 44100 ch 2 fmt 1 maxAmplitude 4904
+
+[2026-09-04 00:00:55.509 Uid(value=10806):735:7911 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f4e8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 4508/4513 (recycle/alloc) - 7/4513 (fetch/transfer)
+
+[2026-09-04 00:00:55.997 Uid(value=10806):735:7908 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5035ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:126(Avg:39ms),DQin:0/0,Render:126(Avg:39ms),Drop:0,DQout:0/0
+
+[2026-09-04 00:00:56.556 Uid(value=10806):735:7928 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5033ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-04 00:00:58.594 Uid(value=10806):735:7928 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f738 : 5(40960 size) total buffers - 1(8192 size) used buffers - 7582/7587 (recycle/alloc) - 19/7584 (fetch/transfer)
+
+[2026-09-04 00:00:59.051 Uid(value=10806):735:7891 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35007 m:0 s:0 k:0 z:0) : pid 735 uid 10806 sessionId 50937 sr 44100 ch 2 fmt 1 maxAmplitude 1727
+
+[2026-09-04 00:01:00.624 Uid(value=10806):735:6788 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f4e8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 4632/4637 (recycle/alloc) - 7/4637 (fetch/transfer)
+
+[2026-09-04 00:01:00.998 Uid(value=10806):735:7908 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:126(Avg:39ms),DQin:0/0,Render:125(Avg:40ms),Drop:0,DQout:0/0
+
+[2026-09-04 00:01:01.595 Uid(value=10806):735:7928 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5039ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-04 00:01:03.628 Uid(value=10806):735:7928 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f738 : 5(40960 size) total buffers - 1(8192 size) used buffers - 7799/7804 (recycle/alloc) - 19/7801 (fetch/transfer)
+
+[2026-09-04 00:01:04.152 Uid(value=10806):735:7891 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40002 m:0 s:0 k:0 z:0) : pid 735 uid 10806 sessionId 50937 sr 44100 ch 2 fmt 1 maxAmplitude 7690
+
+[2026-09-04 00:01:05.736 Uid(value=10806):735:6788 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f4e8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 4758/4763 (recycle/alloc) - 7/4763 (fetch/transfer)
+
+[2026-09-04 00:01:06.038 Uid(value=10806):735:7908 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5039ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:123(Avg:40ms),DQin:0/0,Render:126(Avg:39ms),Drop:0,DQout:0/0
+
+[2026-09-04 00:01:06.597 Uid(value=10806):735:7928 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:218,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-04 00:01:08.669 Uid(value=10806):735:7928 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f738 : 5(40960 size) total buffers - 1(8192 size) used buffers - 8016/8021 (recycle/alloc) - 19/8018 (fetch/transfer)
+
+[2026-09-04 00:01:09.194 Uid(value=10806):735:7891 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45005 m:0 s:0 k:0 z:0) : pid 735 uid 10806 sessionId 50937 sr 44100 ch 2 fmt 1 maxAmplitude 2347
+
+[2026-09-04 00:01:09.391 Uid(value=10806):735:735 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@4220c80, reason: AppDarkModeEnable
+
+[2026-09-04 00:01:09.392 Uid(value=10806):735:735 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+
+[2026-09-04 00:01:09.405 Uid(value=10806):735:735 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4423 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+
+[2026-09-04 00:01:09.406 Uid(value=10806):735:735 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+
+[2026-09-04 00:01:09.406 Uid(value=10806):735:735 D/VRI[CustomPlayerActivity]]
+vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#32
+
+[2026-09-04 00:01:09.412 Uid(value=10806):735:735 D/VRI[CustomPlayerActivity]]
+vri.reportDrawFinished
+
+[2026-09-04 00:01:09.412 Uid(value=10806):735:735 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=6]
+
+[2026-09-04 00:01:10.992 Uid(value=10806):735:6788 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f4e8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 4891/4896 (recycle/alloc) - 7/4896 (fetch/transfer)
+
+[2026-09-04 00:01:11.042 Uid(value=10806):735:7908 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:128(Avg:39ms),DQin:0/0,Render:125(Avg:40ms),Drop:0,DQout:0/0
+
+[2026-09-04 00:01:11.634 Uid(value=10806):735:7928 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5037ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-04 00:01:14.235 Uid(value=10806):735:7928 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f738 : 5(40960 size) total buffers - 1(8192 size) used buffers - 8256/8261 (recycle/alloc) - 19/8258 (fetch/transfer)
+
+[2026-09-04 00:01:14.273 Uid(value=10806):735:7891 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50004 m:0 s:0 k:0 z:0) : pid 735 uid 10806 sessionId 50937 sr 44100 ch 2 fmt 1 maxAmplitude 14489
+
+[2026-09-04 00:01:16.045 Uid(value=10806):735:7908 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:122(Avg:41ms),DQin:0/0,Render:125(Avg:40ms),Drop:0,DQout:0/0
+
+[2026-09-04 00:01:16.068 Uid(value=10806):735:6788 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f4e8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 5017/5022 (recycle/alloc) - 7/5022 (fetch/transfer)
+
+[2026-09-04 00:01:16.645 Uid(value=10806):735:7928 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5010ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-04 00:01:19.313 Uid(value=10806):735:7891 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55002 m:0 s:0 k:0 z:0) : pid 735 uid 10806 sessionId 50937 sr 44100 ch 2 fmt 1 maxAmplitude 2485
+
+[2026-09-04 00:01:19.381 Uid(value=10806):735:735 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@4220c80, reason: AppDarkModeEnable
+
+[2026-09-04 00:01:19.382 Uid(value=10806):735:735 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+
+[2026-09-04 00:01:19.390 Uid(value=10806):735:735 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4423 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+
+[2026-09-04 00:01:19.392 Uid(value=10806):735:735 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+
+[2026-09-04 00:01:19.392 Uid(value=10806):735:735 D/VRI[CustomPlayerActivity]]
+vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#35
+
+[2026-09-04 00:01:19.399 Uid(value=10806):735:735 D/VRI[CustomPlayerActivity]]
+vri.reportDrawFinished
+
+[2026-09-04 00:01:19.399 Uid(value=10806):735:735 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=7]
+
+[2026-09-04 00:01:19.713 Uid(value=10806):735:7928 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f738 : 5(40960 size) total buffers - 1(8192 size) used buffers - 8491/8496 (recycle/alloc) - 19/8493 (fetch/transfer)
+
+[2026-09-04 00:01:21.080 Uid(value=10806):735:7908 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5035ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:128(Avg:39ms),DQin:0/0,Render:126(Avg:39ms),Drop:0,DQout:0/0
+
+[2026-09-04 00:01:21.328 Uid(value=10806):735:6788 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f4e8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 5149/5154 (recycle/alloc) - 7/5154 (fetch/transfer)
+
+[2026-09-04 00:01:21.680 Uid(value=10806):735:7928 I/MediaCodec]
+[mId: 2] [audio-debug-dec] Stats 5034ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-04 00:01:23.483 Uid(value=10806):735:6788 D/PipelineWatcher]
+onInputBufferReleased: frameIndex not found (8658); ignored
+
+[2026-09-04 00:01:24.363 Uid(value=10806):735:7891 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60007 m:0 s:0 k:0 z:0) : pid 735 uid 10806 sessionId 50937 sr 44100 ch 2 fmt 1 maxAmplitude 1852
+
+[2026-09-04 00:01:24.727 Uid(value=10806):735:7928 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d05f738 : 5(40960 size) total buffers - 4(32768 size) used buffers - 8710/8715 (recycle/alloc) - 19/8711 (fetch/transfer)
+
+[2026-09-04 00:01:26.082 Uid(value=10806):735:7908 I/MediaCodec]
+[mId: 1] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:123(Avg:40ms),DQin:0/0,Render:125(Avg:40ms),Drop:0,DQout:0/0
+
