@@ -182,9 +182,8 @@ class HlsExportService : Service() {
                         androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
                     )
                 )
-                // Do not force MimeTypes. This allows the Transformer to transmux
-                // the cached streams (copying raw bytes) instead of hardware transcoding,
-                // avoiding hardware codec crashes (like "csd0 too small") that cause black/silent videos.
+                .setVideoMimeType(MimeTypes.VIDEO_H264)
+                .setAudioMimeType(MimeTypes.AUDIO_AAC)
                 .addListener(object : Transformer.Listener {
                     override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
                         Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
