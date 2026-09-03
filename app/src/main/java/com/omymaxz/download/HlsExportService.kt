@@ -79,7 +79,27 @@ class HlsExportService : Service() {
         val streamKeyStrings = intent.getStringArrayListExtra(EXTRA_STREAM_KEYS)
         val forceTransformer = intent.getBooleanExtra(EXTRA_FORCE_TRANSFORMER, false)
         val mediaItemBundle = intent.getBundleExtra(EXTRA_MEDIA_ITEM_BUNDLE)
-        val bundledMediaItem = if (mediaItemBundle != null) androidx.media3.common.MediaItem.fromBundle(mediaItemBundle) else null
+        var bundledMediaItem = if (mediaItemBundle != null) androidx.media3.common.MediaItem.fromBundle(mediaItemBundle) else null
+
+        // Fix for NullPointerException in Transformer:
+        // MediaItem.fromBundle often loses its localConfiguration/Uri across IPC.
+        // We explicitly reconstruct the MediaItem using primitive strings passed in the intent to ensure it's valid.
+        if (bundledMediaItem != null && bundledMediaItem.localConfiguration == null && videoUrl != null) {
+            val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
+            streamKeyStrings?.forEach {
+                val parts = it.split(",")
+                if (parts.size == 2) {
+                    try {
+                        streamKeys.add(androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt()))
+                    } catch (e: Exception) {}
+                }
+            }
+            bundledMediaItem = androidx.media3.common.MediaItem.Builder()
+                .setUri(videoUrl)
+                .setMimeType(mimeType)
+                .setStreamKeys(streamKeys)
+                .build()
+        }
 
         intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
         intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
