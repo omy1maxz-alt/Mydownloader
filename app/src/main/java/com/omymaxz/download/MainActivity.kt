@@ -533,41 +533,6 @@ private fun checkBatteryOptimization() {
         }
     }
 
-
-    private fun tintToolbarOverflowMenuBackground(toolbar: androidx.appcompat.widget.Toolbar, color: Int) {
-        // Since Toolbar popup relies on static XML themes, we can use reflection to tint it dynamically
-        // Or better yet, we can attach a menu provider or hook into onPrepareOptionsMenu if needed.
-        // A much safer Android approach to tinting the popup menu dynamically:
-        // We can hook `onPrepareOptionsMenu` or override it but that doesn't expose the background.
-        // We will just use the ActionMenuPresenter reflection on click.
-        try {
-            val field = androidx.appcompat.widget.Toolbar::class.java.getDeclaredField("mMenuView")
-            field.isAccessible = true
-            val menuView = field.get(toolbar) as? androidx.appcompat.widget.ActionMenuView
-            menuView?.post {
-                try {
-                    val presenterField = androidx.appcompat.widget.ActionMenuView::class.java.getDeclaredField("mPresenter")
-                    presenterField.isAccessible = true
-                    val presenter = presenterField.get(menuView)
-
-                    if (presenter != null) {
-                        // The presenter is ActionMenuPresenter
-                        val overflowPopupField = presenter.javaClass.getDeclaredField("mOverflowPopup")
-                        overflowPopupField.isAccessible = true
-                        val overflowPopup = overflowPopupField.get(presenter)
-
-                        if (overflowPopup != null) {
-                            val popupField = overflowPopup.javaClass.superclass.getDeclaredField("mPopup")
-                            popupField.isAccessible = true
-                            val listPopupWindow = popupField.get(overflowPopup) as? androidx.appcompat.widget.ListPopupWindow
-                            listPopupWindow?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(color))
-                        }
-                    }
-                } catch(e: Exception) {}
-            }
-        } catch (e: Exception) {}
-    }
-
     private fun applyGlossyTheme() {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         // Default to a dark semi-transparent tint
@@ -593,30 +558,6 @@ private fun checkBatteryOptimization() {
                 binding.toolbar.popupTheme = R.style.GlassyPopupMenu
             }
             binding.toolbar.setPopupTheme(R.style.GlassyPopupMenu)
-
-            // Wait for layout to tint the overflow menu background dynamically using reflection
-            binding.toolbar.post {
-                tintToolbarOverflowMenuBackground(binding.toolbar, color)
-                // Also setup a click listener on the overflow button to ensure the background is updated every time it opens
-                try {
-                    val field = androidx.appcompat.widget.Toolbar::class.java.getDeclaredField("mMenuView")
-                    field.isAccessible = true
-                    val menuView = field.get(binding.toolbar) as? androidx.appcompat.widget.ActionMenuView
-                    if (menuView != null) {
-                        for (i in 0 until menuView.childCount) {
-                            val child = menuView.getChildAt(i)
-                            if (child.javaClass.simpleName.contains("OverflowMenuButton")) {
-                                child.setOnTouchListener { v, event ->
-                                    if (event.action == android.view.MotionEvent.ACTION_DOWN) {
-                                        tintToolbarOverflowMenuBackground(binding.toolbar, color)
-                                    }
-                                    false
-                                }
-                            }
-                        }
-                    }
-                } catch (e: Exception) {}
-            }
 
             // On Android 12+, we can apply a hardware-accelerated background blur
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -1120,7 +1061,7 @@ private fun checkBatteryOptimization() {
 
             // --- PERFORMANCE SETTINGS ---
             settings.allowFileAccess = true
-            settings.cacheMode = WebSettings.LOAD_NO_CACHE // Prevent caching as requested by user
+            settings.cacheMode = WebSettings.LOAD_DEFAULT // Use cache
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
             // Keep these as they are for proper layout handling
@@ -1209,16 +1150,6 @@ private fun checkBatteryOptimization() {
                     }
                     binding.mainContent.visibility = View.VISIBLE
                     binding.toolbar.visibility = View.VISIBLE
-
-                    // Aggressively pause all media to prevent auto-play despite WebView settings
-                    view?.evaluateJavascript(
-                        "(function() { " +
-                        "  var mediaElements = document.querySelectorAll('video, audio');" +
-                        "  mediaElements.forEach(function(media) { " +
-                        "    media.autoplay = false; " +
-                        "    media.pause(); " +
-                        "  }); " +
-                        "})();", null)
 
                     injectAntiHijackingScripts(view)
 
