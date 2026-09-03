@@ -172,7 +172,9 @@ class HlsExportService : Service() {
                 .setDataSourceFactory(cacheFactory)
 
             @Suppress("DEPRECATION")
+            val transformationRequest = androidx.media3.transformer.TransformationRequest.Builder().setAudioMimeType(MimeTypes.AUDIO_AAC).setVideoMimeType(MimeTypes.VIDEO_H264).build()
             val transformer = Transformer.Builder(applicationContext)
+                .setTransformationRequest(transformationRequest)
                 .setAssetLoaderFactory(
                     DefaultAssetLoaderFactory(
                         applicationContext,
@@ -182,8 +184,8 @@ class HlsExportService : Service() {
                         androidx.media3.datasource.DataSourceBitmapLoader(applicationContext)
                     )
                 )
-                .setVideoMimeType(MimeTypes.VIDEO_H264)
-                .setAudioMimeType(MimeTypes.AUDIO_AAC)
+
+
                 .addListener(object : Transformer.Listener {
                     override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
                         Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()

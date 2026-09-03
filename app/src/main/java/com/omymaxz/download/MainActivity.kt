@@ -1028,7 +1028,7 @@ private fun checkBatteryOptimization() {
     private fun setupWebView(webView: WebView) {
         // Dynamically apply padding to WebView so content isn't hidden under the transparent toolbar
         val density = resources.displayMetrics.density
-        val topPadding = (52 * density).toInt() // Toolbar height (48dp) + slightly extra (4dp)
+        val topPadding = (80 * density).toInt() // Max padding for toolbar overlap
         webView.setPadding(0, topPadding, 0, 0)
         webView.clipToPadding = false
 
