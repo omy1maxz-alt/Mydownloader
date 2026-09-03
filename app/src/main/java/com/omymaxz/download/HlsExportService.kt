@@ -146,8 +146,7 @@ class HlsExportService : Service() {
                 .setDataSourceFactory(cacheFactory)
 
             val transformer = Transformer.Builder(applicationContext)
-                .setVideoMimeType(MimeTypes.VIDEO_H264)
-                .setAudioMimeType(MimeTypes.AUDIO_AAC)
+                // Removed forced MimeTypes to allow direct Remuxing instead of Transcoding
                 .setAssetLoaderFactory(
                     DefaultAssetLoaderFactory(
                         applicationContext,

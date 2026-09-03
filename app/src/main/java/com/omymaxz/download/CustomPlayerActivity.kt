@@ -67,21 +67,30 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     private val pipReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == ACTION_BACKGROUND_PLAY) {
-                val serviceIntent = Intent(this@CustomPlayerActivity, PlaybackService::class.java).apply {
-                    action = "com.omymaxz.download.START_BACKGROUND_AUDIO"
-                    putExtra("video_url", videoUrl)
-                    putExtra("video_title", videoTitle)
-                    putExtra("current_position", player?.currentPosition ?: 0L)
-                }
+            when (intent?.action) {
+                ACTION_BACKGROUND_PLAY -> {
+                    val serviceIntent = Intent(this@CustomPlayerActivity, PlaybackService::class.java).apply {
+                        action = "com.omymaxz.download.START_BACKGROUND_AUDIO"
+                        putExtra("video_url", videoUrl)
+                        putExtra("video_title", videoTitle)
+                        putExtra("current_position", player?.currentPosition ?: 0L)
+                    }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(serviceIntent)
-                } else {
-                    startService(serviceIntent)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(serviceIntent)
+                    } else {
+                        startService(serviceIntent)
+                    }
+                    finish()
                 }
-
-                finish() // Close UI since it is now running in background
+                "ACTION_PLAY" -> {
+                    player?.play()
+                    updatePictureInPictureActions()
+                }
+                "ACTION_PAUSE" -> {
+                    player?.pause()
+                    updatePictureInPictureActions()
+                }
             }
         }
     }
@@ -117,10 +126,15 @@ class CustomPlayerActivity : AppCompatActivity() {
         // while the user might be actively streaming 480p via the CacheDataSource.
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val filter = IntentFilter().apply {
+                addAction(ACTION_BACKGROUND_PLAY)
+                addAction("ACTION_PLAY")
+                addAction("ACTION_PAUSE")
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(pipReceiver, IntentFilter(ACTION_BACKGROUND_PLAY), Context.RECEIVER_EXPORTED)
+                registerReceiver(pipReceiver, filter, Context.RECEIVER_EXPORTED)
             } else {
-                registerReceiver(pipReceiver, IntentFilter(ACTION_BACKGROUND_PLAY))
+                registerReceiver(pipReceiver, filter)
             }
         }
     }
@@ -158,23 +172,53 @@ class CustomPlayerActivity : AppCompatActivity() {
         moveTaskToBack(true)
     }
 
+    private fun updatePictureInPictureActions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val isPlaying = player?.isPlaying == true
+
+            // Background Play (Headset) action
+            val bgIntent = Intent(ACTION_BACKGROUND_PLAY).setPackage(packageName)
+            val bgPendingIntent = PendingIntent.getBroadcast(
+                this, 0, bgIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            val bgIcon = Icon.createWithResource(this, R.drawable.ic_headset)
+            val bgAction = RemoteAction(bgIcon, "Listen in Background", "Listen to audio in background", bgPendingIntent)
+
+            // Play/Pause action
+            val playPauseActionId = if (isPlaying) "ACTION_PAUSE" else "ACTION_PLAY"
+            val playPauseIntent = Intent(playPauseActionId).setPackage(packageName)
+            val playPausePendingIntent = PendingIntent.getBroadcast(
+                this, if (isPlaying) 1 else 2, playPauseIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            val playPauseIcon = Icon.createWithResource(
+                this,
+                if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
+            )
+            val playPauseAction = RemoteAction(
+                playPauseIcon,
+                if (isPlaying) "Pause" else "Play",
+                if (isPlaying) "Pause playback" else "Play playback",
+                playPausePendingIntent
+            )
+
+            val params = PictureInPictureParams.Builder()
+                .setActions(listOf(playPauseAction, bgAction))
+                .build()
+
+            setPictureInPictureParams(params)
+        }
+    }
+
     private fun enterPipMode() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val aspectRatio = Rational(16, 9)
-
-            val intent = Intent(ACTION_BACKGROUND_PLAY).setPackage(packageName)
-            val pendingIntent = PendingIntent.getBroadcast(
-                this, 0, intent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            val icon = Icon.createWithResource(this, R.drawable.ic_headset)
-            val action = RemoteAction(icon, "Listen in Background", "Listen to audio in background", pendingIntent)
-
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(aspectRatio)
-                .setActions(listOf(action))
                 .build()
             enterPictureInPictureMode(params)
+            updatePictureInPictureActions()
         } else {
             Toast.makeText(this, "Picture-in-Picture not supported on this device", Toast.LENGTH_SHORT).show()
         }
@@ -184,20 +228,11 @@ class CustomPlayerActivity : AppCompatActivity() {
         super.onUserLeaveHint()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val aspectRatio = Rational(16, 9)
-
-            val intent = Intent(ACTION_BACKGROUND_PLAY).setPackage(packageName)
-            val pendingIntent = PendingIntent.getBroadcast(
-                this, 0, intent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            val icon = Icon.createWithResource(this, R.drawable.ic_headset)
-            val action = RemoteAction(icon, "Listen in Background", "Listen to audio in background", pendingIntent)
-
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(aspectRatio)
-                .setActions(listOf(action))
                 .build()
             enterPictureInPictureMode(params)
+            updatePictureInPictureActions()
         }
     }
 
@@ -669,71 +704,50 @@ class CustomPlayerActivity : AppCompatActivity() {
                     videoTitle = newTitle
                 }
 
-                // 1. Extract MIME type from the current player
+                // 1. Get the currently playing MediaItem which has resolved stream keys
                 val currentMediaItem = player?.currentMediaItem
                 val mimeType = currentMediaItem?.localConfiguration?.mimeType
                     ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
 
-                // 2. Extract StreamKeys as primitive strings to avoid Parcelable/Bundleable serialization bugs
-                val streamKeyStrings = ArrayList<String>()
-                val tracks = player?.currentTracks
-                if (tracks != null) {
+                // 2. Explicitly restrict to the currently selected tracks (e.g., 480p)
+                // Extract using group.mediaTrackGroupIndex to align perfectly with native HLS manifest indices.
+                val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
+                val streamKeyStrings = ArrayList<String>() // Keep for FFmpeg fallback
+                if (player != null) {
+                    val tracks = player!!.currentTracks
+                    // We need to pass the raw stream keys to Transformer. The groupIndex in tracks.groups
+                    // corresponds directly to the track group index in the master playlist for HLS.
                     tracks.groups.forEachIndexed { groupIndex, group ->
-                        var bestVideoIndex = -1
-                        var bestVideoBitrate = -1
-                        var hasVideo = false
-
                         for (i in 0 until group.length) {
                             if (group.isTrackSelected(i)) {
-                                val format = group.getTrackFormat(i)
-                                if (format.sampleMimeType?.startsWith("video/") == true) {
-                                    hasVideo = true
-                                    if (format.bitrate > bestVideoBitrate) {
-                                        bestVideoBitrate = format.bitrate
-                                        bestVideoIndex = i
-                                    }
-                                } else {
-                                    streamKeyStrings.add("$groupIndex,$i")
-                                }
+                                streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
+                                streamKeyStrings.add("$groupIndex,$i")
                             }
-                        }
-                        // To prevent "Format changes are not supported" Transformer crash on Adaptive streams,
-                        // force the selection of a single video track (the highest bitrate among the selected ones).
-                        if (hasVideo && bestVideoIndex != -1) {
-                            streamKeyStrings.add("$groupIndex,$bestVideoIndex")
                         }
                     }
                 }
+
+                val exportMediaItem = currentMediaItem?.buildUpon()
+                    ?.setStreamKeys(streamKeys)
+                    ?.build() ?: currentMediaItem
 
                 // Release the hardware decoder before starting Transformer
                 player?.pause()
 
-                // 3. Build MediaItem and pass via Bundle
-                val mediaItemBuilder = MediaItem.Builder()
-                    .setUri(android.net.Uri.parse(videoUrl!!))
-                    .setMimeType(mimeType)
-
-                if (streamKeyStrings.isNotEmpty()) {
-                    val keys = streamKeyStrings.map {
-                        val parts = it.split(",")
-                        androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt(), parts.getOrNull(2)?.toInt() ?: 0)
-                    }
-                    mediaItemBuilder.setStreamKeys(keys)
-                }
-
-                val mediaItemToExport = mediaItemBuilder.build()
-
                 val intent = Intent(this, HlsExportService::class.java).apply {
-                    putExtra(HlsExportService.EXTRA_MEDIA_ITEM_BUNDLE, mediaItemToExport.toBundle())
+                    if (exportMediaItem != null) {
+                        putExtra(HlsExportService.EXTRA_MEDIA_ITEM_BUNDLE, exportMediaItem.toBundle())
+                    }
+
                     putExtra(HlsExportService.EXTRA_VIDEO_URL, videoUrl) // Fallback for FFmpeg
                     putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
                     putExtra(HlsExportService.EXTRA_MIME_TYPE, mimeType)
                     putStringArrayListExtra(HlsExportService.EXTRA_STREAM_KEYS, streamKeyStrings)
+                    putExtra(HlsExportService.EXTRA_FORCE_TRANSFORMER, true) // User pressed save, so guarantee offline mode
 
                     putExtra(HlsExportService.EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
                     putExtra(HlsExportService.EXTRA_REFERER, HlsDownloadHelper.currentReferer)
                     putExtra(HlsExportService.EXTRA_COOKIE, HlsDownloadHelper.currentCookie)
-                    putExtra(HlsExportService.EXTRA_FORCE_TRANSFORMER, true)
                 }
                 startService(intent)
                 Toast.makeText(this, "Exporting cached video...", Toast.LENGTH_SHORT).show()
