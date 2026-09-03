@@ -708,9 +708,24 @@ class CustomPlayerActivity : AppCompatActivity() {
                 // Release the hardware decoder before starting Transformer
                 player?.pause()
 
-                // 3. Pass primitives to the Service
+                // 3. Build MediaItem and pass via Bundle
+                val mediaItemBuilder = MediaItem.Builder()
+                    .setUri(android.net.Uri.parse(videoUrl!!))
+                    .setMimeType(mimeType)
+
+                if (streamKeyStrings.isNotEmpty()) {
+                    val keys = streamKeyStrings.map {
+                        val parts = it.split(",")
+                        androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt(), parts.getOrNull(2)?.toInt() ?: 0)
+                    }
+                    mediaItemBuilder.setStreamKeys(keys)
+                }
+
+                val mediaItemToExport = mediaItemBuilder.build()
+
                 val intent = Intent(this, HlsExportService::class.java).apply {
-                    putExtra(HlsExportService.EXTRA_VIDEO_URL, videoUrl)
+                    putExtra(HlsExportService.EXTRA_MEDIA_ITEM_BUNDLE, mediaItemToExport.toBundle())
+                    putExtra(HlsExportService.EXTRA_VIDEO_URL, videoUrl) // Fallback for FFmpeg
                     putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
                     putExtra(HlsExportService.EXTRA_MIME_TYPE, mimeType)
                     putStringArrayListExtra(HlsExportService.EXTRA_STREAM_KEYS, streamKeyStrings)
