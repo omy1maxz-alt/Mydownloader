@@ -33,17 +33,19 @@ import kotlin.coroutines.resume
 class HlsExportService : Service() {
 
     companion object {
-        const val EXTRA_MEDIA_ITEM   = "com.omymaxz.download.extra.MEDIA_ITEM"
-        const val EXTRA_DOWNLOAD_ID  = "com.omymaxz.download.extra.DOWNLOAD_ID"
-        const val EXTRA_TITLE        = "com.omymaxz.download.extra.TITLE"
-        const val EXTRA_URL          = "com.omymaxz.download.extra.URL"
-        const val EXTRA_USER_AGENT   = "com.omymaxz.download.extra.USER_AGENT"
-        const val EXTRA_REFERER      = "com.omymaxz.download.extra.REFERER"
-        const val EXTRA_COOKIE       = "com.omymaxz.download.extra.COOKIE"
-        const val EXTRA_TRACK_ID     = "com.omymaxz.download.extra.TRACK_ID"
-        const val EXTRA_TRACK_WIDTH  = "com.omymaxz.download.extra.TRACK_WIDTH"
-        const val EXTRA_TRACK_HEIGHT = "com.omymaxz.download.extra.TRACK_HEIGHT"
-        const val EXTRA_TRACK_BITRATE= "com.omymaxz.download.extra.TRACK_BITRATE"
+        const val EXTRA_VIDEO_URL   = "com.omymaxz.download.extra.VIDEO_URL"
+        const val EXTRA_TITLE       = "com.omymaxz.download.extra.TITLE"
+        const val EXTRA_MIME_TYPE   = "com.omymaxz.download.extra.MIME_TYPE"
+        const val EXTRA_STREAM_KEYS = "com.omymaxz.download.extra.STREAM_KEYS"
+        const val EXTRA_DOWNLOAD_ID = "com.omymaxz.download.extra.DOWNLOAD_ID"
+        const val EXTRA_USER_AGENT  = "com.omymaxz.download.extra.USER_AGENT"
+        const val EXTRA_REFERER     = "com.omymaxz.download.extra.REFERER"
+        const val EXTRA_COOKIE      = "com.omymaxz.download.extra.COOKIE"
+        const val EXTRA_TRACK_ID    = "com.omymaxz.download.extra.TRACK_ID"
+        const val EXTRA_TRACK_WIDTH = "com.omymaxz.download.extra.TRACK_WIDTH"
+        const val EXTRA_TRACK_HEIGHT= "com.omymaxz.download.extra.TRACK_HEIGHT"
+        const val EXTRA_TRACK_BITRATE="com.omymaxz.download.extra.TRACK_BITRATE"
+        const val EXTRA_FORCE_TRANSFORMER="com.omymaxz.download.extra.FORCE_TRANSFORMER"
 
         const val CHANNEL_ID = "hls_export_channel"
         const val NOTIFICATION_ID = 3000
@@ -69,21 +71,18 @@ class HlsExportService : Service() {
             return START_NOT_STICKY
         }
 
-        val mediaItem = intent.getBundleExtra(EXTRA_MEDIA_ITEM)?.let { MediaItem.fromBundle(it) }
-
         val extraDownloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
-        val url        = intent.getStringExtra(EXTRA_URL)
-        val title      = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
-        val trackId    = intent.getStringExtra(EXTRA_TRACK_ID)
-        val width      = intent.getIntExtra(EXTRA_TRACK_WIDTH, -1)
-        val height     = intent.getIntExtra(EXTRA_TRACK_HEIGHT, -1)
-        val bitrate    = intent.getIntExtra(EXTRA_TRACK_BITRATE, -1)
+        val videoUrl = intent.getStringExtra(EXTRA_VIDEO_URL)
+        val title = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
+        val mimeType   = intent.getStringExtra(EXTRA_MIME_TYPE) ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
+        val streamKeyStrings = intent.getStringArrayListExtra(EXTRA_STREAM_KEYS)
+        val forceTransformer = intent.getBooleanExtra(EXTRA_FORCE_TRANSFORMER, false)
 
         intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
         intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
         intent.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
 
-        if (mediaItem == null && extraDownloadId == null && url == null) {
+        if (videoUrl == null && extraDownloadId == null) {
             if (activeExports.get() == 0) stopSelf(startId)
             return START_NOT_STICKY
         }
@@ -94,9 +93,36 @@ class HlsExportService : Service() {
         serviceScope.launch {
             try {
                 when {
-                    mediaItem != null -> muxToMp4WithTransformer(mediaItem, title)
                     extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title)
-                    url != null -> muxToMp4(url, title)
+                    videoUrl != null -> {
+                        val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
+
+                        // Check if the exact variant is already cached. If so, use Transformer to instantly export without network usage!
+                        val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
+                        val cacheKey = androidx.media3.datasource.cache.CacheKeyFactory.DEFAULT.buildCacheKey(androidx.media3.datasource.DataSpec(android.net.Uri.parse(finalUrl)))
+
+                        // A rough check: If there's any data cached for this key, attempt Transformer export.
+                        val isCached = cache.getCachedSpans(cacheKey).isNotEmpty()
+
+                        if (isCached || forceTransformer) {
+                            val builder = MediaItem.Builder()
+                                .setUri(android.net.Uri.parse(finalUrl))
+                                .setMimeType(mimeType)
+
+                            if (!streamKeyStrings.isNullOrEmpty()) {
+                                val keys = streamKeyStrings.map {
+                                    val parts = it.split(",")
+                                    androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt(), parts.getOrNull(2)?.toInt() ?: 0)
+                                }
+                                builder.setStreamKeys(keys)
+                            }
+
+                            val mediaItem = builder.build()
+                            muxToMp4WithTransformer(mediaItem, title)
+                        } else {
+                            muxToMp4(finalUrl, title)
+                        }
+                    }
                 }
             } catch (t: Throwable) {
                 Log.e(TAG, "Export failed", t)
@@ -125,6 +151,7 @@ class HlsExportService : Service() {
             val mediaItem = MediaItem.Builder()
                 .setUri(android.net.Uri.parse(finalUrl))
                 .setMimeType(download.request.mimeType)
+                .setStreamKeys(download.request.streamKeys)
                 .build()
 
             muxToMp4WithTransformer(mediaItem, title)
@@ -156,6 +183,7 @@ class HlsExportService : Service() {
                     )
                 )
                 .setVideoMimeType(MimeTypes.VIDEO_H264)
+                .setAudioMimeType(MimeTypes.AUDIO_AAC)
                 .addListener(object : Transformer.Listener {
                     override fun onCompleted(composition: androidx.media3.transformer.Composition, result: ExportResult) {
                         Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show()
@@ -194,27 +222,40 @@ class HlsExportService : Service() {
         val referer = HlsDownloadHelper.currentReferer ?: ""
         val cookie = HlsDownloadHelper.currentCookie ?: ""
 
-        val sb = StringBuilder()
+        val commandArgs = mutableListOf<String>()
+
         if (userAgent.isNotEmpty()) {
-            sb.append("-user_agent \"$userAgent\" ")
+            commandArgs.add("-user_agent")
+            commandArgs.add(userAgent)
         }
+
         val headers = mutableListOf<String>()
         if (referer.isNotEmpty()) headers.add("Referer: $referer")
         if (cookie.isNotEmpty()) headers.add("Cookie: $cookie")
 
         if (headers.isNotEmpty()) {
-            sb.append("-headers \"${headers.joinToString("\r\n")}\r\n\" ")
+            commandArgs.add("-headers")
+            commandArgs.add("${headers.joinToString("\r\n")}\r\n")
         }
 
-        sb.append("-allowed_extensions ALL ")
+        commandArgs.add("-allowed_extensions")
+        commandArgs.add("ALL")
 
-        // Fast copy, no re-encoding
-        sb.append("-i \"$url\" -c copy -bsf:a aac_adtstoasc \"${out.absolutePath}\"")
+        commandArgs.add("-i")
+        commandArgs.add(url)
 
-        val command = sb.toString()
-        Log.d(TAG, "Executing FFmpeg command: $command")
+        commandArgs.add("-c")
+        commandArgs.add("copy")
 
-        val session = FFmpegKit.execute(command)
+        commandArgs.add("-bsf:a")
+        commandArgs.add("aac_adtstoasc")
+
+        commandArgs.add(out.absolutePath)
+
+        Log.d(TAG, "Executing FFmpeg command with arguments: $commandArgs")
+
+        // Execute with safe arguments list rather than string concatenation to prevent injection
+        val session = FFmpegKit.executeWithArguments(commandArgs.toTypedArray())
 
         withContext(Dispatchers.Main) {
             if (com.arthenica.ffmpegkit.ReturnCode.isSuccess(session.returnCode)) {

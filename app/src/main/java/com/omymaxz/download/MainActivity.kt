@@ -358,6 +358,7 @@ private fun checkBatteryOptimization() {
         setupTabButton()
         setupStartPage()
         setupToolbarNavButtons()
+        applyGlossyTheme()
         binding.fabShowMedia.setOnClickListener {
             showMediaListDialog()
         }
@@ -529,6 +530,34 @@ private fun checkBatteryOptimization() {
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed to save tabs state: ${e.message}")
             }
+        }
+    }
+
+    private fun applyGlossyTheme() {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        // Default to a dark semi-transparent tint
+        val hexColor = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
+
+        try {
+            val color = android.graphics.Color.parseColor(hexColor)
+            binding.toolbar.setBackgroundColor(color)
+
+            // On Android 12+, we can apply a hardware-accelerated background blur
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                try {
+                    val renderEffect = android.graphics.RenderEffect.createBlurEffect(
+                        10f, 10f, android.graphics.Shader.TileMode.CLAMP
+                    )
+                    // Apply blur to the background drawable if possible,
+                    // or to a dedicated view behind it. For the toolbar itself,
+                    // applying it to the toolbar blurs its children (buttons).
+                    // To avoid blurring the buttons, we rely strictly on the semi-transparent color for now.
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Failed to apply blur effect", e)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Invalid hex color: $hexColor")
         }
     }
 
@@ -933,6 +962,24 @@ private fun checkBatteryOptimization() {
                 binding.urlEditTextToolbar.post {
                     binding.urlEditTextToolbar.selectAll()
                 }
+
+                // Modern UI: Hide other buttons to stretch the URL bar
+                binding.homeButton.visibility = View.GONE
+                binding.backButton.visibility = View.GONE
+                binding.forwardButton.visibility = View.GONE
+                binding.refreshButton.visibility = View.GONE
+                binding.translateButton.visibility = View.GONE
+                binding.aiButton.visibility = View.GONE
+                binding.tabButton.visibility = View.GONE
+            } else {
+                // Restore buttons when focus is lost
+                binding.homeButton.visibility = View.VISIBLE
+                binding.backButton.visibility = View.VISIBLE
+                binding.forwardButton.visibility = View.VISIBLE
+                binding.refreshButton.visibility = View.VISIBLE
+                binding.translateButton.visibility = View.VISIBLE
+                binding.aiButton.visibility = View.VISIBLE
+                binding.tabButton.visibility = View.VISIBLE
             }
         }
 
@@ -979,6 +1026,12 @@ private fun checkBatteryOptimization() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView(webView: WebView) {
+        // Dynamically apply padding to WebView so content isn't hidden under the transparent toolbar
+        val density = resources.displayMetrics.density
+        val topPadding = (64 * density).toInt() // Increased padding for toolbar overlap
+        webView.setPadding(0, topPadding, 0, 0)
+        webView.clipToPadding = false
+
         // --- PERFORMANCE OPTIMIZATIONS ---
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null) // Enable hardware acceleration
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
@@ -3222,7 +3275,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         HlsDownloadHelper.downloadHls(this, mediaFile.url, mediaFile.title, userAgent, cookie)
                     } else {
                         val intent = Intent(this, HlsExportService::class.java).apply {
-                            putExtra(HlsExportService.EXTRA_URL, mediaFile.url)
+                            putExtra(HlsExportService.EXTRA_VIDEO_URL, mediaFile.url)
                             putExtra(HlsExportService.EXTRA_TITLE, mediaFile.title)
                             putExtra(HlsExportService.EXTRA_USER_AGENT, userAgent)
                             putExtra(HlsExportService.EXTRA_REFERER, webView.url)
@@ -3330,6 +3383,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             R.id.menu_user_scripts -> {
                 val intent = Intent(this, UserScriptManagerActivity::class.java)
                 startActivity(intent)
+                true
+            }
+            R.id.menu_theme_color -> {
+                showThemeColorPickerDialog()
                 true
             }
             R.id.menu_open_external -> {
@@ -4257,6 +4314,52 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             }
         }
     }
+    private fun showThemeColorPickerDialog() {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val currentHex = prefs.getString("glossy_theme_color", "#A0000000")
+
+        val input = EditText(this).apply {
+            hint = "e.g., #AAFF0000 for semi-transparent red"
+            setText(currentHex)
+        }
+
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 10)
+            addView(input)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Set Theme Color (HEX)")
+            .setMessage("Enter an 8-character HEX code (AARRGGBB) for a glossy effect.")
+            .setView(layout)
+            .setPositiveButton("Apply") { _, _ ->
+                val newColor = input.text.toString().trim()
+                if (newColor.matches(Regex("^#[0-9a-fA-F]{8}$")) || newColor.matches(Regex("^#[0-9a-fA-F]{6}$"))) {
+                    prefs.edit().putString("glossy_theme_color", newColor).apply()
+                    applyGlossyTheme()
+                    Toast.makeText(this, "Theme applied!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Invalid HEX code. Use #AARRGGBB format.", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNeutralButton("Presets") { _, _ ->
+                val presetColors = arrayOf("Dark Glass (#A0000000)", "Light Glass (#90FFFFFF)", "Red Glass (#80FF0000)", "Blue Glass (#800000FF)", "Green Glass (#8000FF00)")
+                val presetHexCodes = arrayOf("#A0000000", "#90FFFFFF", "#80FF0000", "#800000FF", "#8000FF00")
+
+                AlertDialog.Builder(this)
+                    .setTitle("Choose Preset")
+                    .setItems(presetColors) { _, which ->
+                        prefs.edit().putString("glossy_theme_color", presetHexCodes[which]).apply()
+                        applyGlossyTheme()
+                        Toast.makeText(this, "Theme applied!", Toast.LENGTH_SHORT).show()
+                    }
+                    .show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun showSiteDebuggingOptions() {
         val options = arrayOf("Change User Agent", "Add to Whitelist", "Enable Remote Debugging", "Clear Cookies")
         AlertDialog.Builder(this)

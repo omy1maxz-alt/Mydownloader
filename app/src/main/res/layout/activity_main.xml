@@ -4,28 +4,58 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootContainer"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
-    <LinearLayout
+    <!-- Use FrameLayout so the webview can scroll under the toolbar -->
+    <FrameLayout
         android:id="@+id/mainContent"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="?attr/colorPrimary"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:contentInsetStart="0dp"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+            android:layout_height="match_parent">
+
+            <WebView
+                android:id="@+id/webView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/bookmarkRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="52dp"
+                android:clipToPadding="false"
+                android:visibility="visible" />
+
+        </FrameLayout>
+
+        <!-- Place the toolbar on top so it overlaps the webview/bookmarks -->
+        <!-- Wrap in a LinearLayout so the ProgressBar stays attached under the toolbar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="?attr/colorPrimary"
+                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                app:contentInsetStart="0dp"
+                app:popupTheme="@style/GlassyPopupMenu">
 
             <LinearLayout
+                android:id="@+id/toolbarLinearLayout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:animateLayoutChanges="true">
 
                 <ImageButton
                     android:id="@+id/homeButton"
@@ -38,13 +68,14 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="36dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    android:background="@android:color/white"
+                    android:background="@drawable/bg_search_bar_modern"
                     android:orientation="horizontal"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp">
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:gravity="center_vertical">
 
                     <EditText
                         android:id="@+id/urlEditTextToolbar"
@@ -137,37 +168,20 @@
 
             </LinearLayout>
 
-        </androidx.appcompat.widget.Toolbar>
+            </androidx.appcompat.widget.Toolbar>
 
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:progressTint="?attr/colorAccent"
-            android:visibility="gone"
-            tools:visibility="visible" />
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
-
-            <WebView
-                android:id="@+id/webView"
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="gone" />
+                android:layout_height="2dp"
+                android:progressTint="?attr/colorAccent"
+                android:visibility="gone"
+                tools:visibility="visible" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/bookmarkRecyclerView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="visible" />
+        </LinearLayout>
 
-            </FrameLayout>
-
-    </LinearLayout>
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/fullscreenContainer"

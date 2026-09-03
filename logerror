@@ -1,0 +1,1841 @@
+[2026-09-03 10:41:48.015 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 31178/31183 (recycle/alloc) - 10/31181 (fetch/transfer)
+
+[2026-09-03 10:41:48.721 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:41:49.894 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5040ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:41:50.933 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55000 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 162
+
+[2026-09-03 10:41:51.607 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 17461/17466 (recycle/alloc) - 5/17467 (fetch/transfer)
+
+[2026-09-03 10:41:53.536 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 31416/31421 (recycle/alloc) - 10/31419 (fetch/transfer)
+
+[2026-09-03 10:41:53.723 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:41:54.896 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:41:55.978 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60004 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 3330
+
+[2026-09-03 10:41:56.934 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 17589/17594 (recycle/alloc) - 5/17595 (fetch/transfer)
+
+[2026-09-03 10:41:58.733 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5010ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:119(Avg:42ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:41:59.017 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 31652/31657 (recycle/alloc) - 10/31655 (fetch/transfer)
+
+[2026-09-03 10:41:59.901 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:42:01.111 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 5s(f:5012 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 134
+
+[2026-09-03 10:42:01.958 Uid(value=10806):8621:20557 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 17710/17715 (recycle/alloc) - 5/17715 (fetch/transfer)
+
+[2026-09-03 10:42:03.736 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:04.536 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 31890/31895 (recycle/alloc) - 10/31893 (fetch/transfer)
+
+[2026-09-03 10:42:04.902 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:42:06.102 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 10s(f:10003 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 4485
+
+[2026-09-03 10:42:07.294 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 17837/17842 (recycle/alloc) - 5/17843 (fetch/transfer)
+
+[2026-09-03 10:42:08.782 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5046ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:09.427 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][zero] 1s(f:12278 m:0 s:39 k:0 z:1009) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1
+
+[2026-09-03 10:42:09.570 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 32107/32112 (recycle/alloc) - 10/32110 (fetch/transfer)
+
+[2026-09-03 10:42:09.932 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5030ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:212,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:42:10.422 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][zero] 2s(f:12278 m:0 s:39 k:0 z:2004) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1
+
+[2026-09-03 10:42:11.279 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=296655333, downTime=296655333, phoneEventTime=10:42:11.277 } moveCount:0
+
+[2026-09-03 10:42:11.280 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-03 10:42:11.329 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=296655382, downTime=296655333, phoneEventTime=10:42:11.326 } moveCount:0
+
+[2026-09-03 10:42:11.419 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][zero] 3s(f:12278 m:0 s:39 k:0 z:3001) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1
+
+[2026-09-03 10:42:12.418 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][zero] 4s(f:12278 m:0 s:39 k:0 z:4000) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1
+
+[2026-09-03 10:42:12.512 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 17962/17967 (recycle/alloc) - 5/17968 (fetch/transfer)
+
+[2026-09-03 10:42:13.418 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][zero] 5s(f:12278 m:0 s:39 k:0 z:5000) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1
+
+[2026-09-03 10:42:13.794 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5011ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:122(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:14.572 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 32322/32327 (recycle/alloc) - 10/32325 (fetch/transfer)
+
+[2026-09-03 10:42:14.933 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:42:16.708 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 15s(f:15006 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 3655
+
+[2026-09-03 10:42:17.929 Uid(value=10806):8621:20557 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 18092/18097 (recycle/alloc) - 5/18098 (fetch/transfer)
+
+[2026-09-03 10:42:18.794 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:19.611 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 32539/32544 (recycle/alloc) - 10/32542 (fetch/transfer)
+
+[2026-09-03 10:42:19.979 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5046ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:42:21.747 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 20s(f:20004 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 2932
+
+[2026-09-03 10:42:22.973 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 18213/18218 (recycle/alloc) - 5/18219 (fetch/transfer)
+
+[2026-09-03 10:42:23.799 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:116(Avg:43ms),DQin:0/0,Render:119(Avg:42ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:25.014 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5035ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:42:25.138 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 32777/32782 (recycle/alloc) - 10/32780 (fetch/transfer)
+
+[2026-09-03 10:42:26.783 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 25s(f:25000 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 21
+
+[2026-09-03 10:42:28.146 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 18338/18343 (recycle/alloc) - 5/18343 (fetch/transfer)
+
+[2026-09-03 10:42:28.802 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:30.017 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:42:30.652 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 33016/33021 (recycle/alloc) - 10/33019 (fetch/transfer)
+
+[2026-09-03 10:42:31.911 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 30s(f:30007 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 442
+
+[2026-09-03 10:42:33.315 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 18463/18468 (recycle/alloc) - 5/18469 (fetch/transfer)
+
+[2026-09-03 10:42:33.818 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5016ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:35.051 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5034ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:42:36.168 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 33253/33258 (recycle/alloc) - 10/33256 (fetch/transfer)
+
+[2026-09-03 10:42:36.951 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35008 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 4056
+
+[2026-09-03 10:42:38.327 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 18583/18588 (recycle/alloc) - 5/18588 (fetch/transfer)
+
+[2026-09-03 10:42:38.821 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:39.377 Uid(value=10806):8621:14238 D/PipelineWatcher]
+onInputBufferReleased: frameIndex not found (33396); ignored
+
+[2026-09-03 10:42:40.055 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:42:41.696 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 33490/33495 (recycle/alloc) - 10/33493 (fetch/transfer)
+
+[2026-09-03 10:42:41.949 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40006 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 69
+
+[2026-09-03 10:42:43.666 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 18712/18717 (recycle/alloc) - 5/18718 (fetch/transfer)
+
+[2026-09-03 10:42:43.834 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5013ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:45.056 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:213,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:42:46.943 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45000 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 4011
+
+[2026-09-03 10:42:47.169 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 33726/33731 (recycle/alloc) - 10/33729 (fetch/transfer)
+
+[2026-09-03 10:42:48.837 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:48.839 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 18834/18839 (recycle/alloc) - 5/18839 (fetch/transfer)
+
+[2026-09-03 10:42:50.062 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5006ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:42:52.035 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50009 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 3901
+
+[2026-09-03 10:42:52.696 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 33964/33969 (recycle/alloc) - 10/33967 (fetch/transfer)
+
+[2026-09-03 10:42:53.839 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:54.017 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 18960/18965 (recycle/alloc) - 5/18966 (fetch/transfer)
+
+[2026-09-03 10:42:55.091 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5029ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:42:57.029 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55003 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 3795
+
+[2026-09-03 10:42:57.735 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 34181/34186 (recycle/alloc) - 10/34184 (fetch/transfer)
+
+[2026-09-03 10:42:58.845 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5006ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:42:59.515 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 19090/19095 (recycle/alloc) - 5/19096 (fetch/transfer)
+
+[2026-09-03 10:43:00.131 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5040ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:43:02.116 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60009 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 4899
+
+[2026-09-03 10:43:03.289 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 34420/34425 (recycle/alloc) - 10/34423 (fetch/transfer)
+
+[2026-09-03 10:43:03.849 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:04.850 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 19217/19222 (recycle/alloc) - 5/19223 (fetch/transfer)
+
+[2026-09-03 10:43:05.132 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:43:07.230 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 5s(f:5006 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 4438
+
+[2026-09-03 10:43:08.771 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 34656/34661 (recycle/alloc) - 10/34659 (fetch/transfer)
+
+[2026-09-03 10:43:08.883 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5034ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:09.896 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 19341/19346 (recycle/alloc) - 5/19345 (fetch/transfer)
+
+[2026-09-03 10:43:10.172 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5040ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:43:12.265 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 10s(f:10001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 2649
+
+[2026-09-03 10:43:13.891 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5008ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:14.302 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 34895/34900 (recycle/alloc) - 10/34898 (fetch/transfer)
+
+[2026-09-03 10:43:15.210 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5038ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:43:15.232 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 19467/19472 (recycle/alloc) - 5/19472 (fetch/transfer)
+
+[2026-09-03 10:43:17.268 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 15s(f:15004 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 66
+
+[2026-09-03 10:43:18.898 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5007ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:19.332 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 35111/35116 (recycle/alloc) - 10/35114 (fetch/transfer)
+
+[2026-09-03 10:43:20.212 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:212,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:43:20.437 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 19591/19596 (recycle/alloc) - 5/19597 (fetch/transfer)
+
+[2026-09-03 10:43:22.314 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 20s(f:20009 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1872
+
+[2026-09-03 10:43:23.938 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5040ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:24.735 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 35345/35350 (recycle/alloc) - 10/35348 (fetch/transfer)
+
+[2026-09-03 10:43:25.218 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5006ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:43:25.625 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 19718/19723 (recycle/alloc) - 5/19724 (fetch/transfer)
+
+[2026-09-03 10:43:27.534 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 25s(f:25000 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 373
+
+[2026-09-03 10:43:28.947 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5009ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:29.772 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 35562/35567 (recycle/alloc) - 10/35565 (fetch/transfer)
+
+[2026-09-03 10:43:30.225 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5007ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:218,DQin:0/0,Render:0,Drop:218,DQout:0/0
+
+[2026-09-03 10:43:30.964 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 19844/19849 (recycle/alloc) - 5/19850 (fetch/transfer)
+
+[2026-09-03 10:43:32.740 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 30s(f:30003 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 277
+
+[2026-09-03 10:43:33.954 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5007ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:123(Avg:40ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:34.776 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 35776/35781 (recycle/alloc) - 10/35779 (fetch/transfer)
+
+[2026-09-03 10:43:35.256 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5031ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:218,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:43:36.175 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 19968/19973 (recycle/alloc) - 5/19974 (fetch/transfer)
+
+[2026-09-03 10:43:37.833 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35010 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 2784
+
+[2026-09-03 10:43:38.663 Uid(value=10806):8621:14238 D/PipelineWatcher]
+onInputBufferReleased: frameIndex not found (35948); ignored
+
+[2026-09-03 10:43:38.956 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:40.251 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 36012/36017 (recycle/alloc) - 10/36015 (fetch/transfer)
+
+[2026-09-03 10:43:40.261 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:213,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:43:41.346 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 20092/20097 (recycle/alloc) - 5/20099 (fetch/transfer)
+
+[2026-09-03 10:43:42.871 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40009 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 2999
+
+[2026-09-03 10:43:43.967 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5011ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:45.298 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5037ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:43:45.729 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 36248/36253 (recycle/alloc) - 10/36251 (fetch/transfer)
+
+[2026-09-03 10:43:46.393 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 20214/20219 (recycle/alloc) - 5/20220 (fetch/transfer)
+
+[2026-09-03 10:43:47.865 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45003 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 458
+
+[2026-09-03 10:43:49.015 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5048ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:50.331 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5033ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:43:51.253 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 36487/36492 (recycle/alloc) - 10/36490 (fetch/transfer)
+
+[2026-09-03 10:43:51.562 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 20340/20345 (recycle/alloc) - 5/20343 (fetch/transfer)
+
+[2026-09-03 10:43:52.948 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 816
+
+[2026-09-03 10:43:54.053 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5038ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:43:55.334 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:43:56.743 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 20462/20467 (recycle/alloc) - 5/20467 (fetch/transfer)
+
+[2026-09-03 10:43:56.815 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 36725/36730 (recycle/alloc) - 10/36728 (fetch/transfer)
+
+[2026-09-03 10:43:58.147 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55003 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 891
+
+[2026-09-03 10:43:59.061 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5008ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:00.334 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:44:01.946 Uid(value=10806):8621:20557 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 20586/20591 (recycle/alloc) - 5/20592 (fetch/transfer)
+
+[2026-09-03 10:44:02.337 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 36963/36968 (recycle/alloc) - 10/36966 (fetch/transfer)
+
+[2026-09-03 10:44:03.148 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60004 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 4365
+
+[2026-09-03 10:44:04.067 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:05.340 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:220,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:44:07.137 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 20712/20717 (recycle/alloc) - 5/20717 (fetch/transfer)
+
+[2026-09-03 10:44:07.857 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 37202/37207 (recycle/alloc) - 10/37205 (fetch/transfer)
+
+[2026-09-03 10:44:08.276 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 5s(f:5005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 4521
+
+[2026-09-03 10:44:09.068 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:10.377 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5037ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:44:12.507 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 20839/20844 (recycle/alloc) - 5/20845 (fetch/transfer)
+
+[2026-09-03 10:44:13.278 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 10s(f:10006 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 4096
+
+[2026-09-03 10:44:13.412 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 37440/37445 (recycle/alloc) - 10/37443 (fetch/transfer)
+
+[2026-09-03 10:44:14.071 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:15.410 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5033ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:44:17.679 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 20966/20971 (recycle/alloc) - 5/20970 (fetch/transfer)
+
+[2026-09-03 10:44:18.472 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 15s(f:15001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 2753
+
+[2026-09-03 10:44:18.729 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 37669/37674 (recycle/alloc) - 10/37672 (fetch/transfer)
+
+[2026-09-03 10:44:19.079 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5008ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:20.415 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:44:23.015 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 21093/21098 (recycle/alloc) - 5/21097 (fetch/transfer)
+
+[2026-09-03 10:44:23.473 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 20s(f:20002 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1102
+
+[2026-09-03 10:44:24.081 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:24.216 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 37905/37910 (recycle/alloc) - 10/37908 (fetch/transfer)
+
+[2026-09-03 10:44:25.454 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5039ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:44:28.183 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 21216/21221 (recycle/alloc) - 5/21221 (fetch/transfer)
+
+[2026-09-03 10:44:28.551 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 25s(f:25001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1286
+
+[2026-09-03 10:44:29.093 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5012ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:29.250 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 38122/38127 (recycle/alloc) - 10/38125 (fetch/transfer)
+
+[2026-09-03 10:44:30.460 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5006ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:44:33.194 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 21338/21343 (recycle/alloc) - 5/21343 (fetch/transfer)
+
+[2026-09-03 10:44:33.555 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 30s(f:30005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1592
+
+[2026-09-03 10:44:34.099 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5006ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:34.769 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 38360/38365 (recycle/alloc) - 10/38363 (fetch/transfer)
+
+[2026-09-03 10:44:35.493 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5034ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:212,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:44:38.390 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 21460/21465 (recycle/alloc) - 5/21466 (fetch/transfer)
+
+[2026-09-03 10:44:38.553 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35003 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 554
+
+[2026-09-03 10:44:39.140 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5041ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:39.814 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 38577/38582 (recycle/alloc) - 10/38580 (fetch/transfer)
+
+[2026-09-03 10:44:40.529 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5035ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:44:43.581 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 21587/21592 (recycle/alloc) - 5/21591 (fetch/transfer)
+
+[2026-09-03 10:44:43.583 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40002 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 2454
+
+[2026-09-03 10:44:44.145 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:45.329 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 38815/38820 (recycle/alloc) - 10/38818 (fetch/transfer)
+
+[2026-09-03 10:44:45.532 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:44:48.667 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45007 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1957
+
+[2026-09-03 10:44:48.915 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 21712/21717 (recycle/alloc) - 5/21718 (fetch/transfer)
+
+[2026-09-03 10:44:49.150 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:50.573 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5041ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:44:50.931 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 39056/39061 (recycle/alloc) - 10/39059 (fetch/transfer)
+
+[2026-09-03 10:44:53.661 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 3038
+
+[2026-09-03 10:44:54.159 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5009ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:54.256 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 21841/21846 (recycle/alloc) - 5/21847 (fetch/transfer)
+
+[2026-09-03 10:44:55.615 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5042ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:44:55.973 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 39273/39278 (recycle/alloc) - 10/39276 (fetch/transfer)
+
+[2026-09-03 10:44:58.751 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55007 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 3292
+
+[2026-09-03 10:44:59.160 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:44:59.427 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 21966/21971 (recycle/alloc) - 5/21972 (fetch/transfer)
+
+[2026-09-03 10:45:00.616 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:218,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:45:01.496 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 39512/39517 (recycle/alloc) - 10/39515 (fetch/transfer)
+
+[2026-09-03 10:45:03.828 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 3243
+
+[2026-09-03 10:45:04.168 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5008ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:04.596 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 22089/22094 (recycle/alloc) - 5/22095 (fetch/transfer)
+
+[2026-09-03 10:45:05.624 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5008ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:45:07.055 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 39750/39755 (recycle/alloc) - 10/39753 (fetch/transfer)
+
+[2026-09-03 10:45:08.876 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 5s(f:5007 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1973
+
+[2026-09-03 10:45:09.171 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:09.765 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 22214/22219 (recycle/alloc) - 5/22219 (fetch/transfer)
+
+[2026-09-03 10:45:10.650 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5025ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:45:12.577 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 39988/39993 (recycle/alloc) - 10/39991 (fetch/transfer)
+
+[2026-09-03 10:45:13.877 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 10s(f:10008 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 2546
+
+[2026-09-03 10:45:14.174 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:14.981 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 22337/22342 (recycle/alloc) - 5/22343 (fetch/transfer)
+
+[2026-09-03 10:45:15.655 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:45:18.176 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 40229/40234 (recycle/alloc) - 10/40232 (fetch/transfer)
+
+[2026-09-03 10:45:18.916 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 15s(f:15007 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 6626
+
+[2026-09-03 10:45:19.185 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5011ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:19.991 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 22460/22465 (recycle/alloc) - 5/22464 (fetch/transfer)
+
+[2026-09-03 10:45:20.696 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5040ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:45:23.656 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 40465/40470 (recycle/alloc) - 15/40468 (fetch/transfer)
+
+[2026-09-03 10:45:23.949 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 20s(f:20001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 565
+
+[2026-09-03 10:45:24.186 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:25.317 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 22585/22590 (recycle/alloc) - 5/22591 (fetch/transfer)
+
+[2026-09-03 10:45:25.702 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:45:28.734 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 40684/40689 (recycle/alloc) - 15/40687 (fetch/transfer)
+
+[2026-09-03 10:45:29.001 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 25s(f:25011 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 498
+
+[2026-09-03 10:45:29.190 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:30.665 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 22716/22721 (recycle/alloc) - 5/22721 (fetch/transfer)
+
+[2026-09-03 10:45:30.739 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5037ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:212,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:45:33.772 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 40901/40906 (recycle/alloc) - 15/40904 (fetch/transfer)
+
+[2026-09-03 10:45:34.037 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 30s(f:30008 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 3538
+
+[2026-09-03 10:45:34.199 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5009ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:35.767 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5028ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:45:35.841 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 22837/22842 (recycle/alloc) - 5/22843 (fetch/transfer)
+
+[2026-09-03 10:45:38.777 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 41116/41121 (recycle/alloc) - 23/41119 (fetch/transfer)
+
+[2026-09-03 10:45:39.033 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35004 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 277
+
+[2026-09-03 10:45:39.238 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5040ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:42ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:40.778 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5010ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:45:41.053 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 22962/22967 (recycle/alloc) - 5/22968 (fetch/transfer)
+
+[2026-09-03 10:45:42.266 Uid(value=10806):8621:14238 D/PipelineWatcher]
+onInputBufferReleased: frameIndex not found (41270); ignored
+
+[2026-09-03 10:45:43.851 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 41335/41340 (recycle/alloc) - 23/41338 (fetch/transfer)
+
+[2026-09-03 10:45:44.034 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 3151
+
+[2026-09-03 10:45:44.245 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5006ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:45.816 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5038ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:45:46.213 Uid(value=10806):6545:6545 I/auditd]
+type=1400 audit(0.0:333397): avc:  denied  { read } for  comm="AppInit7" name="u:object_r:build_bootimage_prop:s0" dev="tmpfs" ino=127 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:build_bootimage_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:46.213 Uid(value=10806):6545:6545 W/AppInit7]
+type=1400 audit(0.0:333397): avc:  denied  { read } for  name="u:object_r:build_bootimage_prop:s0" dev="tmpfs" ino=127 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:build_bootimage_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:46.427 Uid(value=10806):8621:20557 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 23092/23097 (recycle/alloc) - 5/23098 (fetch/transfer)
+
+[2026-09-03 10:45:48.858 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 41551/41556 (recycle/alloc) - 23/41554 (fetch/transfer)
+
+[2026-09-03 10:45:49.141 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45000 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1429
+
+[2026-09-03 10:45:49.257 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5012ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:117(Avg:42ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:50.818 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:218,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:45:51.321 Uid(value=10806):6545:6545 I/auditd]
+type=1400 audit(0.0:333407): avc:  granted  { execute } for  comm="Analytics2-Even" path="/data/data/com.facebook.katana/lib-compressed/libthird-party_rust_vendor_cpufeatures_0.3.so" dev="dm-58" ino=4692752 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:51.321 Uid(value=10806):6545:6545 W/Analytics2-Even]
+type=1400 audit(0.0:333407): avc:  granted  { execute } for  path="/data/data/com.facebook.katana/lib-compressed/libthird-party_rust_vendor_cpufeatures_0.3.so" dev="dm-58" ino=4692752 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:51.321 Uid(value=10806):6545:6545 I/auditd]
+type=1400 audit(0.0:333408): avc:  granted  { execute } for  comm="Analytics2-Even" path="/data/data/com.facebook.katana/lib-compressed/libthird-party_rust_vendor_cpufeatures_0.2.so" dev="dm-58" ino=4692747 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:51.321 Uid(value=10806):6545:6545 W/Analytics2-Even]
+type=1400 audit(0.0:333408): avc:  granted  { execute } for  path="/data/data/com.facebook.katana/lib-compressed/libthird-party_rust_vendor_cpufeatures_0.2.so" dev="dm-58" ino=4692747 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:51.325 Uid(value=10806):6545:6545 I/auditd]
+type=1400 audit(0.0:333409): avc:  granted  { execute } for  comm="Analytics2-Even" path="/data/data/com.facebook.katana/lib-compressed/libfb_jpegturbo.so" dev="dm-58" ino=4825143 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:51.325 Uid(value=10806):6545:6545 W/Analytics2-Even]
+type=1400 audit(0.0:333409): avc:  granted  { execute } for  path="/data/data/com.facebook.katana/lib-compressed/libfb_jpegturbo.so" dev="dm-58" ino=4825143 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:51.329 Uid(value=10806):6545:6545 I/auditd]
+type=1400 audit(0.0:333410): avc:  granted  { execute } for  comm="Analytics2-Even" path="/data/data/com.facebook.katana/lib-compressed/libscrollmerged.so" dev="dm-58" ino=4693720 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:51.329 Uid(value=10806):6545:6545 W/Analytics2-Even]
+type=1400 audit(0.0:333410): avc:  granted  { execute } for  path="/data/data/com.facebook.katana/lib-compressed/libscrollmerged.so" dev="dm-58" ino=4693720 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:51.425 Uid(value=10806):6545:6545 I/auditd]
+type=1400 audit(0.0:333411): avc:  granted  { execute } for  comm="Analytics2-Even" path="/data/data/com.facebook.katana/lib-compressed/libfbsocketthreadlocalscope.so" dev="dm-58" ino=4826888 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:51.425 Uid(value=10806):6545:6545 W/Analytics2-Even]
+type=1400 audit(0.0:333411): avc:  granted  { execute } for  path="/data/data/com.facebook.katana/lib-compressed/libfbsocketthreadlocalscope.so" dev="dm-58" ino=4826888 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:51.599 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 23218/23223 (recycle/alloc) - 5/23224 (fetch/transfer)
+
+[2026-09-03 10:45:53.701 Uid(value=10806):6545:6545 I/auditd]
+type=1400 audit(0.0:333413): avc:  granted  { execute } for  comm="CombinedTP10" path="/data/data/com.facebook.katana/lib-compressed/libmonitorcontention.so" dev="dm-58" ino=4825491 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:53.701 Uid(value=10806):6545:6545 W/CombinedTP10]
+type=1400 audit(0.0:333413): avc:  granted  { execute } for  path="/data/data/com.facebook.katana/lib-compressed/libmonitorcontention.so" dev="dm-58" ino=4825491 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:54.181 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1862
+
+[2026-09-03 10:45:54.261 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:119(Avg:42ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:54.293 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 41786/41791 (recycle/alloc) - 28/41789 (fetch/transfer)
+
+[2026-09-03 10:45:55.855 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5037ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:212,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:45:56.771 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 23342/23347 (recycle/alloc) - 5/23348 (fetch/transfer)
+
+[2026-09-03 10:45:56.997 Uid(value=10806):6545:6545 I/auditd]
+type=1400 audit(0.0:333414): avc:  granted  { execute } for  comm="BloksDeviceGpuM" path="/data/data/com.facebook.katana/lib-compressed/libbloks_gpu_query.so" dev="dm-58" ino=5327293 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:56.997 Uid(value=10806):6545:6545 W/BloksDeviceGpuM]
+type=1400 audit(0.0:333414): avc:  granted  { execute } for  path="/data/data/com.facebook.katana/lib-compressed/libbloks_gpu_query.so" dev="dm-58" ino=5327293 scontext=u:r:untrusted_app:s0:c23,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c23,c257,c512,c768 tclass=file app=com.omymaxz.download.debug
+
+[2026-09-03 10:45:59.188 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55008 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 12483
+
+[2026-09-03 10:45:59.275 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5014ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:45:59.775 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 42022/42027 (recycle/alloc) - 28/42025 (fetch/transfer)
+
+[2026-09-03 10:46:00.893 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5038ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:46:01.941 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 23464/23469 (recycle/alloc) - 5/23470 (fetch/transfer)
+
+[2026-09-03 10:46:04.253 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 8025
+
+[2026-09-03 10:46:04.279 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:05.249 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 42258/42263 (recycle/alloc) - 28/42261 (fetch/transfer)
+
+[2026-09-03 10:46:05.934 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5041ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:46:07.285 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 23591/23596 (recycle/alloc) - 5/23597 (fetch/transfer)
+
+[2026-09-03 10:46:09.256 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 5s(f:5003 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 6002
+
+[2026-09-03 10:46:09.284 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:10.732 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 42494/42499 (recycle/alloc) - 28/42497 (fetch/transfer)
+
+[2026-09-03 10:46:10.937 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:46:12.458 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 23715/23720 (recycle/alloc) - 5/23721 (fetch/transfer)
+
+[2026-09-03 10:46:14.286 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:14.337 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 10s(f:10002 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 6088
+
+[2026-09-03 10:46:15.938 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:218,DQout:0/0
+
+[2026-09-03 10:46:16.173 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 42727/42732 (recycle/alloc) - 28/42730 (fetch/transfer)
+
+[2026-09-03 10:46:17.640 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 23840/23845 (recycle/alloc) - 5/23846 (fetch/transfer)
+
+[2026-09-03 10:46:19.297 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5011ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:19.372 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 15s(f:15002 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 5583
+
+[2026-09-03 10:46:20.939 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:213,DQout:0/0
+
+[2026-09-03 10:46:21.174 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 42943/42948 (recycle/alloc) - 28/42946 (fetch/transfer)
+
+[2026-09-03 10:46:22.832 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 23964/23969 (recycle/alloc) - 5/23970 (fetch/transfer)
+
+[2026-09-03 10:46:24.330 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5032ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:24.374 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 20s(f:20004 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1803
+
+[2026-09-03 10:46:25.969 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5030ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:46:26.659 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 43178/43183 (recycle/alloc) - 28/43181 (fetch/transfer)
+
+[2026-09-03 10:46:28.013 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 24089/24094 (recycle/alloc) - 5/24095 (fetch/transfer)
+
+[2026-09-03 10:46:29.334 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:29.486 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 25s(f:25007 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1965
+
+[2026-09-03 10:46:30.970 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:46:32.175 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 43416/43421 (recycle/alloc) - 28/43419 (fetch/transfer)
+
+[2026-09-03 10:46:33.341 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 24216/24221 (recycle/alloc) - 5/24222 (fetch/transfer)
+
+[2026-09-03 10:46:34.340 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5006ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:34.598 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 30s(f:30001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1464
+
+[2026-09-03 10:46:35.972 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:46:37.691 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 43655/43660 (recycle/alloc) - 28/43658 (fetch/transfer)
+
+[2026-09-03 10:46:38.101 Uid(value=10806):8621:14238 D/PipelineWatcher]
+onInputBufferReleased: frameIndex not found (43675); ignored
+
+[2026-09-03 10:46:38.513 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 24340/24345 (recycle/alloc) - 5/24346 (fetch/transfer)
+
+[2026-09-03 10:46:39.357 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5016ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:39.598 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 9680
+
+[2026-09-03 10:46:40.974 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:46:42.695 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 43869/43874 (recycle/alloc) - 28/43872 (fetch/transfer)
+
+[2026-09-03 10:46:43.847 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 24468/24473 (recycle/alloc) - 5/24474 (fetch/transfer)
+
+[2026-09-03 10:46:44.369 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5012ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:44.644 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40008 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 2259
+
+[2026-09-03 10:46:46.012 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5038ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:46:48.169 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 44105/44110 (recycle/alloc) - 28/44108 (fetch/transfer)
+
+[2026-09-03 10:46:49.061 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 24593/24598 (recycle/alloc) - 5/24599 (fetch/transfer)
+
+[2026-09-03 10:46:49.397 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5028ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:49.681 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45004 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1388
+
+[2026-09-03 10:46:51.018 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5006ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:46:53.689 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 44343/44348 (recycle/alloc) - 28/44346 (fetch/transfer)
+
+[2026-09-03 10:46:54.249 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 24720/24725 (recycle/alloc) - 5/24724 (fetch/transfer)
+
+[2026-09-03 10:46:54.405 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5008ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:54.685 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50008 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 974
+
+[2026-09-03 10:46:56.028 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5010ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:46:58.695 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 44558/44563 (recycle/alloc) - 28/44561 (fetch/transfer)
+
+[2026-09-03 10:46:59.406 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:119(Avg:42ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:46:59.422 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 24844/24849 (recycle/alloc) - 5/24850 (fetch/transfer)
+
+[2026-09-03 10:46:59.723 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55007 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 221
+
+[2026-09-03 10:47:01.057 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5029ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:218,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:47:04.103 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 4(32768 size) used buffers - 44795/44800 (recycle/alloc) - 28/44796 (fetch/transfer)
+
+[2026-09-03 10:47:04.410 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:04.428 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 24962/24967 (recycle/alloc) - 5/24967 (fetch/transfer)
+
+[2026-09-03 10:47:04.717 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60000 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 844
+
+[2026-09-03 10:47:06.090 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5033ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:47:09.420 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5010ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:09.657 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 45030/45035 (recycle/alloc) - 28/45033 (fetch/transfer)
+
+[2026-09-03 10:47:09.748 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 5s(f:5001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 25
+
+[2026-09-03 10:47:09.764 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 25089/25094 (recycle/alloc) - 5/25095 (fetch/transfer)
+
+[2026-09-03 10:47:11.095 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:47:14.421 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:14.809 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 25212/25217 (recycle/alloc) - 5/25216 (fetch/transfer)
+
+[2026-09-03 10:47:15.133 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 45266/45271 (recycle/alloc) - 28/45269 (fetch/transfer)
+
+[2026-09-03 10:47:16.130 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5034ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:47:17.593 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 10s(f:10003 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 146
+
+[2026-09-03 10:47:19.460 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5038ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:19.979 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 25334/25339 (recycle/alloc) - 5/25340 (fetch/transfer)
+
+[2026-09-03 10:47:20.654 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 45504/45509 (recycle/alloc) - 28/45507 (fetch/transfer)
+
+[2026-09-03 10:47:21.133 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:47:21.531 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=296965504, downTime=296965504, phoneEventTime=10:47:21.448 } moveCount:0
+
+[2026-09-03 10:47:21.536 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-03 10:47:21.545 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=296965577, downTime=296965504, phoneEventTime=10:47:21.521 } moveCount:0
+
+[2026-09-03 10:47:22.707 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 15s(f:15007 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 5802
+
+[2026-09-03 10:47:24.469 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5009ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:25.306 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 25462/25467 (recycle/alloc) - 5/25468 (fetch/transfer)
+
+[2026-09-03 10:47:26.136 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:212,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:47:26.136 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 45740/45745 (recycle/alloc) - 28/45743 (fetch/transfer)
+
+[2026-09-03 10:47:27.742 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 20s(f:20003 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1597
+
+[2026-09-03 10:47:29.481 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5011ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:30.487 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 25587/25592 (recycle/alloc) - 5/25592 (fetch/transfer)
+
+[2026-09-03 10:47:31.175 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5039ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:47:31.501 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 4(32768 size) used buffers - 45975/45980 (recycle/alloc) - 28/45976 (fetch/transfer)
+
+[2026-09-03 10:47:32.811 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 25s(f:25001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 54
+
+[2026-09-03 10:47:34.494 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5013ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:35.501 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 25707/25712 (recycle/alloc) - 5/25713 (fetch/transfer)
+
+[2026-09-03 10:47:35.982 Uid(value=10806):8621:14238 D/PipelineWatcher]
+onInputBufferReleased: frameIndex not found (46170); ignored
+
+[2026-09-03 10:47:36.215 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5040ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:47:37.058 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 46210/46215 (recycle/alloc) - 28/46213 (fetch/transfer)
+
+[2026-09-03 10:47:38.019 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 30s(f:30005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 13
+
+[2026-09-03 10:47:39.499 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:40.670 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 25830/25835 (recycle/alloc) - 5/25837 (fetch/transfer)
+
+[2026-09-03 10:47:41.220 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:220,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:47:42.537 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 46446/46451 (recycle/alloc) - 28/46449 (fetch/transfer)
+
+[2026-09-03 10:47:42.735 Uid(value=10806):8621:14238 D/PipelineWatcher]
+onInputBufferReleased: frameIndex not found (46459); ignored
+
+[2026-09-03 10:47:43.097 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35000 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 206
+
+[2026-09-03 10:47:44.529 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5030ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:45.715 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 25954/25959 (recycle/alloc) - 5/25959 (fetch/transfer)
+
+[2026-09-03 10:47:46.254 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5034ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:47:47.570 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 46663/46668 (recycle/alloc) - 28/46666 (fetch/transfer)
+
+[2026-09-03 10:47:48.104 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40006 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 3028
+
+[2026-09-03 10:47:49.533 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:51.052 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 26079/26084 (recycle/alloc) - 5/26085 (fetch/transfer)
+
+[2026-09-03 10:47:51.292 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5039ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:47:52.651 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 46882/46887 (recycle/alloc) - 28/46885 (fetch/transfer)
+
+[2026-09-03 10:47:53.147 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1056
+
+[2026-09-03 10:47:54.540 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5007ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:47:56.069 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 26200/26205 (recycle/alloc) - 5/26206 (fetch/transfer)
+
+[2026-09-03 10:47:56.300 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5007ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:47:57.695 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 47099/47104 (recycle/alloc) - 28/47102 (fetch/transfer)
+
+[2026-09-03 10:47:58.187 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 553
+
+[2026-09-03 10:47:59.554 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5014ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:01.236 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 26323/26328 (recycle/alloc) - 5/26329 (fetch/transfer)
+
+[2026-09-03 10:48:01.301 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:48:03.175 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 47335/47340 (recycle/alloc) - 28/47338 (fetch/transfer)
+
+[2026-09-03 10:48:03.309 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 435
+
+[2026-09-03 10:48:04.555 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:06.334 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5033ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:48:06.552 Uid(value=10806):8621:20557 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 26451/26456 (recycle/alloc) - 5/26457 (fetch/transfer)
+
+[2026-09-03 10:48:08.391 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60002 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 401
+
+[2026-09-03 10:48:08.691 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 47573/47578 (recycle/alloc) - 28/47576 (fetch/transfer)
+
+[2026-09-03 10:48:09.557 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:11.336 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:48:11.734 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 26575/26580 (recycle/alloc) - 5/26581 (fetch/transfer)
+
+[2026-09-03 10:48:13.392 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 5s(f:5001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 38
+
+[2026-09-03 10:48:14.257 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 47812/47817 (recycle/alloc) - 28/47815 (fetch/transfer)
+
+[2026-09-03 10:48:14.566 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5009ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:16.343 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5007ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:48:16.918 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 26703/26708 (recycle/alloc) - 5/26708 (fetch/transfer)
+
+[2026-09-03 10:48:18.403 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 10s(f:10011 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 572
+
+[2026-09-03 10:48:19.578 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5012ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:19.656 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 48045/48050 (recycle/alloc) - 28/48048 (fetch/transfer)
+
+[2026-09-03 10:48:20.113 Uid(value=10806):8621:14238 D/PipelineWatcher]
+onInputBufferReleased: frameIndex not found (48069); ignored
+
+[2026-09-03 10:48:21.347 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5005ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:48:22.266 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 26828/26833 (recycle/alloc) - 5/26834 (fetch/transfer)
+
+[2026-09-03 10:48:23.433 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 15s(f:15000 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 100
+
+[2026-09-03 10:48:24.583 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:25.134 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 48281/48286 (recycle/alloc) - 28/48284 (fetch/transfer)
+
+[2026-09-03 10:48:26.373 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5025ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:212,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:48:27.749 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 26959/26964 (recycle/alloc) - 5/26965 (fetch/transfer)
+
+[2026-09-03 10:48:28.437 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 20s(f:20005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1909
+
+[2026-09-03 10:48:29.595 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5012ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:30.615 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 48517/48522 (recycle/alloc) - 28/48520 (fetch/transfer)
+
+[2026-09-03 10:48:31.417 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5044ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:48:32.930 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 27086/27091 (recycle/alloc) - 5/27092 (fetch/transfer)
+
+[2026-09-03 10:48:33.435 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 25s(f:25002 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 75
+
+[2026-09-03 10:48:34.599 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:123(Avg:40ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:36.169 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 48756/48761 (recycle/alloc) - 28/48759 (fetch/transfer)
+
+[2026-09-03 10:48:36.456 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5038ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:219,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:48:38.259 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 27211/27216 (recycle/alloc) - 5/27217 (fetch/transfer)
+
+[2026-09-03 10:48:38.481 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 30s(f:30008 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 77
+
+[2026-09-03 10:48:39.601 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:118(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:41.460 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:218,DQout:0/0
+
+[2026-09-03 10:48:41.693 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 48994/48999 (recycle/alloc) - 28/48997 (fetch/transfer)
+
+[2026-09-03 10:48:43.437 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 27338/27343 (recycle/alloc) - 5/27344 (fetch/transfer)
+
+[2026-09-03 10:48:43.477 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1651
+
+[2026-09-03 10:48:44.605 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:119(Avg:42ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:46.464 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:218,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:48:47.214 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 49233/49238 (recycle/alloc) - 28/49236 (fetch/transfer)
+
+[2026-09-03 10:48:48.515 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40002 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 374
+
+[2026-09-03 10:48:48.613 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 27460/27465 (recycle/alloc) - 5/27466 (fetch/transfer)
+
+[2026-09-03 10:48:49.612 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5007ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:51.467 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5003ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:48:52.769 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 49471/49476 (recycle/alloc) - 28/49474 (fetch/transfer)
+
+[2026-09-03 10:48:53.554 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 970
+
+[2026-09-03 10:48:53.943 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 27587/27592 (recycle/alloc) - 5/27593 (fetch/transfer)
+
+[2026-09-03 10:48:54.620 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5008ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:48:56.492 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5025ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:214,DQin:0/0,Render:0,Drop:216,DQout:0/0
+
+[2026-09-03 10:48:58.177 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 49705/49710 (recycle/alloc) - 28/49708 (fetch/transfer)
+
+[2026-09-03 10:48:58.636 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50001 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 1090
+
+[2026-09-03 10:48:59.127 Uid(value=10806):8621:20554 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 27714/27719 (recycle/alloc) - 5/27720 (fetch/transfer)
+
+[2026-09-03 10:48:59.622 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5002ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:121(Avg:41ms),DQin:0/0,Render:120(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:49:01.493 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5001ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:215,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:49:03.654 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 49941/49946 (recycle/alloc) - 28/49944 (fetch/transfer)
+
+[2026-09-03 10:49:03.684 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55010 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 496
+
+[2026-09-03 10:49:04.340 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 27839/27844 (recycle/alloc) - 5/27845 (fetch/transfer)
+
+[2026-09-03 10:49:04.662 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5040ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:42ms),DQin:0/0,Render:120(Avg:42ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:49:05.634 Uid(value=10806):8621:14238 D/PipelineWatcher]
+onInputBufferReleased: frameIndex not found (50028); ignored
+
+[2026-09-03 10:49:06.533 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5041ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:217,DQin:0/0,Render:0,Drop:217,DQout:0/0
+
+[2026-09-03 10:49:08.762 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 793
+
+[2026-09-03 10:49:09.089 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 1(8192 size) used buffers - 50174/50179 (recycle/alloc) - 28/50177 (fetch/transfer)
+
+[2026-09-03 10:49:09.674 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 5012ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:120(Avg:41ms),DQin:0/0,Render:121(Avg:41ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:49:09.841 Uid(value=10806):8621:14238 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 5(15667200 size) used buffers - 27969/27974 (recycle/alloc) - 5/27975 (fetch/transfer)
+
+[2026-09-03 10:49:10.705 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=297074758, downTime=297074758, phoneEventTime=10:49:10.702 } moveCount:0
+
+[2026-09-03 10:49:10.705 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-03 10:49:10.749 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=297074802, downTime=297074758, phoneEventTime=10:49:10.746 } moveCount:0
+
+[2026-09-03 10:49:11.538 Uid(value=10806):8621:20565 I/MediaCodec]
+[mId: 6] [audio-debug-dec] Stats 5004ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:216,DQin:0/0,Render:0,Drop:215,DQout:0/0
+
+[2026-09-03 10:49:11.576 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=297075629, downTime=297075629, phoneEventTime=10:49:11.573 } moveCount:0
+
+[2026-09-03 10:49:11.576 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-03 10:49:11.665 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=297075719, downTime=297075629, phoneEventTime=10:49:11.663 } moveCount:0
+
+[2026-09-03 10:49:11.710 Uid(value=10806):8621:8621 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-03 10:49:11.715 Uid(value=10806):8621:8621 D/ScrollerOptimizationManager]
+registerConfigChangedListener
+
+[2026-09-03 10:49:11.723 Uid(value=10806):8621:8621 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@6e37be0, reason: DarkModeEnabled
+
+[2026-09-03 10:49:11.739 Uid(value=10806):8621:8621 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-09-03 10:49:11.739 Uid(value=10806):8621:8621 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-09-03 10:49:11.739 Uid(value=10806):8621:8621 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-09-03 10:49:11.739 Uid(value=10806):8621:8621 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-09-03 10:49:11.739 Uid(value=10806):8621:8621 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-09-03 10:49:11.758 Uid(value=10806):8621:8621 W/libc]
+Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
+
+[2026-09-03 10:49:11.753 Uid(value=10806):8621:8621 I/auditd]
+type=1400 audit(0.0:333427): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-09-03 10:49:11.753 Uid(value=10806):8621:8621 W/.download.debug]
+type=1400 audit(0.0:333427): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-09-03 10:49:11.753 Uid(value=10806):8621:8621 I/auditd]
+type=1400 audit(0.0:333428): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-09-03 10:49:11.753 Uid(value=10806):8621:8621 W/.download.debug]
+type=1400 audit(0.0:333428): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-09-03 10:49:11.759 Uid(value=10806):8621:8621 I/.download.debug]
+【MiuiBoosterUtils】checkUtil disable.
+
+[2026-09-03 10:49:11.759 Uid(value=10806):8621:8621 I/.download.debug]
+【MiuiBoosterUtils】package permission check disable.
+
+[2026-09-03 10:49:11.759 Uid(value=10806):8621:8621 I/.download.debug]
+【MiuiBoosterUtils】get Service disable.
+
+[2026-09-03 10:49:11.760 Uid(value=10806):8621:8621 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@6e37be0, reason: DarkModeEnabled
+
+[2026-09-03 10:49:11.762 Uid(value=10806):8621:11111 I/.download.debug]
+【MiuiBoosterUtils】improve disable.
+
+[2026-09-03 10:49:11.764 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
+
+[2026-09-03 10:49:11.765 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#58
+
+[2026-09-03 10:49:11.771 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportDrawFinished
+
+[2026-09-03 10:49:11.771 Uid(value=10806):8621:8621 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=0]
+
+[2026-09-03 10:49:11.843 Uid(value=10806):8621:8621 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-09-03 10:49:11.843 Uid(value=10806):8621:8621 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-09-03 10:49:12.771 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=297076825, downTime=297076825, phoneEventTime=10:49:12.769 } moveCount:0
+
+[2026-09-03 10:49:12.771 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-03 10:49:12.837 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=297076891, downTime=297076825, phoneEventTime=10:49:12.835 } moveCount:0
+
+[2026-09-03 10:49:12.855 Uid(value=10806):8621:20518 I/AudioTrack]
+pause(sessionID=47385) pause(14010): prior state:STATE_ACTIVE packageName: com.omymaxz.download.debug
+
+[2026-09-03 10:49:12.864 Uid(value=10806):8621:8621 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{e189b62 V.E...... R....... 0,0-1403,503 aid=1073741825}[CustomPlayerActivity] of Surface(name=null mNativeObject=-5476376608451035280)/@0xf9e34f3android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400
+
+[2026-09-03 10:49:12.864 Uid(value=10806):8621:8621 W/WindowOnBackDispatcher]
+sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@af44e4e
+
+[2026-09-03 10:49:12.865 Uid(value=10806):8621:8621 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{e189b62 V.E...... R....... 0,0-1403,503 aid=1073741825}[CustomPlayerActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283
+
+[2026-09-03 10:49:12.865 Uid(value=10806):8621:8621 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-09-03 10:49:12.867 Uid(value=10806):8621:13314 D/HWUI]
+endAllActiveAnimators on 0xb400007d9d0271b0 (RippleDrawable) with handle 0xb400007e4d04d470
+
+[2026-09-03 10:49:12.913 Uid(value=10806):8621:8621 I/HandWritingStubImpl]
+refreshLastKeyboardType: 1
+
+[2026-09-03 10:49:12.913 Uid(value=10806):8621:8621 I/HandWritingStubImpl]
+getCurrentKeyboardType: 1
+
+[2026-09-03 10:49:13.681 Uid(value=10806):8621:8621 I/TransformerInternal]
+Init 4fac037 [AndroidXMedia3/1.4.0] [marble, 23049PCD8G, Xiaomi, 35]
+
+[2026-09-03 10:49:13.683 Uid(value=10806):8621:8621 I/ExoPlayerImpl]
+Init 6dec9a4 [AndroidXMedia3/1.4.0] [marble, 23049PCD8G, Xiaomi, 35]
+
+[2026-09-03 10:49:13.837 Uid(value=10806):8621:11138 D/MPEG4Writer]
+PreAllocation enabled
+
+[2026-09-03 10:49:13.852 Uid(value=10806):8621:11138 E/Utils]
+csd0 too small
+
+[2026-09-03 10:49:13.852 Uid(value=10806):8621:11138 E/ExtendedUtils]
+csd0 too small
+
+[2026-09-03 10:49:13.853 Uid(value=10806):8621:11138 D/MPEG4Writer]
+fpathconf _PC_FILESIZEBITS:64
+
+[2026-09-03 10:49:13.853 Uid(value=10806):8621:11138 D/MPEG4Writer]
+File size limit set to 4503599627370495 bytes implicitly
+
+[2026-09-03 10:49:13.854 Uid(value=10806):8621:11138 D/MPEG4Writer]
+MP4WtrCtrlHlpLooper Started
+
+[2026-09-03 10:49:13.854 Uid(value=10806):8621:11138 I/MPEG4Writer]
+limits: 4503599627370495/0 bytes/us, bit rate: -1 bps and the estimated moov size 3248 bytes
+
+[2026-09-03 10:49:13.854 Uid(value=10806):8621:11138 I/MPEG4Writer]
+Time taken by video Track Source to start : 0ms
+
+[2026-09-03 10:49:13.854 Uid(value=10806):8621:11138 I/MPEG4Writer]
+Time taken by audio Track Source to start : 0ms
+
+[2026-09-03 10:49:13.854 Uid(value=10806):8621:11153 I/MPEG4Writer]
+setStartTimestampUs: 60200
+
+[2026-09-03 10:49:13.854 Uid(value=10806):8621:11153 I/MPEG4Writer]
+Earliest track starting time: 60200
+
+[2026-09-03 10:49:13.868 Uid(value=10806):8621:11152 I/MPEG4Writer]
+setStartTimestampUs: 83422
+
+[2026-09-03 10:49:13.874 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 5s(f:5112 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 595
+
+[2026-09-03 10:49:14.876 Uid(value=10806):8621:20518 W/MediaCodec]
+[mId: 6] [audio-debug-dec] queueInputBuffer: Input time interval reaches 2046ms before pts: 1001168301922
+
+[2026-09-03 10:49:14.876 Uid(value=10806):8621:20518 I/MediaCodec]
+[mId: 6] [audio-debug-dec] queueInputBuffer: index: 0 pts: 1001168301922 timediff: 2046
+
+[2026-09-03 10:49:14.876 Uid(value=10806):8621:20565 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d07d838 : 5(40960 size) total buffers - 4(32768 size) used buffers - 50342/50347 (recycle/alloc) - 28/50343 (fetch/transfer)
+
+[2026-09-03 10:49:14.877 Uid(value=10806):8621:20518 I/MediaCodec]
+[mId: 6] [audio-debug-dec] queueInputBuffer: index: 1 pts: 1001168324944 timediff: 1
+
+[2026-09-03 10:49:14.877 Uid(value=10806):8621:20518 I/MediaCodec]
+[mId: 6] [audio-debug-dec] queueInputBuffer: index: 2 pts: 1001168347933 timediff: 0
+
+[2026-09-03 10:49:15.850 Uid(value=10806):8621:20554 I/MediaCodec]
+[mId: 5] [video-debug-dec] Stats 6176ms:Client:com.omymaxz.download.debug,Component:c2.qti.avc.decoder,Qin:80(Avg:77ms),DQin:0/0,Render:76(Avg:81ms),Drop:0,DQout:0/0
+
+[2026-09-03 10:49:18.447 Uid(value=10806):8621:14237 D/BufferPoolAccessor2.0]
+bufferpool2 0xb400007d0d069db8 : 5(15667200 size) total buffers - 4(12533760 size) used buffers - 28043/28048 (recycle/alloc) - 5/28050 (fetch/transfer)
+
+[2026-09-03 10:49:18.448 Uid(value=10806):8621:14237 D/BufferPoolAccessor2.0]
+evictor expired: 1, evicted: 1
+
+[2026-09-03 10:49:18.880 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 10s(f:10118 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:49:19.448 Uid(value=10806):8621:14237 D/BufferPoolAccessor2.0]
+evictor expired: 1, evicted: 1
+
+[2026-09-03 10:49:23.886 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 15s(f:15124 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:49:25.724 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=297089777, downTime=297089777, phoneEventTime=10:49:25.721 } moveCount:0
+
+[2026-09-03 10:49:25.724 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-03 10:49:25.818 Uid(value=10806):8621:8621 I/MIUIInput]
+[MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=297089872, downTime=297089777, phoneEventTime=10:49:25.815 } moveCount:9
+
+[2026-09-03 10:49:26.322 Uid(value=10806):8621:8621 I/wm_on_top_resumed_lost_called]
+[182897413,com.omymaxz.download.CustomPlayerActivity,topStateChangedWhenResumed]
+
+[2026-09-03 10:49:26.360 Uid(value=10806):8621:8621 I/wm_on_paused_called]
+[0,182897413,com.omymaxz.download.CustomPlayerActivity,performPause,1]
+
+[2026-09-03 10:49:27.545 Uid(value=10806):8621:8621 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@6e37be0, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.45 fontWeightAdjustment=0/d themeChanged=2 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+
+[2026-09-03 10:49:27.546 Uid(value=10806):8621:8621 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@6e37be0, reason: DarkModeEnabled
+
+[2026-09-03 10:49:27.546 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59
+
+[2026-09-03 10:49:27.568 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-09-03 10:49:27.576 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
+
+[2026-09-03 10:49:27.576 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#61
+
+[2026-09-03 10:49:27.584 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportDrawFinished
+
+[2026-09-03 10:49:27.584 Uid(value=10806):8621:8621 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=25]
+
+[2026-09-03 10:49:27.763 Uid(value=10806):8621:8621 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@6e37be0, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw122dp w216dp h122dp 440dpi smll hdr widecg land finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(441, 1164 - 1036, 1499) mAppBounds=Rect(441, 1164 - 1036, 1499) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=pinned mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.47 fontWeightAdjustment=0/d themeChanged=2 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+
+[2026-09-03 10:49:27.765 Uid(value=10806):8621:8621 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@6e37be0, reason: DarkModeEnabled
+
+[2026-09-03 10:49:27.767 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59
+
+[2026-09-03 10:49:27.778 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4423 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
+
+[2026-09-03 10:49:27.781 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
+
+[2026-09-03 10:49:27.781 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#64
+
+[2026-09-03 10:49:27.791 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportDrawFinished
+
+[2026-09-03 10:49:27.791 Uid(value=10806):8621:8621 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=29]
+
+[2026-09-03 10:49:28.782 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 20s(f:20020 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:49:33.788 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 25s(f:25026 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:49:38.795 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 30s(f:30033 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:49:43.802 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35040 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:49:48.806 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40044 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:49:53.812 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45050 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:49:58.815 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50053 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:03.823 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55061 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:08.826 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 60s(f:60065 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:13.832 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 5s(f:5005 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:18.837 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 10s(f:10010 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:23.843 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 15s(f:15016 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:28.847 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 20s(f:20020 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:33.852 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 25s(f:25025 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:38.859 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 30s(f:30032 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:43.864 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 35s(f:35037 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:48.869 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 40s(f:40042 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:50.298 Uid(value=10806):8621:11138 I/TransformerInternal]
+Release 4fac037 [AndroidXMedia3/1.4.0] [marble, 23049PCD8G, Xiaomi, 35] [media3.common, media3.ui, media3.exoplayer, media3.database, media3.decoder, media3.session, media3.exoplayer.hls, media3.datasource, media3.extractor, media3.transformer]
+
+[2026-09-03 10:50:50.298 Uid(value=10806):8621:11138 I/ExoPlayerImpl]
+Release 6dec9a4 [AndroidXMedia3/1.4.0] [marble, 23049PCD8G, Xiaomi, 35] [media3.common, media3.ui, media3.exoplayer, media3.database, media3.decoder, media3.session, media3.exoplayer.hls, media3.datasource, media3.extractor, media3.transformer]
+
+[2026-09-03 10:50:50.308 Uid(value=10806):8621:11138 D/MPEG4Writer]
+reset()
+
+[2026-09-03 10:50:50.309 Uid(value=10806):8621:11152 V/MediaWriter]
+Track event err/info msg:101, trackId:1, type:1000,val:-1011
+
+[2026-09-03 10:50:50.309 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Audio track stopping. Stop source
+
+[2026-09-03 10:50:50.309 Uid(value=10806):8621:11152 I/MPEG4Writer]
+Received total/0-length (34167/0) buffers and encoded 34167 frames. - Video
+
+[2026-09-03 10:50:50.310 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Audio track source stopping
+
+[2026-09-03 10:50:50.310 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Audio track source stopped
+
+[2026-09-03 10:50:50.311 Uid(value=10806):8621:11153 V/MediaWriter]
+Track event err/info msg:101, trackId:2, type:1000,val:-1011
+
+[2026-09-03 10:50:50.311 Uid(value=10806):8621:11153 I/MPEG4Writer]
+Received total/0-length (61375/0) buffers and encoded 61375 frames. - Audio
+
+[2026-09-03 10:50:50.312 Uid(value=10806):8621:11153 I/MPEG4Writer]
+Audio track drift time: 0 us
+
+[2026-09-03 10:50:50.312 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Audio track stopped. Status:0. Stop source
+
+[2026-09-03 10:50:50.312 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Video track stopping. Stop source
+
+[2026-09-03 10:50:50.312 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Video track source stopping
+
+[2026-09-03 10:50:50.312 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Video track source stopped
+
+[2026-09-03 10:50:50.312 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Video track stopped. Status:0. Stop source
+
+[2026-09-03 10:50:50.312 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Duration from tracks range is [1425030744, 1425123687] us
+
+[2026-09-03 10:50:50.312 Uid(value=10806):8621:11150 D/MPEG4Writer]
+0 chunks are written in the last batch
+
+[2026-09-03 10:50:50.313 Uid(value=10806):8621:11138 D/MPEG4Writer]
+WriterThread stopped. Status:0
+
+[2026-09-03 10:50:50.313 Uid(value=10806):8621:11138 I/MPEG4Writer]
+Adjust the moov start time from 60200 us -> -357089 us
+
+[2026-09-03 10:50:50.316 Uid(value=10806):8621:11138 I/MPEG4Writer]
+The mp4 file will not be streamable.
+
+[2026-09-03 10:50:50.317 Uid(value=10806):8621:11138 I/MPEG4Writer]
+MOOV atom was written to the file
+
+[2026-09-03 10:50:50.317 Uid(value=10806):8621:11138 D/MPEG4Writer]
+release()
+
+[2026-09-03 10:50:50.317 Uid(value=10806):8621:11138 D/MPEG4Writer]
+ftruncate mPreAllocateFileEndOffset:185163283 mOffset:185087646 mMdatEndOffset:184032942 diff:75637
+
+[2026-09-03 10:50:50.684 Uid(value=10806):8621:11138 D/MPEG4Writer]
+final fsync() takes 367 ms, file size 185087646
+
+[2026-09-03 10:50:50.686 Uid(value=10806):8621:11138 D/MPEG4Writer]
+MP4WtrCtrlHlpLooper stopped
+
+[2026-09-03 10:50:50.686 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Top 5 write durations(microseconds): #1:9150 #2:9931 #3:13124 #4:16436 #5:47539
+
+[2026-09-03 10:50:50.686 Uid(value=10806):8621:11138 D/MPEG4Writer]
+reset()
+
+[2026-09-03 10:50:50.686 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Video track stopping. Stop source
+
+[2026-09-03 10:50:50.686 Uid(value=10806):8621:11138 E/MPEG4Writer]
+Stop() called but track is not started or stopped
+
+[2026-09-03 10:50:50.686 Uid(value=10806):8621:11138 D/MPEG4Writer]
+Audio track stopping. Stop source
+
+[2026-09-03 10:50:50.686 Uid(value=10806):8621:11138 E/MPEG4Writer]
+Stop() called but track is not started or stopped
+
+[2026-09-03 10:50:53.875 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 45s(f:45049 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:50:57.449 Uid(value=10806):8621:8621 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@6e37be0, reason: DarkModeEnabled
+
+[2026-09-03 10:50:57.449 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.handleResized:2794 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:12841 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59
+
+[2026-09-03 10:50:57.469 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4423 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
+
+[2026-09-03 10:50:57.470 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
+
+[2026-09-03 10:50:57.470 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.Setup new sync=wmsSync-VRI[CustomPlayerActivity]#67
+
+[2026-09-03 10:50:57.475 Uid(value=10806):8621:8621 D/VRI[CustomPlayerActivity]]
+vri.reportDrawFinished
+
+[2026-09-03 10:50:57.476 Uid(value=10806):8621:8621 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=30]
+
+[2026-09-03 10:50:58.882 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 50s(f:50055 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
+
+[2026-09-03 10:51:03.890 Uid(value=10806):8621:20518 D/AudioTrackImpl]
+[audioTrackData][fine] 55s(f:55063 m:0 s:0 k:0 z:0) : pid 8621 uid 10806 sessionId 47385 sr 44100 ch 2 fmt 1 maxAmplitude 614
