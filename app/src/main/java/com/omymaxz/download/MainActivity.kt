@@ -1028,9 +1028,9 @@ private fun checkBatteryOptimization() {
     private fun setupWebView(webView: WebView) {
         // Dynamically apply padding to WebView so content isn't hidden under the transparent toolbar
         val density = resources.displayMetrics.density
-        val topPadding = (80 * density).toInt() // Max padding for toolbar overlap
-        // WebView padding handled via CSS
-        // // webView.clipToPadding = false
+
+        // Removed WebView padding
+        // webView.clipToPadding = false
 
         // --- PERFORMANCE OPTIMIZATIONS ---
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null) // Enable hardware acceleration
@@ -1189,8 +1189,6 @@ private fun checkBatteryOptimization() {
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
-            // Inject CSS to offset the body
-            view?.evaluateJavascript("document.body.style.paddingTop = \"80px\";", null)
                     super.onPageFinished(view, url)
                     isPageLoading = false
                     binding.progressBar.visibility = View.GONE
