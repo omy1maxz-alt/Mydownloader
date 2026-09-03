@@ -1061,7 +1061,7 @@ private fun checkBatteryOptimization() {
 
             // --- PERFORMANCE SETTINGS ---
             settings.allowFileAccess = true
-            settings.cacheMode = WebSettings.LOAD_DEFAULT // Use cache
+            settings.cacheMode = WebSettings.LOAD_NO_CACHE // Prevent caching as requested by user
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
             // Keep these as they are for proper layout handling
@@ -1150,6 +1150,16 @@ private fun checkBatteryOptimization() {
                     }
                     binding.mainContent.visibility = View.VISIBLE
                     binding.toolbar.visibility = View.VISIBLE
+
+                    // Aggressively pause all media to prevent auto-play despite WebView settings
+                    view?.evaluateJavascript(
+                        "(function() { " +
+                        "  var mediaElements = document.querySelectorAll('video, audio');" +
+                        "  mediaElements.forEach(function(media) { " +
+                        "    media.autoplay = false; " +
+                        "    media.pause(); " +
+                        "  }); " +
+                        "})();", null)
 
                     injectAntiHijackingScripts(view)
 
