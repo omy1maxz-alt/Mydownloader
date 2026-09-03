@@ -1351,7 +1351,8 @@ private fun checkBatteryOptimization() {
                     }
                     fullscreenView = view
                     customViewCallback = callback
-                    (binding.root as FrameLayout).addView(fullscreenView)
+                    val decorView = window.decorView as android.view.ViewGroup
+                    decorView.addView(fullscreenView)
 
                     val downloadButton = com.google.android.material.floatingactionbutton.FloatingActionButton(this@MainActivity).apply {
                         setImageResource(android.R.drawable.ic_menu_save) // A generic download/save icon
@@ -1374,7 +1375,7 @@ private fun checkBatteryOptimization() {
                             Toast.makeText(this@MainActivity, "Requesting active video download...", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    (binding.root as FrameLayout).addView(downloadButton)
+                    decorView.addView(downloadButton)
                     fullscreenDownloadButton = downloadButton
 
                                         val exitButton = com.google.android.material.floatingactionbutton.FloatingActionButton(this@MainActivity).apply {
@@ -1397,7 +1398,7 @@ private fun checkBatteryOptimization() {
                             onHideCustomView()
                         }
                     }
-                    (binding.root as FrameLayout).addView(exitButton)
+                    decorView.addView(exitButton)
                     fullscreenExitButton = exitButton
 
                     // Auto-hide buttons after 5 seconds
@@ -1443,15 +1444,16 @@ private fun checkBatteryOptimization() {
                 }
                 override fun onHideCustomView() {
                     if (fullscreenView == null) return
-                    (binding.root as FrameLayout).removeView(fullscreenView)
+                    val decorView = window.decorView as android.view.ViewGroup
+                    decorView.removeView(fullscreenView)
                     fullscreenView = null
 
                     if (fullscreenDownloadButton != null) {
-                        (binding.root as FrameLayout).removeView(fullscreenDownloadButton)
+                        decorView.removeView(fullscreenDownloadButton)
                         fullscreenDownloadButton = null
                     }
                     if (fullscreenExitButton != null) {
-                        (binding.root as FrameLayout).removeView(fullscreenExitButton)
+                        decorView.removeView(fullscreenExitButton)
                         fullscreenExitButton = null
                     }
 
@@ -3945,7 +3947,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .show()
     }
     private fun showMasterSettingsDialog() {
-        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache", "Popup & Redirect Blocker")
+        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache", "Popup & Redirect Blocker", "View Export Logs")
         AlertDialog.Builder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
@@ -3965,7 +3967,34 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         Toast.makeText(this, "Video cache cleared", Toast.LENGTH_SHORT).show()
                     }
                     8 -> showPopupBlockerSettingsDialog()
+                    9 -> showExportLogsDialog()
                 }
+            }
+            .show()
+    }
+
+
+    private fun showExportLogsDialog() {
+        val logFile = java.io.File(filesDir, "export_logs.txt")
+        val logContent = if (logFile.exists()) logFile.readText() else "No export logs found."
+
+        val scrollView = android.widget.ScrollView(this)
+        val textView = android.widget.TextView(this).apply {
+            text = logContent
+            setPadding(32, 32, 32, 32)
+            textSize = 12f
+            typeface = android.graphics.Typeface.MONOSPACE
+            setTextIsSelectable(true)
+        }
+        scrollView.addView(textView)
+
+        AlertDialog.Builder(this)
+            .setTitle("Export Logs")
+            .setView(scrollView)
+            .setPositiveButton("Close", null)
+            .setNegativeButton("Clear Logs") { _, _ ->
+                if (logFile.exists()) logFile.delete()
+                Toast.makeText(this, "Logs cleared", Toast.LENGTH_SHORT).show()
             }
             .show()
     }
