@@ -376,8 +376,9 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setLoadControl(loadControl)
             .build()
 
+        mediaSession?.release()
         mediaSession = MediaSession.Builder(this, player!!)
-            .setId("CustomPlayerSession")
+            .setId("CustomPlayerSession_${System.currentTimeMillis()}")
             .build()
 
         activePlayer = player
