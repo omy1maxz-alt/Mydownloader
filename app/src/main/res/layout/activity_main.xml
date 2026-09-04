@@ -20,7 +20,7 @@
             android:background="?attr/colorPrimary"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             app:contentInsetStart="0dp"
-            app:popupTheme="@style/GlassyPopupMenu"
+
 >
 
             <LinearLayout
@@ -139,6 +139,14 @@
                         android:textStyle="bold"
                         tools:ignore="SmallSp" />
                 </FrameLayout>
+
+                <ImageButton
+                    android:id="@+id/overflowMenuButton"
+                    style="?attr/borderlessButtonStyle"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="More options"
+                    android:src="@drawable/ic_more_vert" />
 
             </LinearLayout>
 
