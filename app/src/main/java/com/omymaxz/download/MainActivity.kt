@@ -1203,6 +1203,14 @@ private fun checkBatteryOptimization() {
 
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
+                        // Inject CSS padding so the webpage starts below the overlapping transparent toolbar
+                        val paddingJs = "javascript:(function() { " +
+                                "var style = document.createElement('style'); " +
+                                "style.innerHTML = 'body { padding-top: 48px !important; }'; " +
+                                "document.documentElement.appendChild(style); " +
+                                "})();"
+                        view?.evaluateJavascript(paddingJs, null)
+
                     isPageLoading = false
                     binding.progressBar.visibility = View.GONE
                     updateToolbarNavButtonState()
