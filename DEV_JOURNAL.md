@@ -15,3 +15,6 @@
 [Friday, 04 September 2026 | 17:36]
 - Refactored main layout to FrameLayout to allow Toolbar to overlap WebView, and injected CSS padding to ensure content starts below the toolbar but scrolls underneath its transparency.
 [Saturday, 05 September 2026 | 02:58]
+- Shifted standard media sniffing (variable scanning, iframe query extraction) to run automatically on page load.
+- Repurposed the overflow menu option into 'Advanced Media Sniffer' which executes a heavy-duty DOM, window variable, and network interception (fetch/XHR override) script on demand.
+[Sunday, 06 September 2026 | 15:19]
