@@ -20,3 +20,7 @@
 [Sunday, 06 September 2026 | 15:19]
 - Switched main toolbar overflow menu from a floating `ListPopupWindow` to a Material `BottomSheetDialog` (Soul Browser style). Includes custom rounded-corner background logic that dynamically respects the user's `glossy_theme_color` preference without losing corners.
 - Suppressed the 'No media detected' and 'No new media found' Toasts from the automatic media scanner callback in MainActivity to prevent spamming the user on every page load.
+- Replaced the full-screen web pop-up wrapper in MainActivity's onCreateWindow with a minimal BottomSheetDialog notification box. It hides the ad/pop-up content and allows the user to manually close or view it without disrupting the main browsing experience.
+- Refactored all AlertDialogs across the application to dynamically follow the user's `glossy_theme_color` preference using a new `createThemedDialogBuilder` extension, complete with adaptive text luminance calculations to ensure contrast.
+- Prevented the Detected Media List from automatically sliding up into view on page loads. It is now strictly user-initiated via the Floating Action Button.
+[Sunday, 06 September 2026 | 19:14]
