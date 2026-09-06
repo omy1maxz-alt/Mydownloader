@@ -192,7 +192,7 @@ class MainActivity : AppCompatActivity() {
                         val errorMessage = "Download failed for URL:\n$uriString\n\nReason:\n$reasonText"
 
                         runOnUiThread {
-                            androidx.appcompat.app.AlertDialog.Builder(this)
+                            createThemedDialogBuilder(this)
                                 .setTitle("Download Failed")
                                 .setMessage(errorMessage)
                                 .setPositiveButton("Copy Error") { _, _ ->
@@ -252,7 +252,7 @@ private fun checkBatteryOptimization() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
         if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
-            AlertDialog.Builder(this)
+            createThemedDialogBuilder(this)
                 .setTitle("Background Playback")
                 .setMessage("For reliable background playback, please disable battery optimization for this app.")
                 .setPositiveButton("Settings") { _, _ ->
@@ -272,7 +272,7 @@ private fun checkBatteryOptimization() {
 }
 
     private fun showManageStoragePermissionDialog() {
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Storage Permission Required")
             .setMessage("For Android 11 and above, this app needs special storage access to perform backup and restore operations. Please allow file access in the next screen.")
             .setPositiveButton("Continue") { _, _ ->
@@ -401,7 +401,7 @@ private fun checkBatteryOptimization() {
             val hasShownStorageNotice = sharedPrefs.getBoolean("HAS_SHOWN_STORAGE_NOTICE", false)
 
             if (!hasShownStorageNotice) {
-                AlertDialog.Builder(this)
+                createThemedDialogBuilder(this)
                     .setTitle("Storage Access Notice")
                     .setMessage("This app may need storage access for backup/restore functionality. You'll be prompted when needed.")
                     .setPositiveButton("OK") { _, _ ->
@@ -771,7 +771,7 @@ private fun checkBatteryOptimization() {
             showTabsDialog()
         }
 
-        tabsDialog = AlertDialog.Builder(this)
+        tabsDialog = createThemedDialogBuilder(this)
             .setView(dialogView)
             .create()
         tabsDialog?.show()
@@ -941,7 +941,7 @@ private fun checkBatteryOptimization() {
     }
 
     private fun showDeleteBookmarkDialog(bookmark: Bookmark) {
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Delete Bookmark?")
             .setMessage("Are you sure you want to delete '${bookmark.title}'?")
             .setPositiveButton("Delete") { _, _ ->
@@ -1083,7 +1083,7 @@ private fun checkBatteryOptimization() {
                     val linkUrl = hitTestResult.extra
                     if (linkUrl != null) {
                         val options = arrayOf("Open in new tab", "Open in background tab", "Open in Custom Tab", "Copy link URL")
-                        AlertDialog.Builder(this@MainActivity)
+                        createThemedDialogBuilder(this@MainActivity)
                             .setTitle(linkUrl)
                             .setItems(options) { _, which ->
                                 when (which) {
@@ -1099,7 +1099,7 @@ private fun checkBatteryOptimization() {
                     val imageUrl = hitTestResult.extra
                     if (imageUrl != null) {
                         val options = arrayOf("Open image in background", "Copy image link", "Download image")
-                        AlertDialog.Builder(this@MainActivity)
+                        createThemedDialogBuilder(this@MainActivity)
                             .setTitle(imageUrl)
                             .setItems(options) { _, which ->
                                 when (which) {
@@ -1499,17 +1499,17 @@ private fun checkBatteryOptimization() {
                     }
 
                     // For Google Sign-In and OAuth, the popup MUST be kept alive in the view hierarchy
-                    // and MUST have a webChromeClient with onCloseWindow to return the token to the parent.
+                    // but we don't want it to overtake the screen initially.
                     val rootLayout = binding.rootContainer
 
-                    // Create a wrapper layout for the popup to enforce navigation UI
+                    // Create a wrapper layout for the popup if the user decides to open it
                     val popupWrapper = android.widget.LinearLayout(this@MainActivity).apply {
                         orientation = android.widget.LinearLayout.VERTICAL
                         layoutParams = FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT
                         )
-                        setBackgroundColor(android.graphics.Color.WHITE)
+                        visibility = View.GONE // Hidden by default
                     }
 
                     // Simple navigation bar for the popup
@@ -1520,7 +1520,6 @@ private fun checkBatteryOptimization() {
                             android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
                         )
                         setPadding(16, 16, 16, 16)
-                        setBackgroundColor(android.graphics.Color.LTGRAY)
                     }
 
                     val popupUrlTitle = android.widget.TextView(this@MainActivity).apply {
@@ -1557,8 +1556,94 @@ private fun checkBatteryOptimization() {
                     transport.webView = newWebView
                     resultMsg.sendToTarget()
 
+                    // Show small notification box instead of overtaking screen
+                    val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this@MainActivity)
+
+                    val notifContainer = android.widget.LinearLayout(this@MainActivity).apply {
+                        orientation = android.widget.LinearLayout.VERTICAL
+                        setPadding(32, 32, 32, 32)
+                    }
+
+                    val notifTitle = android.widget.TextView(this@MainActivity).apply {
+                        text = "Pop-up Blocked"
+                        textSize = 18f
+                        setTypeface(null, android.graphics.Typeface.BOLD)
+                    }
+
+                    val notifMsg = android.widget.TextView(this@MainActivity).apply {
+                        text = "A new window tried to open."
+                        textSize = 14f
+                        setPadding(0, 16, 0, 32)
+                    }
+
+                    val buttonContainer = android.widget.LinearLayout(this@MainActivity).apply {
+                        orientation = android.widget.LinearLayout.HORIZONTAL
+                        gravity = android.view.Gravity.END
+                    }
+
+                    val closeBtn = android.widget.Button(this@MainActivity, null, android.R.attr.borderlessButtonStyle).apply {
+                        text = "Close"
+                        setOnClickListener {
+                            bottomSheetDialog.dismiss()
+                            popupWrapper.removeView(newWebView)
+                            rootLayout.removeView(popupWrapper)
+                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ newWebView.destroy() }, 500)
+                        }
+                    }
+
+                    val openBtn = android.widget.Button(this@MainActivity, null, android.R.attr.borderlessButtonStyle).apply {
+                        text = "Allow"
+                        setOnClickListener {
+                            bottomSheetDialog.dismiss()
+                            popupWrapper.visibility = View.VISIBLE
+                        }
+                    }
+
+                    buttonContainer.addView(closeBtn)
+                    buttonContainer.addView(openBtn)
+
+                    notifContainer.addView(notifTitle)
+                    notifContainer.addView(notifMsg)
+                    notifContainer.addView(buttonContainer)
+
+                    bottomSheetDialog.setContentView(notifContainer)
+                    bottomSheetDialog.show()
+
+                    // Try to apply theme colors to this popup
+                    val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
+                    val parsedColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
+
+                    // Helper to get text color based on luminance
+                    val luminance = (0.299 * android.graphics.Color.red(parsedColor) + 0.587 * android.graphics.Color.green(parsedColor) + 0.114 * android.graphics.Color.blue(parsedColor)) / 255
+                    val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+
+                    val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
+                        setColor(parsedColor)
+                        cornerRadius = 24f * resources.displayMetrics.density
+                    }
+
+                    val parentView = notifContainer.parent as? View
+                    parentView?.background = shapeDrawable
+                    parentView?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    notifContainer.background = shapeDrawable
+
+                    notifTitle.setTextColor(textColor)
+                    notifMsg.setTextColor(textColor)
+                    closeBtn.setTextColor(textColor)
+                    openBtn.setTextColor(textColor)
+
+                    popupNavBar.setBackgroundColor(parsedColor)
+                    popupUrlTitle.setTextColor(textColor)
+                    val iconColorFilter = android.graphics.PorterDuffColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                    popupCloseBtn.colorFilter = iconColorFilter
+
                     newWebView.webViewClient = object : WebViewClient() {
                         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                            val url = request.url.toString()
+                            runOnUiThread {
+                                notifMsg.text = url
+                                popupUrlTitle.text = url
+                            }
                             // Let the popup handle its own redirects internally
                             return false
                         }
@@ -1602,7 +1687,7 @@ private fun checkBatteryOptimization() {
                         }
                     }
 
-                    AlertDialog.Builder(this@MainActivity)
+                    createThemedDialogBuilder(this@MainActivity)
                         .setTitle("Download File")
                         .setMessage("Do you want to download $fileName?")
                         .setPositiveButton("Download") { _, _ ->
@@ -1711,7 +1796,7 @@ private fun checkBatteryOptimization() {
                 }
                 scrollView.addView(textView)
 
-                AlertDialog.Builder(this@MainActivity)
+                createThemedDialogBuilder(this@MainActivity)
                     .setTitle("Content Preview")
                     .setView(scrollView)
                     .setNegativeButton("Close", null)
@@ -1722,7 +1807,7 @@ private fun checkBatteryOptimization() {
                             hint = currentFilename.substringBeforeLast('.')
                             // Leave it empty so they don't have to backspace the long snippet
                         }
-                        AlertDialog.Builder(this@MainActivity)
+                        createThemedDialogBuilder(this@MainActivity)
                             .setTitle("Rename File")
                             .setView(input)
                             .setNegativeButton("Cancel", null)
@@ -2909,7 +2994,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
         val displayItems = options.map { it.label }.toTypedArray()
 
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Download: ${video.title}")
             .setItems(displayItems) { _, which ->
                 val selected = options[which]
@@ -2955,7 +3040,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             detectedMediaFiles.toMutableList()
         }
         val dialogBinding = DialogMediaListBinding.inflate(layoutInflater)
-        val dialog = AlertDialog.Builder(this).setView(dialogBinding.root).create()
+        val dialog = createThemedDialogBuilder(this).setView(dialogBinding.root).create()
         currentMediaListAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
             // Tap to download (do not dismiss to keep scroll position)
             showRenameDialog(mediaFile)
@@ -3147,7 +3232,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             setText(mediaFile.title.substringBeforeLast('.'))
             selectAll()
         }
-        val builder = AlertDialog.Builder(this)
+        val builder = createThemedDialogBuilder(this)
             .setTitle("Download File")
             .setMessage("Quality: ${mediaFile.quality}")
             .setView(input)
@@ -3290,7 +3375,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
         if (isHls) {
             val options = arrayOf("Normal Download (Media3)", "FFmpeg Download")
-            androidx.appcompat.app.AlertDialog.Builder(this)
+            createThemedDialogBuilder(this)
                 .setTitle("HLS Download Method")
                 .setItems(options) { _, which ->
                     val userAgent = webView.settings.userAgentString
@@ -3975,10 +4060,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     runOnUiThread {
                         if (addedCount > 0) {
                             Toast.makeText(this, "$addedCount new media item(s) found!", Toast.LENGTH_SHORT).show()
-                            showMediaListDialog()
+                            //showMediaListDialog()
                         } else {
                             // Suppressed "No new media found" toast to avoid spamming user
-                            showMediaListDialog()
+                            //showMediaListDialog()
                         }
                     }
                 } else {
@@ -4023,7 +4108,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
         scrollView.addView(textView)
 
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Page Debug Info")
             .setView(scrollView)
             .setPositiveButton("Copy to Clipboard") { _, _ ->
@@ -4077,7 +4162,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
         dialogView.addView(portInput)
 
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Proxy Settings")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
@@ -4108,7 +4193,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
     private fun showMasterSettingsDialog() {
         val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache", "Popup & Redirect Blocker", "View Export Logs")
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
                 when (which) {
@@ -4148,7 +4233,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
         scrollView.addView(textView)
 
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Export Logs")
             .setView(scrollView)
             .setPositiveButton("Close", null)
@@ -4174,7 +4259,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         switchView.layoutParams = params
         container.addView(switchView)
 
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Popup & Redirect Blocker")
             .setMessage("Turn this off to allow login popups (like Google Sign-In) to work properly on some sites.")
             .setView(container)
@@ -4199,7 +4284,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         layout.setPadding(50, 40, 50, 10)
         layout.addView(input)
 
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Gemini AI Settings")
             .setMessage("Please enter your Google Gemini API Key.")
             .setView(layout)
@@ -4227,7 +4312,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         switchView.layoutParams = params
         container.addView(switchView)
 
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Background Loading")
             .setView(container)
             .setPositiveButton("Save") { _, _ ->
@@ -4242,7 +4327,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
     private fun showBackupRestoreDialog() {
         val items = arrayOf("Backup Data", "Restore Data")
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Backup and Restore")
             .setItems(items) { _, which ->
                 when (which) {
@@ -4379,7 +4464,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             settingsPrefs.getBoolean("BLOCK_ALL_POPUPS", true),
             settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
         )
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Content Blocking")
             .setMultiChoiceItems(items, checkedItems) { _, which, isChecked ->
                 checkedItems[which] = isChecked
@@ -4406,7 +4491,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             return
         }
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, blockedSites)
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Blocked Sites")
             .setAdapter(adapter) { dialog, which ->
                 val siteToUnblock = blockedSites[which]
@@ -4417,7 +4502,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .show()
     }
     private fun showUnblockConfirmationDialog(hostname: String) {
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Unblock Site?")
             .setMessage("Are you sure you want to unblock '$hostname'?")
             .setPositiveButton("Unblock") { _, _ ->
@@ -4447,11 +4532,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             return
         }
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, whitelistedSites)
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Whitelisted Sites")
             .setAdapter(adapter) { _, which ->
                 val siteToRemove = whitelistedSites[which]
-                AlertDialog.Builder(this)
+                createThemedDialogBuilder(this)
                     .setTitle("Remove from Whitelist?")
                     .setMessage("Remove '$siteToRemove'?")
                     .setPositiveButton("Remove") { _, _ ->
@@ -4497,7 +4582,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         params.setMargins(margin, margin, margin, margin)
         input.layoutParams = params
         container.addView(input)
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Add Site to Whitelist")
             .setView(container)
             .setPositiveButton("Add") { _, _ ->
@@ -4535,7 +4620,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             addView(input)
         }
 
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Set Theme Color (HEX)")
             .setMessage("Enter an 8-character HEX code (AARRGGBB) for a glossy effect.")
             .setView(layout)
@@ -4553,7 +4638,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 val presetColors = arrayOf("Dark Glass (#A0000000)", "Light Glass (#90FFFFFF)", "Red Glass (#80FF0000)", "Blue Glass (#800000FF)", "Green Glass (#8000FF00)")
                 val presetHexCodes = arrayOf("#A0000000", "#90FFFFFF", "#80FF0000", "#800000FF", "#8000FF00")
 
-                AlertDialog.Builder(this)
+                createThemedDialogBuilder(this)
                     .setTitle("Choose Preset")
                     .setItems(presetColors) { _, which ->
                         prefs.edit().putString("glossy_theme_color", presetHexCodes[which]).apply()
@@ -4568,7 +4653,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
     private fun showSiteDebuggingOptions() {
         val options = arrayOf("Change User Agent", "Add to Whitelist", "Enable Remote Debugging", "Clear Cookies")
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Site Debugging")
             .setItems(options) { _, which ->
                 when (which) {
@@ -4594,7 +4679,7 @@ private fun showUserAgentDialog() {
     val userAgents = arrayOf("Default Mobile", "Desktop Chrome", "iPad Safari")
     val settings = webView.settings
 
-    AlertDialog.Builder(this)
+    createThemedDialogBuilder(this)
         .setTitle("Change Browser Identity")
         .setItems(userAgents) { _, which ->
             val newUserAgent: String
@@ -4701,7 +4786,7 @@ if (isDesktopMode) {
         pendingScriptsToInject.clear()
     }
     fun showBlockedNavigationDialog(url: String) {
-        AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Suspicious Redirect Blocked")
             .setMessage("The site is trying to redirect you to:\n$url\n\nDo you want to allow this?")
             .setPositiveButton("Allow") { _, _ ->
@@ -4739,7 +4824,7 @@ if (isDesktopMode) {
 
         switchAuto.isChecked = isAuto
 
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        createThemedDialogBuilder(this)
             .setTitle("Translation Settings")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
@@ -4771,5 +4856,65 @@ if (isDesktopMode) {
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun createThemedDialogBuilder(context: Context): AlertDialog.Builder {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
+        val parsedColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
+
+        val luminance = (0.299 * android.graphics.Color.red(parsedColor) + 0.587 * android.graphics.Color.green(parsedColor) + 0.114 * android.graphics.Color.blue(parsedColor)) / 255
+        val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+
+        // We use CustomAlertDialogTheme for rounded corners, but we need to set the background dynamically
+        val builder = AlertDialog.Builder(context, R.style.CustomAlertDialogTheme)
+
+        // Unfortunately, AlertDialog.Builder doesn't have a built in way to change the background drawable dynamically before show().
+        // We will intercept it on show.
+        return object : AlertDialog.Builder(context, R.style.CustomAlertDialogTheme) {
+            override fun show(): AlertDialog {
+                val dialog = super.show()
+                val window = dialog.window
+                if (window != null) {
+                    val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
+                        setColor(parsedColor)
+                        cornerRadius = 24f * context.resources.displayMetrics.density
+                    }
+                    window.setBackgroundDrawable(shapeDrawable)
+
+                    // Delaying the text color application to ensure views are measured/added
+                    window.decorView.post {
+                        val titleView = window.findViewById<android.widget.TextView>(androidx.appcompat.R.id.alertTitle)
+                        titleView?.setTextColor(textColor)
+
+                        val msgView = window.findViewById<android.widget.TextView>(android.R.id.message)
+                        msgView?.setTextColor(textColor)
+
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(textColor)
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(textColor)
+                        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(textColor)
+
+                        // For list items (like Settings menu)
+                        val listView = dialog.listView
+                        if (listView != null) {
+                            for (i in 0 until listView.childCount) {
+                                val child = listView.getChildAt(i)
+                                if (child is android.widget.TextView) {
+                                    child.setTextColor(textColor)
+                                } else if (child is android.view.ViewGroup) {
+                                     for (j in 0 until child.childCount) {
+                                         val inner = child.getChildAt(j)
+                                         if (inner is android.widget.TextView) {
+                                             inner.setTextColor(textColor)
+                                         }
+                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+                return dialog
+            }
+        }
     }
 }
