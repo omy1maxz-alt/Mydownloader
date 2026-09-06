@@ -24,3 +24,4 @@
 - Refactored all AlertDialogs across the application to dynamically follow the user's `glossy_theme_color` preference using a new `createThemedDialogBuilder` extension, complete with adaptive text luminance calculations to ensure contrast.
 - Prevented the Detected Media List from automatically sliding up into view on page loads. It is now strictly user-initiated via the Floating Action Button.
 [Sunday, 06 September 2026 | 19:14]
+- Updated the BottomSheetDialog base theme (`TransparentBottomSheetDialogTheme`) to strip its default opaque white backdrop, ensuring that the dynamically applied `glossy_theme_color` (including any transparency) renders fully transparently without washing out or blocking the UI beneath it.
