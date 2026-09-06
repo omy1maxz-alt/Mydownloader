@@ -1222,6 +1222,7 @@ private fun checkBatteryOptimization() {
                     }
                     injectMediaStateDetector()
                     injectAdvancedMediaDetector()
+                    injectStandardMediaDetector()
                     view?.evaluateJavascript("(function() { AndroidMediaState.parseHtmlForHiddenM3u8(document.documentElement.innerHTML); })();", null)
                     if (url?.contains("jules.google.com", ignoreCase = true) == true) {
                         injectJulesLongPress(view)
@@ -3406,7 +3407,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             MenuItemCustom(R.id.menu_settings, "Settings"),
             MenuItemCustom(R.id.menu_theme_color, "Theme Color"),
             MenuItemCustom(R.id.menu_debug_site, "Debug Site"),
-            MenuItemCustom(R.id.menu_enable_media_detection, "Enable Media Detection"),
+            MenuItemCustom(R.id.menu_enable_media_detection, "Advanced Media Sniffer"),
             MenuItemCustom(R.id.menu_debug_page, "Debug Page")
         )
 
@@ -3445,7 +3446,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 R.id.menu_settings -> showMasterSettingsDialog()
                 R.id.menu_theme_color -> showThemeColorPickerDialog()
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
-                R.id.menu_enable_media_detection -> manualMediaScan()
+                R.id.menu_enable_media_detection -> runAdvancedMediaSniffer()
                 R.id.menu_debug_page -> showPageSource()
             }
         }
@@ -3586,7 +3587,128 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
     }
 
-    private fun manualMediaScan() {
+
+    private fun runAdvancedMediaSniffer() {
+        Toast.makeText(this, "Running Advanced Media Sniffer...", Toast.LENGTH_SHORT).show()
+        val script = """
+            (function() {
+                'use strict';
+                const foundMedia = new Set();
+                const notify = (url, type, source) => {
+                    if (!url || url.startsWith('data:') || url.startsWith('blob:')) return;
+                    if (url.startsWith('//')) url = 'https:' + url;
+                    try {
+                        const parsed = new URL(url, window.location.href).href;
+                        if (!foundMedia.has(parsed)) {
+                            foundMedia.add(parsed);
+                            if (window.AndroidMediaState) {
+                                window.AndroidMediaState.onMediaDetected(parsed, type);
+                            }
+                        }
+                    } catch(e) {}
+                };
+
+                const checkString = (str, sourceContext) => {
+                    if (!str || typeof str !== 'string') return;
+                    try {
+                        const decoded = decodeURIComponent(str);
+                        const candidates = [str, decoded];
+                        const regex = /https?:\/\/[^"'\s<>]+\.(m3u8|mp4|mkv|webm|mpd|m4a|mp3|ogg)([^"'\s<>]*)/gi;
+                        candidates.forEach(s => {
+                            let match;
+                            while ((match = regex.exec(s)) !== null) {
+                                let ext = match[1].toLowerCase();
+                                let type = ['mp3', 'm4a', 'ogg'].includes(ext) ? 'audio' : 'video';
+                                notify(match[0], type, sourceContext);
+                            }
+                        });
+                    } catch(e) {}
+                };
+
+                // 1. Deep DOM Inspection
+                const scanDOM = (doc) => {
+                    doc.querySelectorAll('video, audio, source, iframe').forEach(el => {
+                        if (el.src) checkString(el.src, 'DOM ' + el.tagName);
+                        if (el.tagName === 'IFRAME') {
+                            try {
+                                if (el.contentWindow && el.contentWindow.document) {
+                                    scanDOM(el.contentWindow.document);
+                                    scanGlobalVars(el.contentWindow);
+                                }
+                            } catch(e) {
+                                // Cross-origin iframe
+                                checkString(el.src, 'Iframe SRC');
+                            }
+                        }
+                    });
+
+                    // Inspect all script tags for embedded JSON configs
+                    doc.querySelectorAll('script').forEach(script => {
+                        if (script.innerHTML) {
+                            checkString(script.innerHTML, 'Script Inline');
+                        }
+                    });
+                };
+
+                // 2. Scan Window / Global Variables for Player Configs
+                const scanGlobalVars = (win) => {
+                    const keys = ['player_aaaa', 'jwplayer', 'videojs', 'hls', 'dp', 'playerConfig', 'config', 'source', 'media'];
+                    keys.forEach(k => {
+                        try {
+                            if (win[k]) {
+                                checkString(JSON.stringify(win[k]), 'GlobalVar: ' + k);
+                            }
+                        } catch(e) {}
+                    });
+
+                    // Brute force check top level primitive strings
+                    try {
+                        for (let k in win) {
+                            if (typeof win[k] === 'string' && win[k].length > 10 && win[k].includes('http')) {
+                                checkString(win[k], 'GlobalVarString: ' + k);
+                            }
+                        }
+                    } catch(e) {}
+                };
+
+                // 3. Network Interception (Override fetch and XHR for dynamically loaded chunks/manifests)
+                if (!window._advancedSnifferActive) {
+                    window._advancedSnifferActive = true;
+
+                    const origFetch = window.fetch;
+                    window.fetch = async function(...args) {
+                        try {
+                            const url = (typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : null;
+                            if (url) checkString(url, 'FetchAPI');
+                        } catch(e) {}
+                        return origFetch.apply(this, args);
+                    };
+
+                    const origOpen = XMLHttpRequest.prototype.open;
+                    XMLHttpRequest.prototype.open = function(method, url) {
+                        try {
+                            if (url) checkString(url, 'XHR');
+                        } catch(e) {}
+                        return origOpen.apply(this, arguments);
+                    };
+                }
+
+                // Execute scans
+                scanDOM(document);
+                scanGlobalVars(window);
+
+                // Alert if we found anything new immediately
+                if (foundMedia.size > 0 && window.AndroidMediaState) {
+                    // Let Android handle the toast
+                }
+            })();
+        """
+        webView.evaluateJavascript(script) { result ->
+            Toast.makeText(this, "Advanced scan complete. Check Detected Media list.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun injectStandardMediaDetector() {
         val script = """
             (function() {
                 const media = [];
