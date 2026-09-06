@@ -18,3 +18,5 @@
 - Shifted standard media sniffing (variable scanning, iframe query extraction) to run automatically on page load.
 - Repurposed the overflow menu option into 'Advanced Media Sniffer' which executes a heavy-duty DOM, window variable, and network interception (fetch/XHR override) script on demand.
 [Sunday, 06 September 2026 | 15:19]
+- Switched main toolbar overflow menu from a floating `ListPopupWindow` to a Material `BottomSheetDialog` (Soul Browser style). Includes custom rounded-corner background logic that dynamically respects the user's `glossy_theme_color` preference without losing corners.
+- Suppressed the 'No media detected' and 'No new media found' Toasts from the automatic media scanner callback in MainActivity to prevent spamming the user on every page load.

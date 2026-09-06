@@ -3384,17 +3384,27 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
 
     private fun showCustomOverflowMenu(anchor: View) {
-        val listPopupWindow = androidx.appcompat.widget.ListPopupWindow(this, null, androidx.appcompat.R.attr.listPopupWindowStyle)
-        listPopupWindow.anchorView = anchor
-
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val hexColor = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
         val bgColor = try { android.graphics.Color.parseColor(hexColor) } catch (e: Exception) { android.graphics.Color.BLACK }
 
-        listPopupWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(bgColor))
-
         val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
         val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+
+        val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_menu, null)
+
+        // Apply background color to the root layout, maintaining rounded corners
+        val rootLayout = view.findViewById<android.widget.LinearLayout>(R.id.bottom_sheet_root)
+        val bgDrawable = rootLayout.background as android.graphics.drawable.GradientDrawable?
+            ?: (androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bottom_sheet_bg) as android.graphics.drawable.GradientDrawable).mutate() as android.graphics.drawable.GradientDrawable
+        bgDrawable.setColor(bgColor)
+        rootLayout.background = bgDrawable
+
+        // Ensure the dialog's own window background is transparent so the rounded corners show
+        bottomSheetDialog.setContentView(view)
+        val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         data class MenuItemCustom(val id: Int, val title: String)
         val menuItems = listOf(
@@ -3411,31 +3421,36 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             MenuItemCustom(R.id.menu_debug_page, "Debug Page")
         )
 
-        val adapter = object : android.widget.ArrayAdapter<MenuItemCustom>(this, android.R.layout.simple_list_item_1, menuItems) {
+        val listView = view.findViewById<android.widget.ListView>(R.id.bottom_sheet_list)
+
+        val adapter = object : android.widget.ArrayAdapter<MenuItemCustom>(this, R.layout.bottom_sheet_menu_item, menuItems) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val view = super.getView(position, convertView, parent) as android.widget.TextView
-                view.text = getItem(position)?.title
-                view.setTextColor(textColor)
-                return view
+                val itemView = convertView ?: layoutInflater.inflate(R.layout.bottom_sheet_menu_item, parent, false)
+                val textView = itemView.findViewById<android.widget.TextView>(R.id.menu_item_text)
+                textView.text = getItem(position)?.title
+                textView.setTextColor(textColor)
+                return itemView
             }
         }
 
-        listPopupWindow.setAdapter(adapter)
+        listView.adapter = adapter
 
-        var maxWidth = 0
-        val measureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        // Calculate total height to prevent huge scrolling lists if possible
+        var totalHeight = 0
         for (i in 0 until adapter.count) {
-            val view = adapter.getView(i, null, android.widget.FrameLayout(this@MainActivity))
-            view.measure(measureSpec, measureSpec)
-            if (view.measuredWidth > maxWidth) {
-                maxWidth = view.measuredWidth
-            }
+            val listItem = adapter.getView(i, null, listView)
+            listItem.measure(
+                View.MeasureSpec.makeMeasureSpec(listView.width, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+            totalHeight += listItem.measuredHeight
         }
-        val padding = (40 * resources.displayMetrics.density).toInt()
-        listPopupWindow.setContentWidth(maxWidth + padding)
+        val params = listView.layoutParams
+        params.height = totalHeight + (listView.dividerHeight * (adapter.count - 1))
+        listView.layoutParams = params
 
-        listPopupWindow.setOnItemClickListener { _, _, position, _ ->
-            listPopupWindow.dismiss()
+        listView.setOnItemClickListener { _, _, position, _ ->
+            bottomSheetDialog.dismiss()
             when (menuItems[position].id) {
                 R.id.menu_history -> showHistory()
                 R.id.menu_add_bookmark -> addCurrentPageToBookmarks()
@@ -3451,7 +3466,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             }
         }
 
-        listPopupWindow.show()
+        bottomSheetDialog.show()
     }
 
 
@@ -3962,14 +3977,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                             Toast.makeText(this, "$addedCount new media item(s) found!", Toast.LENGTH_SHORT).show()
                             showMediaListDialog()
                         } else {
-                            Toast.makeText(this, "No new media found since last scan. Showing existing list.", Toast.LENGTH_SHORT).show()
+                            // Suppressed "No new media found" toast to avoid spamming user
                             showMediaListDialog()
                         }
                     }
                 } else {
-                    runOnUiThread {
-                        Toast.makeText(this, "No media detected. Try playing the video first.", Toast.LENGTH_LONG).show()
-                    }
+                    // Suppressed "No media detected" toast to avoid spamming user on every page load
                 }
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Error parsing media scan result", e)
