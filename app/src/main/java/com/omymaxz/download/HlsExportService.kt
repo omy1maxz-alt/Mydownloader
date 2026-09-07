@@ -291,50 +291,29 @@ class HlsExportService : Service() {
             val masterText = HlsDownloadHelper.httpGetString(masterUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentReferer, HlsDownloadHelper.currentCookie) ?: throw Exception("Failed to fetch master playlist")
             val masterLines = masterText.lines()
 
-            // 1. Find Video Variant
+            // Parse the master playlist using Media3's official parser to guarantee track group index alignment
             var videoVariantUrl = masterUrl
             var audioVariantUrl: String? = null
 
             if (masterText.contains(".m3u8", true) && !streamKeyStrings.isNullOrEmpty()) {
-                var variantIndex = 0
-                val targetKey = streamKeyStrings.firstOrNull()
-                if (targetKey != null) {
-                    val parts = targetKey.split(",")
-                    if (parts.size >= 2) {
-                        val targetVariantIndex = parts[1].toInt()
-                        for (i in masterLines.indices) {
-                            val line = masterLines[i].trim()
-                            if (line.startsWith("#EXT-X-STREAM-INF")) {
-                                if (variantIndex == targetVariantIndex && i + 1 < masterLines.size) {
-                                    val variantLine = masterLines[i+1].trim()
-                                    videoVariantUrl = if (variantLine.startsWith("http")) variantLine else java.net.URI(masterUrl).resolve(variantLine).toString()
-                                    break
-                                }
-                                variantIndex++
-                            }
-                        }
+                try {
+                    val streamKeys = streamKeyStrings.mapNotNull {
+                        val parts = it.split(",")
+                        if (parts.size == 2) androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt()) else null
                     }
-                }
+                    val parser = androidx.media3.exoplayer.hls.playlist.HlsPlaylistParser()
+                    val masterInputStream = masterText.byteInputStream(Charsets.UTF_8)
+                    val parsedPlaylist = parser.parse(android.net.Uri.parse(masterUrl), masterInputStream)
 
-                // 2. Find Audio Variant
-                val audioKey = streamKeyStrings.find { it.startsWith("1,") }
-                if (audioKey != null) {
-                    val audioIndex = audioKey.split(",")[1].toInt()
-                    var currentAudioIndex = 0
-                    for (line in masterLines) {
-                        val tLine = line.trim()
-                        if (tLine.startsWith("#EXT-X-MEDIA:TYPE=AUDIO")) {
-                            if (currentAudioIndex == audioIndex) {
-                                val uriMatch = Regex("URI=\"([^\"]+)\"").find(tLine)
-                                if (uriMatch != null) {
-                                    val uriStr = uriMatch.groupValues[1]
-                                    audioVariantUrl = if (uriStr.startsWith("http")) uriStr else java.net.URI(masterUrl).resolve(uriStr).toString()
-                                }
-                                break
-                            }
-                            currentAudioIndex++
-                        }
+                    if (parsedPlaylist is androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist) {
+                        val filteredPlaylist = parsedPlaylist.copy(streamKeys) as androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist
+                        // After filtering by streamKeys, the remaining variant/audio in the lists are the exact ones the user downloaded!
+                        videoVariantUrl = filteredPlaylist.variants.firstOrNull()?.url?.toString() ?: masterUrl
+                        audioVariantUrl = filteredPlaylist.audios.firstOrNull()?.url?.toString()
                     }
+                } catch (e: Exception) {
+                    writeExportLog("Failed to parse master playlist with HlsPlaylistParser: ${e.message}")
+                    // Fallback to videoVariantUrl = masterUrl if parsing fails
                 }
             }
 
