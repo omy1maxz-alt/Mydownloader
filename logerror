@@ -134,558 +134,465 @@ Stream map '0:v:0' matches no streams.
 To ignore this, add a trailing '?' to the map.
 
 [2026-09-08 04:39:56] muxToMp4FromCache failed, falling back to network FFmpeg: FFmpeg failed with return code 1
+[2026-09-08 05:04:45] Starting export for: Heart_Signal_China_Version_Season_9_Episode_48__ki.m3u8, URL: https://hls19.cdnvideo11.shop/master/k7dOhqNXUrx1S3JyAsO.m3u8, StreamKeys: [0,2, 1,0, 2,0, 4,0]
+[2026-09-08 05:04:50] Successfully exported cached segments to tmp dir. Muxing to MP4 using FFmpeg.
+[2026-09-08 05:04:50] FFmpeg FAILED rc=1 tail:
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+[hls @ 0xb400007e6d0194f0] Opening '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818686036/init_0.mp4' for reading
+[hls @ 0xb400007e6d0194f0] Opening '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818686036/seg_video_playlist.m3u8_00000.m4s' for reading
+[aac @ 0xb400007e3d19f8c0] Gain control[aac @ 0xb400007e3d19f8c0]  is not implemented. Update your FFmpeg version to the newest one from Git. If the problem still occurs, it means that your file has a feature which has not been implemented.
+[aac @ 0xb400007e3d19f8c0] Prediction is not allowed in AAC-LC.
+Input #0, hls, from '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818686036/video_playlist.m3u8':
+  Duration: 00:21:52.28, start: -0.079864, bitrate: 0 kb/s
+  Program 0 
+    Metadata:
+      variant_bitrate : 0
+  Stream #0:0[0x0](und): Audio: aac (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 1494 kb/s, start -0.079864 (default)
+    Metadata:
+      variant_bitrate : 0
+      handler_name    : SoundHandler
+      compatible_brands: iso5iso6mp41
+      major_brand     : iso5
+      minor_version   : 512
+      encoder         : Lavf61.7.100
+[hls @ 0xb400007e6d025390] Opening '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818686036/init_0.mp4' for reading
+[hls @ 0xb400007e6d025390] Opening '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818686036/seg_audio_playlist.m3u8_00000.m4s' for reading
+Input #1, hls, from '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818686036/audio_playlist.m3u8':
+  Duration: 00:21:52.25, start: -0.114694, bitrate: 0 kb/s
+  Program 0 
+    Metadata:
+      variant_bitrate : 0
+  Stream #1:0[0x0](und): Audio: aac (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 65 kb/s, start -0.114694 (default)
+    Metadata:
+      variant_bitrate : 0
+      handler_name    : SoundHandler
+      compatible_brands: iso5iso6mp41
+      major_brand     : iso5
+      minor_version   : 512
+      encoder         : Lavf61.7.100
+Stream map '0:v:0' matches no streams.
+To ignore this, add a trailing '?' to the map.
+
+[2026-09-08 05:04:50] muxToMp4FromCache failed, falling back to network FFmpeg: FFmpeg failed with return code 1
+[2026-09-08 05:05:25] Starting export for: Heart_Signal_China_Version_Season_9_Episode_48__ki.m3u8, URL: https://hls19.cdnvideo11.shop/master/k7dOhqNXUrx1S3JyAsO.m3u8, StreamKeys: [0,2, 1,0, 2,0, 4,0]
+[2026-09-08 05:05:30] Successfully exported cached segments to tmp dir. Muxing to MP4 using FFmpeg.
+[2026-09-08 05:05:30] FFmpeg FAILED rc=1 tail:
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+[hls @ 0xb400007e6d023770] Opening '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818725291/init_0.mp4' for reading
+[hls @ 0xb400007e6d023770] Opening '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818725291/seg_video_playlist.m3u8_00000.m4s' for reading
+[aac @ 0xb400007e3d167370] Gain control[aac @ 0xb400007e3d167370]  is not implemented. Update your FFmpeg version to the newest one from Git. If the problem still occurs, it means that your file has a feature which has not been implemented.
+[aac @ 0xb400007e3d167370] Prediction is not allowed in AAC-LC.
+Input #0, hls, from '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818725291/video_playlist.m3u8':
+  Duration: 00:21:52.28, start: -0.079864, bitrate: 0 kb/s
+  Program 0 
+    Metadata:
+      variant_bitrate : 0
+  Stream #0:0[0x0](und): Audio: aac (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 1494 kb/s, start -0.079864 (default)
+    Metadata:
+      variant_bitrate : 0
+      handler_name    : SoundHandler
+      compatible_brands: iso5iso6mp41
+      major_brand     : iso5
+      minor_version   : 512
+      encoder         : Lavf61.7.100
+[hls @ 0xb400007e6d028270] Opening '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818725291/init_0.mp4' for reading
+[hls @ 0xb400007e6d028270] Opening '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818725291/seg_audio_playlist.m3u8_00000.m4s' for reading
+Input #1, hls, from '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818725291/audio_playlist.m3u8':
+  Duration: 00:21:52.25, start: -0.114694, bitrate: 0 kb/s
+  Program 0 
+    Metadata:
+      variant_bitrate : 0
+  Stream #1:0[0x0](und): Audio: aac (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 65 kb/s, start -0.114694 (default)
+    Metadata:
+      variant_bitrate : 0
+      handler_name    : SoundHandler
+      compatible_brands: iso5iso6mp41
+      major_brand     : iso5
+      minor_version   : 512
+      encoder         : Lavf61.7.100
+Stream map '0:v:0' matches no streams.
+To ignore this, add a trailing '?' to the map.
+
+[2026-09-08 05:05:30] muxToMp4FromCache failed, falling back to network FFmpeg: FFmpeg failed with return code 1
+[2026-09-08 05:06:50] Starting export for: Heart_Signal_China_Version_Season_9_Episode_48__ki.m3u8, URL: https://hls19.cdnvideo11.shop/master/k7dOhqNXUrx1S3JyAsO.m3u8, StreamKeys: [0,2, 1,1, 2,0, 4,0]
+[2026-09-08 05:06:53] Failed to read segment from cache: https://hls19.videotradercdn.site/segment/k7dOhqNXUrx1S3JyAsO/0_aac_q2/43d758a735be30514f2adabcee6200e3.png
+[2026-09-08 05:06:53] Failed to process audio playlist, continuing without it: Incomplete cache for segment: https://hls19.videotradercdn.site/segment/k7dOhqNXUrx1S3JyAsO/0_aac_q2/43d758a735be30514f2adabcee6200e3.png
+[2026-09-08 05:06:53] Successfully exported cached segments to tmp dir. Muxing to MP4 using FFmpeg.
+[2026-09-08 05:06:53] FFmpeg FAILED rc=1 tail:
+ffmpeg version n8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Android (12470979, +pgo, +bolt, +lto, +mlgo, based on r522817c) clang version 18.0.3 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)
+  configuration: --cross-prefix=aarch64-linux-android- --sysroot=/home/runner/work/ffmpeg-kit/ffmpeg-kit/.ndk/android-ndk-r27c/toolchains/llvm/prebuilt/linux-x86_64/sysroot --prefix=/home/runner/work/ffmpeg-kit/ffmpeg-kit/prebuilt/android-arm64/ffmpeg --pkg-config=/usr/bin/pkg-config --enable-version3 --arch=aarch64 --cpu=armv8-a --target-os=android --enable-neon --enable-asm --enable-inline-asm --ar=llvm-ar --cc=aarch64-linux-android24-clang --cxx=aarch64-linux-android24-clang++ --ranlib=llvm-ranlib --strip=llvm-strip --nm=llvm-nm --extra-libs='-L/home/runner/work/ffmpeg-kit/ffmpeg-kit/prebuilt/android-arm64/cpu-features/lib -lndk_compat' --disable-autodetect --enable-cross-compile --enable-pic --enable-jni --enable-optimizations --enable-swscale --disable-static --enable-shared --enable-pthreads --enable-v4l2-m2m --disable-outdev=fbdev --disable-indev=fbdev --enable-small --disable-xmm-clobber-test --disable-debug --enable-lto --disable-neon-clobber-test --disable-programs --disable-doc --disable-htmlpages --disable-manpages --disable-podpages --disable-txtpages --disable-sndio --disable-schannel --disable-securetransport --disable-xlib --disable-cuda --disable-cuvid --disable-nvenc --disable-vaapi --disable-vdpau --disable-videotoolbox --disable-audiotoolbox --disable-appkit --disable-alsa --disable-cuda --disable-cuvid --disable-nvenc --disable-vaapi --disable-vdpau --disable-sdl2 --enable-openssl --enable-zlib --enable-mediacodec
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+[hls @ 0xb400007e6d02c410] Opening '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818810253/init_0.mp4' for reading
+[hls @ 0xb400007e6d02c410] Opening '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818810253/seg_video_playlist.m3u8_00000.m4s' for reading
+[aac @ 0xb400007e3d13e3f0] Gain control[aac @ 0xb400007e3d13e3f0]  is not implemented. Update your FFmpeg version to the newest one from Git. If the problem still occurs, it means that your file has a feature which has not been implemented.
+[aac @ 0xb400007e3d13e3f0] Prediction is not allowed in AAC-LC.
+Input #0, hls, from '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1788818810253/video_playlist.m3u8':
+  Duration: 00:21:52.28, start: -0.011610, bitrate: 0 kb/s
+  Program 0 
+    Metadata:
+      variant_bitrate : 0
+  Stream #0:0[0x0](und): Audio: aac (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 1494 kb/s, start -0.011610 (default)
+    Metadata:
+      variant_bitrate : 0
+      handler_name    : SoundHandler
+      compatible_brands: iso5iso6mp41
+      major_brand     : iso5
+      minor_version   : 512
+      encoder         : Lavf61.7.100
+Stream map '0:v:0' matches no streams.
+To ignore this, add a trailing '?' to the map.
+
+[2026-09-08 05:06:53] muxToMp4FromCache failed, falling back to network FFmpeg: FFmpeg failed with return code 1
 
 === SYSTEM LOGCAT ===
-09-08 04:36:18.435 22287 27882 I ActivityThread: TrafficStats init done
-09-08 04:36:18.440 22287 22287 D ActivityThread: useGrowthLimitOutExpendMethod invoke error.
-09-08 04:36:18.461 22287 27882 I PluginScenarioManager: miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
-09-08 04:36:18.461 22287 27882 I ActivityThread: Miui Feature Init done
-09-08 04:36:18.487 22287 22287 D FramePredict: FramePredict init: false
-09-08 04:36:18.491 22287 27882 I ActivityThread: HardwareRenderer preload  done
-09-08 04:36:19.189 22287 22287 W MessageMonitor: PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.MainActivity onCreate took 652ms
-09-08 04:36:19.216 22287 22287 D Activity: Activity = ActivityInfo{edfe1bc com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-09-08 04:36:19.239 22287 22287 D FramePredict: init success
-09-08 04:36:19.249 22287 28055 E FramePredict: registerContentObserver fail
-09-08 04:36:19.249 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:36:19.310 22287 22287 D UserSceneDetector: invoke error.
-09-08 04:36:19.313 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:36:19.316 22287 22287 D DecorViewImmersiveImpl: getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:36:19.316 22287 22287 D DecorViewImmersiveImpl: window type: 1
-09-08 04:36:19.318 22287 22287 D MiuiNBIManagerImpl: init success,pkgName=com.omymaxz.download.debug mIsNBIEnable=false mActivityRules=ActivityRules{}}
-09-08 04:36:19.318 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:36:19.383 22287 22287 D UserSceneDetector: invoke error.
-09-08 04:36:19.504 22287 22287 D UserSceneDetector: invoke error.
-09-08 04:36:22.845 22287 28200 W BpBinder: PerfMonitor binderTransact: time=415ms interface=android.speech.tts.ITextToSpeechService code=15
-09-08 04:36:26.029 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:36:26.618 22287 22287 D UserSceneDetector: invoke error.
-09-08 04:36:28.491 22287 28078 D ActivityThread: invoke error.
-09-08 04:36:30.306 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:36:30.920 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:36:31.681 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:36:31.811 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:36:35.876 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:36:36.070 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:36:36.093 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:36:36.093 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:36:36.093 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:36:36.093 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:36:36.093 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:36:36.194 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:36:36.250 22287 22287 D UserSceneDetector: invoke error.
-09-08 04:36:37.596 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:36:37.748 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:36:37.767 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:36:37.767 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:36:37.767 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:36:37.767 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:36:37.767 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:36:37.792 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:36:42.071 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:36:42.224 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:36:42.284 22287 27882 I ActivityThread: HardwareRenderer preload  done
-09-08 04:36:42.772 22287 22287 W MessageMonitor: PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onStart took 290ms
-09-08 04:36:42.774 22287 22287 D Activity: Activity = ActivityInfo{2d19791 com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-09-08 04:36:42.780 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@1b11392, reason: AppDarkModeEnable
-09-08 04:36:42.797 22287 22287 D UserSceneDetector: invoke error.
-09-08 04:36:42.800 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:36:42.801 22287 22287 D DecorViewImmersiveImpl: getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:36:42.801 22287 22287 D DecorViewImmersiveImpl: window type: 1
-09-08 04:36:42.801 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:36:42.801 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:36:42.971 22287 22287 D UserSceneDetector: invoke error.
-09-08 04:36:58.442 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:36:58.616 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@1b11392, reason: AppDarkModeEnable
-09-08 04:36:58.629 22287 22287 D UserSceneDetector: invoke error.
-09-08 04:36:58.631 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:36:58.631 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:36:58.631 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:36:58.631 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:36:58.631 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:36:58.651 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@1b11392, reason: AppDarkModeEnable
-09-08 04:37:00.229 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:00.855 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:00.953 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:37:01.537 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:02.178 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:08.740 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:08.877 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@1b11392, reason: AppDarkModeEnable
-09-08 04:37:08.891 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:37:08.891 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:37:08.891 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:37:08.892 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:37:08.892 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:37:08.913 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@1b11392, reason: AppDarkModeEnable
-09-08 04:37:12.787 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:12.927 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@1b11392, reason: AppDarkModeEnable
-09-08 04:37:12.992 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@1b11392, reason: AppDarkModeEnable
-09-08 04:37:13.005 22287 22287 D VRI[PopupWindow:3e9]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:19.770 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:19.901 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:37:30.025 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:30.637 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:30.637 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:30.651 22287 22287 D Activity: Activity = ActivityInfo{edfe1bc com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-09-08 04:37:30.796 22287 22287 D UserSceneDetector: invoke error.
-09-08 04:37:31.411 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:37:32.450 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:32.545 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:37:33.415 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:33.540 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:33.560 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:37:33.561 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:37:33.561 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:37:33.561 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:37:33.561 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:37:33.578 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:38.795 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:38.911 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:37:39.332 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:39.458 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:39.475 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:37:39.475 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:37:39.475 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:37:39.475 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:37:39.475 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:37:39.496 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:40.874 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:40.975 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:37:41.031 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:41.049 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:37:41.049 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:37:41.049 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:37:41.049 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:37:41.049 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:37:41.088 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:42.377 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:42.476 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:37:46.153 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:46.287 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:46.299 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:37:46.299 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:37:46.299 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:37:46.299 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:37:46.299 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:37:46.362 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:47.798 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:47.925 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:47.937 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:37:47.937 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:37:47.937 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:37:47.937 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:37:47.937 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:37:47.960 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:37:48.827 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:48.974 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:37:49.010 22287 27882 I ActivityThread: HardwareRenderer preload  done
-09-08 04:37:49.140 22287 22287 D Activity: Activity = ActivityInfo{3bb2a74 com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-09-08 04:37:49.145 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@69ebfb6, reason: AppDarkModeEnable
-09-08 04:37:49.160 22287 22287 D UserSceneDetector: invoke error.
-09-08 04:37:49.161 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:37:49.161 22287 22287 D DecorViewImmersiveImpl: getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:37:49.161 22287 22287 D DecorViewImmersiveImpl: window type: 1
-09-08 04:37:49.161 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:37:49.161 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:37:51.782 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:52.345 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:52.497 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@69ebfb6, reason: AppDarkModeEnable
-09-08 04:37:52.512 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:37:52.512 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:37:52.513 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:37:52.513 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:37:52.513 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:37:52.535 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@69ebfb6, reason: AppDarkModeEnable
-09-08 04:37:53.855 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:54.479 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:54.600 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:37:56.043 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:57.100 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:37:57.987 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:38:23.843 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:38:26.109 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:38:26.243 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@69ebfb6, reason: AppDarkModeEnable
-09-08 04:38:26.265 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:38:26.265 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:38:26.265 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:38:26.265 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:38:26.265 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:38:26.288 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@69ebfb6, reason: AppDarkModeEnable
-09-08 04:38:26.919 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:38:26.990 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:39:11.179 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:39:14.597 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:39:17.064 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:39:42.272 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:39:48.115 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:39:50.473 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:39:51.306 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:39:51.405 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@69ebfb6, reason: AppDarkModeEnable
-09-08 04:39:51.417 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:39:51.417 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-09-08 04:39:51.417 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:39:51.417 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:39:51.417 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:39:51.434 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@69ebfb6, reason: AppDarkModeEnable
-09-08 04:39:52.588 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:39:52.665 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@69ebfb6, reason: AppDarkModeEnable
-09-08 04:39:52.707 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@69ebfb6, reason: AppDarkModeEnable
-09-08 04:39:52.718 22287 22287 D VRI[PopupWindow:3e9]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:39:54.523 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:39:54.630 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:39:59.916 22287 22287 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:40:00.538 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:40:00.538 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:40:00.550 22287 22287 D Activity: Activity = ActivityInfo{edfe1bc com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-09-08 04:40:01.158 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 27 is not owned by the producer (state = FREE)
-09-08 04:40:01.158 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 28 is not owned by the producer (state = FREE)
-09-08 04:40:01.158 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 29 is not owned by the producer (state = FREE)
-09-08 04:40:01.158 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 30 is not owned by the producer (state = FREE)
-09-08 04:40:01.158 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 31 is not owned by the producer (state = FREE)
-09-08 04:40:01.158 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 32 is not owned by the producer (state = FREE)
-09-08 04:40:01.158 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 33 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 34 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 35 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 36 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 37 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 38 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 39 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 40 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 41 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 42 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 43 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 44 is not owned by the producer (state = FREE)
-09-08 04:40:01.159 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 45 is not owned by the producer (state = FREE)
-09-08 04:40:01.160 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 46 is not owned by the producer (state = FREE)
-09-08 04:40:01.160 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 47 is not owned by the producer (state = FREE)
-09-08 04:40:01.160 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 48 is not owned by the producer (state = FREE)
-09-08 04:40:01.160 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 49 is not owned by the producer (state = FREE)
-09-08 04:40:01.160 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 50 is not owned by the producer (state = FREE)
-09-08 04:40:01.160 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 51 is not owned by the producer (state = FREE)
-09-08 04:40:01.160 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 52 is not owned by the producer (state = FREE)
-09-08 04:40:01.160 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 53 is not owned by the producer (state = FREE)
-09-08 04:40:01.160 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 54 is not owned by the producer (state = FREE)
-09-08 04:40:01.161 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 55 is not owned by the producer (state = FREE)
-09-08 04:40:01.161 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 56 is not owned by the producer (state = FREE)
-09-08 04:40:01.161 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 57 is not owned by the producer (state = FREE)
-09-08 04:40:01.161 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 58 is not owned by the producer (state = FREE)
-09-08 04:40:01.161 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 59 is not owned by the producer (state = FREE)
-09-08 04:40:01.161 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 60 is not owned by the producer (state = FREE)
-09-08 04:40:01.161 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 61 is not owned by the producer (state = FREE)
-09-08 04:40:01.161 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 62 is not owned by the producer (state = FREE)
-09-08 04:40:01.161 22287 29784 W BufferQueueProducer: [SurfaceView[com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity]#16(BLAST Consumer)16](id:570f00000014,api:3,p:22287,c:22287) detachBuffer: slot 63 is not owned by the producer (state = FREE)
-09-08 04:40:01.163 22287 29784 D Codec2Client: Surface configure completed
-09-08 04:40:01.163 22287 29784 I MediaCodec: [mId: 3] [video-debug-dec] disconnectFromSurface: mSurface 0xb400007d5d03d520
-09-08 04:40:01.163 22287 29784 D SurfaceUtils: disconnecting from surface 0xb400007d5d03d530, reason disconnectFromSurface
-09-08 04:40:01.169 22287 22287 I MediaSessionImpl: Release 29b2844 [AndroidXMedia3/1.4.0] [marble, 23049PCD8G, Xiaomi, 35] [media3.common, media3.ui, media3.exoplayer, media3.database, media3.decoder, media3.session, media3.exoplayer.hls, media3.datasource, media3.extractor]
-09-08 04:40:01.175 22287 22287 I ExoPlayerImpl: Release 2c8f557 [AndroidXMedia3/1.4.0] [marble, 23049PCD8G, Xiaomi, 35] [media3.common, media3.ui, media3.exoplayer, media3.database, media3.decoder, media3.session, media3.exoplayer.hls, media3.datasource, media3.extractor]
-09-08 04:40:01.175 22287 29751 I MiMediaCodec: send fps to display when stop, state:0 mLastSendedFps:25.000000 id:3
-09-08 04:40:01.175 22287 29784 I MediaCodec: [mId: 3] [video-debug-dec] setState: FLUSHING
-09-08 04:40:01.187 22287 29785 I CCodecBufferChannel: [mId: 3] [video-debug-dec] flush: flushing 9 works
-09-08 04:40:01.187 22287 29784 I MediaCodec: [mId: 3] [video-debug-dec] setState: FLUSHED
-09-08 04:40:01.188 22287 29751 D MediaCodec: keep callback message for reclaim
-09-08 04:40:01.188 22287 29784 I MediaCodec: [mId: 3] [video-debug-dec] setState: STARTED
-09-08 04:40:01.188 22287 29784 I CCodecConfig: query failed after returning 18 values (BAD_INDEX)
-09-08 04:40:01.189 22287 29784 W Codec2Client: query -- param skipped: index = 1342179345.
-09-08 04:40:01.189 22287 29784 W Codec2Client: query -- param skipped: index = 2415921170.
-09-08 04:40:01.189 22287 29784 W Codec2Client: query -- param skipped: index = 1610614798.
-09-08 04:40:01.189 22287 29784 D CCodecBufferChannel: [c2.qti.avc.decoder#78] start: updating output delay 13
-09-08 04:40:01.190 22287 29800 I MediaCodec: [mId: 4] [audio-debug-dec] Stats 13809ms:Client:com.omymaxz.download.debug,Component:c2.android.aac.decoder,Qin:70,DQin:0/0,Render:0,Drop:70,DQout:0/0
-09-08 04:40:01.190 22287 29800 I MediaCodec: [mId: 4] [audio-debug-dec] setState: FLUSHING
-09-08 04:40:01.191 22287 31243 I AudioTrack: stop(sessionID=99097), packageName: com.omymaxz.download.debug
-09-08 04:40:01.191 22287 31243 D AudioTrack: stop(52397): prior state:STATE_FLUSHED
-09-08 04:40:01.191 22287 29800 I CCodecBufferChannel: [mId: 4] [audio-debug-dec] flush: flushing 2 works
-09-08 04:40:01.191 22287 29800 D CCodecBuffers: [c2.android.aac.decoder#490:1D-Output.Impl[N]] Client returned a buffer it does not own according to our record: 0
-09-08 04:40:01.191 22287 29800 I MediaCodec: [mId: 4] [audio-debug-dec] setState: FLUSHED
-09-08 04:40:01.191 22287 31243 D AudioTrack: ~AudioTrack(sessionID=99097)
-09-08 04:40:01.191 22287 31243 I AudioTrack: stop(sessionID=99097), packageName: com.omymaxz.download.debug
-09-08 04:40:01.191 22287 29751 D MediaCodec: keep callback message for reclaim
-09-08 04:40:01.191 22287 31243 D AudioTrack: stop(52397): prior state:STATE_FLUSHED
-09-08 04:40:01.191 22287 29800 I MediaCodec: [mId: 4] [audio-debug-dec] setState: STARTED
-09-08 04:40:01.192 22287 29800 I CCodecConfig: query failed after returning 21 values (BAD_INDEX)
-09-08 04:40:01.192 22287 29800 D BufferPoolAccessor2.0: bufferpool2 0xb400007d0d027158 : 1(8192 size) total buffers - 1(8192 size) used buffers - 2506/2512 (recycle/alloc) - 25/2508 (fetch/transfer)
-09-08 04:40:01.192 22287 29800 W Codec2Client: query -- param skipped: index = 1342179345.
-09-08 04:40:01.192 22287 29800 W Codec2Client: query -- param skipped: index = 2415921170.
-09-08 04:40:01.193 22287 29800 W Codec2Client: query -- param skipped: index = 1610614798.
-09-08 04:40:01.193 22287 29800 D CCodecBufferChannel: [c2.android.aac.decoder#490] start: updating output delay 2
-09-08 04:40:01.193 22287 31243 D AudioTrackStub: ~AudioTrackStub() destroy
-09-08 04:40:01.193 22287 22287 W MediaCodec_loop: type=1400 audit(0.0:684466): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-09-08 04:40:01.196 22287 29784 W libc    : Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-09-08 04:40:01.196 22287 29784 I MediaCodec: [mId: 3] [video-debug-dec] connectToSurface: surface 0xb400007d5d012be0, mSurface 0xb400007d5d058ff0
-09-08 04:40:01.196 22287 29784 D SurfaceUtils: connecting to surface 0xb400007d5d012bf0, reason connectToSurface
-09-08 04:40:01.196 22287 29784 I MediaCodec: [c2.qti.avc.decoder] setting surface generation to 22821896
-09-08 04:40:01.196 22287 29784 D SurfaceUtils: disconnecting from surface 0xb400007d5d012bf0, reason connectToSurface(reconnect)
-09-08 04:40:01.196 22287 29784 D SurfaceUtils: connecting to surface 0xb400007d5d012be0, reason connectToSurface(reconnect-with-listener)
-09-08 04:40:01.196 22287 29784 D Codec2-OutputBufferQueue: remote graphic buffer migration 0/0
-09-08 04:40:01.197 22287 29784 D Codec2Client: setOutputSurface -- failed to set consumer usage (6/BAD_INDEX)
-09-08 04:40:01.197 22287 29784 D Codec2Client: setOutputSurface -- generation=22821896 consumer usage=0x900
-09-08 04:40:01.197 22287 29784 D qdgralloc: Falling back to default YUV format - no camera/video specific format defined, usage 0x100
-09-08 04:40:01.198 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 0 is not owned by the producer (state = FREE)
-09-08 04:40:01.198 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 1 is not owned by the producer (state = FREE)
-09-08 04:40:01.198 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 2 is not owned by the producer (state = FREE)
-09-08 04:40:01.198 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 3 is not owned by the producer (state = FREE)
-09-08 04:40:01.198 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 4 is not owned by the producer (state = FREE)
-09-08 04:40:01.198 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 5 is not owned by the producer (state = FREE)
-09-08 04:40:01.199 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 6 is not owned by the producer (state = FREE)
-09-08 04:40:01.199 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 7 is not owned by the producer (state = FREE)
-09-08 04:40:01.199 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 8 is not owned by the producer (state = FREE)
-09-08 04:40:01.199 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 9 is not owned by the producer (state = FREE)
-09-08 04:40:01.199 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 10 is not owned by the producer (state = FREE)
-09-08 04:40:01.199 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 11 is not owned by the producer (state = FREE)
-09-08 04:40:01.199 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 12 is not owned by the producer (state = FREE)
-09-08 04:40:01.199 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 13 is not owned by the producer (state = FREE)
-09-08 04:40:01.199 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 14 is not owned by the producer (state = FREE)
-09-08 04:40:01.200 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 20 is not owned by the producer (state = FREE)
-09-08 04:40:01.200 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 21 is not owned by the producer (state = FREE)
-09-08 04:40:01.200 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 22 is not owned by the producer (state = FREE)
-09-08 04:40:01.200 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 23 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 24 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 25 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 26 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 27 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 28 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 29 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 30 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 31 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 32 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 33 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 34 is not owned by the producer (state = FREE)
-09-08 04:40:01.201 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 35 is not owned by the producer (state = FREE)
-09-08 04:40:01.202 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 36 is not owned by the producer (state = FREE)
-09-08 04:40:01.202 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 37 is not owned by the producer (state = FREE)
-09-08 04:40:01.202 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 38 is not owned by the producer (state = FREE)
-09-08 04:40:01.202 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 39 is not owned by the producer (state = FREE)
-09-08 04:40:01.202 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 40 is not owned by the producer (state = FREE)
-09-08 04:40:01.202 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 41 is not owned by the producer (state = FREE)
-09-08 04:40:01.202 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 42 is not owned by the producer (state = FREE)
-09-08 04:40:01.202 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 43 is not owned by the producer (state = FREE)
-09-08 04:40:01.202 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 44 is not owned by the producer (state = FREE)
-09-08 04:40:01.203 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 45 is not owned by the producer (state = FREE)
-09-08 04:40:01.203 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 46 is not owned by the producer (state = FREE)
-09-08 04:40:01.203 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 47 is not owned by the producer (state = FREE)
-09-08 04:40:01.203 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 48 is not owned by the producer (state = FREE)
-09-08 04:40:01.203 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 49 is not owned by the producer (state = FREE)
-09-08 04:40:01.203 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 50 is not owned by the producer (state = FREE)
-09-08 04:40:01.203 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 51 is not owned by the producer (state = FREE)
-09-08 04:40:01.203 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 52 is not owned by the producer (state = FREE)
-09-08 04:40:01.203 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 53 is not owned by the producer (state = FREE)
-09-08 04:40:01.203 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 54 is not owned by the producer (state = FREE)
-09-08 04:40:01.204 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 55 is not owned by the producer (state = FREE)
-09-08 04:40:01.204 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 56 is not owned by the producer (state = FREE)
-09-08 04:40:01.204 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 57 is not owned by the producer (state = FREE)
-09-08 04:40:01.204 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 58 is not owned by the producer (state = FREE)
-09-08 04:40:01.204 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 59 is not owned by the producer (state = FREE)
-09-08 04:40:01.204 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 60 is not owned by the producer (state = FREE)
-09-08 04:40:01.204 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 61 is not owned by the producer (state = FREE)
-09-08 04:40:01.204 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 62 is not owned by the producer (state = FREE)
-09-08 04:40:01.204 22287 29784 W BufferQueueProducer: [SurfaceTexture-1-22287-1](id:570f0000001b,api:3,p:22287,c:22287) detachBuffer: slot 63 is not owned by the producer (state = FREE)
-09-08 04:40:01.206 22287 29784 D Codec2Client: Surface configure completed
-09-08 04:40:01.206 22287 29784 I MediaCodec: [mId: 3] [video-debug-dec] disconnectFromSurface: mSurface 0xb400007d5d058ff0
-09-08 04:40:01.206 22287 29784 D SurfaceUtils: disconnecting from surface 0xb400007d5d059000, reason disconnectFromSurface
-09-08 04:40:01.206 22287 29784 I MediaCodec: [mId: 3] [video-debug-dec] setState: RELEASING
-09-08 04:40:01.207 22287 29784 D CCodecBufferChannel: [c2.qti.avc.decoder#78] MediaCodec discarded an unknown buffer
-09-08 04:40:01.207 22287 29784 D CCodecBufferChannel: [c2.qti.avc.decoder#78] MediaCodec discarded an unknown buffer
-09-08 04:40:01.207 22287 29784 D CCodecBufferChannel: [c2.qti.avc.decoder#78] MediaCodec discarded an unknown buffer
-09-08 04:40:01.207 22287 29784 D CCodecBufferChannel: [c2.qti.avc.decoder#78] MediaCodec discarded an unknown buffer
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 5 is not owned by the producer (state = FREE)
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 6 is not owned by the producer (state = FREE)
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 7 is not owned by the producer (state = FREE)
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 8 is not owned by the producer (state = FREE)
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 9 is not owned by the producer (state = FREE)
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 10 is not owned by the producer (state = FREE)
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 11 is not owned by the producer (state = FREE)
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 12 is not owned by the producer (state = FREE)
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 13 is not owned by the producer (state = FREE)
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 14 is not owned by the producer (state = FREE)
-09-08 04:40:01.208 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 15 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 16 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 17 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 18 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 19 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 20 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 29800 I MediaCodec: [mId: 4] [audio-debug-dec] setState: RELEASING
-09-08 04:40:01.209 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 21 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 22 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 23 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 29800 D CCodecBufferChannel: [c2.android.aac.decoder#490] MediaCodec discarded an unknown buffer
-09-08 04:40:01.209 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 24 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 29800 D CCodecBufferChannel: [c2.android.aac.decoder#490] MediaCodec discarded an unknown buffer
-09-08 04:40:01.209 22287 29800 D CCodecBufferChannel: [c2.android.aac.decoder#490] MediaCodec discarded an unknown buffer
-09-08 04:40:01.209 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 25 is not owned by the producer (state = FREE)
-09-08 04:40:01.209 22287 29800 D CCodecBufferChannel: [c2.android.aac.decoder#490] MediaCodec discarded an unknown buffer
-09-08 04:40:01.210 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 26 is not owned by the producer (state = FREE)
-09-08 04:40:01.210 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 27 is not owned by the producer (state = FREE)
-09-08 04:40:01.210 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 28 is not owned by the producer (state = FREE)
-09-08 04:40:01.210 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 29 is not owned by the producer (state = FREE)
-09-08 04:40:01.210 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 30 is not owned by the producer (state = FREE)
-09-08 04:40:01.210 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 31 is not owned by the producer (state = FREE)
-09-08 04:40:01.210 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 32 is not owned by the producer (state = FREE)
-09-08 04:40:01.210 22287 31245 I hw-BpHwBinder: onLastStrongRef automatically unlinking death recipients
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 33 is not owned by the producer (state = FREE)
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 34 is not owned by the producer (state = FREE)
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 35 is not owned by the producer (state = FREE)
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 36 is not owned by the producer (state = FREE)
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 37 is not owned by the producer (state = FREE)
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 38 is not owned by the producer (state = FREE)
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 39 is not owned by the producer (state = FREE)
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 40 is not owned by the producer (state = FREE)
-09-08 04:40:01.211 22287 29800 I MediaCodec: [mId: 4] [audio-debug-dec] setState: UNINITIALIZED
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 41 is not owned by the producer (state = FREE)
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 42 is not owned by the producer (state = FREE)
-09-08 04:40:01.211 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 43 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 44 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 45 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 46 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 47 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 48 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 49 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 50 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 51 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 52 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 29800 I MediaCodec: MediaStub sendHdrInfo/sendFrameRateFloatCal/updateFrcAieAisState
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 53 is not owned by the producer (state = FREE)
-09-08 04:40:01.212 22287 29800 D MediaImpl: FRC not support: valueSupport : 
-09-08 04:40:01.212 22287 29800 D MediaImpl: AIE not support: valueSupport : 
-09-08 04:40:01.212 22287 29800 D MediaImpl: AIS not support: valueSupport : 
-09-08 04:40:01.212 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 54 is not owned by the producer (state = FREE)
-09-08 04:40:01.213 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 55 is not owned by the producer (state = FREE)
-09-08 04:40:01.213 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 56 is not owned by the producer (state = FREE)
-09-08 04:40:01.213 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 57 is not owned by the producer (state = FREE)
-09-08 04:40:01.213 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 58 is not owned by the producer (state = FREE)
-09-08 04:40:01.213 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 59 is not owned by the producer (state = FREE)
-09-08 04:40:01.213 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 60 is not owned by the producer (state = FREE)
-09-08 04:40:01.213 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 61 is not owned by the producer (state = FREE)
-09-08 04:40:01.213 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 62 is not owned by the producer (state = FREE)
-09-08 04:40:01.213 22287 31244 W BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) detachBuffer: slot 63 is not owned by the producer (state = FREE)
-09-08 04:40:01.221 22287 22287 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@a4ac76a
-09-08 04:40:01.221 22287 28406 E BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) cancelBuffer: slot 4 is not owned by the producer (state = FREE)
-09-08 04:40:01.221 22287 28406 E BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) cancelBuffer: slot 0 is not owned by the producer (state = FREE)
-09-08 04:40:01.222 22287 28406 E BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) cancelBuffer: slot 1 is not owned by the producer (state = FREE)
-09-08 04:40:01.222 22287 28406 E BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) cancelBuffer: slot 3 is not owned by the producer (state = FREE)
-09-08 04:40:01.222 22287 28406 E BufferQueueProducer: [MediaCodec.release](id:570f0000001c,api:3,p:22287,c:22287) cancelBuffer: slot 2 is not owned by the producer (state = FREE)
-09-08 04:40:01.223 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:40:01.224 22287 31244 I hw-BpHwBinder: onLastStrongRef automatically unlinking death recipients
-09-08 04:40:01.224 22287 29784 I MediaCodec: [mId: 3] [video-debug-dec] disconnectFromSurface: mSurface 0xb400007d5d012be0
-09-08 04:40:01.224 22287 29784 D SurfaceUtils: disconnecting from surface 0xb400007d5d012bf0, reason disconnectFromSurface
-09-08 04:40:01.224 22287 29784 I MediaCodec: [mId: 3] [video-debug-dec] setState: UNINITIALIZED
-09-08 04:40:01.225 22287 29784 I MediaCodec: MediaStub sendHdrInfo/sendFrameRateFloatCal/updateFrcAieAisState
-09-08 04:40:01.225 22287 29784 D MediaImpl: FRC not support: valueSupport : 
-09-08 04:40:01.225 22287 29784 D MediaImpl: AIE not support: valueSupport : 
-09-08 04:40:01.225 22287 29784 D MediaImpl: AIS not support: valueSupport : 
-09-08 04:40:01.225 22287 29784 I MediaCodec: MediaStub sendVideoPlayData
-09-08 04:40:01.225 22287 29784 D MediaImpl: sendVideoPlayData, start
-09-08 04:40:01.225 22287 29784 D MediaImpl: MediaImpl::sendVideoPlayData::mediacodec_mime : video/avc
-09-08 04:40:01.225 22287 29784 D MediaImpl: MediaImpl::sendVideoPlayData::mediacodec_packgeName : com.omymaxz.download.debug
-09-08 04:40:01.225 22287 29784 D MediaImpl: MediaImpl::sendVideoPlayData::mine : video/avc
-09-08 04:40:01.225 22287 29784 D MediaImpl: MediaImpl::sendVideoPlayData::packgeName : com.omymaxz.download.debug
-09-08 04:40:01.225 22287 29784 E send_data_to_xlog: send_video_play_to_xlog, start
-09-08 04:40:01.225 22287 29784 D send_data_to_xlog: send_video_play_to_xlog::mine : video/avc
-09-08 04:40:01.225 22287 29784 D send_data_to_xlog: send_video_play_to_xlog::packgeName : com.omymaxz.download.debug
-09-08 04:40:01.225 22287 29784 D send_data_to_xlog: send_video_play_to_xlog::deviceState : 0:DEFAULT
-09-08 04:40:01.225 22287 29784 V xlog_client:  xlog_send  msg_id: 13
-09-08 04:40:01.225 22287 29784 V xlog_client:  xlog_send 
-09-08 04:40:01.225 22287 29784 V xlog_client: xlog_open fd = 4
-09-08 04:40:01.225 22287 29784 D xlog_client: xlog_format_msg: send msg 13
-09-08 04:40:01.225 22287 29784 D xlog_client: _xlog_write_flat_msg: send msg {"name":"video_play","audio_event":{"video_play_framerate":"0","video_play_hdr":"0","video_play_width_height":"860_480","video_play_framratecal":"25","video_play_frc":"-1","video_play_aie":"-1","video_play_ais":"-1","video_play_dolbyvision":"0", "video_play_codecdomain":"2", "video_play_durationsec":"113","video_play_codec":"video/avc", "video_play_app":"com.omymaxz.download.debug", "video_play_device_state":"0:DEFAULT"},"dgt":"null","audio_ext":"null" }
-09-08 04:40:01.225 22287 29784 V xlog_client: xlog_close 4
-09-08 04:40:01.226 22287 29784 D .download.debug: VideoServiceClientImpl::reportCodecStatus
-09-08 04:40:01.226 22287 29784 D VideoCodecInfo: [3789890905905823747] ipb: 3035 ipd: 121606ms ipbd: 247400ms maxipi: 1931ms
-09-08 04:40:01.226 22287 29784 D VideoCodecInfo: [3789890905905823747] opb: 3005 opd: 120576ms opbd: 247040ms maxopi: 3666ms
-09-08 04:40:01.227 22287 29784 D VideoCodecInfo: [3789890905905823747] rdb: 2832 rdd: 119412ms rdbd: 244480ms maxrdi: 3206ms
-09-08 04:40:01.227 22287 29784 D VideoCodecInfo: com.omymaxz.download.debug destroy video codec index: [3789890905905823747] 
-09-08 04:40:01.236 22287 28656 D InsetsController: default animation onReady types: 3 controller=android.view.InsetsAnimationControlImpl@ff7ae7c
-09-08 04:40:01.236 22287 28656 D ViewRootImplStubImpl: requestedTypes: 3
-09-08 04:40:01.743 22287 28656 D InsetsAnimationCtrlImpl: notifyFinished shown: true, currentAlpha: 1.000000, currentInsets: Insets{left=0, top=111, right=0, bottom=130}
-09-08 04:40:01.743 22287 28656 D InsetsAnimationCtrlImpl: Animation finished abruptly.
-09-08 04:40:01.743 22287 28656 D InsetsController: onAnimationFinish showOnFinish: true
-09-08 04:40:01.743 22287 22287 D InsetsController: cancelAnimation of types:3 animType=0 host:com.omymaxz.download.debug/com.omymaxz.download.MainActivity invokeCallback=false
-09-08 04:40:01.743 22287 22287 D InsetsController: notifyFinished. shown: true runner=android.view.InsetsAnimationThreadControlRunner@ce3f726
-09-08 04:40:01.807 22287 22287 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=706441854, downTime=706441854, phoneEventTime=04:40:01.805 } moveCount:0
-09-08 04:40:01.807 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:40:01.887 22287 22287 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=706441934, downTime=706441854, phoneEventTime=04:40:01.884 } moveCount:0
-09-08 04:40:01.888 22287 22287 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@f91c2b
-09-08 04:40:01.890 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:40:01.908 22287 22287 W InputEventReceiver: Attempted to finish an input event but the input event receiver has already been disposed.
-09-08 04:40:01.936 22287 22287 I HandWritingStubImpl: refreshLastKeyboardType: 1
-09-08 04:40:01.936 22287 22287 I HandWritingStubImpl: getCurrentKeyboardType: 1
-09-08 04:40:02.394 22287 22287 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=706442441, downTime=706442441, phoneEventTime=04:40:02.392 } moveCount:0
-09-08 04:40:02.394 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:40:02.397 22287 22287 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=706442443, downTime=706442441, phoneEventTime=04:40:02.393 } moveCount:0
-09-08 04:40:02.408 22287 22287 I AbsListViewStubImpl: com.omymaxz.download.debug, version: 1.0, Enable Prefetch: false
-09-08 04:40:02.432 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:40:02.441 22287 22287 W WindowOnBackDispatcher: OnBackInvokedCallback is not enabled for the application.
-09-08 04:40:02.441 22287 22287 W WindowOnBackDispatcher: Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-09-08 04:40:02.441 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:40:02.441 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:40:02.441 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:40:02.441 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:40:02.441 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:40:02.452 22287 22287 W libc    : Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-09-08 04:40:02.449 22287 22287 W .download.debug: type=1400 audit(0.0:684467): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-09-08 04:40:02.453 22287 22287 W libc    : Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-09-08 04:40:02.453 22287 22287 I .download.debug: 【MiuiBoosterUtils】checkUtil disable.
-09-08 04:40:02.453 22287 22287 I .download.debug: 【MiuiBoosterUtils】package permission check disable.
-09-08 04:40:02.453 22287 22287 I .download.debug: 【MiuiBoosterUtils】get Service disable.
-09-08 04:40:02.449 22287 22287 W .download.debug: type=1400 audit(0.0:684468): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-09-08 04:40:02.455 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:40:02.456 22287 31260 I .download.debug: 【MiuiBoosterUtils】improve disable.
-09-08 04:40:02.456 22287 22287 D ScrollerOptimizationManager: registerConfigChangedListener
-09-08 04:40:02.473 22287 22287 D VRI[MainActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
-09-08 04:40:02.473 22287 22287 D VRI[MainActivity]: vri.Setup new sync=wmsSync-VRI[MainActivity]#59
-09-08 04:40:02.480 22287 22287 D VRI[MainActivity]: vri.reportDrawFinished
-09-08 04:40:02.538 22287 22287 I HandWritingStubImpl: refreshLastKeyboardType: 1
-09-08 04:40:02.538 22287 22287 I HandWritingStubImpl: getCurrentKeyboardType: 1
-09-08 04:40:03.757 22287 22287 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=706443800, downTime=706443800, phoneEventTime=04:40:03.750 } moveCount:0
-09-08 04:40:03.757 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:40:03.832 22287 22287 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=706443877, downTime=706443800, phoneEventTime=04:40:03.827 } moveCount:0
-09-08 04:40:03.837 22287 22287 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@fcb72ba
-09-08 04:40:03.840 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:40:03.865 22287 22287 I AbsListViewStubImpl: com.omymaxz.download.debug, version: 1.0, Enable Prefetch: false
-09-08 04:40:03.874 22287 22287 D ScrollerOptimizationManager: registerConfigChangedListener
-09-08 04:40:03.878 22287 22287 D ScrollerOptimizationManager: registerConfigChangedListener
-09-08 04:40:03.896 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:40:03.905 22287 22287 W InputEventReceiver: Attempted to finish an input event but the input event receiver has already been disposed.
-09-08 04:40:03.907 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:40:03.907 22287 22287 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-09-08 04:40:03.907 22287 22287 D DecorViewImmersiveImpl: window type: 2
-09-08 04:40:03.907 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:40:03.907 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:40:03.933 22287 22287 W .download.debug: type=1400 audit(0.0:684469): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-09-08 04:40:03.933 22287 22287 W .download.debug: type=1400 audit(0.0:684470): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-09-08 04:40:03.937 22287 22287 W libc    : Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-09-08 04:40:03.938 22287 22287 W libc    : Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-09-08 04:40:03.938 22287 22287 I .download.debug: 【MiuiBoosterUtils】checkUtil disable.
-09-08 04:40:03.938 22287 22287 I .download.debug: 【MiuiBoosterUtils】package permission check disable.
-09-08 04:40:03.938 22287 22287 I .download.debug: 【MiuiBoosterUtils】get Service disable.
-09-08 04:40:03.939 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-09-08 04:40:03.940 22287 31276 I .download.debug: 【MiuiBoosterUtils】improve disable.
-09-08 04:40:03.962 22287 22287 D VRI[MainActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
-09-08 04:40:03.962 22287 22287 D VRI[MainActivity]: vri.Setup new sync=wmsSync-VRI[MainActivity]#61
-09-08 04:40:03.967 22287 22287 D VRI[MainActivity]: vri.reportDrawFinished
-09-08 04:40:05.669 22287 22287 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=706445715, downTime=706445715, phoneEventTime=04:40:05.665 } moveCount:0
-09-08 04:40:05.669 22287 22287 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-09-08 04:40:05.724 22287 22287 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=706445770, downTime=706445715, phoneEventTime=04:40:05.721 } moveCount:0
-09-08 04:40:05.745 22287 22287 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@70f697a
-09-08 04:40:05.747 22287 22287 D DecorViewImmersiveImpl: onDetachedFromWindow
-09-08 04:40:05.757 22287 22287 W InputEventReceiver: Attempted to finish an input event but the input event receiver has already been disposed.
-09-08 04:40:05.776 22287 27882 I ActivityThread: HardwareRenderer preload  done
-09-08 04:40:05.807 22287 22287 D ScrollerOptimizationManager: registerConfigChangedListener
-09-08 04:40:05.813 22287 22287 D Activity: Activity = ActivityInfo{dcffe23 com.omymaxz.download.LogcatViewerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-09-08 04:40:05.813 22287 22287 D SecurityManager: checkAccessControl flag0
-09-08 04:40:05.817 22287 22287 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.LogcatViewerActivity@3392f82, reason: AppDarkModeEnable
-09-08 04:40:05.825 22287 22287 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity
-09-08 04:40:05.825 22287 22287 D DecorViewImmersiveImpl: getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity
-09-08 04:40:05.826 22287 22287 D DecorViewImmersiveImpl: window type: 1
-09-08 04:40:05.826 22287 22287 D MiuiNBIManagerImpl: mRemote has create
-09-08 04:40:05.826 22287 22287 D DecorViewImmersiveImpl: isNBIEnable=false
-09-08 04:40:05.852 22287 22287 W libc    : Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
-09-08 04:40:05.849 22287 22287 W .download.debug: type=1400 audit(0.0:684471): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-09-08 04:40:05.853 22287 22287 W libc    : Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-09-08 04:40:05.853 22287 22287 I .download.debug: 【MiuiBoosterUtils】checkUtil disable.
-09-08 04:40:05.853 22287 22287 I .download.debug: 【MiuiBoosterUtils】package permission check disable.
-09-08 04:40:05.853 22287 22287 I .download.debug: 【MiuiBoosterUtils】get Service disable.
-09-08 04:40:05.854 22287 31312 I .download.debug: 【MiuiBoosterUtils】improve disable.
-09-08 04:40:05.855 22287 22287 D VRI[LogcatViewerActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
-09-08 04:40:05.856 22287 22287 D VRI[LogcatViewerActivity]: vri.Setup new sync=wmsSync-VRI[LogcatViewerActivity]#63
-09-08 04:40:05.849 22287 22287 W .download.debug: type=1400 audit(0.0:684472): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
-09-08 04:40:05.868 22287 22287 D VRI[LogcatViewerActivity]: vri.reportDrawFinished
-09-08 04:40:05.897 22287 22287 I HandWritingStubImpl: refreshLastKeyboardType: 1
-09-08 04:40:05.897 22287 22287 I HandWritingStubImpl: getCurrentKeyboardType: 1
+09-08 05:04:16.422 29148  3351 I ActivityThread: TrafficStats init done
+09-08 05:04:16.427 29148 29148 D ActivityThread: useGrowthLimitOutExpendMethod invoke error.
+09-08 05:04:16.451 29148  3351 I PluginScenarioManager: miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+09-08 05:04:16.451 29148  3351 I ActivityThread: Miui Feature Init done
+09-08 05:04:16.471 29148 29148 D FramePredict: FramePredict init: false
+09-08 05:04:16.478 29148  3351 I ActivityThread: HardwareRenderer preload  done
+09-08 05:04:17.213 29148 29148 W MessageMonitor: PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.MainActivity onCreate took 668ms
+09-08 05:04:17.228 29148 29148 D Activity: Activity = ActivityInfo{de0d1cb com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-08 05:04:17.299 29148 29148 D FramePredict: init success
+09-08 05:04:17.311 29148  3488 E FramePredict: registerContentObserver fail
+09-08 05:04:17.315 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:04:17.413 29148 29148 D UserSceneDetector: invoke error.
+09-08 05:04:17.435 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:04:17.437 29148 29148 D DecorViewImmersiveImpl: getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:04:17.437 29148 29148 D DecorViewImmersiveImpl: window type: 1
+09-08 05:04:17.446 29148 29148 D MiuiNBIManagerImpl: init success,pkgName=com.omymaxz.download.debug mIsNBIEnable=false mActivityRules=ActivityRules{}}
+09-08 05:04:17.446 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:04:17.519 29148 29148 D UserSceneDetector: invoke error.
+09-08 05:04:17.641 29148 29148 D UserSceneDetector: invoke error.
+09-08 05:04:18.069 29148  3511 W BpBinder: PerfMonitor binderTransact: time=524ms interface=android.content.IContentProvider code=21
+09-08 05:04:19.134 29148  3622 W BpBinder: PerfMonitor binderTransact: time=371ms interface=android.speech.tts.ITextToSpeechService code=15
+09-08 05:04:24.205 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:26.471 29148  3532 D ActivityThread: invoke error.
+09-08 05:04:29.507 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:29.609 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:04:29.621 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:04:29.621 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:04:29.621 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:04:29.621 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:04:29.621 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:04:29.664 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:04:30.550 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:30.651 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:04:30.671 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:04:30.671 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:04:30.671 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:04:30.671 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:04:30.671 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:04:30.692 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:04:31.631 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:31.783 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:04:31.836 29148  3351 I ActivityThread: HardwareRenderer preload  done
+09-08 05:04:32.155 29148 29148 W MessageMonitor: PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onStart took 218ms
+09-08 05:04:32.157 29148 29148 D Activity: Activity = ActivityInfo{9299e0b com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-08 05:04:32.162 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@4cd651d, reason: AppDarkModeEnable
+09-08 05:04:32.177 29148 29148 D UserSceneDetector: invoke error.
+09-08 05:04:32.179 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:04:32.179 29148 29148 D DecorViewImmersiveImpl: getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:04:32.179 29148 29148 D DecorViewImmersiveImpl: window type: 1
+09-08 05:04:32.180 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:04:32.180 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:04:33.953 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:34.138 29148  4218 W BpBinder: PerfMonitor binderTransact: time=288ms interface=android.media.IAudioTrack code=2
+09-08 05:04:35.858 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:36.031 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@4cd651d, reason: AppDarkModeEnable
+09-08 05:04:36.042 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:04:36.042 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:04:36.042 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:04:36.042 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:04:36.042 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:04:36.060 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@4cd651d, reason: AppDarkModeEnable
+09-08 05:04:36.834 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:37.483 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:37.567 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:04:38.276 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:43.193 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:43.276 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@4cd651d, reason: AppDarkModeEnable
+09-08 05:04:43.288 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:04:43.289 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:04:43.289 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:04:43.289 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:04:43.289 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:04:43.304 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@4cd651d, reason: AppDarkModeEnable
+09-08 05:04:45.702 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:45.816 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:04:51.529 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:54.490 29148 29148 D ActivityThread: Activity = com.omymaxz.download.CustomPlayerActivity@4cd651d, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw122dp w216dp h122dp 440dpi smll hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(441, 1891 - 1036, 2226) mAppBounds=Rect(441, 1891 - 1036, 2226) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=pinned mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.6 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-08 05:04:54.491 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@4cd651d, reason: AppDarkModeEnable
+09-08 05:04:56.252 29148 29148 D ActivityThread: Activity = com.omymaxz.download.CustomPlayerActivity@4cd651d, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.8 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-08 05:04:56.255 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@4cd651d, reason: AppDarkModeEnable
+09-08 05:04:56.804 29148 29148 D Activity: Activity = ActivityInfo{9299e0b com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-08 05:04:57.250 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:57.817 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:04:57.817 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:04:57.830 29148 29148 D Activity: Activity = ActivityInfo{de0d1cb com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-08 05:04:58.508 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:04:59.622 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:04:59.722 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:04:59.741 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:04:59.741 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:04:59.741 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:04:59.741 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:04:59.741 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:04:59.755 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:05:01.456 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:01.530 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:05:02.275 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:02.396 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:05:02.405 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:05:02.405 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:05:02.405 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:05:02.405 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:05:02.405 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:05:02.415 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:05:03.363 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:03.477 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:05:03.542 29148  3351 I ActivityThread: HardwareRenderer preload  done
+09-08 05:05:03.650 29148 29148 D Activity: Activity = ActivityInfo{dc3aa5c com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-08 05:05:03.654 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:03.666 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:05:03.666 29148 29148 D DecorViewImmersiveImpl: getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:05:03.666 29148 29148 D DecorViewImmersiveImpl: window type: 1
+09-08 05:05:03.666 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:05:03.666 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:05:04.869 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:05.506 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:05.639 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:05.665 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:06.256 29148 29148 D VRI[PopupWindow:bd7384f]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:06.792 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:06.888 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:06.909 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:07.250 29148 29148 D VRI[PopupWindow:bd7384f]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:08.187 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:08.208 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:08.266 29148 29148 D VRI[PopupWindow:bd7384f]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:09.272 29148 29148 D VRI[PopupWindow:bd7384f]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:10.599 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:10.704 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:10.721 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:10.742 29148 29148 D VRI[PopupWindow:bd7384f]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:11.753 29148 29148 D VRI[PopupWindow:bd7384f]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:11.857 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:11.877 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:13.902 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:15.077 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:16.428 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:16.541 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:16.547 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:05:16.547 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:05:16.547 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:05:16.547 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:05:16.547 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:05:16.559 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:17.779 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:18.566 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:18.656 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:05:23.141 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:23.636 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:23.753 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:23.762 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:05:23.762 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:05:23.762 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:05:23.762 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:05:23.762 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:05:23.775 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:25.072 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:25.210 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:05:32.687 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:32.782 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:32.797 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:33.246 29148 29148 D VRI[PopupWindow:bd7384f]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:34.093 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:34.109 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:34.242 29148 29148 D VRI[PopupWindow:bd7384f]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:35.251 29148 29148 D VRI[PopupWindow:bd7384f]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:36.253 29148 29148 D VRI[PopupWindow:bd7384f]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:42.925 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:43.041 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:43.047 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:05:43.047 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:05:43.047 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:05:43.047 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:05:43.047 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:05:43.058 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:05:43.950 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:44.055 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:05:46.500 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:05:56.081 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:06.795 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:17.230 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:32.726 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:46.086 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:48.236 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:49.053 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:49.182 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:06:49.233 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:06:49.234 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-08 05:06:49.234 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:06:49.234 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:06:49.234 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:06:49.247 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@f6b0cae, reason: AppDarkModeEnable
+09-08 05:06:50.089 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:50.171 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:06:56.872 29148 29148 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:57.598 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:06:57.598 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:06:57.626 29148 29148 D Activity: Activity = ActivityInfo{de0d1cb com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-08 05:06:57.772 29148 29148 D UserSceneDetector: invoke error.
+09-08 05:06:57.988 29148 29148 D UserSceneDetector: invoke error.
+09-08 05:06:58.451 29148 29148 W MessageMonitor: PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onDestroy took 102ms
+09-08 05:06:58.456 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:06:58.482 29148 29148 D UserSceneDetector: invoke error.
+09-08 05:06:58.778 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:59.349 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:06:59.437 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:07:00.100 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:00.280 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:00.290 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:07:00.290 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:07:00.290 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:07:00.290 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:07:00.290 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:07:00.302 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:02.006 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:02.090 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:07:02.142 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:02.151 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:07:02.151 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:07:02.151 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:07:02.151 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:07:02.151 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:07:02.174 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:03.700 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:03.810 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:03.820 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:07:03.827 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:07:03.827 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:07:03.827 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:07:03.827 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:07:03.827 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:07:03.920 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:04.665 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:05.590 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:06.231 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:06.716 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:07.108 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:07.577 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:10.433 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:11.821 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:13.087 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:16.771 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:18.328 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:21.864 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:24.854 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:25.805 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:27.731 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:30.834 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:35.408 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:35.425 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:40.018 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:40.157 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:07:43.413 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:43.483 29148 29148 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=708103527, downTime=708103454, phoneEventTime=05:07:43.477 } moveCount:0
+09-08 05:07:43.490 29148 29148 I AbsListViewStubImpl: com.omymaxz.download.debug, version: 1.0, Enable Prefetch: false
+09-08 05:07:43.521 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:43.529 29148 29148 W WindowOnBackDispatcher: OnBackInvokedCallback is not enabled for the application.
+09-08 05:07:43.529 29148 29148 W WindowOnBackDispatcher: Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+09-08 05:07:43.529 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:07:43.529 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:07:43.530 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:07:43.530 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:07:43.530 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:07:43.533 29148 29148 W .download.debug: type=1400 audit(0.0:686586): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+09-08 05:07:43.536 29148 29148 W libc    : Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
+09-08 05:07:43.536 29148 29148 W libc    : Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+09-08 05:07:43.536 29148 29148 I .download.debug: 【MiuiBoosterUtils】checkUtil disable.
+09-08 05:07:43.536 29148 29148 I .download.debug: 【MiuiBoosterUtils】package permission check disable.
+09-08 05:07:43.536 29148 29148 I .download.debug: 【MiuiBoosterUtils】get Service disable.
+09-08 05:07:43.533 29148 29148 W .download.debug: type=1400 audit(0.0:686587): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+09-08 05:07:43.537 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:43.537 29148 11293 I .download.debug: 【MiuiBoosterUtils】improve disable.
+09-08 05:07:43.538 29148 29148 D ScrollerOptimizationManager: registerConfigChangedListener
+09-08 05:07:43.551 29148 29148 D VRI[MainActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+09-08 05:07:43.551 29148 29148 D VRI[MainActivity]: vri.Setup new sync=wmsSync-VRI[MainActivity]#2
+09-08 05:07:43.558 29148 29148 D VRI[MainActivity]: vri.reportDrawFinished
+09-08 05:07:43.604 29148 29148 I HandWritingStubImpl: refreshLastKeyboardType: 1
+09-08 05:07:43.604 29148 29148 I HandWritingStubImpl: getCurrentKeyboardType: 1
+09-08 05:07:45.315 29148 29148 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=708105360, downTime=708105360, phoneEventTime=05:07:45.310 } moveCount:0
+09-08 05:07:45.316 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:45.376 29148 29148 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=708105421, downTime=708105360, phoneEventTime=05:07:45.372 } moveCount:0
+09-08 05:07:45.382 29148 29148 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@5133bd8
+09-08 05:07:45.386 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:07:45.402 29148 29148 I AbsListViewStubImpl: com.omymaxz.download.debug, version: 1.0, Enable Prefetch: false
+09-08 05:07:45.410 29148 29148 D ScrollerOptimizationManager: registerConfigChangedListener
+09-08 05:07:45.412 29148 29148 D ScrollerOptimizationManager: registerConfigChangedListener
+09-08 05:07:45.421 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:45.429 29148 29148 W InputEventReceiver: Attempted to finish an input event but the input event receiver has already been disposed.
+09-08 05:07:45.430 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:07:45.430 29148 29148 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-08 05:07:45.430 29148 29148 D DecorViewImmersiveImpl: window type: 2
+09-08 05:07:45.430 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:07:45.430 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:07:45.449 29148 29148 W libc    : Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
+09-08 05:07:45.445 29148 29148 W .download.debug: type=1400 audit(0.0:686588): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+09-08 05:07:45.450 29148 29148 W libc    : Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+09-08 05:07:45.450 29148 29148 I .download.debug: 【MiuiBoosterUtils】checkUtil disable.
+09-08 05:07:45.450 29148 29148 I .download.debug: 【MiuiBoosterUtils】package permission check disable.
+09-08 05:07:45.450 29148 29148 I .download.debug: 【MiuiBoosterUtils】get Service disable.
+09-08 05:07:45.449 29148 29148 W .download.debug: type=1400 audit(0.0:686589): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+09-08 05:07:45.451 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
+09-08 05:07:45.452 29148 11333 I .download.debug: 【MiuiBoosterUtils】improve disable.
+09-08 05:07:45.465 29148 29148 D VRI[MainActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+09-08 05:07:45.465 29148 29148 D VRI[MainActivity]: vri.Setup new sync=wmsSync-VRI[MainActivity]#4
+09-08 05:07:45.469 29148 29148 D VRI[MainActivity]: vri.reportDrawFinished
+09-08 05:07:45.475 29148 29148 I HandWritingStubImpl: refreshLastKeyboardType: 1
+09-08 05:07:45.476 29148 29148 I HandWritingStubImpl: getCurrentKeyboardType: 1
+09-08 05:07:46.899 29148 29148 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=708106941, downTime=708106941, phoneEventTime=05:07:46.891 } moveCount:0
+09-08 05:07:46.900 29148 29148 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-08 05:07:46.974 29148 29148 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=708107019, downTime=708106941, phoneEventTime=05:07:46.970 } moveCount:0
+09-08 05:07:47.032 29148 29148 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@dba5eb2
+09-08 05:07:47.034 29148 29148 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-08 05:07:47.041 29148 29148 W InputEventReceiver: Attempted to finish an input event but the input event receiver has already been disposed.
+09-08 05:07:47.060 29148  3351 I ActivityThread: HardwareRenderer preload  done
+09-08 05:07:47.098 29148 29148 D ScrollerOptimizationManager: registerConfigChangedListener
+09-08 05:07:47.107 29148 29148 D Activity: Activity = ActivityInfo{baf4a18 com.omymaxz.download.LogcatViewerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-08 05:07:47.108 29148 29148 D SecurityManager: checkAccessControl flag0
+09-08 05:07:47.112 29148 29148 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.LogcatViewerActivity@48e686b, reason: AppDarkModeEnable
+09-08 05:07:47.116 29148 29148 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity
+09-08 05:07:47.116 29148 29148 D DecorViewImmersiveImpl: getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity
+09-08 05:07:47.117 29148 29148 D DecorViewImmersiveImpl: window type: 1
+09-08 05:07:47.117 29148 29148 D MiuiNBIManagerImpl: mRemote has create
+09-08 05:07:47.117 29148 29148 D DecorViewImmersiveImpl: isNBIEnable=false
+09-08 05:07:47.125 29148 29148 W .download.debug: type=1400 audit(0.0:686590): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+09-08 05:07:47.129 29148 29148 W .download.debug: type=1400 audit(0.0:686591): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+09-08 05:07:47.130 29148 29148 W libc    : Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
+09-08 05:07:47.130 29148 29148 W libc    : Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+09-08 05:07:47.130 29148 29148 I .download.debug: 【MiuiBoosterUtils】checkUtil disable.
+09-08 05:07:47.130 29148 29148 I .download.debug: 【MiuiBoosterUtils】package permission check disable.
+09-08 05:07:47.130 29148 29148 I .download.debug: 【MiuiBoosterUtils】get Service disable.
+09-08 05:07:47.132 29148 11369 I .download.debug: 【MiuiBoosterUtils】improve disable.
+09-08 05:07:47.132 29148 29148 D VRI[LogcatViewerActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+09-08 05:07:47.133 29148 29148 D VRI[LogcatViewerActivity]: vri.Setup new sync=wmsSync-VRI[LogcatViewerActivity]#6
+09-08 05:07:47.141 29148 29148 D VRI[LogcatViewerActivity]: vri.reportDrawFinished
+09-08 05:07:47.161 29148 29148 I HandWritingStubImpl: refreshLastKeyboardType: 1
+09-08 05:07:47.162 29148 29148 I HandWritingStubImpl: getCurrentKeyboardType: 1
