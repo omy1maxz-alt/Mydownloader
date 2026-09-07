@@ -368,7 +368,7 @@ class HlsExportService : Service() {
                             if (ext.lowercase() in listOf("png", "jpg", "jpeg", "bmp", "gif", "bin", "php")) {
                                 ext = "mp4" // Assuming fMP4 init chunks shouldn't be fake images either
                             }
-                            val localFile = File(tmpDir, "init_$segmentIndex.$ext")
+                            val localFile = File(tmpDir, "init_${outputFileName}_$segmentIndex.$ext")
 
                             val mapSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(fullUrl))
                             try {
@@ -403,7 +403,7 @@ class HlsExportService : Service() {
                         if (uriMatch != null && !uriMatch.groupValues[1].startsWith("data:")) {
                             val uriStr = uriMatch.groupValues[1]
                             val fullUrl = if (uriStr.startsWith("http")) uriStr else java.net.URI(playlistUrl).resolve(uriStr).toString()
-                            val localFile = File(tmpDir, "key_$segmentIndex.bin")
+                            val localFile = File(tmpDir, "key_${outputFileName}_$segmentIndex.bin")
 
                             val keySpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(fullUrl))
                             try {
