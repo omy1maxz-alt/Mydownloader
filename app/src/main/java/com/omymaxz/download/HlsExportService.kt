@@ -29,6 +29,7 @@ import kotlinx.coroutines.*
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class HlsExportService : Service() {
 
@@ -129,8 +130,17 @@ class HlsExportService : Service() {
                     extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title)
                     bundledMediaItem != null -> {
                         // Use the bundled MediaItem directly if provided (from CustomPlayerActivity 'Play in App' export)
-                        // This preserves the exact stream keys and master URL necessary for Transformer to hit the cache
-                        muxToMp4WithTransformer(bundledMediaItem, title)
+                        try {
+                            muxToMp4WithTransformer(bundledMediaItem, title)
+                        } catch (e: Exception) {
+                            writeExportLog("Transformer failed, falling back to FFmpeg: ${e.message}")
+                            if (videoUrl != null) {
+                                val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
+                                muxToMp4(finalUrl, title)
+                            } else {
+                                throw e
+                            }
+                        }
                     }
                     videoUrl != null -> {
                         val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
@@ -201,8 +211,8 @@ class HlsExportService : Service() {
                     ) {
                         writeExportLog("Transformer error on $title: ${ex.message} | ${android.util.Log.getStackTraceString(ex)}")
                         Log.e(TAG, "Transformer error", ex)
-                        Toast.makeText(applicationContext, "Export error: ${ex.message}", Toast.LENGTH_LONG).show()
-                        if (cont.isActive) cont.resume(Unit)
+                        // Do not show Toast here if we are falling back, the fallback will handle success/failure Toast.
+                        if (cont.isActive) cont.resumeWithException(ex)
                     }
                 })
                 .build()
