@@ -26,3 +26,5 @@
 [Sunday, 06 September 2026 | 19:14]
 - Updated the BottomSheetDialog base theme (`TransparentBottomSheetDialogTheme`) to strip its default opaque white backdrop, ensuring that the dynamically applied `glossy_theme_color` (including any transparency) renders fully transparently without washing out or blocking the UI beneath it.
 - Re-enabled the manual showing of the Detected Media List after advanced sniffing and YouTube interception. Introduced an `isManualScanPending` boolean to distinguish between automatic (silent) on-page-load scans and user-initiated scans via the FAB.
+- Fixed Media3 Transformer "asset loaded error" during HLS export by removing explicit `.setVideoMimeType` and `.setAudioMimeType` overrides, restoring its native ability to remux supported cached codecs rather than forcing a hardware-dependent transcode that crashes on unsupported formats.
+- Rewired `HlsExportService.kt` to catch Transformer `ExportException`s gracefully and trigger an automatic fallback to the FFmpeg download method, ensuring heavily obfuscated streams that defeat the Media3 AssetLoader can still be exported.
