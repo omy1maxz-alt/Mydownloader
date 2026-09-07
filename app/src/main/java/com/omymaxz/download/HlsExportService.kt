@@ -384,7 +384,10 @@ class HlsExportService : Service() {
                         if (uriMatch != null) {
                             val uriStr = uriMatch.groupValues[1]
                             val fullUrl = if (uriStr.startsWith("http")) uriStr else java.net.URI(playlistUrl).resolve(uriStr).toString()
-                            val ext = fullUrl.substringAfterLast(".", "mp4").substringBefore("?")
+                            var ext = fullUrl.substringAfterLast(".", "mp4").substringBefore("?")
+                            if (ext.lowercase() in listOf("png", "jpg", "jpeg", "bmp", "gif", "bin", "php")) {
+                                ext = "mp4" // Assuming fMP4 init chunks shouldn't be fake images either
+                            }
                             val localFile = File(tmpDir, "init_$segmentIndex.$ext")
 
                             val mapSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(fullUrl))
@@ -452,7 +455,12 @@ class HlsExportService : Service() {
 
                     if (!line.startsWith("#")) {
                         val segmentUrl = if (line.startsWith("http")) line else java.net.URI(playlistUrl).resolve(line).toString()
-                        val ext = segmentUrl.substringAfterLast(".", "ts").substringBefore("?")
+                        var ext = segmentUrl.substringAfterLast(".", "ts").substringBefore("?")
+                        // FFmpeg strictly blocks non-media extensions (like .PNG obfuscation) in LOCAL playlists for security.
+                        // We must normalize image/fake extensions back to .ts, while preserving real fMP4 extensions.
+                        if (ext.lowercase() in listOf("png", "jpg", "jpeg", "bmp", "gif", "bin", "php")) {
+                            ext = "ts"
+                        }
                         val localSegment = File(tmpDir, "seg_${outputFileName}_%05d.$ext".format(segmentIndex))
 
                         val segmentSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(segmentUrl))
