@@ -133,10 +133,15 @@ class HlsExportService : Service() {
                         try {
                             muxToMp4WithTransformer(bundledMediaItem, title)
                         } catch (e: Exception) {
-                            writeExportLog("Transformer failed, falling back to FFmpeg: ${e.message}")
+                            writeExportLog("Transformer failed, falling back to muxToMp4FromCache: ${e.message}")
                             if (videoUrl != null) {
                                 val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                                muxToMp4(finalUrl, title)
+                                try {
+                                    muxToMp4FromCache(finalUrl, title)
+                                } catch (cacheEx: Exception) {
+                                    writeExportLog("muxToMp4FromCache failed (likely incomplete cache), falling back to network FFmpeg: ${cacheEx.message}")
+                                    muxToMp4(finalUrl, title)
+                                }
                             } else {
                                 throw e
                             }
@@ -169,7 +174,20 @@ class HlsExportService : Service() {
         // Check if fully cached. If yes, use Transformer. If not, fallback to FFmpeg network download.
         if (download.state == Download.STATE_COMPLETED) {
             val mediaItem = download.request.toMediaItem()
-            muxToMp4WithTransformer(mediaItem, title)
+            try {
+                muxToMp4WithTransformer(mediaItem, title)
+            } catch (e: Exception) {
+                writeExportLog("Transformer failed on downloaded item, falling back to muxToMp4FromCache: ${e.message}")
+                val url = download.request.uri.toString()
+                val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
+                val finalUrl = resolveVariantUrl(url, streamKeysStr)
+                try {
+                    muxToMp4FromCache(finalUrl, title)
+                } catch (cacheEx: Exception) {
+                    writeExportLog("muxToMp4FromCache failed, falling back to FFmpeg network: ${cacheEx.message}")
+                    muxToMp4(finalUrl, title)
+                }
+            }
         } else {
             val url = download.request.uri.toString()
             val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
@@ -225,6 +243,157 @@ class HlsExportService : Service() {
             transformer.start(mediaItem, out.absolutePath)
             cont.invokeOnCancellation { transformer.cancel() }
         }
+
+
+    private suspend fun muxToMp4FromCache(finalUrl: String, title: String) = withContext(Dispatchers.IO) {
+        val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+        val out = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            "$safeTitle.mp4"
+        )
+        if (out.exists()) out.delete()
+
+        val tmpDir = File(applicationContext.filesDir, "tmp_export_${System.currentTimeMillis()}")
+        tmpDir.mkdirs()
+
+        try {
+            val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
+            val dataSource = cacheFactory.createDataSource()
+
+            // Read the main playlist
+            val dataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(finalUrl))
+            var playlistContent = ""
+            try {
+                dataSource.open(dataSpec)
+                val buffer = ByteArray(1024 * 64)
+                var bytesRead: Int
+                val outputStream = java.io.ByteArrayOutputStream()
+                while (dataSource.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                    outputStream.write(buffer, 0, bytesRead)
+                }
+                playlistContent = outputStream.toString("UTF-8")
+            } finally {
+                dataSource.close()
+            }
+
+            if (playlistContent.isEmpty() || !playlistContent.contains("#EXTM3U")) {
+                throw Exception("Failed to read valid M3U8 from cache.")
+            }
+
+            // Parse and cache segments locally
+            val lines = playlistContent.lines()
+            val newLines = mutableListOf<String>()
+            var segmentIndex = 0
+
+            // Optional ad stripping: Detect short discontinuity blocks
+            // First pass: group segments by discontinuity blocks
+            data class DiscontinuityBlock(val startIndex: Int, val endIndex: Int, val duration: Double)
+            val blocks = mutableListOf<DiscontinuityBlock>()
+            var currentBlockDuration = 0.0
+            var currentBlockStart = 0
+
+            var i = 0
+            while (i < lines.size) {
+                val line = lines[i]
+                if (line.startsWith("#EXT-X-DISCONTINUITY")) {
+                    blocks.add(DiscontinuityBlock(currentBlockStart, i, currentBlockDuration))
+                    currentBlockDuration = 0.0
+                    currentBlockStart = i + 1
+                } else if (line.startsWith("#EXTINF:")) {
+                    try {
+                        val durationStr = line.substringAfter("#EXTINF:").substringBefore(",")
+                        currentBlockDuration += durationStr.toDouble()
+                    } catch (e: Exception) {}
+                }
+                i++
+            }
+            blocks.add(DiscontinuityBlock(currentBlockStart, lines.size, currentBlockDuration))
+
+            // Heuristic: If a block is < 90 seconds and surrounded by discontinuities, it MIGHT be an ad.
+            // Only strip if there are multiple blocks and one is significantly shorter than the main content.
+            val totalDuration = blocks.sumOf { it.duration }
+            val mainContentBlock = blocks.maxByOrNull { it.duration }
+            val blocksToKeep = blocks.filter { it.duration >= 90.0 || it == mainContentBlock || blocks.size < 3 }.toSet()
+
+            var currentBlockIndex = 0
+            var inIgnoredBlock = false
+
+            for (line in lines) {
+                if (line.startsWith("#EXT-X-DISCONTINUITY")) {
+                    currentBlockIndex++
+                    inIgnoredBlock = !blocksToKeep.contains(blocks[currentBlockIndex])
+                    if (!inIgnoredBlock) {
+                        newLines.add(line)
+                    }
+                    continue
+                }
+
+                if (line.isBlank()) continue
+
+                if (!line.startsWith("#")) {
+                    if (inIgnoredBlock) continue
+
+                    // Segment URL
+                    val segmentUrl = if (line.startsWith("http")) line else android.net.Uri.parse(finalUrl).let {
+                        val path = it.path ?: ""
+                        val basePath = path.substringBeforeLast("/")
+                        "${it.scheme}://${it.host}$basePath/$line"
+                    }
+
+                    val segmentSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(segmentUrl))
+                    val localSegment = File(tmpDir, String.format("seg_%05d.ts", segmentIndex))
+                    try {
+                        dataSource.open(segmentSpec)
+                        val fos = java.io.FileOutputStream(localSegment)
+                        val buffer = ByteArray(1024 * 64)
+                        var bytesRead: Int
+                        while (dataSource.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                            fos.write(buffer, 0, bytesRead)
+                        }
+                        fos.close()
+                    } catch (e: Exception) {
+                        writeExportLog("Failed to read segment from cache: $segmentUrl")
+                        // If we fail to read a segment, we might have an incomplete cache. Throw to trigger network fallback.
+                        throw Exception("Incomplete cache for segment: $segmentUrl", e)
+                    } finally {
+                        dataSource.close()
+                    }
+
+                    newLines.add(localSegment.name)
+                    segmentIndex++
+                } else {
+                    if (!inIgnoredBlock || line.startsWith("#EXT-X-VERSION") || line.startsWith("#EXT-X-TARGETDURATION") || line.startsWith("#EXTM3U") || line.startsWith("#EXT-X-PLAYLIST-TYPE") || line.startsWith("#EXT-X-ENDLIST")) {
+                        newLines.add(line)
+                    }
+                }
+            }
+
+            val localPlaylist = File(tmpDir, "playlist.m3u8")
+            localPlaylist.writeText(newLines.joinToString("\n"))
+
+            writeExportLog("Successfully exported cached segments to tmp dir. Muxing to MP4 using FFmpeg.")
+
+            val ffmpegArgs = mutableListOf(
+                "-allowed_extensions", "ALL",
+                "-i", localPlaylist.absolutePath,
+                "-c", "copy",
+                "-bsf:a", "aac_adtstoasc",
+                out.absolutePath
+            )
+
+            val session = FFmpegKit.executeWithArguments(ffmpegArgs.toTypedArray())
+            val returnCode = session.returnCode
+
+            if (returnCode.isValueSuccess) {
+                withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show() }
+                writeExportLog("FFmpeg muxing complete: $title")
+            } else {
+                throw Exception("FFmpeg failed with return code ${returnCode.value}")
+            }
+        } finally {
+            tmpDir.deleteRecursively()
+        }
+    }
 
     private suspend fun muxToMp4(url: String, title: String) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
