@@ -61,8 +61,24 @@ class LogcatViewerActivity : AppCompatActivity() {
             val reader = BufferedReader(InputStreamReader(process.inputStream))
             val logOutput = StringBuilder()
 
+            val exportLogFile = java.io.File(filesDir, "export_logs.txt")
+            if (exportLogFile.exists()) {
+                logOutput.append("=== EXPORT LOGS ===\n")
+                val exportLogs = exportLogFile.readText()
+                if (filter.isEmpty()) {
+                    logOutput.append(exportLogs)
+                } else {
+                    exportLogs.lines().forEach { line ->
+                        if (line.contains(filter, ignoreCase = true)) {
+                            logOutput.append(line).append("\n")
+                        }
+                    }
+                }
+                logOutput.append("\n=== SYSTEM LOGCAT ===\n")
+            }
+
             reader.forEachLine { line ->
-                if (line.contains(pid)) {
+                if (line.contains(pid) || line.contains("MediaCodec") || line.contains("ExoPlayer") || line.contains("Transformer")) {
                     if (filter.isEmpty() || line.contains(filter, ignoreCase = true)) {
                         logOutput.append(line).append("\n")
                     }
