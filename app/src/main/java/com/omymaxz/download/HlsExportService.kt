@@ -122,19 +122,19 @@ class HlsExportService : Service() {
                 when {
                     extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title)
                     bundledMediaItem != null -> {
-                        // Use the bundled MediaItem directly if provided (from CustomPlayerActivity 'Play in App' export)
+                        // Use the new muxToMp4FromCache method which reads the exact cached segments.
                         try {
-                            muxToMp4WithTransformer(bundledMediaItem, title)
-                        } catch (e: Exception) {
-                            writeExportLog("Transformer failed, falling back to muxToMp4FromCache: ${e.message}")
                             if (videoUrl != null) {
                                 val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                                try {
-                                    muxToMp4FromCache(finalUrl, title)
-                                } catch (cacheEx: Exception) {
-                                    writeExportLog("muxToMp4FromCache failed (likely incomplete cache), falling back to network FFmpeg: ${cacheEx.message}")
-                                    muxToMp4(finalUrl, title)
-                                }
+                                muxToMp4FromCache(finalUrl, title)
+                            } else {
+                                throw Exception("videoUrl is null")
+                            }
+                        } catch (e: Exception) {
+                            writeExportLog("muxToMp4FromCache failed, falling back to network FFmpeg: ${e.message}")
+                            if (videoUrl != null) {
+                                val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
+                                muxToMp4(finalUrl, title)
                             } else {
                                 throw e
                             }
@@ -164,24 +164,17 @@ class HlsExportService : Service() {
                 return
             }
 
-        // Check if fully cached. If yes, use Transformer. If not, fallback to FFmpeg network download.
+        // Check if fully cached. If yes, use the new muxToMp4FromCache method which reads the exact cached segments.
         if (download.state == Download.STATE_COMPLETED) {
-            // Strip streamKeys from the download mediaItem to prevent track index mismatch during export
-            val rawMediaItem = download.request.toMediaItem()
-            val mediaItem = rawMediaItem.buildUpon().setStreamKeys(emptyList()).build()
+            val url = download.request.uri.toString()
+            val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
+            val finalUrl = resolveVariantUrl(url, streamKeysStr)
             try {
-                muxToMp4WithTransformer(mediaItem, title)
-            } catch (e: Exception) {
-                writeExportLog("Transformer failed on downloaded item, falling back to muxToMp4FromCache: ${e.message}")
-                val url = download.request.uri.toString()
-                val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
-                val finalUrl = resolveVariantUrl(url, streamKeysStr)
-                try {
-                    muxToMp4FromCache(finalUrl, title)
-                } catch (cacheEx: Exception) {
-                    writeExportLog("muxToMp4FromCache failed, falling back to FFmpeg network: ${cacheEx.message}")
-                    muxToMp4(finalUrl, title)
-                }
+                writeExportLog("Using muxToMp4FromCache for fully downloaded item to avoid network playlist re-parsing drift.")
+                muxToMp4FromCache(finalUrl, title)
+            } catch (cacheEx: Exception) {
+                writeExportLog("muxToMp4FromCache failed, falling back to network FFmpeg: ${cacheEx.message}")
+                muxToMp4(finalUrl, title)
             }
         } else {
             val url = download.request.uri.toString()
