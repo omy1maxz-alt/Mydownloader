@@ -95,19 +95,12 @@ class HlsExportService : Service() {
         // MediaItem.fromBundle often loses its localConfiguration/Uri across IPC.
         // We explicitly reconstruct the MediaItem using primitive strings passed in the intent to ensure it's valid.
         if (bundledMediaItem != null && bundledMediaItem.localConfiguration == null && videoUrl != null) {
-            val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
-            streamKeyStrings?.forEach {
-                val parts = it.split(",")
-                if (parts.size == 2) {
-                    try {
-                        streamKeys.add(androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt()))
-                    } catch (e: Exception) {}
-                }
-            }
+            // Bug fix: Do NOT apply stale streamKeys to the MediaItem.
+            // HLS track group indices can shift between cache time and export time (e.g. ad insertion), causing audio-only exports.
+            // Let Transformer / AssetLoader auto-select the best tracks (MIME-type based) at export time.
             bundledMediaItem = androidx.media3.common.MediaItem.Builder()
                 .setUri(videoUrl)
                 .setMimeType(mimeType)
-                .setStreamKeys(streamKeys)
                 .build()
         }
 
@@ -173,7 +166,9 @@ class HlsExportService : Service() {
 
         // Check if fully cached. If yes, use Transformer. If not, fallback to FFmpeg network download.
         if (download.state == Download.STATE_COMPLETED) {
-            val mediaItem = download.request.toMediaItem()
+            // Strip streamKeys from the download mediaItem to prevent track index mismatch during export
+            val rawMediaItem = download.request.toMediaItem()
+            val mediaItem = rawMediaItem.buildUpon().setStreamKeys(emptyList()).build()
             try {
                 muxToMp4WithTransformer(mediaItem, title)
             } catch (e: Exception) {
