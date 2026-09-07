@@ -37,3 +37,4 @@
 - Rewrote the `muxToMp4FromCache` FFmpeg fallback to support fully local fMP4 maps, DRM keys, and split audio/video HLS playlists. It now generates an explicit audio playlist and merges them using `-map 0:v:0 -map 1:a:0` internally, fixing silent-video cache exports on providers like KissKH.
 - Forced `muxToMp4FromCache` to strict CacheOnly reads for video segments (falling back to network ONLY for init/key chunks) to guarantee zero-quota redundant downloading.
 - Updated `LogcatViewerActivity` and FFmpeg failure logging to capture and dump STDERR log tails inside the `export_logs.txt` trace, providing accurate diagnostics instead of a generic "rc=1".
+- Normalized file extensions for `EXT-X-MAP` (init) segments during cached HLS export to prevent FFmpeg local-playlist security restrictions from rejecting `.PNG` and other fake image extensions used in obfuscated streams.
