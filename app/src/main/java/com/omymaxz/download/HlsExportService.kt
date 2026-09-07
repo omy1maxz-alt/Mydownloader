@@ -122,19 +122,19 @@ class HlsExportService : Service() {
                 when {
                     extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title)
                     bundledMediaItem != null -> {
-                        // Use the new muxToMp4FromCache method which reads the exact cached segments.
+                        // Use the bundled MediaItem directly if provided (from CustomPlayerActivity 'Play in App' export)
                         try {
-                            if (videoUrl != null) {
-                                val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                                muxToMp4FromCache(finalUrl, title)
-                            } else {
-                                throw Exception("videoUrl is null")
-                            }
+                            muxToMp4WithTransformer(bundledMediaItem, title)
                         } catch (e: Exception) {
-                            writeExportLog("muxToMp4FromCache failed, falling back to network FFmpeg: ${e.message}")
+                            writeExportLog("Transformer failed, falling back to muxToMp4FromCache: ${e.message}")
                             if (videoUrl != null) {
                                 val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                                muxToMp4(finalUrl, title)
+                                try {
+                                    muxToMp4FromCache(finalUrl, title)
+                                } catch (cacheEx: Exception) {
+                                    writeExportLog("muxToMp4FromCache failed (likely incomplete cache), falling back to network FFmpeg: ${cacheEx.message}")
+                                    muxToMp4(finalUrl, title)
+                                }
                             } else {
                                 throw e
                             }
@@ -164,17 +164,24 @@ class HlsExportService : Service() {
                 return
             }
 
-        // Check if fully cached. If yes, use the new muxToMp4FromCache method which reads the exact cached segments.
+        // Check if fully cached. If yes, use Transformer. If not, fallback to FFmpeg network download.
         if (download.state == Download.STATE_COMPLETED) {
-            val url = download.request.uri.toString()
-            val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
-            val finalUrl = resolveVariantUrl(url, streamKeysStr)
+            // Strip streamKeys from the download mediaItem to prevent track index mismatch during export
+            val rawMediaItem = download.request.toMediaItem()
+            val mediaItem = rawMediaItem.buildUpon().setStreamKeys(emptyList()).build()
             try {
-                writeExportLog("Using muxToMp4FromCache for fully downloaded item to avoid network playlist re-parsing drift.")
-                muxToMp4FromCache(finalUrl, title)
-            } catch (cacheEx: Exception) {
-                writeExportLog("muxToMp4FromCache failed, falling back to network FFmpeg: ${cacheEx.message}")
-                muxToMp4(finalUrl, title)
+                muxToMp4WithTransformer(mediaItem, title)
+            } catch (e: Exception) {
+                writeExportLog("Transformer failed on downloaded item, falling back to muxToMp4FromCache: ${e.message}")
+                val url = download.request.uri.toString()
+                val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
+                val finalUrl = resolveVariantUrl(url, streamKeysStr)
+                try {
+                    muxToMp4FromCache(finalUrl, title)
+                } catch (cacheEx: Exception) {
+                    writeExportLog("muxToMp4FromCache failed, falling back to network FFmpeg: ${cacheEx.message}")
+                    muxToMp4(finalUrl, title)
+                }
             }
         } else {
             val url = download.request.uri.toString()
@@ -188,6 +195,13 @@ class HlsExportService : Service() {
         suspendCancellableCoroutine<Unit> { cont ->
             val cacheFactory: CacheDataSource.Factory =
                 HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
+
+            // Force track selection by MIME type to avoid stale streamKey drift
+            val trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(applicationContext)
+                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_VIDEO, false)
+                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_AUDIO, false)
+                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, true) // Ignore subs for muxing
+                .build()
 
             val defaultMediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
                 .setDataSourceFactory(cacheFactory)
@@ -322,10 +336,10 @@ class HlsExportService : Service() {
                     if (inIgnoredBlock) continue
 
                     // Segment URL
-                    val segmentUrl = if (line.startsWith("http")) line else android.net.Uri.parse(finalUrl).let {
-                        val path = it.path ?: ""
-                        val basePath = path.substringBeforeLast("/")
-                        "${it.scheme}://${it.host}$basePath/$line"
+                    val segmentUrl = try {
+                        java.net.URI(finalUrl).resolve(line).toString()
+                    } catch (e: Exception) {
+                        line
                     }
 
                     val segmentSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(segmentUrl))
@@ -449,11 +463,32 @@ class HlsExportService : Service() {
         }
 
         try {
-            val userAgent = HlsDownloadHelper.currentUserAgent
-            val cookie = HlsDownloadHelper.currentCookie
-            val referer = HlsDownloadHelper.currentReferer
+            // Bug fix: Read master playlist FROM CACHE first. Live network master playlists drift over time (track group indices change),
+            // which causes stale streamKeys to pick the wrong variant (audio-only bug).
+            val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
+            val dataSource = cacheFactory.createDataSource()
+            val dataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(masterUrl))
 
-            val masterText = HlsDownloadHelper.httpGetString(masterUrl, userAgent, referer, cookie) ?: return@withContext masterUrl
+            var masterText = ""
+            try {
+                dataSource.open(dataSpec)
+                val buffer = ByteArray(1024 * 64)
+                var bytesRead: Int
+                val outputStream = java.io.ByteArrayOutputStream()
+                while (dataSource.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                    outputStream.write(buffer, 0, bytesRead)
+                }
+                masterText = outputStream.toString("UTF-8")
+            } catch (e: Exception) {
+                // If not in cache, fallback to network (but risky for drift)
+                val userAgent = HlsDownloadHelper.currentUserAgent
+                val cookie = HlsDownloadHelper.currentCookie
+                val referer = HlsDownloadHelper.currentReferer
+                masterText = HlsDownloadHelper.httpGetString(masterUrl, userAgent, referer, cookie) ?: return@withContext masterUrl
+            } finally {
+                dataSource.close()
+            }
+
             val lines = masterText.lines()
 
             var variantIndex = 0
