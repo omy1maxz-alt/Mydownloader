@@ -65,6 +65,7 @@ import java.util.regex.Pattern
 import android.widget.LinearLayout
 
 class MainActivity : AppCompatActivity() {
+    var isManualScanPending = false
     private lateinit var binding: ActivityMainBinding
     private lateinit var webView: WebView
     private lateinit var userscriptInterface: UserscriptInterface
@@ -2864,6 +2865,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             binding.fabShowMedia.setOnClickListener {
                 if (isYoutube) {
                     Toast.makeText(this, "Analyzing YouTube video...", Toast.LENGTH_SHORT).show()
+                    isManualScanPending = true
                     webView.evaluateJavascript(YouTubeHelper.EXTRACTION_SCRIPT, null)
                 } else {
                     showMediaListDialog()
@@ -3689,7 +3691,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
 
     private fun runAdvancedMediaSniffer() {
+        isManualScanPending = true
         Toast.makeText(this, "Running Advanced Media Sniffer...", Toast.LENGTH_SHORT).show()
+        isManualScanPending = true
         val script = """
             (function() {
                 'use strict';
@@ -4060,10 +4064,16 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     runOnUiThread {
                         if (addedCount > 0) {
                             Toast.makeText(this, "$addedCount new media item(s) found!", Toast.LENGTH_SHORT).show()
-                            //showMediaListDialog()
+                            if (isManualScanPending) {
+                                showMediaListDialog()
+                                isManualScanPending = false
+                            }
                         } else {
-                            // Suppressed "No new media found" toast to avoid spamming user
-                            //showMediaListDialog()
+                            if (isManualScanPending) {
+                                Toast.makeText(this, "No new media found.", Toast.LENGTH_SHORT).show()
+                                showMediaListDialog()
+                                isManualScanPending = false
+                            }
                         }
                     }
                 } else {
