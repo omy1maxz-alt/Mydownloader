@@ -95,12 +95,19 @@ class HlsExportService : Service() {
         // MediaItem.fromBundle often loses its localConfiguration/Uri across IPC.
         // We explicitly reconstruct the MediaItem using primitive strings passed in the intent to ensure it's valid.
         if (bundledMediaItem != null && bundledMediaItem.localConfiguration == null && videoUrl != null) {
-            // Bug fix: Do NOT apply stale streamKeys to the MediaItem.
-            // HLS track group indices can shift between cache time and export time (e.g. ad insertion), causing audio-only exports.
-            // Let Transformer / AssetLoader auto-select the best tracks (MIME-type based) at export time.
+            val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
+            streamKeyStrings?.forEach {
+                val parts = it.split(",")
+                if (parts.size == 2) {
+                    try {
+                        streamKeys.add(androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt()))
+                    } catch (e: Exception) {}
+                }
+            }
             bundledMediaItem = androidx.media3.common.MediaItem.Builder()
                 .setUri(videoUrl)
                 .setMimeType(mimeType)
+                .setStreamKeys(streamKeys)
                 .build()
         }
 
@@ -122,19 +129,19 @@ class HlsExportService : Service() {
                 when {
                     extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title)
                     bundledMediaItem != null -> {
-                        // Use the bundled MediaItem directly if provided (from CustomPlayerActivity 'Play in App' export)
+                        // Use the new muxToMp4FromCache method which reads the exact cached segments based on the exact quality the user chose in the player.
                         try {
-                            muxToMp4WithTransformer(bundledMediaItem, title)
-                        } catch (e: Exception) {
-                            writeExportLog("Transformer failed, falling back to muxToMp4FromCache: ${e.message}")
                             if (videoUrl != null) {
                                 val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                                try {
-                                    muxToMp4FromCache(finalUrl, title)
-                                } catch (cacheEx: Exception) {
-                                    writeExportLog("muxToMp4FromCache failed (likely incomplete cache), falling back to network FFmpeg: ${cacheEx.message}")
-                                    muxToMp4(finalUrl, title)
-                                }
+                                muxToMp4FromCache(finalUrl, title)
+                            } else {
+                                throw Exception("videoUrl is null")
+                            }
+                        } catch (e: Exception) {
+                            writeExportLog("muxToMp4FromCache failed, falling back to network FFmpeg: ${e.message}")
+                            if (videoUrl != null) {
+                                val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
+                                muxToMp4(finalUrl, title)
                             } else {
                                 throw e
                             }
