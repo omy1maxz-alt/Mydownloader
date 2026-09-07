@@ -372,6 +372,7 @@ class HlsExportService : Service() {
                     throw Exception("Failed to read valid M3U8 for $playlistUrl")
                 }
 
+                val isFmp4 = playlistContent.contains("#EXT-X-MAP")
                 val lines = playlistContent.lines()
                 val newLines = mutableListOf<String>()
                 var segmentIndex = 0
@@ -458,8 +459,8 @@ class HlsExportService : Service() {
                         var ext = segmentUrl.substringAfterLast(".", "ts").substringBefore("?")
                         // FFmpeg strictly blocks non-media extensions (like .PNG obfuscation) in LOCAL playlists for security.
                         // We must normalize image/fake extensions back to .ts, while preserving real fMP4 extensions.
-                        if (ext.lowercase() in listOf("png", "jpg", "jpeg", "bmp", "gif", "bin", "php")) {
-                            ext = "ts"
+                        if (ext.lowercase() in listOf("png", "jpg", "jpeg", "bmp", "gif", "bin", "php") || !segmentUrl.contains(".")) {
+                            ext = if (isFmp4) "m4s" else "ts"
                         }
                         val localSegment = File(tmpDir, "seg_${outputFileName}_%05d.$ext".format(segmentIndex))
 

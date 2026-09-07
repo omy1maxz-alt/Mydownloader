@@ -38,3 +38,4 @@
 - Forced `muxToMp4FromCache` to strict CacheOnly reads for video segments (falling back to network ONLY for init/key chunks) to guarantee zero-quota redundant downloading.
 - Updated `LogcatViewerActivity` and FFmpeg failure logging to capture and dump STDERR log tails inside the `export_logs.txt` trace, providing accurate diagnostics instead of a generic "rc=1".
 - Normalized file extensions for `EXT-X-MAP` (init) segments during cached HLS export to prevent FFmpeg local-playlist security restrictions from rejecting `.PNG` and other fake image extensions used in obfuscated streams.
+- Normalized data segment extensions correctly based on stream type (`.m4s` if `#EXT-X-MAP` is present, otherwise `.ts`) rather than forcing `.ts` blindly. This resolves FFmpeg failing with "Stream map matches no streams" on split fMP4 playlists (e.g. Heart Signal on KissKH) where forcing `.ts` on ISO-BMFF data caused the HLS demuxer to skip tracking headers.
