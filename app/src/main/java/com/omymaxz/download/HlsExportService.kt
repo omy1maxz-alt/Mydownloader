@@ -132,8 +132,7 @@ class HlsExportService : Service() {
                         // Use the new muxToMp4FromCache method which reads the exact cached segments based on the exact quality the user chose in the player.
                         try {
                             if (videoUrl != null) {
-                                val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                                muxToMp4FromCache(finalUrl, title)
+                                muxToMp4FromCache(videoUrl, streamKeyStrings, title)
                             } else {
                                 throw Exception("videoUrl is null")
                             }
@@ -184,7 +183,7 @@ class HlsExportService : Service() {
                 val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
                 val finalUrl = resolveVariantUrl(url, streamKeysStr)
                 try {
-                    muxToMp4FromCache(finalUrl, title)
+                    muxToMp4FromCache(url, streamKeysStr, title)
                 } catch (cacheEx: Exception) {
                     writeExportLog("muxToMp4FromCache failed, falling back to network FFmpeg: ${cacheEx.message}")
                     muxToMp4(finalUrl, title)
@@ -254,7 +253,27 @@ class HlsExportService : Service() {
         }
 
 
-    private suspend fun muxToMp4FromCache(finalUrl: String, title: String) = withContext(Dispatchers.IO) {
+    private fun cacheOnlyDataSource(): androidx.media3.datasource.DataSource {
+        val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
+        val failingUpstream = androidx.media3.datasource.DataSource.Factory {
+            object : androidx.media3.datasource.BaseDataSource(false) {
+                override fun open(dataSpec: androidx.media3.datasource.DataSpec): Long =
+                    throw java.io.IOException("CACHE_MISS: ${dataSpec.uri}")
+                override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
+                    throw java.io.IOException("CACHE_MISS")
+                override fun getUri(): android.net.Uri? = null
+                override fun close() {}
+            }
+        }
+        return androidx.media3.datasource.cache.CacheDataSource.Factory()
+            .setCache(cache)
+            .setUpstreamDataSourceFactory(failingUpstream)
+            .setCacheKeyFactory(HlsDownloadHelper.customCacheKeyFactory)
+            .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+            .createDataSource()
+    }
+
+    private suspend fun muxToMp4FromCache(masterUrl: String, streamKeyStrings: List<String>?, title: String) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
         val out = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -266,129 +285,224 @@ class HlsExportService : Service() {
         tmpDir.mkdirs()
 
         try {
-            val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
-            val dataSource = cacheFactory.createDataSource()
+            val cacheOnlyFactory = cacheOnlyDataSource()
+            val networkFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = false).createDataSource()
 
-            // Read the main playlist
-            val dataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(finalUrl))
-            var playlistContent = ""
-            try {
-                dataSource.open(dataSpec)
-                val buffer = ByteArray(1024 * 64)
-                var bytesRead: Int
-                val outputStream = java.io.ByteArrayOutputStream()
-                while (dataSource.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
-                }
-                playlistContent = outputStream.toString("UTF-8")
-            } finally {
-                dataSource.close()
-            }
+            val masterText = HlsDownloadHelper.httpGetString(masterUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentReferer, HlsDownloadHelper.currentCookie) ?: throw Exception("Failed to fetch master playlist")
+            val masterLines = masterText.lines()
 
-            if (playlistContent.isEmpty() || !playlistContent.contains("#EXTM3U")) {
-                throw Exception("Failed to read valid M3U8 from cache.")
-            }
+            // 1. Find Video Variant
+            var videoVariantUrl = masterUrl
+            var audioVariantUrl: String? = null
 
-            // Parse and cache segments locally
-            val lines = playlistContent.lines()
-            val newLines = mutableListOf<String>()
-            var segmentIndex = 0
-
-            // Optional ad stripping: Detect short discontinuity blocks
-            // First pass: group segments by discontinuity blocks
-            data class DiscontinuityBlock(val startIndex: Int, val endIndex: Int, val duration: Double)
-            val blocks = mutableListOf<DiscontinuityBlock>()
-            var currentBlockDuration = 0.0
-            var currentBlockStart = 0
-
-            var i = 0
-            while (i < lines.size) {
-                val line = lines[i]
-                if (line.startsWith("#EXT-X-DISCONTINUITY")) {
-                    blocks.add(DiscontinuityBlock(currentBlockStart, i, currentBlockDuration))
-                    currentBlockDuration = 0.0
-                    currentBlockStart = i + 1
-                } else if (line.startsWith("#EXTINF:")) {
-                    try {
-                        val durationStr = line.substringAfter("#EXTINF:").substringBefore(",")
-                        currentBlockDuration += durationStr.toDouble()
-                    } catch (e: Exception) {}
-                }
-                i++
-            }
-            blocks.add(DiscontinuityBlock(currentBlockStart, lines.size, currentBlockDuration))
-
-            // Heuristic: If a block is < 90 seconds and surrounded by discontinuities, it MIGHT be an ad.
-            // Only strip if there are multiple blocks and one is significantly shorter than the main content.
-            val totalDuration = blocks.sumOf { it.duration }
-            val mainContentBlock = blocks.maxByOrNull { it.duration }
-            val blocksToKeep = blocks.filter { it.duration >= 90.0 || it == mainContentBlock || blocks.size < 3 }.toSet()
-
-            var currentBlockIndex = 0
-            var inIgnoredBlock = false
-
-            for (line in lines) {
-                if (line.startsWith("#EXT-X-DISCONTINUITY")) {
-                    currentBlockIndex++
-                    inIgnoredBlock = !blocksToKeep.contains(blocks[currentBlockIndex])
-                    if (!inIgnoredBlock) {
-                        newLines.add(line)
+            if (masterText.contains(".m3u8", true) && !streamKeyStrings.isNullOrEmpty()) {
+                var variantIndex = 0
+                val targetKey = streamKeyStrings.firstOrNull()
+                if (targetKey != null) {
+                    val parts = targetKey.split(",")
+                    if (parts.size >= 2) {
+                        val targetVariantIndex = parts[1].toInt()
+                        for (i in masterLines.indices) {
+                            val line = masterLines[i].trim()
+                            if (line.startsWith("#EXT-X-STREAM-INF")) {
+                                if (variantIndex == targetVariantIndex && i + 1 < masterLines.size) {
+                                    val variantLine = masterLines[i+1].trim()
+                                    videoVariantUrl = if (variantLine.startsWith("http")) variantLine else java.net.URI(masterUrl).resolve(variantLine).toString()
+                                    break
+                                }
+                                variantIndex++
+                            }
+                        }
                     }
-                    continue
                 }
 
-                if (line.isBlank()) continue
-
-                if (!line.startsWith("#")) {
-                    if (inIgnoredBlock) continue
-
-                    // Segment URL
-                    val segmentUrl = try {
-                        java.net.URI(finalUrl).resolve(line).toString()
-                    } catch (e: Exception) {
-                        line
+                // 2. Find Audio Variant
+                val audioKey = streamKeyStrings.find { it.startsWith("1,") }
+                if (audioKey != null) {
+                    val audioIndex = audioKey.split(",")[1].toInt()
+                    var currentAudioIndex = 0
+                    for (line in masterLines) {
+                        val tLine = line.trim()
+                        if (tLine.startsWith("#EXT-X-MEDIA:TYPE=AUDIO")) {
+                            if (currentAudioIndex == audioIndex) {
+                                val uriMatch = Regex("URI=\"([^\"]+)\"").find(tLine)
+                                if (uriMatch != null) {
+                                    val uriStr = uriMatch.groupValues[1]
+                                    audioVariantUrl = if (uriStr.startsWith("http")) uriStr else java.net.URI(masterUrl).resolve(uriStr).toString()
+                                }
+                                break
+                            }
+                            currentAudioIndex++
+                        }
                     }
+                }
+            }
 
-                    val segmentSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(segmentUrl))
-                    val localSegment = File(tmpDir, String.format("seg_%05d.ts", segmentIndex))
+            suspend fun processPlaylist(playlistUrl: String, outputFileName: String): File {
+                val dataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(playlistUrl))
+                var playlistContent = ""
+                try {
+                    cacheOnlyFactory.open(dataSpec)
+                    val buffer = ByteArray(1024 * 64)
+                    var bytesRead: Int
+                    val outputStream = java.io.ByteArrayOutputStream()
+                    while (cacheOnlyFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
+                    playlistContent = outputStream.toString("UTF-8")
+                } catch (e: Exception) {
+                    // Fallback to network for playlist
                     try {
-                        dataSource.open(segmentSpec)
-                        val fos = java.io.FileOutputStream(localSegment)
+                        networkFactory.open(dataSpec)
                         val buffer = ByteArray(1024 * 64)
                         var bytesRead: Int
-                        while (dataSource.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
-                            fos.write(buffer, 0, bytesRead)
+                        val outputStream = java.io.ByteArrayOutputStream()
+                        while (networkFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                            outputStream.write(buffer, 0, bytesRead)
                         }
-                        fos.close()
-                    } catch (e: Exception) {
-                        writeExportLog("Failed to read segment from cache: $segmentUrl")
-                        // If we fail to read a segment, we might have an incomplete cache. Throw to trigger network fallback.
-                        throw Exception("Incomplete cache for segment: $segmentUrl", e)
+                        playlistContent = outputStream.toString("UTF-8")
                     } finally {
-                        dataSource.close()
+                        networkFactory.close()
+                    }
+                } finally {
+                    cacheOnlyFactory.close()
+                }
+
+                if (playlistContent.isEmpty() || !playlistContent.contains("#EXTM3U")) {
+                    throw Exception("Failed to read valid M3U8 for $playlistUrl")
+                }
+
+                val lines = playlistContent.lines()
+                val newLines = mutableListOf<String>()
+                var segmentIndex = 0
+
+                for (line in lines) {
+                    if (line.isBlank()) continue
+
+                    if (line.startsWith("#EXT-X-MAP:URI=")) {
+                        val uriMatch = Regex("URI=\"([^\"]+)\"").find(line)
+                        if (uriMatch != null) {
+                            val uriStr = uriMatch.groupValues[1]
+                            val fullUrl = if (uriStr.startsWith("http")) uriStr else java.net.URI(playlistUrl).resolve(uriStr).toString()
+                            val ext = fullUrl.substringAfterLast(".", "mp4").substringBefore("?")
+                            val localFile = File(tmpDir, "init_$segmentIndex.$ext")
+
+                            val mapSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(fullUrl))
+                            try {
+                                cacheOnlyFactory.open(mapSpec)
+                            } catch (e: Exception) {
+                                networkFactory.open(mapSpec)
+                            }
+                            val fos = java.io.FileOutputStream(localFile)
+                            val buffer = ByteArray(1024 * 64)
+                            var bytesRead: Int
+                            try {
+                                while (true) {
+                                    val source = if (cacheOnlyFactory.uri != null) cacheOnlyFactory else networkFactory
+                                    val r = source.read(buffer, 0, buffer.size)
+                                    if (r == -1) break
+                                    fos.write(buffer, 0, r)
+                                }
+                            } finally {
+                                fos.close()
+                                cacheOnlyFactory.close()
+                                networkFactory.close()
+                            }
+                            newLines.add(line.replace(uriStr, localFile.name))
+                        } else {
+                            newLines.add(line)
+                        }
+                        continue
                     }
 
-                    newLines.add(localSegment.name)
-                    segmentIndex++
-                } else {
-                    if (!inIgnoredBlock || line.startsWith("#EXT-X-VERSION") || line.startsWith("#EXT-X-TARGETDURATION") || line.startsWith("#EXTM3U") || line.startsWith("#EXT-X-PLAYLIST-TYPE") || line.startsWith("#EXT-X-ENDLIST")) {
+                    if (line.startsWith("#EXT-X-KEY:URI=")) {
+                        val uriMatch = Regex("URI=\"([^\"]+)\"").find(line)
+                        if (uriMatch != null && !uriMatch.groupValues[1].startsWith("data:")) {
+                            val uriStr = uriMatch.groupValues[1]
+                            val fullUrl = if (uriStr.startsWith("http")) uriStr else java.net.URI(playlistUrl).resolve(uriStr).toString()
+                            val localFile = File(tmpDir, "key_$segmentIndex.bin")
+
+                            val keySpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(fullUrl))
+                            try {
+                                cacheOnlyFactory.open(keySpec)
+                            } catch (e: Exception) {
+                                networkFactory.open(keySpec)
+                            }
+                            val fos = java.io.FileOutputStream(localFile)
+                            val buffer = ByteArray(1024 * 64)
+                            var bytesRead: Int
+                            try {
+                                while (true) {
+                                    val source = if (cacheOnlyFactory.uri != null) cacheOnlyFactory else networkFactory
+                                    val r = source.read(buffer, 0, buffer.size)
+                                    if (r == -1) break
+                                    fos.write(buffer, 0, r)
+                                }
+                            } finally {
+                                fos.close()
+                                cacheOnlyFactory.close()
+                                networkFactory.close()
+                            }
+                            newLines.add(line.replace(uriStr, localFile.absolutePath))
+                        } else {
+                            newLines.add(line)
+                        }
+                        continue
+                    }
+
+                    if (!line.startsWith("#")) {
+                        val segmentUrl = if (line.startsWith("http")) line else java.net.URI(playlistUrl).resolve(line).toString()
+                        val ext = segmentUrl.substringAfterLast(".", "ts").substringBefore("?")
+                        val localSegment = File(tmpDir, "seg_${outputFileName}_%05d.$ext".format(segmentIndex))
+
+                        val segmentSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(segmentUrl))
+                        try {
+                            cacheOnlyFactory.open(segmentSpec)
+                            val fos = java.io.FileOutputStream(localSegment)
+                            val buffer = ByteArray(1024 * 64)
+                            var bytesRead: Int
+                            while (cacheOnlyFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                                fos.write(buffer, 0, bytesRead)
+                            }
+                            fos.close()
+                        } catch (e: Exception) {
+                            writeExportLog("Failed to read segment from cache: $segmentUrl")
+                            throw Exception("Incomplete cache for segment: $segmentUrl", e)
+                        } finally {
+                            cacheOnlyFactory.close()
+                        }
+
+                        newLines.add(localSegment.name)
+                        segmentIndex++
+                    } else {
                         newLines.add(line)
                     }
                 }
+
+                val localPlaylist = File(tmpDir, outputFileName)
+                localPlaylist.writeText(newLines.joinToString("\n"))
+                return localPlaylist
             }
 
-            val localPlaylist = File(tmpDir, "playlist.m3u8")
-            localPlaylist.writeText(newLines.joinToString("\n"))
+            val videoPlaylistFile = processPlaylist(videoVariantUrl, "video_playlist.m3u8")
+            var audioPlaylistFile: File? = null
+            if (audioVariantUrl != null) {
+                try {
+                    audioPlaylistFile = processPlaylist(audioVariantUrl, "audio_playlist.m3u8")
+                } catch(e: Exception) {
+                    writeExportLog("Failed to process audio playlist, continuing without it: ${e.message}")
+                }
+            }
 
             writeExportLog("Successfully exported cached segments to tmp dir. Muxing to MP4 using FFmpeg.")
 
-            val ffmpegArgs = mutableListOf(
-                "-allowed_extensions", "ALL",
-                "-i", localPlaylist.absolutePath,
-                "-c", "copy",
-                "-bsf:a", "aac_adtstoasc",
-                out.absolutePath
-            )
+            val ffmpegArgs = mutableListOf("-allowed_extensions", "ALL", "-i", videoPlaylistFile.absolutePath)
+            if (audioPlaylistFile != null) {
+                ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", audioPlaylistFile.absolutePath, "-map", "0:v:0", "-map", "1:a:0"))
+            } else {
+                ffmpegArgs.addAll(listOf("-map", "0:v:0", "-map", "0:a?"))
+            }
+            ffmpegArgs.addAll(listOf("-c", "copy", "-bsf:a", "aac_adtstoasc", "-movflags", "+faststart", out.absolutePath))
 
             val session = FFmpegKit.executeWithArguments(ffmpegArgs.toTypedArray())
             val returnCode = session.returnCode
@@ -397,6 +511,8 @@ class HlsExportService : Service() {
                 withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show() }
                 writeExportLog("FFmpeg muxing complete: $title")
             } else {
+                val tail = session.allLogsAsString.lines().takeLast(40).joinToString("\n")
+                writeExportLog("FFmpeg FAILED rc=${session.returnCode.value} tail:\n$tail")
                 throw Exception("FFmpeg failed with return code ${returnCode.value}")
             }
         } finally {
