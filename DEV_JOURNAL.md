@@ -44,3 +44,4 @@
 appsummary.md
 Fix Chinese site custom player error, mark media item.
 Fix missing scroll offset padding on chinese kisskh site.
+- Corrected CSS injection for kisskh.co to properly shift page layout using `margin-top` instead of `padding-top` to account for fixed headers, and implemented `isMainVideoContent` safely to mark actively playing media items.

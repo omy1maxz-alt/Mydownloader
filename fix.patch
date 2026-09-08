@@ -1,0 +1,10 @@
+--- app/src/main/java/com/omymaxz/download/MainActivity.kt
++++ app/src/main/java/com/omymaxz/download/MainActivity.kt
+@@ -2863,6 +2863,7 @@
+     }
+
+     private fun isMainVideoContent(url: String): Boolean {
++        if (currentVideoUrl != null && currentVideoUrl == url) return true
+         val lower = url.lowercase()
+         return lower.contains("videoplayback") || lower.contains("manifest")
+     }

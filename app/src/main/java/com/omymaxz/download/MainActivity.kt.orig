@@ -849,7 +849,7 @@ private fun checkBatteryOptimization() {
         if (tabIndex !in tabs.indices) return
         val tab = tabs[tabIndex]
         binding.urlEditTextToolbar.setText(tab.url)
-        
+
         if (tab.url != null) {
             if (tab.historyStack.isNotEmpty()) {
                 webView.loadUrl(tab.historyStack.last())
@@ -1207,7 +1207,7 @@ private fun checkBatteryOptimization() {
                         // Inject CSS padding so the webpage starts below the overlapping transparent toolbar
                         val paddingJs = "javascript:(function() { " +
                                 "var style = document.createElement('style'); " +
-                                "style.innerHTML = 'html, body { margin-top: 48px !important; } header, nav, .navbar, .top-bar { top: 48px !important; }'; " +
+                                "style.innerHTML = 'html, body { padding-top: 48px !important; box-sizing: border-box !important; } #app, #root, #__next { padding-top: 48px !important; box-sizing: border-box !important; min-height: calc(100vh - 48px) !important; } header, .nav, .navbar, .top-bar { top: 48px !important; }'; " +
                                 "document.documentElement.appendChild(style); " +
                                 "})();"
                         view?.evaluateJavascript(paddingJs, null)
@@ -2863,7 +2863,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         return adIndicators.any { url.contains(it) }
     }
     private fun isMainVideoContent(url: String): Boolean {
-        if (currentVideoUrl != null && currentVideoUrl == url) return true
         val lower = url.lowercase()
         return lower.contains("videoplayback") || lower.contains("manifest")
     }
@@ -3193,7 +3192,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 }
 
                 var track = findTrack(window);
-                
+
                 function doFetch(contextWindow) {
                     console.log("Falling back to fetch for " + targetUrl);
                     var fetcher = contextWindow ? contextWindow.fetch : fetch;
@@ -3219,7 +3218,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         console.log("Enabling track mode");
                         track.track.mode = 'hidden';
                     }
-                    
+
                     var attempts = 0;
                     function checkCues() {
                         if (track.track.cues && track.track.cues.length > 0) {
@@ -4717,10 +4716,10 @@ private fun showUserAgentDialog() {
         .setItems(userAgents) { _, which ->
             val newUserAgent: String
             when (which) {
-               1, 2 -> { 
+               1, 2 -> {
     isDesktopMode = true
     settings.useWideViewPort = true
-    settings.loadWithOverviewMode = true  
+    settings.loadWithOverviewMode = true
     settings.setSupportZoom(true)
     settings.builtInZoomControls = true
     settings.displayZoomControls = false
@@ -4732,7 +4731,7 @@ private fun showUserAgentDialog() {
                         "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
                     }
                 }
-                else -> { 
+                else -> {
                     isDesktopMode = false
                     settings.useWideViewPort = false
                     settings.loadWithOverviewMode = false
@@ -4752,7 +4751,7 @@ if (isDesktopMode) {
     }, 100)
 }
             webView.reload()
-            webView.requestLayout() 
+            webView.requestLayout()
 
             Toast.makeText(this, "Switched to ${userAgents[which]}", Toast.LENGTH_SHORT).show()
         }
