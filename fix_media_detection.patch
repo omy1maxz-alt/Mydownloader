@@ -1,0 +1,17 @@
+--- app/src/main/java/com/omymaxz/download/MainActivity.kt
++++ app/src/main/java/com/omymaxz/download/MainActivity.kt
+@@ -2271,6 +2271,10 @@
+
+                     if (JSON.stringify(currentState) !== JSON.stringify(this.lastInformedState)) {
+                         AndroidMediaState.updateMediaPlaybackState(
+                             currentState.title, currentState.isPlaying, currentState.currentTime,
+                             currentState.duration, currentState.hasNext, currentState.hasPrevious
+                         );
++                        if (this.mediaElement && this.mediaElement.currentSrc) {
++                            AndroidMediaState.onVideoFound(this.mediaElement.currentSrc);
++                        } else if (this.mediaElement && this.mediaElement.src) {
++                            AndroidMediaState.onVideoFound(this.mediaElement.src);
++                        }
+                         this.lastInformedState = currentState;
+                     }
+                 },

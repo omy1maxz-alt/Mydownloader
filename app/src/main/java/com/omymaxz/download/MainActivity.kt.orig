@@ -1212,6 +1212,15 @@ private fun checkBatteryOptimization() {
                                 "})();"
                         view?.evaluateJavascript(paddingJs, null)
 
+                        if (url?.contains("kisskh.co") == true || url?.contains("kisskh.me") == true) {
+                            val kisskhPaddingJs = "javascript:(function() { " +
+                                    "var style = document.createElement('style'); " +
+                                    "style.innerHTML = 'html, body { padding-top: 0 !important; margin-top: 48px !important; } header, .nav, .navbar, .top-bar { top: 48px !important; margin-top: 0 !important; transform: translateY(48px) !important; }'; " +
+                                    "document.documentElement.appendChild(style); " +
+                                    "})();"
+                            view?.evaluateJavascript(kisskhPaddingJs, null)
+                        }
+
                     isPageLoading = false
                     binding.progressBar.visibility = View.GONE
                     updateToolbarNavButtonState()
@@ -2863,6 +2872,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         return adIndicators.any { url.contains(it) }
     }
     private fun isMainVideoContent(url: String): Boolean {
+        if (currentVideoUrl != null && currentVideoUrl == url) return true
         val lower = url.lowercase()
         return lower.contains("videoplayback") || lower.contains("manifest")
     }

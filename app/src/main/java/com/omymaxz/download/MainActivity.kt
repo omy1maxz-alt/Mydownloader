@@ -1207,10 +1207,19 @@ private fun checkBatteryOptimization() {
                         // Inject CSS padding so the webpage starts below the overlapping transparent toolbar
                         val paddingJs = "javascript:(function() { " +
                                 "var style = document.createElement('style'); " +
-                                "style.innerHTML = 'html, body { margin-top: 48px !important; } header, nav, .navbar, .top-bar { top: 48px !important; }'; " +
+                                "style.innerHTML = 'html, body { padding-top: 48px !important; box-sizing: border-box !important; } #app, #root, #__next { padding-top: 48px !important; box-sizing: border-box !important; min-height: calc(100vh - 48px) !important; }'; " +
                                 "document.documentElement.appendChild(style); " +
                                 "})();"
                         view?.evaluateJavascript(paddingJs, null)
+
+                        if (url?.contains("kisskh.co") == true || url?.contains("kisskh.me") == true) {
+                            val kisskhPaddingJs = "javascript:(function() { " +
+                                    "var style = document.createElement('style'); " +
+                                    "style.innerHTML = 'html, body { padding-top: 0 !important; margin-top: 48px !important; } header, .nav, .navbar, .top-bar { top: 48px !important; margin-top: 0 !important; transform: translateY(48px) !important; }'; " +
+                                    "document.documentElement.appendChild(style); " +
+                                    "})();"
+                            view?.evaluateJavascript(kisskhPaddingJs, null)
+                        }
 
                     isPageLoading = false
                     binding.progressBar.visibility = View.GONE
@@ -2270,6 +2279,11 @@ private fun injectMediaStateDetector() {
                             currentState.title, currentState.isPlaying, currentState.currentTime,
                             currentState.duration, currentState.hasNext, currentState.hasPrevious
                         );
+                        if (this.mediaElement && this.mediaElement.currentSrc) {
+                            AndroidMediaState.onVideoFound(this.mediaElement.currentSrc);
+                        } else if (this.mediaElement && this.mediaElement.src) {
+                            AndroidMediaState.onVideoFound(this.mediaElement.src);
+                        }
                         this.lastInformedState = currentState;
                     }
                 },
@@ -2675,6 +2689,19 @@ private fun injectMediaStateDetector() {
                 if (videoUrl.isNotEmpty() && videoUrl != "about:blank") {
                     activity.currentVideoUrl = videoUrl
                     android.util.Log.d("MediaStateInterface", "Video found: $videoUrl")
+
+                    var updated = false
+                    synchronized(activity.detectedMediaFiles) {
+                        for (file in activity.detectedMediaFiles) {
+                            if (file.url == videoUrl && !file.isMainContent) {
+                                file.isMainContent = true
+                                updated = true
+                            }
+                        }
+                    }
+                    if (updated) {
+                        activity.currentMediaListAdapter?.notifyDataSetChanged()
+                    }
                 }
             }
         }
