@@ -2064,6 +2064,9 @@ private fun checkBatteryOptimization() {
 
                     checkUrl: function(url, type) {
                         if (!url || url.startsWith('data:') || url.startsWith('blob:')) return;
+                        if (url.match(/\.m3u8/i)) {
+                             this.notify(url, 'video');
+                        }
 
                         // Basic extension check
                         if (url.match(/\.(mp4|mkv|webm|m3u8|mpd|mov|avi|flv|m4v)(\?|${'$'})/i)) {
@@ -2427,6 +2430,15 @@ private fun injectMediaStateDetector() {
                     val cleanIframeUrl = iframeMatch.groupValues[2]
                     onMediaDetected(cleanIframeUrl, "application/x-mpegURL")
                 }
+
+                // Fallback for simple iframe src
+                val iframeSrcRegex = """<iframe[^>]+src=["'](https?://[^"']+)["']""".toRegex(RegexOption.IGNORE_CASE)
+                iframeSrcRegex.findAll(htmlSource).forEach { matchResult ->
+                    val url = matchResult.groupValues[1]
+                    if (url.contains(".m3u8", ignoreCase = true) || url.contains("?url=", ignoreCase = true) || url.contains("player", ignoreCase = true)) {
+                        activity.runOnUiThread { IframeSniffer(activity) { sniffedUrl -> onMediaDetected(sniffedUrl, "video") }.sniff(url) }
+                    }
+                }
             } catch (e: Exception) {
                 android.util.Log.e("MediaStateInterface", "Error parsing HTML for hidden m3u8: ${e.message}")
             }
@@ -2527,7 +2539,7 @@ private fun injectMediaStateDetector() {
                                 category = category,
                                 fileSize = "Unknown",
                                 language = null,
-                                isMainContent = false
+                                isMainContent = isMainVideoContent(url)
                             )
 
                             synchronized(activity.detectedMediaFiles) {
@@ -2599,7 +2611,7 @@ private fun injectMediaStateDetector() {
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, newTitle)
                                                 putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, activity.webView.settings.userAgentString)
-                                                putExtra(CustomPlayerActivity.EXTRA_REFERER, activity.webView.url)
+                                                putExtra(CustomPlayerActivity.EXTRA_REFERER, url)
                                                 val cookie = android.webkit.CookieManager.getInstance().getCookie(activity.webView.url)
                                                     if (cookie != null) {
                                                         putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
@@ -3277,7 +3289,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
                         putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
-                        putExtra(CustomPlayerActivity.EXTRA_REFERER, webView.url)
+                        putExtra(CustomPlayerActivity.EXTRA_REFERER, mediaFile.url)
                         val cookie = CookieManager.getInstance().getCookie(mediaFile.url) ?: CookieManager.getInstance().getCookie(webView.url)
                         if (cookie != null) {
                             putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
@@ -3700,6 +3712,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 const foundMedia = new Set();
                 const notify = (url, type, source) => {
                     if (!url || url.startsWith('data:') || url.startsWith('blob:')) return;
+                        if (url.match(/\.m3u8/i)) {
+                             this.notify(url, 'video');
+                        }
                     if (url.startsWith('//')) url = 'https:' + url;
                     try {
                         const parsed = new URL(url, window.location.href).href;
@@ -3717,6 +3732,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     try {
                         const decoded = decodeURIComponent(str);
                         const candidates = [str, decoded];
+                        if (str.includes(".m3u8")) {
+                            const regexM3u8 = /(https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*)/i;
+                            let match = regexM3u8.exec(str);
+                            if (match) notify(match[1], 'video', sourceContext);
+                        }
                         const regex = /https?:\/\/[^"'\s<>]+\.(m3u8|mp4|mkv|webm|mpd|m4a|mp3|ogg)([^"'\s<>]*)/gi;
                         candidates.forEach(s => {
                             let match;
@@ -3822,6 +3842,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     try {
                         const decoded = decodeURIComponent(str);
                         const candidates = [str, decoded];
+                        if (str.includes(".m3u8")) {
+                            const regexM3u8 = /(https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*)/i;
+                            let match = regexM3u8.exec(str);
+                            if (match) notify(match[1], 'video', sourceContext);
+                        }
                         const regex = /https?:\/\/[^"'\s<>]+\.(m3u8|mp4|mkv|webm|mpd)([^"'\s<>]*)/gi;
 
                         candidates.forEach(s => {
@@ -4025,7 +4050,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                             category = category,
                             fileSize = "Unknown",
                             language = language,
-                            isMainContent = false
+                            isMainContent = isMainVideoContent(url)
                         )
                     }
 
