@@ -45,3 +45,7 @@ appsummary.md
 Fix Chinese site custom player error, mark media item.
 Fix missing scroll offset padding on chinese kisskh site.
 - Corrected CSS injection for kisskh.co to properly shift page layout using `margin-top` instead of `padding-top` to account for fixed headers, and implemented `isMainVideoContent` safely to mark actively playing media items.
+- Refactored kissing site CSS injection to correctly target only the kisskh domain and applied translateY for headers.
+- Fixed `currentVideoUrl` not being updated dynamically by emitting `onVideoFound` directly from JS state tracker.
+- Refactored MediaFile data class `isMainContent` from `val` to `var` to allow dynamic state mutations.
+- Updated `MainActivity.kt` to trigger UI update on `currentMediaListAdapter` when the playing media is successfully matched with a detected media file, properly highlighting it in the list.
