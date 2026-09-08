@@ -43,3 +43,4 @@
 - Fixed a critical file overwriting bug in `muxToMp4FromCache` where the initialization segment (`init_0.mp4`) for the audio playlist overwrote the init segment for the video playlist, causing FFmpeg to mistakenly identify the video stream as audio-only and fail with "Stream map '0:v:0' matches no streams". The init and key segments are now prefixed with their respective playlist names to ensure uniqueness.
 appsummary.md
 Fix Chinese site custom player error, mark media item.
+Fix missing scroll offset padding on chinese kisskh site.

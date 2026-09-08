@@ -38,21 +38,17 @@ class MediaListAdapter(
         val context = holder.itemView.context
         when (mediaFile.category) {
             MediaCategory.VIDEO -> {
-                holder.itemView.alpha = if (mediaFile.isMainContent) 1.0f else 0.8f
-                val colorRes = if (mediaFile.isMainContent) R.color.media_video_main_bg else R.color.media_video_clip_bg
+                                val colorRes = if (mediaFile.isMainContent) R.color.media_video_main_bg else R.color.media_video_clip_bg
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(context, colorRes))
             }
             MediaCategory.SUBTITLE -> {
-                holder.itemView.alpha = 0.7f
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.media_subtitle_bg))
+                                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.media_subtitle_bg))
             }
             MediaCategory.AD -> {
-                holder.itemView.alpha = 0.5f
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.media_ad_bg))
+                                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.media_ad_bg))
             }
             else -> { // Handles AUDIO, THUMBNAIL, UNKNOWN
-                holder.itemView.alpha = 0.9f
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.media_other_bg))
+                                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.media_other_bg))
             }
         }
     }

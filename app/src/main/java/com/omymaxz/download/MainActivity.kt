@@ -1207,7 +1207,7 @@ private fun checkBatteryOptimization() {
                         // Inject CSS padding so the webpage starts below the overlapping transparent toolbar
                         val paddingJs = "javascript:(function() { " +
                                 "var style = document.createElement('style'); " +
-                                "style.innerHTML = 'body { padding-top: 48px !important; }'; " +
+                                "style.innerHTML = 'html, body { padding-top: 48px !important; box-sizing: border-box !important; } #app, #root, #__next { padding-top: 48px !important; box-sizing: border-box !important; min-height: calc(100vh - 48px) !important; } header, .nav, .navbar, .top-bar { top: 48px !important; }'; " +
                                 "document.documentElement.appendChild(style); " +
                                 "})();"
                         view?.evaluateJavascript(paddingJs, null)
@@ -2611,7 +2611,7 @@ private fun injectMediaStateDetector() {
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, newTitle)
                                                 putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, activity.webView.settings.userAgentString)
-                                                putExtra(CustomPlayerActivity.EXTRA_REFERER, url)
+                                                putExtra(CustomPlayerActivity.EXTRA_REFERER, activity.webView.url)
                                                 val cookie = android.webkit.CookieManager.getInstance().getCookie(activity.webView.url)
                                                     if (cookie != null) {
                                                         putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
@@ -3289,7 +3289,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
                         putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
-                        putExtra(CustomPlayerActivity.EXTRA_REFERER, mediaFile.url)
+                        putExtra(CustomPlayerActivity.EXTRA_REFERER, webView.url)
                         val cookie = CookieManager.getInstance().getCookie(mediaFile.url) ?: CookieManager.getInstance().getCookie(webView.url)
                         if (cookie != null) {
                             putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
@@ -3712,9 +3712,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 const foundMedia = new Set();
                 const notify = (url, type, source) => {
                     if (!url || url.startsWith('data:') || url.startsWith('blob:')) return;
-                        if (url.match(/\.m3u8/i)) {
-                             this.notify(url, 'video');
-                        }
                     if (url.startsWith('//')) url = 'https:' + url;
                     try {
                         const parsed = new URL(url, window.location.href).href;
