@@ -56,3 +56,5 @@ Fix missing scroll offset padding on chinese kisskh site.
 - **Fix (Player & Detection)**: Addressed 403 HTTP status errors during `Play in app` by fixing the `DefaultHttpDataSource` injection of headers (`User-Agent`, `Referer`, `Cookie`) within `HlsDownloadHelper`.
 - **Feature Update (Media List)**: Scoped the detected media files to the current page by clearing the list inside `onPageStarted` and forcing a UI list update (`notifyDataSetChanged()`). Ensured any video that triggers Javascript `onVideoFound` is automatically injected into the detected list if not caught by standard interceptors.
 - **UI Fix (Custom Player)**: Fixed the resize visual bugs (leaving space at the top and pulling subtitles down) by changing the parent `FrameLayout` to `android:fitsSystemWindows="false"` and ensuring `PlayerView` naturally governs the inner `SubtitleView` anchors.
+
+- Fixed HlsExportService to correctly download MP4 streams instead of falling back to FFmpeg network fetch when cache copy fails. Also fixed MainActivity to clear detected media files correctly on SPA navigation by using `doUpdateVisitedHistory` instead of `onPageStarted`.
