@@ -22,6 +22,7 @@ import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.ui.PlayerView
+import androidx.media3.ui.AspectRatioFrameLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -119,6 +120,18 @@ class CustomPlayerActivity : AppCompatActivity() {
         findViewById<FloatingActionButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
         findViewById<FloatingActionButton>(R.id.fab_settings).setOnClickListener { showTrackSelectionDialog() }
         findViewById<FloatingActionButton>(R.id.fab_bubble).setOnClickListener { startFloatingBubble() }
+
+        var currentResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+        findViewById<FloatingActionButton>(R.id.fab_resize).setOnClickListener {
+            currentResizeMode = when (currentResizeMode) {
+                AspectRatioFrameLayout.RESIZE_MODE_FIT -> { Toast.makeText(this, "Resize Mode: Stretch", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_FILL }
+                AspectRatioFrameLayout.RESIZE_MODE_FILL -> { Toast.makeText(this, "Resize Mode: Zoom (Crop)", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_ZOOM }
+                AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> { Toast.makeText(this, "Resize Mode: Fixed Width", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH }
+                AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH -> { Toast.makeText(this, "Resize Mode: Fixed Height", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT }
+                else -> { Toast.makeText(this, "Resize Mode: Fit (Original)", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_FIT }
+            }
+            findViewById<PlayerView>(R.id.player_view).resizeMode = currentResizeMode
+        }
         hideSystemUI()
 
         // Removed aggressive background caching using DownloadManager on startup.

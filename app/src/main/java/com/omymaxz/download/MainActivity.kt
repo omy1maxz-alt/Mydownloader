@@ -1204,22 +1204,29 @@ private fun checkBatteryOptimization() {
 
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
-                        // Inject CSS padding so the webpage starts below the overlapping transparent toolbar
-                        val paddingJs = "javascript:(function() { " +
+                        // Inject CSS padding intelligently so the webpage starts below the overlapping transparent toolbar
+                        // Instead of a blind global padding (which breaks 100vh and kisskh), we apply padding-top to body
+                        // AND dynamically scan for fixed/sticky headers at the top of the viewport and push them down by 48px.
+                        val smartPaddingJs = "javascript:(function() { " +
+                                "if(window.__smartPaddingInjected) return;" +
+                                "window.__smartPaddingInjected = true;" +
                                 "var style = document.createElement('style'); " +
-                                "style.innerHTML = 'html, body { padding-top: 48px !important; box-sizing: border-box !important; } #app, #root, #__next { padding-top: 48px !important; box-sizing: border-box !important; min-height: calc(100vh - 48px) !important; }'; " +
+                                "style.innerHTML = 'body { padding-top: 48px !important; }';" +
                                 "document.documentElement.appendChild(style); " +
+                                "setTimeout(function() {" +
+                                "  var all = document.querySelectorAll('header, nav, .navbar, .nav, div');" +
+                                "  for(var i=0; i<all.length; i++) {" +
+                                "    var el = all[i];" +
+                                "    var comp = window.getComputedStyle(el);" +
+                                "    if ((comp.position === 'fixed' || comp.position === 'sticky') && parseInt(comp.top) <= 10) {" +
+                                "      if(el.tagName === 'DIV' && el.offsetHeight > 150) continue;" + // Ignore large full-screen overlays
+                                "      el.style.setProperty('top', '48px', 'important');" +
+                                "      el.style.setProperty('margin-top', '0px', 'important');" +
+                                "    }" +
+                                "  }" +
+                                "}, 500);" +
                                 "})();"
-                        view?.evaluateJavascript(paddingJs, null)
-
-                        if (url?.contains("kisskh.co") == true || url?.contains("kisskh.me") == true) {
-                            val kisskhPaddingJs = "javascript:(function() { " +
-                                    "var style = document.createElement('style'); " +
-                                    "style.innerHTML = 'html, body { padding-top: 0 !important; margin-top: 48px !important; } header, .nav, .navbar, .top-bar { top: 48px !important; margin-top: 0 !important; transform: translateY(48px) !important; }'; " +
-                                    "document.documentElement.appendChild(style); " +
-                                    "})();"
-                            view?.evaluateJavascript(kisskhPaddingJs, null)
-                        }
+                        view?.evaluateJavascript(smartPaddingJs, null)
 
                     isPageLoading = false
                     binding.progressBar.visibility = View.GONE
@@ -4368,18 +4375,36 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         input.hint = "Enter Gemini API Key"
         input.setText(currentKey)
 
+        val currentModel = sharedPrefs.getString("gemini_model", "gemini-flash-latest") ?: "gemini-flash-latest"
+
+        val modelSpinner = android.widget.Spinner(this)
+        val models = arrayOf("gemini-1.5-pro", "gemini-1.5-flash", "gemini-flash-latest")
+        val adapter = android.widget.ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, models)
+        modelSpinner.adapter = adapter
+        modelSpinner.setSelection(models.indexOf(currentModel).takeIf { it >= 0 } ?: 2)
+
+        val modelLabel = TextView(this)
+        modelLabel.text = "Select Model:"
+        modelLabel.setPadding(0, 30, 0, 10)
+
         val layout = LinearLayout(this)
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(50, 40, 50, 10)
         layout.addView(input)
+        layout.addView(modelLabel)
+        layout.addView(modelSpinner)
 
         createThemedDialogBuilder(this)
             .setTitle("Gemini AI Settings")
-            .setMessage("Please enter your Google Gemini API Key.")
+            .setMessage("Please enter your Google Gemini API Key and select your preferred model.")
             .setView(layout)
             .setPositiveButton("Save") { _, _ ->
                 val newKey = input.text.toString().trim()
-                sharedPrefs.edit().putString("gemini_api_key", newKey).apply()
+                val selectedModel = modelSpinner.selectedItem.toString()
+                sharedPrefs.edit()
+                    .putString("gemini_api_key", newKey)
+                    .putString("gemini_model", selectedModel)
+                    .apply()
                 Toast.makeText(this, "Gemini Settings Saved", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
