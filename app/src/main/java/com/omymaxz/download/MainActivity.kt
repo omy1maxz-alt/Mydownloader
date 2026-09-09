@@ -1204,6 +1204,18 @@ private fun checkBatteryOptimization() {
                     updateToolbarNavButtonState()
                 }
 
+                override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+                    super.doUpdateVisitedHistory(view, url, isReload)
+                    // Auto-clear detected media on SPA navigation or in-page history push
+                    synchronized(detectedMediaFiles) {
+                        detectedMediaFiles.clear()
+                    }
+                    runOnUiThread {
+                        currentMediaListAdapter?.notifyDataSetChanged()
+                        updateFabVisibility()
+                    }
+                }
+
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
                         // Inject CSS padding intelligently so the webpage starts below the overlapping transparent toolbar

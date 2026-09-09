@@ -143,12 +143,14 @@ class HlsExportService : Service() {
                         } catch (e: Exception) {
                             writeExportLog("Cache export failed, falling back to network FFmpeg: ${e.message}")
                             if (videoUrl != null) {
-                                val finalUrl = if (videoUrl.contains(".mp4", ignoreCase = true) && !videoUrl.contains(".m3u8", ignoreCase = true)) {
-                                    videoUrl
+                                if (videoUrl.contains(".mp4", ignoreCase = true) && !videoUrl.contains(".m3u8", ignoreCase = true)) {
+                                    withContext(Dispatchers.Main) { android.widget.Toast.makeText(applicationContext, "Starting background download...", android.widget.Toast.LENGTH_SHORT).show() }
+                                    val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(title, android.net.Uri.parse(videoUrl)).build()
+                                    androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, request, false)
                                 } else {
-                                    resolveVariantUrl(videoUrl, streamKeyStrings)
+                                    val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
+                                    muxToMp4(finalUrl, title)
                                 }
-                                muxToMp4(finalUrl, title)
                             } else {
                                 throw e
                             }
@@ -198,23 +200,27 @@ class HlsExportService : Service() {
                     }
                 } catch (cacheEx: Exception) {
                     writeExportLog("Cache export failed, falling back to network FFmpeg: ${cacheEx.message}")
-                    val finalUrl = if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
-                        url
+                    if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
+                        withContext(Dispatchers.Main) { android.widget.Toast.makeText(applicationContext, "Starting background download...", android.widget.Toast.LENGTH_SHORT).show() }
+                        val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(title, android.net.Uri.parse(url)).build()
+                        androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, request, false)
                     } else {
-                        resolveVariantUrl(url, streamKeysStr)
+                        val finalUrl = resolveVariantUrl(url, streamKeysStr)
+                        muxToMp4(finalUrl, title)
                     }
-                    muxToMp4(finalUrl, title)
                 }
             }
         } else {
             val url = download.request.uri.toString()
             val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
-            val finalUrl = if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
-                url
+            if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
+                withContext(Dispatchers.Main) { android.widget.Toast.makeText(applicationContext, "Starting background download...", android.widget.Toast.LENGTH_SHORT).show() }
+                val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(title, android.net.Uri.parse(url)).build()
+                androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, request, false)
             } else {
-                resolveVariantUrl(url, streamKeysStr)
+                val finalUrl = resolveVariantUrl(url, streamKeysStr)
+                muxToMp4(finalUrl, title)
             }
-            muxToMp4(finalUrl, title)
         }
     }
 
@@ -318,6 +324,7 @@ class HlsExportService : Service() {
             writeExportLog("MP4 cache copy complete: $title")
         } catch (e: Exception) {
             if (out.exists()) out.delete()
+            writeExportLog("Failed to copy MP4 from cache: ${e.message}")
             throw Exception("Failed to copy MP4 from cache", e)
         } finally {
             try {
