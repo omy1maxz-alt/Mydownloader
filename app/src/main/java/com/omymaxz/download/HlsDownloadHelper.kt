@@ -95,11 +95,14 @@ object HlsDownloadHelper {
             .setConnectTimeoutMs(15_000)
             .setReadTimeoutMs(15_000)
         return DataSource.Factory {
-            val ds = upstream.createDataSource()
-            currentUserAgent?.let { ds.setRequestProperty("User-Agent", it) }
-            currentCookie?.let   { ds.setRequestProperty("Cookie", it) }
-            currentReferer?.let  { ds.setRequestProperty("Referer", it) }
-            ds
+            currentUserAgent?.let { upstream.setUserAgent(it) }
+            val props = mutableMapOf<String, String>()
+            currentCookie?.let { props["Cookie"] = it }
+            currentReferer?.let { props["Referer"] = it }
+            if (props.isNotEmpty()) {
+                upstream.setDefaultRequestProperties(props)
+            }
+            upstream.createDataSource()
         }
     }
 
