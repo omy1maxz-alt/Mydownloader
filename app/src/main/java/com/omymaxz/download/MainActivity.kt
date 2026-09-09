@@ -2453,6 +2453,32 @@ private fun injectMediaStateDetector() {
                         activity.runOnUiThread { IframeSniffer(activity) { sniffedUrl -> onMediaDetected(sniffedUrl, "video") }.sniff(url) }
                     }
                 }
+
+                // 3. Fallback: Check for base64 encoded data-play attributes on iframes
+                val dataPlayRegex = """data-play=["']([^"']+)["']""".toRegex(RegexOption.IGNORE_CASE)
+                dataPlayRegex.findAll(htmlSource).forEach { matchResult ->
+                    val originalEncoded = matchResult.groupValues[1].trim()
+
+                    if (originalEncoded.isNotEmpty()) {
+                        // Sometimes strings are prepended with random characters like "WZna" where "aHR0" is the start of "http".
+                        // Let's try decoding from different starting offsets (up to 5 characters)
+                        for (i in 0..5) {
+                            if (i >= originalEncoded.length) break
+                            var encoded = originalEncoded.substring(i)
+                            val padding = (4 - encoded.length % 4) % 4
+                            encoded += "=".repeat(padding)
+                            try {
+                                val decodedUrl = String(android.util.Base64.decode(encoded, android.util.Base64.DEFAULT))
+                                if (decodedUrl.startsWith("http")) {
+                                    activity.runOnUiThread { IframeSniffer(activity) { sniffedUrl -> onMediaDetected(sniffedUrl, "video") }.sniff(decodedUrl) }
+                                    break // Stop trying offsets if we found a valid URL
+                                }
+                            } catch (e: Exception) {
+                                // Ignore decode exceptions and try next offset
+                            }
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 android.util.Log.e("MediaStateInterface", "Error parsing HTML for hidden m3u8: ${e.message}")
             }
@@ -2553,7 +2579,8 @@ private fun injectMediaStateDetector() {
                                 category = category,
                                 fileSize = "Unknown",
                                 language = null,
-                                isMainContent = isMainVideoContent(url)
+                                isMainContent = isMainVideoContent(url),
+                                referer = activity.webView.url
                             )
 
                             synchronized(activity.detectedMediaFiles) {
@@ -3317,8 +3344,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
                         putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
-                        putExtra(CustomPlayerActivity.EXTRA_REFERER, webView.url)
-                        val cookie = CookieManager.getInstance().getCookie(mediaFile.url) ?: CookieManager.getInstance().getCookie(webView.url)
+                        // Use the referer that was active when the media was detected, fallback to current webView url
+                        val refererToUse = mediaFile.referer ?: webView.url
+                        putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
+                        val cookie = CookieManager.getInstance().getCookie(mediaFile.url) ?: CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) {
                             putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
                         }
@@ -3429,7 +3458,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                             putExtra(HlsExportService.EXTRA_VIDEO_URL, mediaFile.url)
                             putExtra(HlsExportService.EXTRA_TITLE, mediaFile.title)
                             putExtra(HlsExportService.EXTRA_USER_AGENT, userAgent)
-                            putExtra(HlsExportService.EXTRA_REFERER, webView.url)
+                            putExtra(HlsExportService.EXTRA_REFERER, mediaFile.referer ?: webView.url)
                             putExtra(HlsExportService.EXTRA_COOKIE, cookie)
                         }
                         startService(intent)

@@ -8,7 +8,8 @@ data class MediaFile(
     val category: MediaCategory,
     val fileSize: String,
     val language: String?,
-    var isMainContent: Boolean
+    var isMainContent: Boolean,
+    var referer: String? = null
 )
 
 enum class MediaCategory(val displayName: String, val priority: Int) {
