@@ -309,7 +309,12 @@ class HlsExportService : Service() {
         if (out.exists()) out.delete()
 
         val cacheOnlyFactory = cacheOnlyDataSource()
-        val dataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(url))
+        val uri = android.net.Uri.parse(url)
+        val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec.Builder().setUri(uri).build())
+        val dataSpec = androidx.media3.datasource.DataSpec.Builder()
+            .setUri(uri)
+            .setKey(cacheKey)
+            .build()
 
         try {
             writeExportLog("Reading MP4 directly from cache for: $url")
