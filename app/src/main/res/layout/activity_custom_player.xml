@@ -12,7 +12,16 @@
         android:layout_height="match_parent"
         app:show_timeout="5000"
         app:use_controller="true"
-        app:show_subtitle_button="true" />
+        app:surface_type="texture_view"
+        app:show_subtitle_button="true">
+
+        <androidx.media3.ui.SubtitleView
+            android:id="@+id/exo_subtitles"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom"
+            android:paddingBottom="24dp" />
+    </androidx.media3.ui.PlayerView>
 
     <LinearLayout
         android:id="@+id/fab_container"
