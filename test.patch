@@ -1,0 +1,18 @@
+--- app/src/main/java/com/omymaxz/download/MainActivity.kt
++++ app/src/main/java/com/omymaxz/download/MainActivity.kt
+@@ -1137,6 +1137,7 @@
+                     synchronized(detectedMediaFiles) {
+                         detectedMediaFiles.clear()
+                     }
++                    currentMediaListAdapter?.notifyDataSetChanged()
+                     runOnUiThread {
+                         updateFabVisibility()
+                     }
+@@ -1186,6 +1187,7 @@
+                     synchronized(detectedMediaFiles) {
+                         detectedMediaFiles.clear()
+                     }
++                    currentMediaListAdapter?.notifyDataSetChanged()
+                     runOnUiThread { updateFabVisibility() }
+                     if (url?.contains("perchance.org") == true) {
+                         injectPerchanceFixes(view)

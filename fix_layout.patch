@@ -1,0 +1,11 @@
+--- app/src/main/res/layout/activity_custom_player.xml
++++ app/src/main/res/layout/activity_custom_player.xml
+@@ -4,7 +4,7 @@
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     android:background="@android:color/black"
+-    android:fitsSystemWindows="true">
++    android:fitsSystemWindows="false">
+
+     <androidx.media3.ui.PlayerView
+         android:id="@+id/player_view"

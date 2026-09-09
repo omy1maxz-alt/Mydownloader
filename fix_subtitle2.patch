@@ -1,0 +1,17 @@
+--- app/src/main/res/layout/activity_custom_player.xml
++++ app/src/main/res/layout/activity_custom_player.xml
+@@ -14,14 +14,7 @@
+         app:use_controller="true"
+-        app:show_subtitle_button="true">
+-
+-        <androidx.media3.ui.SubtitleView
+-            android:id="@+id/exo_subtitles"
+-            android:layout_width="match_parent"
+-            android:layout_height="match_parent"
+-            android:layout_gravity="bottom" />
+-
+-    </androidx.media3.ui.PlayerView>
++        app:show_subtitle_button="true" />
+
+     <LinearLayout
+         android:id="@+id/fab_container"

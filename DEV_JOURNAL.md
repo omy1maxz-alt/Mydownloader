@@ -53,3 +53,6 @@ Fix missing scroll offset padding on chinese kisskh site.
 * Replaced global padding injection with 'smart' JS targeting fixed/sticky elements to fix transparent toolbar layout without breaking 100vh grids on sites like kisskh.
 * Added Gemini AI Model Switcher dialog and configured CustomPlayerActivity with Video Resize Mode toggle.
 * Added handling for direct MP4 URLs in HlsExportService to bypass M3U8 parsers and extract video bytes directly from cache.
+- **Fix (Player & Detection)**: Addressed 403 HTTP status errors during `Play in app` by fixing the `DefaultHttpDataSource` injection of headers (`User-Agent`, `Referer`, `Cookie`) within `HlsDownloadHelper`.
+- **Feature Update (Media List)**: Scoped the detected media files to the current page by clearing the list inside `onPageStarted` and forcing a UI list update (`notifyDataSetChanged()`). Ensured any video that triggers Javascript `onVideoFound` is automatically injected into the detected list if not caught by standard interceptors.
+- **UI Fix (Custom Player)**: Fixed the resize visual bugs (leaving space at the top and pulling subtitles down) by changing the parent `FrameLayout` to `android:fitsSystemWindows="false"` and ensuring `PlayerView` naturally governs the inner `SubtitleView` anchors.

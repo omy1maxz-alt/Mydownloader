@@ -1137,6 +1137,7 @@ private fun checkBatteryOptimization() {
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.clear()
                     }
+                    currentMediaListAdapter?.notifyDataSetChanged()
                     runOnUiThread {
                         updateFabVisibility()
                     }
@@ -1185,6 +1186,7 @@ private fun checkBatteryOptimization() {
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.clear()
                     }
+                    currentMediaListAdapter?.notifyDataSetChanged()
                     runOnUiThread { updateFabVisibility() }
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
@@ -2726,11 +2728,21 @@ private fun injectMediaStateDetector() {
 
                     var updated = false
                     synchronized(activity.detectedMediaFiles) {
-                        for (file in activity.detectedMediaFiles) {
-                            if (file.url == videoUrl && !file.isMainContent) {
-                                file.isMainContent = true
+                        val foundFile = activity.detectedMediaFiles.find { it.url == videoUrl }
+                        if (foundFile != null) {
+                            if (!foundFile.isMainContent) {
+                                foundFile.isMainContent = true
                                 updated = true
                             }
+                        } else {
+                            // URL was not previously caught by shouldInterceptRequest but is playing, add it now
+                            activity.detectedMediaFiles.add(0, MediaFile(
+                                url = videoUrl, title = "Detected_Video_${System.currentTimeMillis()}",
+                                mimeType = "video/*", quality = "Auto", category = MediaCategory.VIDEO,
+                                fileSize = "Unknown", language = null, isMainContent = true,
+                                referer = activity.webView.url
+                            ))
+                            updated = true
                         }
                     }
                     if (updated) {
