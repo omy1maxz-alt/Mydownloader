@@ -61,6 +61,7 @@ class GeminiChatActivity : AppCompatActivity() {
 
         val sharedPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val apiKey = sharedPrefs.getString("gemini_api_key", "") ?: ""
+        val preferredModel = sharedPrefs.getString("gemini_model", "gemini-flash-latest") ?: "gemini-flash-latest"
 
         val savedChat = sharedPrefs.getString("gemini_chat_history", null)
         if (savedChat != null) {
@@ -96,7 +97,7 @@ class GeminiChatActivity : AppCompatActivity() {
             }
 
             generativeModel = GenerativeModel(
-                modelName = "gemini-flash-latest", // We use gemini-flash-latest for valid models
+                modelName = preferredModel,
                 apiKey = apiKey,
                 systemInstruction = content { text(systemPrompt) }
             )

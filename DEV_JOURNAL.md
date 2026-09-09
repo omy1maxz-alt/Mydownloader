@@ -50,3 +50,5 @@ Fix missing scroll offset padding on chinese kisskh site.
 - Refactored MediaFile data class `isMainContent` from `val` to `var` to allow dynamic state mutations.
 - Updated `MainActivity.kt` to trigger UI update on `currentMediaListAdapter` when the playing media is successfully matched with a detected media file, properly highlighting it in the list.
 * Enhanced MediaDetection to decrypt base64 data-play iframes on sites like kpkuang and explicitly pass the source Referer to fix ExoPlayer 403 HTTP Bad Status errors.
+* Replaced global padding injection with 'smart' JS targeting fixed/sticky elements to fix transparent toolbar layout without breaking 100vh grids on sites like kisskh.
+* Added Gemini AI Model Switcher dialog and configured CustomPlayerActivity with Video Resize Mode toggle.
