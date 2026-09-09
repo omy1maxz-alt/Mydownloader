@@ -132,14 +132,22 @@ class HlsExportService : Service() {
                         // Use the new muxToMp4FromCache method which reads the exact cached segments based on the exact quality the user chose in the player.
                         try {
                             if (videoUrl != null) {
-                                muxToMp4FromCache(videoUrl, streamKeyStrings, title)
+                                if (videoUrl.contains(".mp4", ignoreCase = true) && !videoUrl.contains(".m3u8", ignoreCase = true)) {
+                                    copyMp4FromCache(videoUrl, title)
+                                } else {
+                                    muxToMp4FromCache(videoUrl, streamKeyStrings, title)
+                                }
                             } else {
                                 throw Exception("videoUrl is null")
                             }
                         } catch (e: Exception) {
-                            writeExportLog("muxToMp4FromCache failed, falling back to network FFmpeg: ${e.message}")
+                            writeExportLog("Cache export failed, falling back to network FFmpeg: ${e.message}")
                             if (videoUrl != null) {
-                                val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
+                                val finalUrl = if (videoUrl.contains(".mp4", ignoreCase = true) && !videoUrl.contains(".m3u8", ignoreCase = true)) {
+                                    videoUrl
+                                } else {
+                                    resolveVariantUrl(videoUrl, streamKeyStrings)
+                                }
                                 muxToMp4(finalUrl, title)
                             } else {
                                 throw e
@@ -181,18 +189,31 @@ class HlsExportService : Service() {
                 writeExportLog("Transformer failed on downloaded item, falling back to muxToMp4FromCache: ${e.message}")
                 val url = download.request.uri.toString()
                 val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
-                val finalUrl = resolveVariantUrl(url, streamKeysStr)
+
                 try {
-                    muxToMp4FromCache(url, streamKeysStr, title)
+                    if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
+                        copyMp4FromCache(url, title)
+                    } else {
+                        muxToMp4FromCache(url, streamKeysStr, title)
+                    }
                 } catch (cacheEx: Exception) {
-                    writeExportLog("muxToMp4FromCache failed, falling back to network FFmpeg: ${cacheEx.message}")
+                    writeExportLog("Cache export failed, falling back to network FFmpeg: ${cacheEx.message}")
+                    val finalUrl = if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
+                        url
+                    } else {
+                        resolveVariantUrl(url, streamKeysStr)
+                    }
                     muxToMp4(finalUrl, title)
                 }
             }
         } else {
             val url = download.request.uri.toString()
             val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
-            val finalUrl = resolveVariantUrl(url, streamKeysStr)
+            val finalUrl = if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
+                url
+            } else {
+                resolveVariantUrl(url, streamKeysStr)
+            }
             muxToMp4(finalUrl, title)
         }
     }
@@ -271,6 +292,40 @@ class HlsExportService : Service() {
             .setCacheKeyFactory(HlsDownloadHelper.customCacheKeyFactory)
             .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
             .createDataSource()
+    }
+
+    private suspend fun copyMp4FromCache(url: String, title: String) = withContext(Dispatchers.IO) {
+        val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+        val out = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            "$safeTitle.mp4"
+        )
+        if (out.exists()) out.delete()
+
+        val cacheOnlyFactory = cacheOnlyDataSource()
+        val dataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(url))
+
+        try {
+            writeExportLog("Reading MP4 directly from cache for: $url")
+            cacheOnlyFactory.open(dataSpec)
+            out.outputStream().use { fos ->
+                val buffer = ByteArray(1024 * 256)
+                var bytesRead: Int
+                while (cacheOnlyFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                    fos.write(buffer, 0, bytesRead)
+                }
+            }
+            writeExportLog("MP4 cache copy complete: $title")
+        } catch (e: Exception) {
+            if (out.exists()) out.delete()
+            throw Exception("Failed to copy MP4 from cache", e)
+        } finally {
+            try {
+                cacheOnlyFactory.close()
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
     }
 
     private suspend fun muxToMp4FromCache(masterUrl: String, streamKeyStrings: List<String>?, title: String) = withContext(Dispatchers.IO) {
@@ -546,8 +601,13 @@ class HlsExportService : Service() {
         commandArgs.add("-c")
         commandArgs.add("copy")
 
-        commandArgs.add("-bsf:a")
-        commandArgs.add("aac_adtstoasc")
+        if (!url.contains(".mp4", ignoreCase = true)) {
+            commandArgs.add("-bsf:a")
+            commandArgs.add("aac_adtstoasc")
+        }
+
+        commandArgs.add("-movflags")
+        commandArgs.add("+faststart")
 
         commandArgs.add(out.absolutePath)
 

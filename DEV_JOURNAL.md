@@ -52,3 +52,4 @@ Fix missing scroll offset padding on chinese kisskh site.
 * Enhanced MediaDetection to decrypt base64 data-play iframes on sites like kpkuang and explicitly pass the source Referer to fix ExoPlayer 403 HTTP Bad Status errors.
 * Replaced global padding injection with 'smart' JS targeting fixed/sticky elements to fix transparent toolbar layout without breaking 100vh grids on sites like kisskh.
 * Added Gemini AI Model Switcher dialog and configured CustomPlayerActivity with Video Resize Mode toggle.
+* Added handling for direct MP4 URLs in HlsExportService to bypass M3U8 parsers and extract video bytes directly from cache.
