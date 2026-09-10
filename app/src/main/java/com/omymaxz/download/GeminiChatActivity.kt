@@ -24,6 +24,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import io.noties.markwon.Markwon
 
 class GeminiChatActivity : AppCompatActivity() {
 
@@ -263,9 +264,16 @@ class ChatAdapter(
     private val onMessageLongClick: (Int) -> Unit
 ) : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
 
+    private var markwon: Markwon? = null
+
     class ChatViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val messageContainer: LinearLayout = view.findViewById(R.id.messageContainer)
         val messageTextView: TextView = view.findViewById(R.id.messageTextView)
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        markwon = Markwon.create(recyclerView.context)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
@@ -276,7 +284,7 @@ class ChatAdapter(
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {
         val message = messages[position]
-        holder.messageTextView.text = message.text
+        markwon?.setMarkdown(holder.messageTextView, message.text)
 
         val layoutParams = holder.messageTextView.layoutParams as LinearLayout.LayoutParams
         if (message.isUser) {
