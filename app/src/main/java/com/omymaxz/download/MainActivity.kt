@@ -1292,6 +1292,14 @@ private fun checkBatteryOptimization() {
                         return createEmptyResponse()
                     }
                     if (isMediaUrl(url)) {
+                        // Hook for detecting upstream network requests bypassing JS blobs.
+                        // We register this internally so `CustomPlayerActivity` can use it when playing active streams.
+                        if (url.contains(".m3u8", ignoreCase = true) || url.endsWith(".mp4") || url.contains("videoplayback")) {
+                            currentVideoUrl = url
+                            runOnUiThread {
+                                webView.evaluateJavascript("if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) { window.AndroidMediaState.onMediaDetected('$url', 'video'); }", null)
+                            }
+                        }
                         try {
                             val category = MediaCategory.fromUrl(url)
                             val isMainContent = isMainVideoContent(url)
@@ -2081,6 +2089,35 @@ private fun checkBatteryOptimization() {
                 'use strict';
                 if (window.AndroidMediaDetector) return;
 
+                // Inject fetch/XHR hooking specifically for capturing blobs manifesting to m3u8 upstream.
+                const originalFetch = window.fetch;
+                window.fetch = async function() {
+                    let requestUrl = arguments[0];
+                    if (typeof requestUrl === 'string' && (requestUrl.includes('.m3u8') || requestUrl.includes('.mp4') || requestUrl.includes('videoplayback'))) {
+                        if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) {
+                            window.AndroidMediaState.onMediaDetected(requestUrl, 'video');
+                        }
+                    } else if (arguments[0] instanceof Request) {
+                        let reqUrl = arguments[0].url;
+                        if (reqUrl.includes('.m3u8') || reqUrl.includes('.mp4') || reqUrl.includes('videoplayback')) {
+                            if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) {
+                                window.AndroidMediaState.onMediaDetected(reqUrl, 'video');
+                            }
+                        }
+                    }
+                    return originalFetch.apply(this, arguments);
+                };
+
+                const originalXhrOpen = XMLHttpRequest.prototype.open;
+                XMLHttpRequest.prototype.open = function(method, url) {
+                    if (typeof url === 'string' && (url.includes('.m3u8') || url.includes('.mp4') || url.includes('videoplayback'))) {
+                         if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) {
+                            window.AndroidMediaState.onMediaDetected(url, 'video');
+                        }
+                    }
+                    return originalXhrOpen.apply(this, arguments);
+                };
+
                 const detector = {
                     processedUrls: new Set(),
 
@@ -2368,6 +2405,16 @@ private fun injectMediaStateDetector() {
                             src = this.mediaElement.querySelector('source').src;
                         }
 
+                        // If it's a blob URL, we should intercept and ask Android for the real stream URL.
+                        if (src && src.startsWith('blob:')) {
+                            if (window.AndroidMediaState && window.AndroidMediaState.getCurrentVideoUrl) {
+                                let upstreamUrl = window.AndroidMediaState.getCurrentVideoUrl();
+                                if (upstreamUrl && !upstreamUrl.startsWith('blob:')) {
+                                    src = upstreamUrl;
+                                }
+                            }
+                        }
+
                         // Extract subtitle track if available
                         let subtitleUrl = "";
                         let tracks = this.mediaElement.querySelectorAll('track');
@@ -2567,14 +2614,21 @@ private fun injectMediaStateDetector() {
         fun getLastDetectedSubtitle(): String {
             return lastSubtitleUrl
         }
+
+        @JavascriptInterface
+        fun getCurrentVideoUrl(): String {
+            return activity.currentVideoUrl ?: ""
+        }
+
         @JavascriptInterface
         fun onMediaDetected(url: String, type: String) {
+            if (url.startsWith("blob:")) return
             if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
                 lastSubtitleUrl = url
             }
             activity.runOnUiThread {
                 try {
-                    if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:")) {
+                    if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:") && !url.startsWith("blob:")) {
                          val existsAlready = synchronized(activity.detectedMediaFiles) {
                             activity.detectedMediaFiles.any { it.url == url }
                          }
@@ -2626,7 +2680,7 @@ private fun injectMediaStateDetector() {
         @JavascriptInterface
         fun onDownloadActiveMedia(url: String, type: String, title: String, subtitleUrl: String) {
             activity.runOnUiThread {
-                if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:")) {
+                if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:") && !url.startsWith("blob:")) {
                     val category = if (type.contains("subtitle", true) || url.endsWith(".vtt") || url.endsWith(".srt") || url.contains(".vtt?") || url.contains(".srt?")) {
                         MediaCategory.SUBTITLE
                     } else if (type.contains("audio", true)) {
@@ -2666,8 +2720,21 @@ private fun injectMediaStateDetector() {
                                         }
                                         1 -> {
                                             if (url.startsWith("blob:")) {
-                                                Toast.makeText(activity, "Cannot play Blob URLs directly. Please select the real video stream (.m3u8/.mp4) from the Media List.", Toast.LENGTH_LONG).show()
-                                                // Skipping normal return label since it's nested. Use an if-block to bypass instead.
+                                                if (activity.currentVideoUrl != null && !activity.currentVideoUrl!!.startsWith("blob:")) {
+                                                    val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
+                                                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, activity.currentVideoUrl)
+                                                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, newTitle)
+                                                        putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, activity.webView.settings.userAgentString)
+                                                        putExtra(CustomPlayerActivity.EXTRA_REFERER, activity.webView.url)
+                                                        val cookie = android.webkit.CookieManager.getInstance().getCookie(activity.webView.url)
+                                                        if (cookie != null) {
+                                                            putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                                                        }
+                                                    }
+                                                    activity.startActivity(intent)
+                                                } else {
+                                                    Toast.makeText(activity, "Cannot play Blob URLs directly. Please wait for the real video stream to be detected.", Toast.LENGTH_LONG).show()
+                                                }
                                             } else {
                                                 val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
                                                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
@@ -3366,7 +3433,24 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             // For videos/audio, add Play in App button
             builder.setNegativeButton("Play in App") { _, _ ->
                 if (mediaFile.url.startsWith("blob:")) {
-                    Toast.makeText(this, "Cannot play Blob URLs directly. Please select the real video stream (.m3u8/.mp4) or use Download.", Toast.LENGTH_LONG).show()
+                    if (currentVideoUrl != null && !currentVideoUrl!!.startsWith("blob:")) {
+                        val newName = input.text.toString().trim()
+                        val finalName = if (newName.isNotEmpty()) "$newName.${mediaFile.title.substringAfterLast('.')}" else mediaFile.title
+                        val intent = Intent(this, CustomPlayerActivity::class.java).apply {
+                            putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, currentVideoUrl)
+                            putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
+                            putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
+                            val refererToUse = mediaFile.referer ?: webView.url
+                            putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
+                            val cookie = CookieManager.getInstance().getCookie(currentVideoUrl) ?: CookieManager.getInstance().getCookie(refererToUse)
+                            if (cookie != null) {
+                                putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                            }
+                        }
+                        startActivity(intent)
+                    } else {
+                        Toast.makeText(this, "Cannot play Blob URLs directly. Please wait for the real stream to be captured.", Toast.LENGTH_LONG).show()
+                    }
                 } else {
                     val newName = input.text.toString().trim()
                     val finalName = if (newName.isNotEmpty()) "$newName.${mediaFile.title.substringAfterLast('.')}" else mediaFile.title
