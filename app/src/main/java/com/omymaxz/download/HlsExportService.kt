@@ -354,7 +354,41 @@ class HlsExportService : Service() {
             val cacheOnlyFactory = cacheOnlyDataSource()
             val networkFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = false).createDataSource()
 
-            val masterText = HlsDownloadHelper.httpGetString(masterUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentReferer, HlsDownloadHelper.currentCookie) ?: throw Exception("Failed to fetch master playlist")
+            var masterText = ""
+            val masterDataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(masterUrl))
+            try {
+                // 1. Try to read the master playlist strictly from the cache
+                cacheOnlyFactory.open(masterDataSpec)
+                val buffer = ByteArray(1024 * 64)
+                var bytesRead: Int
+                val outputStream = java.io.ByteArrayOutputStream()
+                while (cacheOnlyFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                    outputStream.write(buffer, 0, bytesRead)
+                }
+                masterText = outputStream.toString("UTF-8")
+                writeExportLog("Successfully read master playlist from cache.")
+            } catch (e: Exception) {
+                // 2. Fallback to network (with headers) if not in cache
+                writeExportLog("Master playlist not in cache, fetching from network...")
+                try {
+                    networkFactory.open(masterDataSpec)
+                    val buffer = ByteArray(1024 * 64)
+                    var bytesRead: Int
+                    val outputStream = java.io.ByteArrayOutputStream()
+                    while (networkFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
+                    masterText = outputStream.toString("UTF-8")
+                } finally {
+                    networkFactory.close()
+                }
+            } finally {
+                cacheOnlyFactory.close()
+            }
+
+            if (masterText.isEmpty() || !masterText.contains("#EXTM3U")) {
+                throw Exception("Failed to fetch or parse master playlist")
+            }
             val masterLines = masterText.lines()
 
             // Parse the master playlist using Media3's official parser to guarantee track group index alignment
