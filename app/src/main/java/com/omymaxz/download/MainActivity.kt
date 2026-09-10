@@ -139,6 +139,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (newConfig.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) {
+            binding.mainContent.layoutParams = android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            val params = binding.mainContent.layoutParams as? android.view.ViewGroup.MarginLayoutParams
+            params?.setMargins(0, 0, 0, 0)
+            binding.mainContent.setPadding(0, 0, 0, 0)
+            window.decorView.requestLayout()
+            binding.mainContent.requestLayout()
+        }
+    }
+
     companion object {
         const val ACTION_MEDIA_CONTROL = "com.omymaxz.download.MEDIA_CONTROL"
         const val EXTRA_COMMAND = "command"
@@ -1486,7 +1502,7 @@ private fun checkBatteryOptimization() {
                     }
                     binding.mainContent.visibility = View.GONE
                 }
-                override fun onHideCustomView() {
+                                override fun onHideCustomView() {
                     if (fullscreenView == null) return
                     val decorView = window.decorView as android.view.ViewGroup
                     decorView.removeView(fullscreenView)
@@ -1503,7 +1519,28 @@ private fun checkBatteryOptimization() {
 
                     window.decorView.setOnSystemUiVisibilityChangeListener(null)
                     window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true)
+                        androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).show(androidx.core.view.WindowInsetsCompat.Type.statusBars() or androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+                    }
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        window.attributes.layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                    }
+
+                    requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+
+                    binding.mainContent.layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+                    val params = binding.mainContent.layoutParams as? android.view.ViewGroup.MarginLayoutParams
+                    params?.setMargins(0, 0, 0, 0)
+                    binding.mainContent.setPadding(0, 0, 0, 0)
+
                     binding.mainContent.visibility = View.VISIBLE
+
+                    window.decorView.requestLayout()
+                    binding.mainContent.requestLayout()
+
                     customViewCallback?.onCustomViewHidden()
                     customViewCallback = null
                 }
