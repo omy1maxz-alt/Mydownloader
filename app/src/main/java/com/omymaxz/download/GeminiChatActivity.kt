@@ -61,7 +61,11 @@ class GeminiChatActivity : AppCompatActivity() {
 
         val sharedPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val apiKey = sharedPrefs.getString("gemini_api_key", "") ?: ""
-        val preferredModel = sharedPrefs.getString("gemini_model", "gemini-flash-latest") ?: "gemini-flash-latest"
+        val savedModel = sharedPrefs.getString("gemini_model", null)
+        val preferredModel = when (savedModel) {
+            null, "", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-flash-latest", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest" -> "gemini-2.5-flash"
+            else -> savedModel
+        }
 
         val savedChat = sharedPrefs.getString("gemini_chat_history", null)
         if (savedChat != null) {

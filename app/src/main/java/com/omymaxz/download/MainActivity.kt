@@ -4399,10 +4399,22 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         input.hint = "Enter Gemini API Key"
         input.setText(currentKey)
 
-        val currentModel = sharedPrefs.getString("gemini_model", "gemini-flash-latest") ?: "gemini-flash-latest"
+        val savedModel = sharedPrefs.getString("gemini_model", null)
+        val currentModel = when (savedModel) {
+            null, "", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-flash-latest", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest" -> "gemini-2.5-flash"
+            else -> savedModel
+        }
 
         val modelSpinner = android.widget.Spinner(this)
-        val models = arrayOf("gemini-1.5-pro", "gemini-1.5-flash", "gemini-flash-latest")
+        val models = arrayOf(
+            "gemini-2.5-flash",
+            "gemini-2.5-flash-lite",
+            "gemini-2.5-pro",
+            "gemini-3.5-flash",
+            "gemini-3.6-flash",
+            "gemini-3.7-flash",
+            "gemini-3.8-flash"
+        )
         val adapter = android.widget.ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, models)
         modelSpinner.adapter = adapter
         modelSpinner.setSelection(models.indexOf(currentModel).takeIf { it >= 0 } ?: 2)
