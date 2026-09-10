@@ -511,8 +511,10 @@ class HlsExportService : Service() {
                         val localSegment = File(tmpDir, "seg_${outputFileName}_%05d.$ext".format(segmentIndex))
 
                         val baseSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(segmentUrl))
-                        val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(baseSpec)
-                        val segmentSpec = baseSpec.buildUpon().setKey(cacheKey).build()
+                        var cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(baseSpec)
+                        var segmentSpec = baseSpec.buildUpon().setKey(cacheKey).build()
+
+                        var success = false
                         try {
                             cacheOnlyFactory.open(segmentSpec)
                             val fos = java.io.FileOutputStream(localSegment)
@@ -522,11 +524,43 @@ class HlsExportService : Service() {
                                 fos.write(buffer, 0, bytesRead)
                             }
                             fos.close()
+                            success = true
                         } catch (e: Exception) {
-                            writeExportLog("Failed to read segment from cache: $segmentUrl")
-                            throw Exception("Incomplete cache for segment: $segmentUrl", e)
+                            // Cache miss. ExoPlayer might have cached this segment under a redirected domain.
+                            // We will scan the unified cache keys for any key that ends with the same path structure.
+                            try {
+                                val uriPath = android.net.Uri.parse(segmentUrl).path
+                                if (uriPath != null) {
+                                    val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
+                                    val keys = cache.keys
+                                    val matchedKey = keys.firstOrNull { it.endsWith(uriPath) }
+                                    if (matchedKey != null) {
+                                        writeExportLog("Domain mismatch detected. Found segment in cache using path fallback: $matchedKey")
+                                        cacheKey = matchedKey
+                                        segmentSpec = baseSpec.buildUpon().setKey(cacheKey).build()
+
+                                        cacheOnlyFactory.close() // ensure clean state
+                                        cacheOnlyFactory.open(segmentSpec)
+                                        val fos = java.io.FileOutputStream(localSegment)
+                                        val buffer = ByteArray(1024 * 64)
+                                        var bytesRead: Int
+                                        while (cacheOnlyFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                                            fos.write(buffer, 0, bytesRead)
+                                        }
+                                        fos.close()
+                                        success = true
+                                    }
+                                }
+                            } catch (fallbackEx: Exception) {
+                                writeExportLog("Fallback cache lookup failed for: $segmentUrl")
+                            }
                         } finally {
                             cacheOnlyFactory.close()
+                        }
+
+                        if (!success) {
+                            writeExportLog("Failed to read segment from cache: $segmentUrl")
+                            throw Exception("Incomplete cache for segment: $segmentUrl")
                         }
 
                         newLines.add(localSegment.name)
