@@ -47,3 +47,4 @@
 - Eliminated redundant explicit `SubtitleView` in `activity_custom_player.xml` to fix layout distortions that caused captions to be pushed off-screen when toggling PlayerView `resizeMode`.
 - Blocked `blob:` URLs from triggering false highlights on the `MediaStateInterface.onVideoFound` hook in `MainActivity.kt`. It now falls back to correctly highlighting the original intercepted stream from `detectedMediaFiles`.
 - Implemented a fallback mechanism in HlsExportService to find cached segments by matching URI paths when domain redirects cause cache misses during FFmpeg exports.
+- Fixed ExoPlayer CacheDataSource throwing exceptions during cross-domain fallback lookups in HlsExportService by explicitly setting BOTH the new cacheKey and the URI (Uri.parse(matchedKey)) in the DataSpec.

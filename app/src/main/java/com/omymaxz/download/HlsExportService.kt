@@ -537,7 +537,10 @@ class HlsExportService : Service() {
                                     if (matchedKey != null) {
                                         writeExportLog("Domain mismatch detected. Found segment in cache using path fallback: $matchedKey")
                                         cacheKey = matchedKey
-                                        segmentSpec = baseSpec.buildUpon().setKey(cacheKey).build()
+                                        segmentSpec = androidx.media3.datasource.DataSpec.Builder()
+                                            .setUri(android.net.Uri.parse(matchedKey))
+                                            .setKey(cacheKey)
+                                            .build()
 
                                         cacheOnlyFactory.close() // ensure clean state
                                         cacheOnlyFactory.open(segmentSpec)
