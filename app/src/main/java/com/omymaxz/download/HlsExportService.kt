@@ -510,7 +510,9 @@ class HlsExportService : Service() {
                         }
                         val localSegment = File(tmpDir, "seg_${outputFileName}_%05d.$ext".format(segmentIndex))
 
-                        val segmentSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(segmentUrl))
+                        val baseSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(segmentUrl))
+                        val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(baseSpec)
+                        val segmentSpec = baseSpec.buildUpon().setKey(cacheKey).build()
                         try {
                             cacheOnlyFactory.open(segmentSpec)
                             val fos = java.io.FileOutputStream(localSegment)

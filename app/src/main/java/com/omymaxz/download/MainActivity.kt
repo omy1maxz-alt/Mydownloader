@@ -2732,19 +2732,30 @@ private fun injectMediaStateDetector() {
         @JavascriptInterface
         fun onDownloadActiveMedia(url: String, type: String, title: String, subtitleUrl: String) {
             activity.runOnUiThread {
-                if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:") && !url.startsWith("blob:")) {
-                    val category = if (type.contains("subtitle", true) || url.endsWith(".vtt") || url.endsWith(".srt") || url.contains(".vtt?") || url.contains(".srt?")) {
+                var finalUrl = url
+                if (url.startsWith("blob:")) {
+                    val mainMedia = synchronized(activity.detectedMediaFiles) {
+                        activity.detectedMediaFiles.firstOrNull { it.isMainContent && !it.url.startsWith("blob:") }
+                            ?: activity.detectedMediaFiles.firstOrNull { !it.url.startsWith("blob:") && it.category == MediaCategory.VIDEO }
+                    }
+                    if (mainMedia != null) {
+                        finalUrl = mainMedia.url
+                    }
+                }
+
+                if (finalUrl.isNotEmpty() && finalUrl != "about:blank" && !finalUrl.startsWith("data:") && !finalUrl.startsWith("blob:")) {
+                    val category = if (type.contains("subtitle", true) || finalUrl.endsWith(".vtt") || finalUrl.endsWith(".srt") || finalUrl.contains(".vtt?") || finalUrl.contains(".srt?")) {
                         MediaCategory.SUBTITLE
                     } else if (type.contains("audio", true)) {
                         MediaCategory.AUDIO
                     } else {
                         MediaCategory.VIDEO
                     }
-                    val detectedFormat = activity.detectVideoFormat(url)
-                    val quality = activity.extractQualityFromUrl(url)
-                    val enhancedTitle = activity.generateSmartFileName(url, detectedFormat.extension, quality, category)
+                    val detectedFormat = activity.detectVideoFormat(finalUrl)
+                    val quality = activity.extractQualityFromUrl(finalUrl)
+                    val enhancedTitle = activity.generateSmartFileName(finalUrl, detectedFormat.extension, quality, category)
                     val mediaFile = MediaFile(
-                        url = url,
+                        url = finalUrl,
                         title = enhancedTitle,
                         mimeType = detectedFormat.mimeType,
                         quality = quality,
