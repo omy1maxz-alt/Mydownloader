@@ -535,10 +535,14 @@ class HlsExportService : Service() {
                                     val matchedKey = keys.firstOrNull { it.endsWith(uriPath) }
                                     if (matchedKey != null) {
                                         writeExportLog("Domain mismatch detected. Found segment in cache using path fallback: $matchedKey")
-                                        cacheKey = matchedKey
+
+                                        // CRITICAL FIX: Use a dummy URI and strictly set the cache key.
+                                        // This forces CacheDataSource to look up the exact string in the cache database
+                                        // and completely bypasses any URI-based network/upstream logic.
+                                        val dummyUri = android.net.Uri.parse("http://cache.local")
                                         segmentSpec = androidx.media3.datasource.DataSpec.Builder()
-                                            .setUri(android.net.Uri.parse(matchedKey))
-                                            .setKey(cacheKey)
+                                            .setUri(dummyUri)
+                                            .setKey(matchedKey) // Force the exact cache key
                                             .build()
 
                                         // CRITICAL FIX: Use a FRESH CacheDataSource for the fallback.
