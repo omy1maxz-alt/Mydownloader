@@ -39,3 +39,6 @@
 - Fixed the subtitle layout when switching screen modes by explicitly declaring a nested `SubtitleView` anchored to the bottom inside the `PlayerView` and applying `surface_type="texture_view"` to correctly stretch the video to fill the screen bounds without vertical blank spaces.
 - Updated Gemini AI Models to point to the newest stable Flash releases, such as gemini-2.5-flash.
 - Implemented robust blob: URL filtering by overriding `onMediaDetected` to drop them. Integrated upstream intercept hooking for blob streams mapping to `.m3u8` payloads during MSE parsing, allowing CustomPlayer to properly launch via intercepted `currentVideoUrl`.
+- Fixed browser UI shrinking bug upon exiting immersive fullscreen web media by explicitly resetting root container layout parameters and bounds.
+- Integrated Markwon library into GeminiChatActivity to ensure AI responses properly render markdown syntax (bolding, lists, headers).
+- Forced CustomPlayerActivity to expand its layout into the physical display cutout/notch area by applying LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES, allowing video stretching modes like RESIZE_MODE_FILL to maximize the full screen area.

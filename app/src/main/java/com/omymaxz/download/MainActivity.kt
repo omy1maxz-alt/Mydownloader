@@ -143,6 +143,14 @@ class MainActivity : AppCompatActivity() {
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
         if (newConfig.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) {
+            binding.rootContainer.layoutParams = android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            val rootParams = binding.rootContainer.layoutParams as? android.view.ViewGroup.MarginLayoutParams
+            rootParams?.setMargins(0, 0, 0, 0)
+            binding.rootContainer.setPadding(0, 0, 0, 0)
+
             binding.mainContent.layoutParams = android.widget.FrameLayout.LayoutParams(
                 android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
                 android.widget.FrameLayout.LayoutParams.MATCH_PARENT
@@ -151,6 +159,7 @@ class MainActivity : AppCompatActivity() {
             params?.setMargins(0, 0, 0, 0)
             binding.mainContent.setPadding(0, 0, 0, 0)
             window.decorView.requestLayout()
+            binding.rootContainer.requestLayout()
             binding.mainContent.requestLayout()
         }
     }
@@ -1531,6 +1540,11 @@ private fun checkBatteryOptimization() {
 
                     requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
+                    binding.rootContainer.layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+                    val rootParams = binding.rootContainer.layoutParams as? android.view.ViewGroup.MarginLayoutParams
+                    rootParams?.setMargins(0, 0, 0, 0)
+                    binding.rootContainer.setPadding(0, 0, 0, 0)
+
                     binding.mainContent.layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
                     val params = binding.mainContent.layoutParams as? android.view.ViewGroup.MarginLayoutParams
                     params?.setMargins(0, 0, 0, 0)
@@ -1539,6 +1553,7 @@ private fun checkBatteryOptimization() {
                     binding.mainContent.visibility = View.VISIBLE
 
                     window.decorView.requestLayout()
+                    binding.rootContainer.requestLayout()
                     binding.mainContent.requestLayout()
 
                     customViewCallback?.onCustomViewHidden()
