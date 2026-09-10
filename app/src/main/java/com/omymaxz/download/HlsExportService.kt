@@ -296,7 +296,6 @@ class HlsExportService : Service() {
             .setCache(cache)
             .setUpstreamDataSourceFactory(failingUpstream)
             .setCacheKeyFactory(HlsDownloadHelper.customCacheKeyFactory)
-            .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
             .createDataSource()
     }
 
@@ -542,15 +541,18 @@ class HlsExportService : Service() {
                                             .setKey(cacheKey)
                                             .build()
 
-                                        cacheOnlyFactory.close() // ensure clean state
-                                        cacheOnlyFactory.open(segmentSpec)
+                                        // CRITICAL FIX: Use a FRESH CacheDataSource for the fallback.
+                                        val freshCacheDataSource = cacheOnlyDataSource()
+
+                                        freshCacheDataSource.open(segmentSpec)
                                         val fos = java.io.FileOutputStream(localSegment)
                                         val buffer = ByteArray(1024 * 64)
                                         var bytesRead: Int
-                                        while (cacheOnlyFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                                        while (freshCacheDataSource.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
                                             fos.write(buffer, 0, bytesRead)
                                         }
                                         fos.close()
+                                        freshCacheDataSource.close()
                                         success = true
                                     }
                                 }
