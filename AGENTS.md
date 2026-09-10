@@ -296,3 +296,8 @@ The four heads are internal roles, not separate personalities that need to appea
 The Builder's objective is simple:
 
 Understand the real problem → inspect the evidence → consider viable options → challenge the options → choose the simplest effective solution → implement it → verify it → record important lessons.
+<exoplayer_caching_quirks>
+- When exporting HLS streams from the ExoPlayer `SimpleCache` (`HlsExportService`), the exact `DataSpec` URI requested MUST perfectly match the domain and path that ExoPlayer originally used to cache the segment.
+- If a master playlist uses relative paths (e.g., `index0.ts`), but ExoPlayer followed a cross-domain redirect during playback (e.g., `cdnvideo11.shop` -> `streamingcdn5.site`), the offline export will fail with a cache miss if it requests the segment using the master playlist's original domain.
+- To fix this, always implement a fallback that iterates through `cache.keys` using the segment's path (e.g., `endsWith(uriPath)`). When rebuilding the fallback `DataSpec`, YOU MUST update BOTH the `.setKey(cacheKey)` AND `.setUri(Uri.parse(matchedKey))`. Updating only the cache key will cause `CacheDataSource` to throw an internal mismatch exception.
+</exoplayer_caching_quirks>
