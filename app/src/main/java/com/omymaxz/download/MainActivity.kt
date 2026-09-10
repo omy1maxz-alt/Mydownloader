@@ -2863,6 +2863,21 @@ private fun injectMediaStateDetector() {
 
         @JavascriptInterface
         fun onVideoFound(videoUrl: String) {
+            if (videoUrl.startsWith("blob:")) {
+                // If it's a blob, attempt to find and highlight the true stream from the existing sniffed list instead of creating a fake blob entry.
+                activity.runOnUiThread {
+                    synchronized(activity.detectedMediaFiles) {
+                        val mainStream = activity.detectedMediaFiles.firstOrNull { it.category == MediaCategory.VIDEO && !it.url.startsWith("blob:") }
+                        if (mainStream != null && !mainStream.isMainContent) {
+                            mainStream.isMainContent = true
+                            activity.currentVideoUrl = mainStream.url
+                            activity.currentMediaListAdapter?.notifyDataSetChanged()
+                        }
+                    }
+                }
+                return
+            }
+
             activity.runOnUiThread {
                 if (videoUrl.isNotEmpty() && videoUrl != "about:blank") {
                     activity.currentVideoUrl = videoUrl
