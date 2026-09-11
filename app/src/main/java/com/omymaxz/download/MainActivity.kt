@@ -350,6 +350,7 @@ private fun checkBatteryOptimization() {
         }
     }
 
+    private lateinit var mediaDetectionEngine: MediaDetectionEngine
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
 
@@ -365,6 +366,54 @@ private fun checkBatteryOptimization() {
         webView = findViewById(R.id.webView)
         userscriptInterface = UserscriptInterface(this, webView, lifecycleScope)
         gmApi = GMApi(webView)
+
+        mediaDetectionEngine = MediaDetectionEngine { candidate ->
+            runOnUiThread {
+                try {
+                    val category = if (candidate.url.contains("subtitle", true) || candidate.url.endsWith(".vtt") || candidate.url.endsWith(".srt") || candidate.url.contains(".vtt?") || candidate.url.contains(".srt?")) {
+                        MediaCategory.SUBTITLE
+                    } else if (candidate.url.contains("audio", true)) {
+                        MediaCategory.AUDIO
+                    } else {
+                        MediaCategory.VIDEO
+                    }
+
+                    val detectedFormat = detectVideoFormat(candidate.url)
+                    val quality = extractQualityFromUrl(candidate.url)
+                    val enhancedTitle = generateSmartFileName(candidate.url, detectedFormat.extension, quality, category)
+                    val fileSize = estimateFileSize(candidate.url, category)
+                    val language = extractLanguageFromUrl(candidate.url)
+
+                    val mediaFile = MediaFile(
+                        url = candidate.url,
+                        title = enhancedTitle,
+                        mimeType = detectedFormat.mimeType,
+                        quality = quality,
+                        category = category,
+                        fileSize = fileSize,
+                        language = language,
+                        isMainContent = true,
+                        referer = candidate.referer ?: webView.url
+                    )
+
+                    val existsAlready = synchronized(detectedMediaFiles) {
+                        detectedMediaFiles.any { it.url == candidate.url }
+                    }
+
+                    if (!existsAlready) {
+                        synchronized(detectedMediaFiles) {
+                            detectedMediaFiles.add(0, mediaFile)
+                        }
+                        updateFabVisibility()
+                        currentVideoUrl = candidate.url
+                        currentMediaListAdapter?.notifyDataSetChanged()
+                        android.util.Log.d("MainActivity", "MediaDetectionEngine finalized candidate: ${candidate.url}")
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Error handling engine candidate: ${e.message}")
+                }
+            }
+        }
 
         redirectLogic = RedirectLogic(getSharedPreferences("AdBlocker", Context.MODE_PRIVATE))
         setupWebView(webView)
@@ -1165,6 +1214,7 @@ private fun checkBatteryOptimization() {
                     if (url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))) {
                         checkForYouTube(url)
                     }
+                    mediaDetectionEngine.clear()
                     // Auto-clear detected media on new page load to prevent stale episode links
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.clear()
@@ -1327,56 +1377,15 @@ private fun checkBatteryOptimization() {
                     if (isAdDomain(url)) {
                         return createEmptyResponse()
                     }
-                    if (isMediaUrl(url)) {
-                        if (isAdUrl(url)) {
-                            android.util.Log.d("WebViewClient", "Ignoring AD request: $url")
-                            return super.shouldInterceptRequest(view, request)
-                        }
-                        // Hook for detecting upstream network requests bypassing JS blobs.
-                        // We register this internally so `CustomPlayerActivity` can use it when playing active streams.
-                        if (url.contains(".m3u8", ignoreCase = true) || url.endsWith(".mp4") || url.contains("videoplayback")) {
-                            currentVideoUrl = url
-                            runOnUiThread {
-                                webView.evaluateJavascript("if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) { window.AndroidMediaState.onMediaDetected('$url', 'video'); }", null)
-                            }
-                        }
-                        try {
-                            val category = MediaCategory.fromUrl(url)
-                            val isMainContent = isMainVideoContent(url)
-                            if (category == MediaCategory.VIDEO && isMainContent) {
-                                currentVideoUrl = url
-                            }
-                            val detectedFormat = detectVideoFormat(url)
-                            val quality = extractQualityFromUrl(url)
-                            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
-                            val fileSize = estimateFileSize(url, category)
-                            val language = extractLanguageFromUrl(url)
-                            val mediaFile = MediaFile(
-                                url = url,
-                                title = enhancedTitle,
-                                mimeType = detectedFormat.mimeType,
-                                quality = quality,
-                                category = category,
-                                fileSize = fileSize,
-                                language = language,
-                                isMainContent = isMainContent
-                            )
-                            val existsAlready = synchronized(detectedMediaFiles) {
-                                detectedMediaFiles.any { it.url == url }
-                            }
-                            if (!existsAlready) {
-                                synchronized(detectedMediaFiles) {
-                                    detectedMediaFiles.add(mediaFile)
-                                }
-                                runOnUiThread { updateFabVisibility() }
-                                if (category == MediaCategory.SUBTITLE) {
-                                    fetchSubtitleSnippet(mediaFile)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
-                        }
-                    }
+                    // Feed request to MediaDetectionEngine
+                    val referer = request.requestHeaders["Referer"] ?: view?.url
+                    mediaDetectionEngine.observeRequest(
+                        url = url,
+                        pageUrl = view?.url ?: "",
+                        referer = referer,
+                        userAgent = view?.settings?.userAgentString,
+                        cookie = android.webkit.CookieManager.getInstance().getCookie(url)
+                    )
                     return super.shouldInterceptRequest(view, request)
                 }
 
@@ -2713,42 +2722,14 @@ private fun injectMediaStateDetector() {
             activity.runOnUiThread {
                 try {
                     if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:") && !url.startsWith("blob:")) {
-                         val existsAlready = synchronized(activity.detectedMediaFiles) {
-                            activity.detectedMediaFiles.any { it.url == url }
-                         }
-
-                         if (!existsAlready) {
-                             val category = if (type.contains("subtitle", true) || url.endsWith(".vtt") || url.endsWith(".srt") || url.contains(".vtt?") || url.contains(".srt?")) {
-                                 MediaCategory.SUBTITLE
-                             } else if (type.contains("audio", true)) {
-                                 MediaCategory.AUDIO
-                             } else {
-                                 MediaCategory.VIDEO
-                             }
-
-                             val detectedFormat = activity.detectVideoFormat(url)
-                             val quality = activity.extractQualityFromUrl(url)
-                             val enhancedTitle = activity.generateSmartFileName(url, detectedFormat.extension, quality, category)
-
-                             val mediaFile = MediaFile(
-                                url = url,
-                                title = enhancedTitle,
-                                mimeType = detectedFormat.mimeType,
-                                quality = quality,
-                                category = category,
-                                fileSize = "Unknown",
-                                language = null,
-                                isMainContent = isMainVideoContent(url),
-                                referer = activity.webView.url
-                            )
-
-                            synchronized(activity.detectedMediaFiles) {
-                                activity.detectedMediaFiles.add(mediaFile)
-                            }
-                            activity.updateFabVisibility()
-                            android.util.Log.d("MediaStateInterface", "Advanced detection found: $url")
-
-                         }
+                        // Feed JS detections to engine as well
+                        activity.mediaDetectionEngine.observeRequest(
+                            url = url,
+                            pageUrl = activity.webView.url ?: "",
+                            mimeType = type,
+                            referer = activity.webView.url,
+                            userAgent = activity.webView.settings.userAgentString
+                        )
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("MediaStateInterface", "Error in onMediaDetected: ${e.message}")
@@ -2915,6 +2896,15 @@ private fun injectMediaStateDetector() {
                     activity.currentVideoUrl = videoUrl
                     android.util.Log.d("MediaStateInterface", "Video found: $videoUrl")
 
+                    // Feed to engine to mark as playable
+                    activity.mediaDetectionEngine.observeRequest(
+                        url = videoUrl,
+                        pageUrl = activity.webView.url ?: "",
+                        mimeType = "video/*",
+                        referer = activity.webView.url,
+                        userAgent = activity.webView.settings.userAgentString
+                    )
+
                     var updated = false
                     synchronized(activity.detectedMediaFiles) {
                         val foundFile = activity.detectedMediaFiles.find { it.url == videoUrl }
@@ -2945,6 +2935,7 @@ private fun injectMediaStateDetector() {
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPlay called")
                 activity.isMediaPlaying = true
+                activity.mediaDetectionEngine.notifyPlaybackStarted()
                 activity.startOrUpdatePlaybackService()
             }
         }
