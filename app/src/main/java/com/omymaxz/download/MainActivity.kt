@@ -65,6 +65,8 @@ import java.util.regex.Pattern
 import android.widget.LinearLayout
 
 class MainActivity : AppCompatActivity() {
+
+    val mediaEngine = MediaDetectionEngine(this)
     var isManualScanPending = false
     private lateinit var binding: ActivityMainBinding
     private lateinit var webView: WebView
@@ -1296,6 +1298,7 @@ private fun checkBatteryOptimization() {
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.clear()
                     }
+                    mediaEngine.clear()
                     runOnUiThread {
                         currentMediaListAdapter?.notifyDataSetChanged()
                         updateFabVisibility()
@@ -1371,6 +1374,14 @@ private fun checkBatteryOptimization() {
                 }
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                     val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
+
+                    val reqHeaders = request?.requestHeaders
+                    val referer = reqHeaders?.get("Referer") ?: reqHeaders?.get("referer")
+                    val userAgent = reqHeaders?.get("User-Agent") ?: reqHeaders?.get("user-agent")
+
+                    // Safely process through MediaDetectionEngine on background thread
+                    mediaEngine.processRequest(url, referer, userAgent)
+
                     if (isUrlWhitelisted(url)) {
                         return super.shouldInterceptRequest(view, request)
                     }
@@ -2719,7 +2730,9 @@ private fun injectMediaStateDetector() {
             if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
                 lastSubtitleUrl = url
             }
+            // Pass to engine on UI thread context
             activity.runOnUiThread {
+                activity.mediaEngine.processRequest(url, activity.webView.url, activity.webView.settings.userAgentString)
                 try {
                     if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:") && !url.startsWith("blob:")) {
                         // Feed JS detections to engine as well
@@ -2795,48 +2808,52 @@ private fun injectMediaStateDetector() {
                                             activity.downloadMediaFile(updatedMediaFile)
                                         }
                                         1 -> {
-                                            if (url.startsWith("blob:")) {
-                                                if (activity.currentVideoUrl != null && !activity.currentVideoUrl!!.startsWith("blob:")) {
-                                                    val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
-                                                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, activity.currentVideoUrl)
-                                                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, newTitle)
-                                                        putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, activity.webView.settings.userAgentString)
-                                                        putExtra(CustomPlayerActivity.EXTRA_REFERER, activity.webView.url)
-                                                        val cookie = android.webkit.CookieManager.getInstance().getCookie(activity.webView.url)
-                                                        if (cookie != null) {
-                                                            putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                                                        }
-                                                    }
-                                                    activity.startActivity(intent)
-                                                } else {
-                                                    Toast.makeText(activity, "Cannot play Blob URLs directly. Please wait for the real video stream to be detected.", Toast.LENGTH_LONG).show()
-                                                }
+                                            val bestCandidate = activity.mediaEngine.getBestCandidate()
+                                            activity.mediaEngine.logCandidatesState()
+                                            if (bestCandidate != null && (bestCandidate.confidence == "HIGH" || bestCandidate.confidence == "MEDIUM")) {
+                                                activity.launchPlayerWithCandidate(bestCandidate, newTitle, activity.webView.url?.toString())
                                             } else {
-                                                val intent = android.content.Intent(activity, CustomPlayerActivity::class.java).apply {
-                                                putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
-                                                putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, newTitle)
-                                                putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, activity.webView.settings.userAgentString)
-                                                putExtra(CustomPlayerActivity.EXTRA_REFERER, activity.webView.url)
-                                                val cookie = android.webkit.CookieManager.getInstance().getCookie(activity.webView.url)
-                                                    if (cookie != null) {
-                                                        putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                                                // Start analyzing dialog
+                                                val pd = android.app.ProgressDialog(activity).apply {
+                                                    setMessage("Analyzing video... please wait.")
+                                                    setCancelable(true)
+                                                    show()
+                                                }
+                                                var elapsed = 0
+                                                val maxWait = 4000 // wait max 4 seconds
+                                                val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                                                val checkRunnable = object : Runnable {
+                                                    override fun run() {
+                                                        val candidate = activity.mediaEngine.getBestCandidate()
+                                                        if (candidate != null && candidate.confidence == "HIGH") {
+                                                            pd.dismiss()
+                                                            activity.launchPlayerWithCandidate(candidate, newTitle, activity.webView.url?.toString())
+                                                            return
+                                                        }
+                                                        elapsed += 500
+                                                        if (elapsed >= maxWait) {
+                                                            pd.dismiss()
+                                                            val fallbackCand = activity.mediaEngine.getBestCandidate()
+                                                            if (fallbackCand != null) {
+                                                                activity.launchPlayerWithCandidate(fallbackCand, newTitle, activity.webView.url?.toString())
+                                                            } else {
+                                                                // Legacy fallback
+                                                                if (url.startsWith("blob:")) {
+                                                                    if (activity.currentVideoUrl != null && !activity.currentVideoUrl!!.startsWith("blob:")) {
+                                                                        activity.launchLegacyPlayer(activity.currentVideoUrl!!, newTitle, activity.webView.url?.toString())
+                                                                    } else {
+                                                                        Toast.makeText(activity, "Cannot play Blob URLs directly. Please wait for the real video stream to be detected.", Toast.LENGTH_LONG).show()
+                                                                    }
+                                                                } else {
+                                                                    activity.launchLegacyPlayer(url, newTitle, activity.webView.url?.toString())
+                                                                }
+                                                            }
+                                                            return
+                                                        }
+                                                        handler.postDelayed(this, 500)
                                                     }
-
-                                            // Automatically gather ALL detected subtitles from the current page
-                                            val allSubtitleUrls = synchronized(activity.detectedMediaFiles) {
-                                                activity.detectedMediaFiles
-                                                    .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
-                                                    .map { it.url }
-                                                    .toMutableList()
-                                            }
-
-                                            if (allSubtitleUrls.isNotEmpty()) {
-                                                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
-                                            } else if (subtitleUrl.isNotEmpty()) {
-                                                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, arrayListOf(subtitleUrl))
-                                            }
-                                        }
-                                        activity.startActivity(intent)
+                                                }
+                                                handler.postDelayed(checkRunnable, 500)
                                             }
                                         }
                                     }
@@ -2932,6 +2949,7 @@ private fun injectMediaStateDetector() {
         }
         @JavascriptInterface
         fun onMediaPlay() {
+            activity.mediaEngine.isPlaybackActive = true
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPlay called")
                 activity.isMediaPlaying = true
@@ -2942,6 +2960,7 @@ private fun injectMediaStateDetector() {
 
         @JavascriptInterface
         fun onMediaPause() {
+            activity.mediaEngine.isPlaybackActive = false
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaPause called")
                 activity.isMediaPlaying = false
@@ -2951,6 +2970,7 @@ private fun injectMediaStateDetector() {
 
         @JavascriptInterface
         fun onMediaEnded() {
+            activity.mediaEngine.isPlaybackActive = false
             activity.runOnUiThread {
                 android.util.Log.d("MediaStateInterface", "onMediaEnded called")
                 activity.isMediaPlaying = false
@@ -3467,6 +3487,60 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         """
     }
 
+        private fun launchPlayerWithCandidate(candidate: MediaCandidate, title: String, fallbackReferer: String?) {
+        val intent = Intent(this, CustomPlayerActivity::class.java).apply {
+            putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, candidate.url)
+            putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
+            putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, candidate.userAgent ?: webView.settings.userAgentString)
+
+            val refererToUse = candidate.referer ?: fallbackReferer ?: webView.url
+            putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
+
+            val cookie = candidate.cookie ?: CookieManager.getInstance().getCookie(candidate.url) ?: CookieManager.getInstance().getCookie(refererToUse)
+            if (cookie != null) {
+                putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+            }
+
+            val allSubtitleUrls = synchronized(detectedMediaFiles) {
+                detectedMediaFiles
+                    .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
+                    .map { it.url }
+                    .toMutableList()
+            }
+            if (allSubtitleUrls.isNotEmpty()) {
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+            }
+        }
+        startActivity(intent)
+    }
+
+    private fun launchLegacyPlayer(url: String, title: String, fallbackReferer: String?) {
+        val intent = Intent(this, CustomPlayerActivity::class.java).apply {
+            putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
+            putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
+            putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
+
+            val refererToUse = fallbackReferer ?: webView.url
+            putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
+
+            val cookie = CookieManager.getInstance().getCookie(url) ?: CookieManager.getInstance().getCookie(refererToUse)
+            if (cookie != null) {
+                putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+            }
+
+            val allSubtitleUrls = synchronized(detectedMediaFiles) {
+                detectedMediaFiles
+                    .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
+                    .map { it.url }
+                    .toMutableList()
+            }
+            if (allSubtitleUrls.isNotEmpty()) {
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+            }
+        }
+        startActivity(intent)
+    }
+
     private fun showRenameDialog(mediaFile: MediaFile) {
         val input = EditText(this).apply {
             setText(mediaFile.title.substringBeforeLast('.'))
@@ -3505,52 +3579,62 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         } else {
             // For videos/audio, add Play in App button
             builder.setNegativeButton("Play in App") { _, _ ->
-                if (mediaFile.url.startsWith("blob:")) {
-                    if (currentVideoUrl != null && !currentVideoUrl!!.startsWith("blob:")) {
-                        val newName = input.text.toString().trim()
-                        val finalName = if (newName.isNotEmpty()) "$newName.${mediaFile.title.substringAfterLast('.')}" else mediaFile.title
-                        val intent = Intent(this, CustomPlayerActivity::class.java).apply {
-                            putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, currentVideoUrl)
-                            putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
-                            putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
-                            val refererToUse = mediaFile.referer ?: webView.url
-                            putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
-                            val cookie = CookieManager.getInstance().getCookie(currentVideoUrl) ?: CookieManager.getInstance().getCookie(refererToUse)
-                            if (cookie != null) {
-                                putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                            }
-                        }
-                        startActivity(intent)
-                    } else {
-                        Toast.makeText(this, "Cannot play Blob URLs directly. Please wait for the real stream to be captured.", Toast.LENGTH_LONG).show()
-                    }
+                val newName = input.text.toString().trim()
+                val finalName = if (newName.isNotEmpty()) "$newName.${mediaFile.title.substringAfterLast('.')}" else mediaFile.title
+
+                // Query MediaDetectionEngine for the best candidate
+                val bestCandidate = mediaEngine.getBestCandidate()
+                mediaEngine.logCandidatesState()
+
+                if (bestCandidate != null && (bestCandidate.confidence == "HIGH" || bestCandidate.confidence == "MEDIUM")) {
+                    android.util.Log.d("PlayInApp", "Launching best candidate directly: ${bestCandidate.url} (Confidence: ${bestCandidate.confidence})")
+                    launchPlayerWithCandidate(bestCandidate, finalName, mediaFile.referer)
                 } else {
-                    val newName = input.text.toString().trim()
-                    val finalName = if (newName.isNotEmpty()) "$newName.${mediaFile.title.substringAfterLast('.')}" else mediaFile.title
+                    // Start analyzing dialog
+                    val pd = android.app.ProgressDialog(this).apply {
+                        setMessage("Analyzing video... please wait.")
+                        setCancelable(true)
+                        show()
+                    }
 
-                    val intent = Intent(this, CustomPlayerActivity::class.java).apply {
-                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
-                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
-                        putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
-                        // Use the referer that was active when the media was detected, fallback to current webView url
-                        val refererToUse = mediaFile.referer ?: webView.url
-                        putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
-                        val cookie = CookieManager.getInstance().getCookie(mediaFile.url) ?: CookieManager.getInstance().getCookie(refererToUse)
-                        if (cookie != null) {
-                            putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                        }
+                    var elapsed = 0
+                    val maxWait = 4000 // wait max 4 seconds
+                    val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                    val checkRunnable = object : Runnable {
+                        override fun run() {
+                            val candidate = mediaEngine.getBestCandidate()
+                            if (candidate != null && candidate.confidence == "HIGH") {
+                                pd.dismiss()
+                                android.util.Log.d("PlayInApp", "Found high confidence candidate after observation: ${candidate.url}")
+                                launchPlayerWithCandidate(candidate, finalName, mediaFile.referer)
+                                return
+                            }
 
-                        val allSubtitleUrls = synchronized(detectedMediaFiles) {
-                            detectedMediaFiles
-                                .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
-                                .map { it.url }
-                                .toMutableList()
-                        }
-                        if (allSubtitleUrls.isNotEmpty()) {
-                            putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+                            elapsed += 500
+                            if (elapsed >= maxWait) {
+                                pd.dismiss()
+                                val fallbackCand = mediaEngine.getBestCandidate()
+                                if (fallbackCand != null) {
+                                    android.util.Log.d("PlayInApp", "Wait timeout. Launching best available: ${fallbackCand.url}")
+                                    launchPlayerWithCandidate(fallbackCand, finalName, mediaFile.referer)
+                                } else {
+                                    // Fallback to legacy behavior
+                                    if (mediaFile.url.startsWith("blob:")) {
+                                        if (currentVideoUrl != null && !currentVideoUrl!!.startsWith("blob:")) {
+                                            launchLegacyPlayer(currentVideoUrl!!, finalName, mediaFile.referer)
+                                        } else {
+                                            Toast.makeText(this@MainActivity, "Cannot play Blob URLs directly. Please wait for the real stream to be captured.", Toast.LENGTH_LONG).show()
+                                        }
+                                    } else {
+                                        launchLegacyPlayer(mediaFile.url, finalName, mediaFile.referer)
+                                    }
+                                }
+                                return
+                            }
+                            handler.postDelayed(this, 500)
                         }
                     }
-                    startActivity(intent)
+                    handler.postDelayed(checkRunnable, 500)
                 }
             }
         }
@@ -3751,6 +3835,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         bottomSheet?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         data class MenuItemCustom(val id: Int, val title: String)
+        val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
+        val popupNoticeTitle = if (showNotice) "Popup Notice: ON" else "Popup Notice: OFF"
+
         val menuItems = listOf(
             MenuItemCustom(R.id.menu_history, "History"),
             MenuItemCustom(R.id.menu_add_bookmark, "Add Bookmark"),
@@ -3762,7 +3850,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             MenuItemCustom(R.id.menu_theme_color, "Theme Color"),
             MenuItemCustom(R.id.menu_debug_site, "Debug Site"),
             MenuItemCustom(R.id.menu_enable_media_detection, "Advanced Media Sniffer"),
-            MenuItemCustom(R.id.menu_debug_page, "Debug Page")
+            MenuItemCustom(R.id.menu_debug_page, "Debug Page"),
+            MenuItemCustom(R.id.menu_toggle_popup_notice, popupNoticeTitle)
         )
 
         val listView = view.findViewById<android.widget.ListView>(R.id.bottom_sheet_list)
@@ -3807,6 +3896,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
                 R.id.menu_enable_media_detection -> runAdvancedMediaSniffer()
                 R.id.menu_debug_page -> showPageSource()
+                R.id.menu_toggle_popup_notice -> {
+                    val currentSetting = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
+                    settingsPrefs.edit().putBoolean("SHOW_POPUP_BLOCKED_NOTICE", !currentSetting).apply()
+                    val stateStr = if (!currentSetting) "enabled" else "disabled"
+                    Toast.makeText(this@MainActivity, "Popup block notices $stateStr", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
