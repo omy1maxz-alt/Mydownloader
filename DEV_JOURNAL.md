@@ -58,3 +58,4 @@
 - Implemented MediaDetectionEngine to intelligently track and score media candidates based on playback activity and request relationships, replacing simplistic URL extension matching.
 - Fixed preference mismatch causing the Pop-up Blocked notice to show even when disabled.
 - Silenced YouTube video detection and extraction toasts to prevent UI interruptions during standard background browsing.
+- Fixed ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED in CustomPlayerActivity by correctly identifying yt-dlp extracted DASH and HLS manifest mime-types.

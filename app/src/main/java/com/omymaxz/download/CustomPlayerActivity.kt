@@ -468,9 +468,16 @@ class CustomPlayerActivity : AppCompatActivity() {
             .build()
         subtitleConfigs.add(emptySubtitleConfig)
 
+
+        val actualMimeType = when {
+            isHls -> MimeTypes.APPLICATION_M3U8
+            videoUrl?.contains(".mpd") == true || videoUrl?.contains("manifest/dash") == true -> MimeTypes.APPLICATION_MPD
+            else -> MimeTypes.APPLICATION_MP4
+        }
+
         val newBaseItem = MediaItem.Builder()
             .setUri(Uri.parse(videoUrl!!))
-            .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
+            .setMimeType(actualMimeType)
             .setSubtitleConfigurations(subtitleConfigs)
             .build()
 
@@ -621,9 +628,15 @@ class CustomPlayerActivity : AppCompatActivity() {
                 .build()
             subtitleConfigs.add(emptySubtitleConfig)
 
+            val actualMimeType = when {
+                isHls -> MimeTypes.APPLICATION_M3U8
+                videoUrl?.contains(".mpd") == true || videoUrl?.contains("manifest/dash") == true -> MimeTypes.APPLICATION_MPD
+                else -> MimeTypes.APPLICATION_MP4
+            }
+
             val newBaseItem = MediaItem.Builder()
                 .setUri(Uri.parse(videoUrl!!))
-                .setMimeType(if (isHls) MimeTypes.APPLICATION_M3U8 else MimeTypes.APPLICATION_MP4)
+                .setMimeType(actualMimeType)
                 .setSubtitleConfigurations(subtitleConfigs)
                 .build()
 
