@@ -559,46 +559,54 @@ class HlsExportService : Service() {
                             fos.close()
                             success = true
                         } catch (e: Exception) {
-                            // Cache miss. ExoPlayer might have cached this segment under a redirected domain.
-                            // We will scan the unified cache keys for any key that ends with the same path structure.
+                            // Cache miss on primary URI. Fallback to direct SimpleCache file reading.
                             try {
                                 val uriPath = android.net.Uri.parse(segmentUrl).path
                                 if (uriPath != null) {
                                     val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
                                     val keys = cache.keys
-                                    val matchedKey = keys.firstOrNull { it.endsWith(uriPath) }
+
+                                    // Stricter path matching to avoid false positives
+                                    val matchedKey = keys.firstOrNull { key ->
+                                        runCatching { android.net.Uri.parse(key).path == uriPath }.getOrDefault(false)
+                                    }
+
                                     if (matchedKey != null) {
                                         writeExportLog("Domain mismatch detected. Found segment in cache using path fallback: $matchedKey")
 
-                                        // CRITICAL FIX: Use a dummy URI and strictly set the cache key.
-                                        // This forces CacheDataSource to look up the exact string in the cache database
-                                        // and completely bypasses any URI-based network/upstream logic.
-                                        val dummyUri = android.net.Uri.parse("http://cache.local")
-                                        segmentSpec = androidx.media3.datasource.DataSpec.Builder()
-                                            .setUri(dummyUri)
-                                            .setKey(matchedKey) // Force the exact cache key
-                                            .build()
+                                        // BULLETPROOF FIX: Read directly from SimpleCache spans, bypassing CacheDataSource entirely.
+                                        val spans = cache.getCachedSpans(matchedKey).filter { it.length > 0 }.sortedBy { it.position }
 
-                                        // CRITICAL FIX: Use a FRESH CacheDataSource for the fallback.
-                                        val freshCacheDataSource = cacheOnlyDataSource()
-
-                                        freshCacheDataSource.open(segmentSpec)
-                                        val fos = java.io.FileOutputStream(localSegment)
-                                        val buffer = ByteArray(1024 * 64)
-                                        var bytesRead: Int
-                                        while (freshCacheDataSource.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
-                                            fos.write(buffer, 0, bytesRead)
+                                        if (spans.isNotEmpty()) {
+                                            java.io.FileOutputStream(localSegment).use { output ->
+                                                var expectedPosition = 0L
+                                                for (span in spans) {
+                                                    if (span.position != expectedPosition) {
+                                                        throw java.io.IOException("CACHE_INCOMPLETE: gap at $expectedPosition")
+                                                    }
+                                                    java.io.FileInputStream(span.file).use { input ->
+                                                        val buffer = ByteArray(64 * 1024)
+                                                        var read: Int
+                                                        while (input.read(buffer).also { read = it } != -1) {
+                                                            output.write(buffer, 0, read)
+                                                        }
+                                                    }
+                                                    expectedPosition += span.length
+                                                }
+                                                output.flush()
+                                            }
+                                            success = true
+                                            writeExportLog("DIRECT CACHE HIT: Copied segment via SimpleCache spans for $matchedKey")
+                                        } else {
+                                            writeExportLog("DIRECT CACHE MISS: No spans found for $matchedKey")
                                         }
-                                        fos.close()
-                                        freshCacheDataSource.close()
-                                        success = true
                                     }
                                 }
                             } catch (fallbackEx: Exception) {
-                                writeExportLog("Fallback cache lookup failed for: $segmentUrl")
+                                writeExportLog("Fallback cache lookup failed: ${fallbackEx.message}")
                             }
                         } finally {
-                            cacheOnlyFactory.close()
+                            try { cacheOnlyFactory.close() } catch (ex: Exception) {}
                         }
 
                         if (!success) {
