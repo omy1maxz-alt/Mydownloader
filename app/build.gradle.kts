@@ -87,6 +87,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
     implementation("androidx.media3:media3-exoplayer:1.4.0")
     implementation("androidx.media3:media3-exoplayer-hls:1.4.0")
+    implementation("androidx.media3:media3-exoplayer-dash:1.4.0")
     implementation("androidx.media3:media3-datasource-cronet:1.4.0")
     implementation("androidx.media3:media3-ui:1.4.0")
     implementation("androidx.media3:media3-session:1.4.0")
@@ -108,6 +109,10 @@ dependencies {
 
     // FFmpeg
     implementation("io.github.maitrungduc1410:ffmpeg-kit-https:8.1.2")
+
+    // YoutubeDL Android
+    implementation("com.github.yausername.youtubedl-android:library:0.14.0")
+    implementation("com.github.yausername.youtubedl-android:ffmpeg:0.14.0")
 
     // Testing Dependencies
     testImplementation("junit:junit:4.13.2")

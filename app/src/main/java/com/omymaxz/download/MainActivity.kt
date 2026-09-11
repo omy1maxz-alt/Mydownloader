@@ -355,6 +355,10 @@ private fun checkBatteryOptimization() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize YoutubeDL in the background
+        Thread { YoutubeExtractorHelper.init(applicationContext) }.start()
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -1158,6 +1162,9 @@ private fun checkBatteryOptimization() {
                 private var navigationCount = 0
 
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    if (url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))) {
+                        checkForYouTube(url)
+                    }
                     // Auto-clear detected media on new page load to prevent stale episode links
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.clear()
@@ -1206,6 +1213,10 @@ private fun checkBatteryOptimization() {
 
                     super.onPageStarted(view, url, favicon)
                     isPageLoading = true
+
+                    if (url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))) {
+                        checkForYouTube(url)
+                    }
                     binding.progressBar.visibility = View.VISIBLE
                     binding.urlEditTextToolbar.setText(url)
                     synchronized(detectedMediaFiles) {
@@ -3127,48 +3138,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         if (currentVideoUrl != null && currentVideoUrl == url) return true
         val lower = url.lowercase()
         return lower.contains("videoplayback") || lower.contains("manifest")
-    }
-    private fun updateFabVisibility() {
-        val isYoutube = isYouTubeUrl(webView.url)
-        val hasFiles = detectedMediaFiles.isNotEmpty()
-
-        if (isYoutube || hasFiles) {
-            binding.fabShowMedia.visibility = View.VISIBLE
-            binding.fabShowMedia.setImageResource(if (isYoutube) R.drawable.ic_download else android.R.drawable.ic_menu_add)
-
-            binding.fabShowMedia.setOnClickListener {
-                if (isYoutube) {
-                    Toast.makeText(this, "Analyzing YouTube video...", Toast.LENGTH_SHORT).show()
-                    isManualScanPending = true
-                    webView.evaluateJavascript(YouTubeHelper.EXTRACTION_SCRIPT, null)
-                } else {
-                    showMediaListDialog()
-                }
-            }
-
-            binding.fabShowMedia.setOnLongClickListener {
-                if (detectedMediaFiles.isNotEmpty()) {
-                    showMediaListDialog()
-                } else {
-                    Toast.makeText(this, "No media intercepted yet. Play the video first.", Toast.LENGTH_SHORT).show()
-                }
-                true
-            }
-        } else {
-            binding.fabShowMedia.visibility = View.GONE
-        }
-    }
-
-    private fun isYouTubeUrl(url: String?): Boolean {
-        if (url == null) return false
-        val lower = url.lowercase()
-        return (lower.contains("youtube.com/watch") || lower.contains("m.youtube.com/watch") || lower.contains("youtu.be/")) && !lower.contains("googleads")
-    }
-
-    private fun checkForYouTube(url: String?) {
-        runOnUiThread {
-            updateFabVisibility()
-        }
     }
     private fun fetchSubtitleSnippet(mediaFile: MediaFile) {
         lifecycleScope.launch(Dispatchers.IO) {
@@ -5260,4 +5229,62 @@ if (isDesktopMode) {
             }
         }
     }
+    private fun updateFabVisibility() {
+        val hasFiles = detectedMediaFiles.isNotEmpty()
+
+        if (hasFiles) {
+            binding.fabShowMedia.visibility = android.view.View.VISIBLE
+            binding.fabShowMedia.setImageResource(android.R.drawable.ic_menu_add)
+
+            binding.fabShowMedia.setOnClickListener {
+                showMediaListDialog()
+            }
+
+            binding.fabShowMedia.setOnLongClickListener {
+                if (detectedMediaFiles.isNotEmpty()) {
+                    showMediaListDialog()
+                } else {
+                    android.widget.Toast.makeText(this, "No media intercepted yet. Play the video first.", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                true
+            }
+        } else {
+            binding.fabShowMedia.visibility = android.view.View.GONE
+        }
+    }
+
+    private var lastYoutubeUrl: String? = null
+
+    private fun checkForYouTube(url: String?) {
+        if (url == null || url == lastYoutubeUrl) return
+        lastYoutubeUrl = url
+
+        runOnUiThread {
+            updateFabVisibility()
+            android.widget.Toast.makeText(this, "YouTube video detected. Extracting stream...", android.widget.Toast.LENGTH_SHORT).show()
+        }
+        this.lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val mediaFile = YoutubeExtractorHelper.extractMedia(url)
+            if (mediaFile != null) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    val existsAlready = synchronized(detectedMediaFiles) {
+                        detectedMediaFiles.any { it.url == mediaFile.url }
+                    }
+                    if (!existsAlready) {
+                        synchronized(detectedMediaFiles) {
+                            detectedMediaFiles.add(0, mediaFile)
+                        }
+                        updateFabVisibility()
+                        currentMediaListAdapter?.notifyDataSetChanged()
+                        android.widget.Toast.makeText(this@MainActivity, "YouTube stream ready! Tap the floating button to play/download.", android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+            } else {
+                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                     android.widget.Toast.makeText(this@MainActivity, "Failed to extract YouTube stream.", android.widget.Toast.LENGTH_SHORT).show()
+                 }
+            }
+        }
+    }
+
 }
