@@ -1337,10 +1337,13 @@ private fun checkBatteryOptimization() {
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
-                    injectMediaStateDetector()
-                    injectAdvancedMediaDetector()
-                    injectStandardMediaDetector()
-                    view?.evaluateJavascript("(function() { AndroidMediaState.parseHtmlForHiddenM3u8(document.documentElement.innerHTML); })();", null)
+                    // Disable JS sniffing on YouTube (handled natively by YoutubeExtractorHelper)
+                    if (url == null || !(url.contains("youtube.com") || url.contains("youtu.be"))) {
+                        injectMediaStateDetector()
+                        injectAdvancedMediaDetector()
+                        injectStandardMediaDetector()
+                        view?.evaluateJavascript("(function() { AndroidMediaState.parseHtmlForHiddenM3u8(document.documentElement.innerHTML); })();", null)
+                    }
                     if (url?.contains("jules.google.com", ignoreCase = true) == true) {
                         injectJulesLongPress(view)
                     }
