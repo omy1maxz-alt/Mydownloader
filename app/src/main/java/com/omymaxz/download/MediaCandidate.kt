@@ -2,36 +2,40 @@ package com.omymaxz.download
 
 data class MediaCandidate(
     val url: String,
-    val type: String, // e.g., "video/mp4", "application/x-mpegURL", "dash", "segment"
-    val isManifest: Boolean,
-    val isSegment: Boolean,
-    var isAd: Boolean = false,
-    val pageUrl: String,
-    val referer: String? = null,
-    val userAgent: String? = null,
-    val cookie: String? = null,
+    var type: String,
+    var isManifest: Boolean = false,
+    var isSegment: Boolean = false,
     var requestCount: Int = 1,
-    val firstSeen: Long = System.currentTimeMillis(),
-    var lastSeen: Long = System.currentTimeMillis(),
-    var score: Int = 0,
+    val firstSeenTime: Long = System.currentTimeMillis(),
+    var lastSeenTime: Long = System.currentTimeMillis(),
     var startedAfterPlayback: Boolean = false,
-    var associatedManifestUrl: String? = null
+    var adScore: Int = 0,
+    var playbackScore: Int = 0,
+    var referer: String? = null,
+    var userAgent: String? = null,
+    var cookie: String? = null
 ) {
-    // Determine the confidence that this is the main playing video
-    fun getConfidence(): Float {
-        if (isAd || isSegment) return 0f
+    val finalScore: Int
+        get() {
+            var score = 0
+            if (isManifest) score += 20
+            score += playbackScore
+            score -= adScore
 
-        var confidence = 0f
+            // Boost based on continued requests (e.g. streaming segments)
+            if (requestCount > 5) score += 10
+            if (requestCount > 15) score += 15
 
-        // Manifests are highly preferred over raw mp4s if segments are actively being requested
-        if (isManifest && requestCount > 0) confidence += 0.4f
+            // Significant boost if this stream started fetching after a play event
+            if (startedAfterPlayback) score += 25
 
-        // High request count for manifests/segments implies active streaming
-        if (requestCount > 5) confidence += 0.3f
+            return score
+        }
 
-        // Started after user pressed play (or player initialized)
-        if (startedAfterPlayback) confidence += 0.3f
-
-        return confidence.coerceIn(0f, 1f)
-    }
+    val confidence: String
+        get() = when {
+            finalScore >= 45 -> "HIGH"
+            finalScore >= 20 -> "MEDIUM"
+            else -> "LOW"
+        }
 }
