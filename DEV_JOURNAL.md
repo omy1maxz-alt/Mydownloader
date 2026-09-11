@@ -55,4 +55,3 @@
 - Integrated youtubedl-android to extract YouTube DASH manifests, allowing full-quality YouTube playback and offline caching in CustomPlayerActivity without breaking existing HLS logic.
 - Enforced yt-dlp to extract direct, combined MP4 formats ('bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best') for YouTube URLs to prevent DASH format errors inside the Custom Player and allow seamless offline MP4 exports via existing caching.
 - Forced YoutubeDL extractors to use 'best[ext=mp4]/best' instead of separate streams to allow ExoPlayer to natively playback direct URLs without hitting DASH container parsing exceptions on unmerged raw chunks.
-- Replaced rigid first-hit URL media sniffing with a robust MediaDetectionEngine. The engine intelligently correlates segments (.m4s, .ts) to parent manifests, tracks playback state dynamically, scores streams confidently against ad networks, and provides native resilience against complex multi-source domains.
