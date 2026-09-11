@@ -9,37 +9,32 @@ import kotlinx.coroutines.withContext
 
 object YoutubeExtractorHelper {
     private const val TAG = "YoutubeExtractorHelper"
-    private var isInitialized = false
 
+    @Synchronized
     fun init(context: Context) {
-        if (isInitialized) return
         try {
-            YoutubeDL.getInstance().init(context)
-            isInitialized = true
+            YoutubeDL.getInstance().init(context.applicationContext)
             Log.d(TAG, "YoutubeDL initialized successfully.")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize YoutubeDL: ${e.message}")
         }
     }
 
-    suspend fun extractMedia(url: String): MediaFile? = withContext(Dispatchers.IO) {
+    suspend fun extractMedia(context: Context, url: String): MediaFile? = withContext(Dispatchers.IO) {
         try {
-            if (!isInitialized) {
-                Log.e(TAG, "YoutubeDL is not initialized.")
-                return@withContext null
-            }
+            // Ensure initialized before extraction
+            init(context)
 
             val request = YoutubeDLRequest(url)
 
-            // CRITICAL FIX: Force yt-dlp to find a combined MP4 format.
-            // This prevents it from returning a DASH manifest (.mpd) or an audio-only file.
-            request.addOption("-f", "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4]/best")
+            // CRITICAL FIX: Force yt-dlp to find the absolute best SINGLE pre-combined MP4 file.
+            // When we use `bestvideo+bestaudio`, yt-dlp needs local FFmpeg to merge them into a single file on disk.
+            // Because we are streaming `info.url` over the network directly into ExoPlayer, we MUST request a pre-merged format.
+            request.addOption("-f", "best[ext=mp4]/best")
 
             val info = YoutubeDL.getInstance().getInfo(request)
 
             val title = info.title ?: "YouTube_Video"
-
-            // Check if we got a direct URL (combined MP4)
             val streamUrl = info.url
 
             if (streamUrl.isNullOrEmpty()) {
@@ -52,7 +47,7 @@ object YoutubeExtractorHelper {
             return@withContext MediaFile(
                 url = streamUrl,
                 title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
-                mimeType = "video/mp4", // Force MP4 MIME type for your player/exporter
+                mimeType = "video/mp4",
                 quality = "Best Available MP4",
                 category = MediaCategory.VIDEO,
                 fileSize = "Unknown",
