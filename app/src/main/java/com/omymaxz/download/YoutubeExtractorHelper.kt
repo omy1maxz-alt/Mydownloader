@@ -15,8 +15,6 @@ object YoutubeExtractorHelper {
         if (isInitialized) return
         try {
             YoutubeDL.getInstance().init(context)
-            // Optional: You can also init FFmpeg here if needed for downloads:
-            // FFmpeg.getInstance().init(context)
             isInitialized = true
             Log.d(TAG, "YoutubeDL initialized successfully.")
         } catch (e: Exception) {
@@ -31,34 +29,31 @@ object YoutubeExtractorHelper {
                 return@withContext null
             }
 
-            // We request the best video and audio.
-            // We use the --dump-json argument implicitly by using getInfo.
             val request = YoutubeDLRequest(url)
+
+            // CRITICAL FIX: Force yt-dlp to find a combined MP4 format.
+            // This prevents it from returning a DASH manifest (.mpd) or an audio-only file.
+            request.addOption("-f", "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4]/best")
+
             val info = YoutubeDL.getInstance().getInfo(request)
 
-            val title = info.title ?: "YouTube Video"
-            val duration = info.duration.toLong()
+            val title = info.title ?: "YouTube_Video"
 
-            // Prefer the DASH manifest if available for adaptive streaming
-            var streamUrl = info.manifestUrl
-            var mimeType = "application/dash+xml"
-
-            // Fallback to a direct combined MP4 if no manifest is available
-            if (streamUrl.isNullOrEmpty()) {
-                streamUrl = info.url
-                mimeType = "video/mp4"
-            }
+            // Check if we got a direct URL (combined MP4)
+            val streamUrl = info.url
 
             if (streamUrl.isNullOrEmpty()) {
-                Log.e(TAG, "Failed to extract any stream URL.")
+                Log.e(TAG, "Failed to extract a direct MP4 stream URL. Info: ${info.title}")
                 return@withContext null
             }
+
+            Log.d(TAG, "Successfully extracted YouTube MP4: $streamUrl")
 
             return@withContext MediaFile(
                 url = streamUrl,
                 title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
-                mimeType = mimeType,
-                quality = "Adaptive",
+                mimeType = "video/mp4", // Force MP4 MIME type for your player/exporter
+                quality = "Best Available MP4",
                 category = MediaCategory.VIDEO,
                 fileSize = "Unknown",
                 language = null,
@@ -66,6 +61,7 @@ object YoutubeExtractorHelper {
             )
         } catch (e: Exception) {
             Log.e(TAG, "YoutubeDL extraction failed: ${e.message}")
+            e.printStackTrace()
             return@withContext null
         }
     }
