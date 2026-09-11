@@ -57,4 +57,10 @@
         android:title="Debug Page"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/menu_toggle_popup_notice"
+        android:title="Show popup notification"
+        android:checkable="true"
+        app:showAsAction="never" />
+
 </menu>
