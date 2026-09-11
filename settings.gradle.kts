@@ -10,7 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // This tells Gradle where to find the GeckoView library
+        maven { url = uri("https://jitpack.io") }
         maven { url = uri("https://maven.mozilla.org/maven2/") }
     }
 }
