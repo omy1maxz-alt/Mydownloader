@@ -296,7 +296,6 @@ class HlsExportService : Service() {
             .setCache(cache)
             .setUpstreamDataSourceFactory(failingUpstream)
             .setCacheKeyFactory(HlsDownloadHelper.customCacheKeyFactory)
-            .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
             .createDataSource()
     }
 
@@ -355,7 +354,41 @@ class HlsExportService : Service() {
             val cacheOnlyFactory = cacheOnlyDataSource()
             val networkFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = false).createDataSource()
 
-            val masterText = HlsDownloadHelper.httpGetString(masterUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentReferer, HlsDownloadHelper.currentCookie) ?: throw Exception("Failed to fetch master playlist")
+            var masterText = ""
+            val masterDataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(masterUrl))
+            try {
+                // 1. Try to read the master playlist strictly from the cache
+                cacheOnlyFactory.open(masterDataSpec)
+                val buffer = ByteArray(1024 * 64)
+                var bytesRead: Int
+                val outputStream = java.io.ByteArrayOutputStream()
+                while (cacheOnlyFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                    outputStream.write(buffer, 0, bytesRead)
+                }
+                masterText = outputStream.toString("UTF-8")
+                writeExportLog("Successfully read master playlist from cache.")
+            } catch (e: Exception) {
+                // 2. Fallback to network (with headers) if not in cache
+                writeExportLog("Master playlist not in cache, fetching from network...")
+                try {
+                    networkFactory.open(masterDataSpec)
+                    val buffer = ByteArray(1024 * 64)
+                    var bytesRead: Int
+                    val outputStream = java.io.ByteArrayOutputStream()
+                    while (networkFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
+                    masterText = outputStream.toString("UTF-8")
+                } finally {
+                    networkFactory.close()
+                }
+            } finally {
+                cacheOnlyFactory.close()
+            }
+
+            if (masterText.isEmpty() || !masterText.contains("#EXTM3U")) {
+                throw Exception("Failed to fetch or parse master playlist")
+            }
             val masterLines = masterText.lines()
 
             // Parse the master playlist using Media3's official parser to guarantee track group index alignment
@@ -511,8 +544,10 @@ class HlsExportService : Service() {
                         val localSegment = File(tmpDir, "seg_${outputFileName}_%05d.$ext".format(segmentIndex))
 
                         val baseSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(segmentUrl))
-                        val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(baseSpec)
-                        val segmentSpec = baseSpec.buildUpon().setKey(cacheKey).build()
+                        var cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(baseSpec)
+                        var segmentSpec = baseSpec.buildUpon().setKey(cacheKey).build()
+
+                        var success = false
                         try {
                             cacheOnlyFactory.open(segmentSpec)
                             val fos = java.io.FileOutputStream(localSegment)
@@ -522,11 +557,61 @@ class HlsExportService : Service() {
                                 fos.write(buffer, 0, bytesRead)
                             }
                             fos.close()
+                            success = true
                         } catch (e: Exception) {
-                            writeExportLog("Failed to read segment from cache: $segmentUrl")
-                            throw Exception("Incomplete cache for segment: $segmentUrl", e)
+                            // Cache miss on primary URI. Fallback to direct SimpleCache file reading.
+                            try {
+                                val uriPath = android.net.Uri.parse(segmentUrl).path
+                                if (uriPath != null) {
+                                    val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
+                                    val keys = cache.keys
+
+                                    // Stricter path matching to avoid false positives
+                                    val matchedKey = keys.firstOrNull { key ->
+                                        runCatching { android.net.Uri.parse(key).path == uriPath }.getOrDefault(false)
+                                    }
+
+                                    if (matchedKey != null) {
+                                        writeExportLog("Domain mismatch detected. Found segment in cache using path fallback: $matchedKey")
+
+                                        // BULLETPROOF FIX: Read directly from SimpleCache spans, bypassing CacheDataSource entirely.
+                                        val spans = cache.getCachedSpans(matchedKey).filter { it.length > 0 }.sortedBy { it.position }
+
+                                        if (spans.isNotEmpty()) {
+                                            java.io.FileOutputStream(localSegment).use { output ->
+                                                var expectedPosition = 0L
+                                                for (span in spans) {
+                                                    if (span.position != expectedPosition) {
+                                                        throw java.io.IOException("CACHE_INCOMPLETE: gap at $expectedPosition")
+                                                    }
+                                                    java.io.FileInputStream(span.file).use { input ->
+                                                        val buffer = ByteArray(64 * 1024)
+                                                        var read: Int
+                                                        while (input.read(buffer).also { read = it } != -1) {
+                                                            output.write(buffer, 0, read)
+                                                        }
+                                                    }
+                                                    expectedPosition += span.length
+                                                }
+                                                output.flush()
+                                            }
+                                            success = true
+                                            writeExportLog("DIRECT CACHE HIT: Copied segment via SimpleCache spans for $matchedKey")
+                                        } else {
+                                            writeExportLog("DIRECT CACHE MISS: No spans found for $matchedKey")
+                                        }
+                                    }
+                                }
+                            } catch (fallbackEx: Exception) {
+                                writeExportLog("Fallback cache lookup failed: ${fallbackEx.message}")
+                            }
                         } finally {
-                            cacheOnlyFactory.close()
+                            try { cacheOnlyFactory.close() } catch (ex: Exception) {}
+                        }
+
+                        if (!success) {
+                            writeExportLog("Failed to read segment from cache: $segmentUrl")
+                            throw Exception("Incomplete cache for segment: $segmentUrl")
                         }
 
                         newLines.add(localSegment.name)
