@@ -50,3 +50,4 @@
 - Fixed ExoPlayer CacheDataSource throwing exceptions during cross-domain fallback lookups in HlsExportService by explicitly setting BOTH the new cacheKey and the URI (Uri.parse(matchedKey)) in the DataSpec.
 - Fixed CacheDataSource state persistence bug by removing FLAG_IGNORE_CACHE_ON_ERROR and instantiating a fresh cache source during fallback.
 - Forced HlsExportService to parse master playlists strictly from cache inside muxToMp4FromCache before attempting a network fetch, preventing CDN blocks (403 Forbidden) from causing unwanted FFmpeg network fallbacks.
+- Replaced CacheDataSource fallback logic with direct SimpleCache physical file extraction (cache.getCachedSpans) to completely eliminate custom CacheKeyFactory interference during cross-domain HLS exports.
