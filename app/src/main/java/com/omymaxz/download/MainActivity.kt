@@ -3128,6 +3128,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val lower = url.lowercase()
         val cleanUrl = lower.substringBefore('?')
         if (isAdOrTrackingUrl(lower)) return false
+        // CRITICAL FIX: Ignore raw YouTube chunk requests. They cause ExoPlayer "ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED"
+        // when passed as a main stream URL. YouTube is handled entirely by YoutubeExtractorHelper via onPageStarted.
+        if (lower.contains("googlevideo.com/videoplayback")) return false
+
         return cleanUrl.endsWith(".mp4") || cleanUrl.endsWith(".mkv") || cleanUrl.endsWith(".webm") || cleanUrl.endsWith(".vtt") || cleanUrl.endsWith(".srt") || lower.contains("videoplayback")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
@@ -5264,7 +5268,7 @@ if (isDesktopMode) {
             android.widget.Toast.makeText(this, "YouTube video detected. Extracting stream...", android.widget.Toast.LENGTH_SHORT).show()
         }
         this.lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            val mediaFile = YoutubeExtractorHelper.extractMedia(url)
+            val mediaFile = YoutubeExtractorHelper.extractMedia(applicationContext, url)
             if (mediaFile != null) {
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                     val existsAlready = synchronized(detectedMediaFiles) {
