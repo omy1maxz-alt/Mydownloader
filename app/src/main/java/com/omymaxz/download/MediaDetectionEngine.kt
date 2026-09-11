@@ -1,158 +1,146 @@
 package com.omymaxz.download
 
-import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
-import android.webkit.CookieManager
-import java.net.URL
 
-class MediaDetectionEngine(private val context: Context) {
-
-    private val candidates = mutableMapOf<String, MediaCandidate>()
+class MediaDetectionEngine(private val callback: (MediaCandidate) -> Unit) {
     private val TAG = "MediaDetectionEngine"
+    private val candidates = mutableMapOf<String, MediaCandidate>()
+    private var isPlaybackActive = false
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var selectionRunnable: Runnable? = null
+    private val DEBOUNCE_MS = 3500L
 
-    // Playback state tracker
-    var isPlaybackActive: Boolean = false
-        set(value) {
-            field = value
-            if (value) {
-                Log.d(TAG, "Playback active signal received.")
-            }
-        }
+    // Maintain a map of active segments back to their presumed manifest
+    private var currentActiveManifestUrl: String? = null
 
-    fun clear() {
-        candidates.clear()
-        isPlaybackActive = false
+    fun notifyPlaybackStarted() {
+        Log.d(TAG, "User playback initialized.")
+        isPlaybackActive = true
     }
 
-    fun processRequest(url: String, referer: String?, userAgent: String?, isFromAdBlocker: Boolean = false): MediaCandidate? {
-        val cleanUrl = url.substringBefore('?')
-        val lowerUrl = cleanUrl.lowercase()
+    fun observeRequest(
+        url: String,
+        pageUrl: String,
+        mimeType: String? = null,
+        referer: String? = null,
+        userAgent: String? = null,
+        cookie: String? = null
+    ) {
+        val lowerUrl = url.lowercase()
+        val cleanUrl = lowerUrl.substringBefore('?')
 
-        // Ad detection (just a signal, not a hard block unless absolutely certain, handled outside)
-        val isLikelyAd = isAdUrl(lowerUrl)
-
-        // Categorize
-        val isHlsManifest = lowerUrl.endsWith(".m3u8")
-        val isDashManifest = lowerUrl.endsWith(".mpd")
-        val isProgressive = lowerUrl.endsWith(".mp4") || lowerUrl.endsWith(".webm") || lowerUrl.endsWith(".mkv")
-
-        val isHlsSegment = lowerUrl.endsWith(".ts")
-        val isDashSegment = lowerUrl.endsWith(".m4s") || lowerUrl.endsWith(".m4f")
-        val isManifest = isHlsManifest || isDashManifest || (lowerUrl.contains("manifest") && !isHlsSegment && !isDashSegment)
-        val isSegment = isHlsSegment || isDashSegment
-
-        if (!isManifest && !isSegment && !isProgressive && !url.contains("videoplayback")) {
-            // Might be an extensionless video, but we need more evidence. We'll track it if it comes through `onMediaDetected`.
-            // For now, if we are just looking at raw intercepted network traffic, we only track obvious media types
-            // to avoid tracking thousands of useless image/json requests.
-            if (!lowerUrl.contains("video") && !lowerUrl.contains("stream")) {
-               return null
-            }
+        // 1. Identify Ad Trackers (Drop completely or flag)
+        val isAd = isAdDomain(lowerUrl)
+        if (isAd) {
+            Log.d(TAG, "Ignoring obvious ad request: $url")
+            return
         }
 
-        // Try to associate segments with their parent manifest if they share a path
-        if (isSegment) {
-            val parentCandidate = findParentManifestForSegment(url)
-            if (parentCandidate != null) {
-                parentCandidate.requestCount++
-                parentCandidate.lastSeenTime = System.currentTimeMillis()
-                if (isPlaybackActive) {
-                    parentCandidate.startedAfterPlayback = true
-                    parentCandidate.playbackScore += 5 // Reward active segments
-                }
-                Log.d(TAG, "Correlated segment to manifest: ${parentCandidate.url}")
-                return parentCandidate
-            }
+        // 2. Classify the request type
+        val isManifest = cleanUrl.endsWith(".m3u8") || cleanUrl.endsWith(".mpd") || lowerUrl.contains("manifest")
+        val isSegment = cleanUrl.endsWith(".ts") || cleanUrl.endsWith(".m4s") || cleanUrl.endsWith(".aac")
+        val isDirectFile = cleanUrl.endsWith(".mp4") || cleanUrl.endsWith(".webm") || cleanUrl.endsWith(".mkv") || lowerUrl.contains("videoplayback")
+
+        if (!isManifest && !isSegment && !isDirectFile) {
+            // Not a known media format
+            return
         }
 
-        // It's a new media entity or a standalone segment without a known manifest
-        val existing = candidates[url]
-        if (existing != null) {
-            existing.requestCount++
-            existing.lastSeenTime = System.currentTimeMillis()
-            if (isPlaybackActive) existing.startedAfterPlayback = true
-            return existing
-        }
-
-        val type = when {
-            isManifest -> "manifest"
-            isSegment -> "segment"
-            isProgressive -> "video"
-            else -> "unknown"
-        }
-
-        val cookie = CookieManager.getInstance().getCookie(url)
-
-        val candidate = MediaCandidate(
-            url = url,
-            type = type,
-            isManifest = isManifest,
-            isSegment = isSegment,
-            referer = referer,
-            userAgent = userAgent,
-            cookie = cookie
-        )
-
-        if (isLikelyAd) candidate.adScore += 50
-        if (isPlaybackActive) {
-            candidate.startedAfterPlayback = true
-            candidate.playbackScore += 10
-        }
-
-        candidates[url] = candidate
-        Log.d(TAG, "New Candidate Tracking: $url | type=$type | manifest=$isManifest")
-        return candidate
-    }
-
-    private fun findParentManifestForSegment(segmentUrl: String): MediaCandidate? {
-        // Simple heuristic: Does the segment share a directory path with a known manifest?
-        try {
-            val segUrlObj = URL(segmentUrl)
-            val segPath = segUrlObj.path.substringBeforeLast("/")
-
-            for ((candUrl, candidate) in candidates) {
-                if (candidate.isManifest) {
-                    val candUrlObj = URL(candUrl)
-                    val candPath = candUrlObj.path.substringBeforeLast("/")
-                    if (segUrlObj.host == candUrlObj.host && segPath == candPath) {
-                        return candidate
+        // 3. Process Request
+        synchronized(candidates) {
+            if (isSegment) {
+                // If a segment is requested, it proves the CURRENT manifest is the actively playing stream
+                currentActiveManifestUrl?.let { manifestUrl ->
+                    val manifestCandidate = candidates[manifestUrl]
+                    if (manifestCandidate != null) {
+                        manifestCandidate.requestCount++
+                        manifestCandidate.lastSeen = System.currentTimeMillis()
+                        manifestCandidate.score += 2
+                        Log.d(TAG, "Segment observed. Boosting active manifest: $manifestUrl (Score: ${manifestCandidate.score})")
+                        scheduleSelection()
                     }
                 }
+                return // We don't want to list the segment itself as a playable candidate
             }
-        } catch (e: Exception) {
-            // Ignore malformed URLs
+
+            val existing = candidates[url]
+            if (existing != null) {
+                existing.requestCount++
+                existing.lastSeen = System.currentTimeMillis()
+                if (existing.isManifest || existing.type == "video/mp4") {
+                    currentActiveManifestUrl = url
+                    scheduleSelection()
+                }
+            } else {
+                val candidate = MediaCandidate(
+                    url = url,
+                    type = mimeType ?: if (isManifest) "manifest" else "video",
+                    isManifest = isManifest,
+                    isSegment = isSegment,
+                    isAd = false,
+                    pageUrl = pageUrl,
+                    referer = referer,
+                    userAgent = userAgent,
+                    cookie = cookie,
+                    startedAfterPlayback = isPlaybackActive
+                )
+
+                // Base Scoring
+                if (isManifest) candidate.score += 10
+                if (isDirectFile) candidate.score += 5
+                if (isPlaybackActive) candidate.score += 15 // High value for things requested exactly when play is pressed
+                if (lowerUrl.contains("master") || lowerUrl.contains("index")) candidate.score += 5
+
+                candidates[url] = candidate
+                Log.d(TAG, "New Candidate Found: $url (Score: ${candidate.score})")
+
+                if (isManifest || isDirectFile) {
+                    currentActiveManifestUrl = url
+                    scheduleSelection()
+                }
+            }
         }
-        return null
     }
 
-    fun getBestCandidate(): MediaCandidate? {
-        if (candidates.isEmpty()) return null
-
-        // Filter out standalone segments if we have actual manifests or progressive videos
-        val playables = candidates.values.filter { !it.isSegment || (it.isSegment && candidates.values.none { c -> c.isManifest }) }
-
-        if (playables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
-
-        return playables.maxByOrNull { it.finalScore }
-    }
-
-    fun getCandidate(url: String): MediaCandidate? = candidates[url]
-
-    fun logCandidatesState() {
-        Log.d(TAG, "=== Current Candidates ===")
-        candidates.values.forEach {
-            Log.d(TAG, "Candidate: type=${it.type} manifest=${it.isManifest} reqs=${it.requestCount} afterPlay=${it.startedAfterPlayback} ad=${it.adScore} playScore=${it.playbackScore} FINAL=${it.finalScore} CONF=${it.confidence}\n URL: ${it.url}")
-        }
-        Log.d(TAG, "==========================")
-    }
-
-    private fun isAdUrl(url: String): Boolean {
-        val lowerUrl = url.lowercase()
+    private fun isAdDomain(url: String): Boolean {
         val adKeywords = listOf(
             "vast", "preroll", "midroll", "postroll", "doubleclick", "googlesyndication",
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
-            "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver"
+            "ad.", "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver",
+            "googleads.", "doubleclick.net", "adsystem"
         )
-        return adKeywords.any { lowerUrl.contains(it) }
+        return adKeywords.any { url.contains(it) }
+    }
+
+    private fun scheduleSelection() {
+        selectionRunnable?.let { mainHandler.removeCallbacks(it) }
+        selectionRunnable = Runnable { evaluateAndSelect() }
+        mainHandler.postDelayed(selectionRunnable!!, DEBOUNCE_MS)
+    }
+
+    private fun evaluateAndSelect() {
+        synchronized(candidates) {
+            val bestCandidate = candidates.values
+                .filter { !it.isAd && !it.isSegment }
+                .maxByOrNull { it.score + (it.getConfidence() * 100).toInt() }
+
+            if (bestCandidate != null && bestCandidate.getConfidence() >= 0.3f) {
+                Log.d(TAG, "Selected MAIN VIDEO: ${bestCandidate.url} | Score: ${bestCandidate.score} | Confidence: ${bestCandidate.getConfidence()}")
+                callback(bestCandidate)
+            } else {
+                Log.d(TAG, "No candidate reached high confidence yet. Still observing...")
+            }
+        }
+    }
+
+    fun clear() {
+        synchronized(candidates) {
+            candidates.clear()
+            currentActiveManifestUrl = null
+            isPlaybackActive = false
+            selectionRunnable?.let { mainHandler.removeCallbacks(it) }
+        }
     }
 }
