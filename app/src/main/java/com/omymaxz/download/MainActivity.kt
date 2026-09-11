@@ -1725,7 +1725,20 @@ private fun checkBatteryOptimization() {
                     notifContainer.addView(buttonContainer)
 
                     bottomSheetDialog.setContentView(notifContainer)
-                    bottomSheetDialog.show()
+
+                    val popupPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                    val showNotice = popupPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
+                    if (showNotice) {
+                        bottomSheetDialog.show()
+                    } else {
+                        // Keep it invisible but alive if the user intends to block *notifications*
+                        // but not necessarily the underlying functionality.
+                        // However, since it is a pop-up block notice, and the user disabled notifications,
+                        // it's safer to just kill the pop-up entirely to prevent invisible tracking windows.
+                        popupWrapper.removeView(newWebView)
+                        rootLayout.removeView(popupWrapper)
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ newWebView.destroy() }, 500)
+                    }
 
                     // Try to apply theme colors to this popup
                     val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
