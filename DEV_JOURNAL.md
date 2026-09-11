@@ -53,3 +53,4 @@
 - Replaced CacheDataSource fallback logic with direct SimpleCache physical file extraction (cache.getCachedSpans) to completely eliminate custom CacheKeyFactory interference during cross-domain HLS exports.
 - Completely rewrote IframeSniffer.kt to implement candidate tracking, debouncing, and scoring. Ad-keywords are explicitly blacklisted in MainActivity.kt's shouldInterceptRequest to prevent pre-roll ads from being captured and sent to the download UI.
 - Integrated youtubedl-android to extract YouTube DASH manifests, allowing full-quality YouTube playback and offline caching in CustomPlayerActivity without breaking existing HLS logic.
+- Enforced yt-dlp to extract direct, combined MP4 formats ('bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best') for YouTube URLs to prevent DASH format errors inside the Custom Player and allow seamless offline MP4 exports via existing caching.
