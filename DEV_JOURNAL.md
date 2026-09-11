@@ -51,3 +51,4 @@
 - Fixed CacheDataSource state persistence bug by removing FLAG_IGNORE_CACHE_ON_ERROR and instantiating a fresh cache source during fallback.
 - Forced HlsExportService to parse master playlists strictly from cache inside muxToMp4FromCache before attempting a network fetch, preventing CDN blocks (403 Forbidden) from causing unwanted FFmpeg network fallbacks.
 - Replaced CacheDataSource fallback logic with direct SimpleCache physical file extraction (cache.getCachedSpans) to completely eliminate custom CacheKeyFactory interference during cross-domain HLS exports.
+- Completely rewrote IframeSniffer.kt to implement candidate tracking, debouncing, and scoring. Ad-keywords are explicitly blacklisted in MainActivity.kt's shouldInterceptRequest to prevent pre-roll ads from being captured and sent to the download UI.

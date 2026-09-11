@@ -1317,6 +1317,10 @@ private fun checkBatteryOptimization() {
                         return createEmptyResponse()
                     }
                     if (isMediaUrl(url)) {
+                        if (isAdUrl(url)) {
+                            android.util.Log.d("WebViewClient", "Ignoring AD request: $url")
+                            return super.shouldInterceptRequest(view, request)
+                        }
                         // Hook for detecting upstream network requests bypassing JS blobs.
                         // We register this internally so `CustomPlayerActivity` can use it when playing active streams.
                         if (url.contains(".m3u8", ignoreCase = true) || url.endsWith(".mp4") || url.contains("videoplayback")) {
@@ -2389,10 +2393,17 @@ private fun injectMediaStateDetector() {
                             currentState.title, currentState.isPlaying, currentState.currentTime,
                             currentState.duration, currentState.hasNext, currentState.hasPrevious
                         );
-                        if (this.mediaElement && this.mediaElement.currentSrc) {
-                            AndroidMediaState.onVideoFound(this.mediaElement.currentSrc);
-                        } else if (this.mediaElement && this.mediaElement.src) {
-                            AndroidMediaState.onVideoFound(this.mediaElement.src);
+                        if (this.mediaElement) {
+                            let vidSrc = this.mediaElement.currentSrc || this.mediaElement.src;
+                            if (vidSrc) {
+                                if (this.mediaElement.duration > 0 && this.mediaElement.duration < 45) {
+                                    console.log("Ignoring short video on auto-found (likely ad): " + this.mediaElement.duration + "s");
+                                } else if (this.mediaElement.videoWidth && this.mediaElement.videoWidth < 100) {
+                                    console.log("Ignoring tiny video on auto-found (likely ad).");
+                                } else {
+                                    AndroidMediaState.onVideoFound(vidSrc);
+                                }
+                            }
                         }
                         this.lastInformedState = currentState;
                     }
@@ -2483,6 +2494,16 @@ private fun injectMediaStateDetector() {
                         }
 
                         if (src) {
+                            // Smart checks to ignore obvious pre-roll or hidden ads
+                            if (this.mediaElement.duration > 0 && this.mediaElement.duration < 45) {
+                                console.log("Ignoring short video (likely ad): " + this.mediaElement.duration + "s");
+                                return;
+                            }
+                            if (this.mediaElement.videoWidth && this.mediaElement.videoWidth < 100) {
+                                console.log("Ignoring tiny video (likely ad): " + this.mediaElement.videoWidth + "px wide");
+                                return;
+                            }
+
                             let type = this.mediaElement.tagName.toLowerCase();
                             let title = this.targetDocument.title || document.title;
                             if (window.AndroidMediaState && window.AndroidMediaState.onDownloadActiveMedia) {
@@ -3082,6 +3103,16 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         clipboard.setPrimaryClip(clip)
         Toast.makeText(this, "URL copied", Toast.LENGTH_SHORT).show()
     }
+    private fun isAdUrl(url: String): Boolean {
+        val lowerUrl = url.lowercase()
+        val adKeywords = listOf(
+            "vast", "preroll", "midroll", "postroll", "doubleclick", "googlesyndication",
+            "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
+            "ad.", "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver"
+        )
+        return adKeywords.any { lowerUrl.contains(it) }
+    }
+
     private fun isMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
         val cleanUrl = lower.substringBefore('?')
