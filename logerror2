@@ -1,780 +1,280 @@
-[2026-09-10 22:39:27.974 Uid(value=10806):31786:31786 D/ActivityThread]
-Activity = com.omymaxz.download.CustomPlayerActivity@278f9b0, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.11 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 22:39:27.977 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@278f9b0, reason: AppDarkModeEnable
-
-[2026-09-10 22:39:28.631 Uid(value=10806):31786:31786 D/Activity]
-Activity = ActivityInfo{13c09bd com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 22:39:30.154 Uid(value=10806):31786:31786 D/ActivityThread]
-Activity = com.omymaxz.download.CustomPlayerActivity@278f9b0, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w785dp h393dp 440dpi nrml long hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 2400, 1080) mAppBounds=Rect(130, 0 - 2289, 1080) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_270 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_270 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.14 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 22:39:30.155 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@278f9b0, reason: AppDarkModeEnable
-
-[2026-09-10 22:39:30.162 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:39:30.833 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:39:31.616 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:39:31.688 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@278f9b0, reason: AppDarkModeEnable
-
-[2026-09-10 22:39:31.718 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@278f9b0, reason: AppDarkModeEnable
-
-[2026-09-10 22:39:31.806 Uid(value=10806):31786:31786 D/VRI[PopupWindow:b0ff88a]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:43:10.849 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:43:12.279 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:44:39.892 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:44:40.411 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:48:52.781 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:48:53.468 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:49:54.886 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:11.607 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:12.744 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:13.980 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:15.165 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:16.676 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:21.989 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:22.718 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:24.574 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:31.597 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:33.164 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:50:35.151 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:51:17.756 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:51:18.517 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:51:35.326 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:51:35.912 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:51:37.203 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:51:37.821 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:51:38.320 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:51:40.343 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:52:40.012 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:52:46.966 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:52:47.773 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:52:49.814 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:52:50.599 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:52:52.028 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:29.356 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:30.272 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:31.833 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:33.568 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:34.855 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:36.159 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:36.740 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:37.426 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:45.581 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:46.191 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:47.601 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:48.061 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:49.244 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:58:49.719 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:05.819 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:06.307 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:08.030 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:08.458 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:09.207 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:09.806 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:10.629 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:11.059 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:16.424 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:17.021 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:57.300 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:58.223 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:58.374 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@278f9b0, reason: AppDarkModeEnable
-
-[2026-09-10 22:59:58.391 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-
-[2026-09-10 22:59:58.392 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
-
-[2026-09-10 22:59:58.392 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-window type: 2
-
-[2026-09-10 22:59:58.392 Uid(value=10806):31786:31786 D/MiuiNBIManagerImpl]
-mRemote has create
-
-[2026-09-10 22:59:58.392 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-isNBIEnable=false
-
-[2026-09-10 22:59:58.411 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@278f9b0, reason: AppDarkModeEnable
-
-[2026-09-10 22:59:59.801 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 22:59:59.893 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onDetachedFromWindow
-
-[2026-09-10 23:00:00.954 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:03.136 Uid(value=10806):31786:31786 D/ActivityThread]
-Activity = com.omymaxz.download.CustomPlayerActivity@278f9b0, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw122dp w216dp h122dp 440dpi smll hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(441, 1891 - 1036, 2226) mAppBounds=Rect(441, 1891 - 1036, 2226) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_270 mWindowingMode=pinned mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_270 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.18 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 23:00:03.138 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@278f9b0, reason: AppDarkModeEnable
-
-[2026-09-10 23:00:03.892 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@278f9b0, reason: AppDarkModeEnable
-
-[2026-09-10 23:00:03.900 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:06.644 Uid(value=10806):31786:31786 D/ActivityThread]
-Activity = com.omymaxz.download.CustomPlayerActivity@278f9b0, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.21 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 23:00:06.646 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@278f9b0, reason: AppDarkModeEnable
-
-[2026-09-10 23:00:06.648 Uid(value=10806):31786:31786 D/UserSceneDetector]
-invoke error.
-
-[2026-09-10 23:00:07.895 Uid(value=10806):31786:31786 D/Activity]
-Activity = ActivityInfo{13c09bd com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 23:00:08.310 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:11.878 Uid(value=10806):31786:31786 D/ActivityThread]
-Activity = com.omymaxz.download.CustomPlayerActivity@278f9b0, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w785dp h393dp 440dpi nrml long hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 2400, 1080) mAppBounds=Rect(130, 0 - 2289, 1080) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_270 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_270 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.24 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 23:00:11.879 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@278f9b0, reason: AppDarkModeEnable
-
-[2026-09-10 23:00:11.887 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:12.670 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:15.904 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:16.420 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:16.860 Uid(value=10806):31786:27368 W/BpBinder]
-PerfMonitor binderTransact: time=285ms interface=android.media.IAudioTrack code=2
-
-[2026-09-10 23:00:17.867 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:32.584 Uid(value=10806):31786:31786 D/UserSceneDetector]
-invoke error.
-
-[2026-09-10 23:00:34.000 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:39.021 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:51.854 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:00:55.206 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:14.799 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:17.815 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:20.631 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:24.806 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:27.410 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:28.164 Uid(value=10806):31786:31786 D/VRI[CustomPlayerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:29.540 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:29.540 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:29.562 Uid(value=10806):31786:31786 D/Activity]
-Activity = ActivityInfo{f829545 com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w785dp h393dp 440dpi nrml long hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 2400, 1080) mAppBounds=Rect(130, 0 - 2289, 1080) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_270 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_270 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.3 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 23:01:30.336 Uid(value=10806):31786:31786 D/UserSceneDetector]
-invoke error.
-
-[2026-09-10 23:01:30.563 Uid(value=10806):31786:31786 D/UserSceneDetector]
-invoke error.
-
-[2026-09-10 23:01:30.566 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:31.049 Uid(value=10806):31786:31786 D/UserSceneDetector]
-invoke error.
-
-[2026-09-10 23:01:31.049 Uid(value=10806):31786:14453 D/UserSceneDetector]
-invoke error.
-
-[2026-09-10 23:01:32.762 Uid(value=10806):31786:31786 W/MessageMonitor]
-PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onDestroy took 291ms
-
-[2026-09-10 23:01:32.764 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onDetachedFromWindow
-
-[2026-09-10 23:01:32.782 Uid(value=10806):31786:31786 D/UserSceneDetector]
-invoke error.
-
-[2026-09-10 23:01:32.811 Uid(value=10806):31786:31786 D/ActivityThread]
-Activity = com.omymaxz.download.MainActivity@567ba6e, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.16 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 23:01:32.818 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:32.819 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:32.854 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:32.889 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:32.978 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:34.101 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:34.209 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onDetachedFromWindow
-
-[2026-09-10 23:01:35.364 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:35.493 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:35.501 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-09-10 23:01:35.501 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-09-10 23:01:35.501 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-window type: 2
-
-[2026-09-10 23:01:35.502 Uid(value=10806):31786:31786 D/MiuiNBIManagerImpl]
-mRemote has create
-
-[2026-09-10 23:01:35.502 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-isNBIEnable=false
-
-[2026-09-10 23:01:35.515 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:36.291 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:38.966 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:39.042 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onDetachedFromWindow
-
-[2026-09-10 23:01:39.093 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:39.101 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-09-10 23:01:39.101 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-09-10 23:01:39.101 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-window type: 2
-
-[2026-09-10 23:01:39.102 Uid(value=10806):31786:31786 D/MiuiNBIManagerImpl]
-mRemote has create
-
-[2026-09-10 23:01:39.102 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-isNBIEnable=false
-
-[2026-09-10 23:01:39.129 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:39.971 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:40.087 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:40.096 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onDetachedFromWindow
-
-[2026-09-10 23:01:40.105 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-09-10 23:01:40.105 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-09-10 23:01:40.105 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-window type: 2
-
-[2026-09-10 23:01:40.105 Uid(value=10806):31786:31786 D/MiuiNBIManagerImpl]
-mRemote has create
-
-[2026-09-10 23:01:40.105 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-isNBIEnable=false
-
-[2026-09-10 23:01:40.166 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:40.672 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:41.448 Uid(value=10806):31786:31786 D/UserSceneDetector]
-invoke error.
-
-[2026-09-10 23:01:53.453 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:01:55.587 Uid(value=10806):31786:31786 D/UserSceneDetector]
-invoke error.
-
-[2026-09-10 23:01:55.592 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:55.600 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:55.624 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:01:55.647 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:02:00.813 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:00.815 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3eb]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:00.911 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:00.935 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:00.983 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.017 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.053 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.151 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.163 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.183 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.267 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.314 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.318 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.356 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.374 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.392 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.404 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.466 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.490 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.515 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.584 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.835 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.894 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:01.998 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:02.086 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:02.332 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:02.651 Uid(value=10806):31786:31786 D/VRI[PopupWindow:3ea]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:09.993 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:10.022 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onDetachedFromWindow
-
-[2026-09-10 23:02:32.339 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:02:32.400 Uid(value=10806):31786:31786 D/Activity]
-Activity = ActivityInfo{f829545 com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 23:02:33.112 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:33.184 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:02:33.193 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-09-10 23:02:33.193 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-09-10 23:02:33.193 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-window type: 2
-
-[2026-09-10 23:02:33.195 Uid(value=10806):31786:31786 D/MiuiNBIManagerImpl]
-mRemote has create
-
-[2026-09-10 23:02:33.195 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-isNBIEnable=false
-
-[2026-09-10 23:02:33.210 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:02:35.405 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:35.488 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onDetachedFromWindow
-
-[2026-09-10 23:02:35.547 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:02:35.563 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-09-10 23:02:35.563 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
-
-[2026-09-10 23:02:35.563 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-window type: 2
-
-[2026-09-10 23:02:35.563 Uid(value=10806):31786:31786 D/MiuiNBIManagerImpl]
-mRemote has create
-
-[2026-09-10 23:02:35.563 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-isNBIEnable=false
-
-[2026-09-10 23:02:35.590 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@567ba6e, reason: AppDarkModeEnable
-
-[2026-09-10 23:02:37.000 Uid(value=10806):31786:31786 D/VRI[MainActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:02:37.094 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onDetachedFromWindow
-
-[2026-09-10 23:02:37.125 Uid(value=10806):31786:13615 I/ActivityThread]
-HardwareRenderer preload  done
-
-[2026-09-10 23:02:37.167 Uid(value=10806):31786:31786 D/Activity]
-Activity = ActivityInfo{2bb934d com.omymaxz.download.LogcatViewerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
-
-[2026-09-10 23:02:37.172 Uid(value=10806):31786:31786 I/ForceDarkHelperStubImpl]
-setViewRootImplForceDark: false for com.omymaxz.download.LogcatViewerActivity@33d1d00, reason: AppDarkModeEnable
-
-[2026-09-10 23:02:37.179 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity
-
-[2026-09-10 23:02:37.179 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity
-
-[2026-09-10 23:02:37.179 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-window type: 1
-
-[2026-09-10 23:02:37.179 Uid(value=10806):31786:31786 D/MiuiNBIManagerImpl]
-mRemote has create
-
-[2026-09-10 23:02:37.179 Uid(value=10806):31786:31786 D/DecorViewImmersiveImpl]
-isNBIEnable=false
-
-[2026-09-10 23:02:37.573 Uid(value=10806):31786:31786 D/UserSceneDetector]
-invoke error.
-
-[2026-09-10 23:02:38.639 Uid(value=10806):31786:31786 D/VRI[LogcatViewerActivity]]
-getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
-
-[2026-09-10 23:05:01.028 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=25600 fps=110 q=-1.0 size=  119808kB time=00:17:03.95 bitrate= 958.5kbits/s speed=4.42x    
-
-[2026-09-10 23:05:01.128 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd019800] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:05.763 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=25725 fps=109 q=-1.0 size=  120832kB time=00:17:08.94 bitrate= 962.0kbits/s speed=4.35x    
-
-[2026-09-10 23:05:05.885 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd049e90] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:07.857 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=25850 fps=108 q=-1.0 size=  122368kB time=00:17:13.93 bitrate= 969.5kbits/s speed=4.33x    
-
-[2026-09-10 23:05:07.928 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd019800] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:09.851 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=25962 fps=108 q=-1.0 size=  123648kB time=00:17:18.48 bitrate= 975.4kbits/s speed=4.31x    
-
-[2026-09-10 23:05:10.015 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd049e90] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:10.198 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd019800] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:12.532 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=26261 fps=108 q=-1.0 size=  125440kB time=00:17:30.40 bitrate= 978.3kbits/s speed=4.32x    
-
-[2026-09-10 23:05:13.077 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=26384 fps=108 q=-1.0 size=  126208kB time=00:17:35.32 bitrate= 979.7kbits/s speed=4.33x    
-
-[2026-09-10 23:05:13.594 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=26402 fps=108 q=-1.0 size=  126464kB time=00:17:36.04 bitrate= 981.0kbits/s speed=4.32x    
-
-[2026-09-10 23:05:14.098 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=26414 fps=108 q=-1.0 size=  126720kB time=00:17:36.53 bitrate= 982.5kbits/s speed=4.31x    
-
-[2026-09-10 23:05:14.889 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=26437 fps=108 q=-1.0 size=  126976kB time=00:17:37.43 bitrate= 983.7kbits/s speed= 4.3x    
-
-[2026-09-10 23:05:15.025 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd049e90] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:15.915 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=26453 fps=107 q=-1.0 size=  127232kB time=00:17:38.08 bitrate= 985.1kbits/s speed=4.29x    
-
-[2026-09-10 23:05:15.961 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd019800] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:18.671 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=26561 fps=106 q=-1.0 size=  128512kB time=00:17:42.40 bitrate= 990.9kbits/s speed=4.26x    
-
-[2026-09-10 23:05:18.733 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd049e90] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:20.595 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=26714 fps=106 q=-1.0 size=  130048kB time=00:17:48.53 bitrate= 997.0kbits/s speed=4.25x    
-
-[2026-09-10 23:05:20.709 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd019800] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:21.071 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd049e90] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:21.436 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=27056 fps=107 q=-1.0 size=  132352kB time=00:18:02.23 bitrate=1001.8kbits/s speed=4.29x    
-
-[2026-09-10 23:05:21.471 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd019800] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:22.526 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=27166 fps=107 q=-1.0 size=  132608kB time=00:18:06.60 bitrate= 999.7kbits/s speed=4.29x    
-
-[2026-09-10 23:05:23.031 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=27345 fps=108 q=-1.0 size=  134144kB time=00:18:13.77 bitrate=1004.7kbits/s speed=4.31x    
-
-[2026-09-10 23:05:23.035 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd049e90] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:23.368 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd019800] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:24.313 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=27470 fps=108 q=-1.0 size=  134912kB time=00:18:18.81 bitrate=1005.8kbits/s speed=4.31x    
-
-[2026-09-10 23:05:25.174 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=27672 fps=108 q=-1.0 size=  136448kB time=00:18:26.84 bitrate=1009.9kbits/s speed=4.32x    
-
-[2026-09-10 23:05:25.259 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd049e90] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:25.438 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd019800] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:26.622 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=27776 fps=108 q=-1.0 size=  137472kB time=00:18:31.05 bitrate=1013.6kbits/s speed=4.31x    
-
-[2026-09-10 23:05:26.655 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd049e90] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:27.606 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=27905 fps=108 q=-1.0 size=  137728kB time=00:18:36.16 bitrate=1010.8kbits/s speed=4.32x    
-
-[2026-09-10 23:05:27.645 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd019800] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:28.632 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-frame=28127 fps=108 q=-1.0 size=  138752kB time=00:18:45.05 bitrate=1010.3kbits/s speed=4.34x    
-
-[2026-09-10 23:05:28.663 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd049e90] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
-[2026-09-10 23:05:28.901 Uid(value=10806):31786:18594 I/ffmpeg-kit]
-[https @ 0xb400007dfd019800] Opening 'https://hls08.streamingcdn5.site/13677/Ep10.v368_index0.ts' for reading
-
+ mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-12 04:09:42.973 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:43.243 16488 16488 D UserSceneDetector: invoke error.
+09-12 04:09:44.276 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:44.894 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:47.583 16488 16488 D UserSceneDetector: invoke error.
+09-12 04:09:47.649 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:47.948 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:54.228 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:55.148 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:55.295 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:55.384 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:55.534 16488 16488 D UserSceneDetector: invoke error.
+09-12 04:09:56.422 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:56.597 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:09:56.618 16488 16488 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-12 04:09:56.618 16488 16488 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-12 04:09:56.619 16488 16488 D DecorViewImmersiveImpl: window type: 2
+09-12 04:09:56.619 16488 16488 D MiuiNBIManagerImpl: mRemote has create
+09-12 04:09:56.619 16488 16488 D DecorViewImmersiveImpl: isNBIEnable=false
+09-12 04:09:56.654 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:09:57.627 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:57.763 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:09:57.775 16488 16488 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-12 04:09:57.792 16488 16488 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-12 04:09:57.792 16488 16488 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-12 04:09:57.792 16488 16488 D DecorViewImmersiveImpl: window type: 2
+09-12 04:09:57.792 16488 16488 D MiuiNBIManagerImpl: mRemote has create
+09-12 04:09:57.792 16488 16488 D DecorViewImmersiveImpl: isNBIEnable=false
+09-12 04:09:57.817 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:09:59.188 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:09:59.353 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:09:59.367 16488 16488 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-12 04:09:59.381 16488 16488 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-12 04:09:59.381 16488 16488 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-12 04:09:59.381 16488 16488 D DecorViewImmersiveImpl: window type: 2
+09-12 04:09:59.381 16488 16488 D MiuiNBIManagerImpl: mRemote has create
+09-12 04:09:59.381 16488 16488 D DecorViewImmersiveImpl: isNBIEnable=false
+09-12 04:09:59.407 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:10:03.372 16488 16488 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-12 04:10:03.511 16488 20578 I ActivityThread: HardwareRenderer preload  done
+09-12 04:10:03.802 16488 16488 W MessageMonitor: PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onStart took 163ms
+09-12 04:10:03.803 16488 16488 D Activity: Activity = ActivityInfo{e983b41 com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-12 04:10:03.809 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@d0129c2, reason: AppDarkModeEnable
+09-12 04:10:03.823 16488 16488 D UserSceneDetector: invoke error.
+09-12 04:10:03.825 16488 16488 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-12 04:10:03.826 16488 16488 D DecorViewImmersiveImpl: getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-12 04:10:03.826 16488 16488 D DecorViewImmersiveImpl: window type: 1
+09-12 04:10:03.826 16488 16488 D MiuiNBIManagerImpl: mRemote has create
+09-12 04:10:03.826 16488 16488 D DecorViewImmersiveImpl: isNBIEnable=false
+09-12 04:10:04.195 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@d0129c2, reason: AppDarkModeEnable
+09-12 04:10:04.215 16488 16488 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-12 04:10:04.215 16488 16488 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-12 04:10:04.215 16488 16488 D DecorViewImmersiveImpl: window type: 2
+09-12 04:10:04.215 16488 16488 D MiuiNBIManagerImpl: mRemote has create
+09-12 04:10:04.215 16488 16488 D DecorViewImmersiveImpl: isNBIEnable=false
+09-12 04:10:04.240 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@d0129c2, reason: AppDarkModeEnable
+09-12 04:10:07.036 16488 16488 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:09.048 16488 16488 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:09.102 16488 16488 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-12 04:10:10.340 16488 16488 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:10.579 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@d0129c2, reason: AppDarkModeEnable
+09-12 04:10:10.604 16488 16488 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-12 04:10:10.604 16488 16488 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+09-12 04:10:10.604 16488 16488 D DecorViewImmersiveImpl: window type: 2
+09-12 04:10:10.604 16488 16488 D MiuiNBIManagerImpl: mRemote has create
+09-12 04:10:10.604 16488 16488 D DecorViewImmersiveImpl: isNBIEnable=false
+09-12 04:10:10.630 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@d0129c2, reason: AppDarkModeEnable
+09-12 04:10:11.905 16488 16488 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:11.992 16488 16488 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-12 04:10:12.966 16488 16488 D VRI[CustomPlayerActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:13.637 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:10:13.654 16488 16488 D Activity: Activity = ActivityInfo{ce8d67e com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-12 04:10:14.273 16488 16488 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-12 04:10:15.035 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:15.700 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:15.741 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:17.250 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:17.390 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:10:17.410 16488 16488 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-12 04:10:17.410 16488 16488 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-12 04:10:17.410 16488 16488 D DecorViewImmersiveImpl: window type: 2
+09-12 04:10:17.411 16488 16488 D MiuiNBIManagerImpl: mRemote has create
+09-12 04:10:17.411 16488 16488 D DecorViewImmersiveImpl: isNBIEnable=false
+09-12 04:10:17.426 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:10:19.331 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:19.394 16488 16488 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-12 04:10:19.467 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:10:19.485 16488 16488 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-12 04:10:19.485 16488 16488 D DecorViewImmersiveImpl: getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+09-12 04:10:19.485 16488 16488 D DecorViewImmersiveImpl: window type: 2
+09-12 04:10:19.485 16488 16488 D MiuiNBIManagerImpl: mRemote has create
+09-12 04:10:19.485 16488 16488 D DecorViewImmersiveImpl: isNBIEnable=false
+09-12 04:10:19.519 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@7a4d5d1, reason: AppDarkModeEnable
+09-12 04:10:29.091 16488 16488 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=1009060969, downTime=1009060969, phoneEventTime=04:10:29.083 } moveCount:0
+09-12 04:10:29.092 16488 16488 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+09-12 04:10:29.168 16488 16488 I MIUIInput: [MotionEvent] ViewRootImpl windowName 'com.omymaxz.download.debug/com.omymaxz.download.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=1009061050, downTime=1009060969, phoneEventTime=04:10:29.163 } moveCount:0
+09-12 04:10:29.206 16488 16488 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda12@7d3d5f2
+09-12 04:10:29.207 16488 16488 D DecorViewImmersiveImpl: onDetachedFromWindow
+09-12 04:10:29.225 16488 16488 W InputEventReceiver: Attempted to finish an input event but the input event receiver has already been disposed.
+09-12 04:10:29.246 16488 20578 I ActivityThread: HardwareRenderer preload  done
+09-12 04:10:29.266 16488 20678 D AAudio  : AAudioStream_requestStop(s#3) called
+09-12 04:10:29.266 16488 20678 D AAudio  : AAudioStream_close(s#3) called ---------------
+09-12 04:10:29.266 16488 20678 D AAudioStream: setState(s#3) from 10 to 11
+09-12 04:10:29.266 16488 20678 I AudioTrack: stop(sessionID=137561), packageName: com.omymaxz.download.debug
+09-12 04:10:29.266 16488 20678 D AudioTrack: stop(67750): prior state:STATE_STOPPED
+09-12 04:10:29.266 16488 20678 D AudioTrack: ~AudioTrack(sessionID=137561)
+09-12 04:10:29.266 16488 20678 I AudioTrack: stop(sessionID=137561), packageName: com.omymaxz.download.debug
+09-12 04:10:29.266 16488 20678 D AudioTrack: stop(67750): prior state:STATE_STOPPED
+09-12 04:10:29.267 16488 20678 D AudioTrackStub: ~AudioTrackStub() destroy
+09-12 04:10:29.268 16488 20678 D AAudioStream: setState(s#3) from 11 to 12
+09-12 04:10:29.268 16488 20678 D AAudioStream: ~AudioStream(s#3) mPlayerBase strongCount = 2
+09-12 04:10:29.268 16488 20678 D AAudio  : AAudioStream_close(s#3) returned 0 ---------
+09-12 04:10:29.275 16488 16488 D ScrollerOptimizationManager: registerConfigChangedListener
+09-12 04:10:29.280 16488 16488 D Activity: Activity = ActivityInfo{f21dc27 com.omymaxz.download.LogcatViewerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.36 s.2 fontWeightAdjustment=0/d themeChanged=7 themeChangedFlags=268466329 display=0 extraData = Bundle[{key_var_font_scale=50}] screenType=0/0}
+09-12 04:10:29.281 16488 16488 D SecurityManager: checkAccessControl flag0
+09-12 04:10:29.285 16488 16488 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.LogcatViewerActivity@56380fa, reason: AppDarkModeEnable
+09-12 04:10:29.297 16488 16488 D DecorViewImmersiveImpl: onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity
+09-12 04:10:29.298 16488 16488 D DecorViewImmersiveImpl: getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity
+09-12 04:10:29.298 16488 16488 D DecorViewImmersiveImpl: window type: 1
+09-12 04:10:29.298 16488 16488 D MiuiNBIManagerImpl: mRemote has create
+09-12 04:10:29.298 16488 16488 D DecorViewImmersiveImpl: isNBIEnable=false
+09-12 04:10:29.325 16488 16488 W libc    : Access denied finding property "ro.vendor.display.support_round_corner_decoration_composite"
+09-12 04:10:29.326 16488 16488 W libc    : Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+09-12 04:10:29.326 16488 16488 I .download.debug: 【MiuiBoosterUtils】checkUtil disable.
+09-12 04:10:29.326 16488 16488 I .download.debug: 【MiuiBoosterUtils】package permission check disable.
+09-12 04:10:29.326 16488 16488 I .download.debug: 【MiuiBoosterUtils】get Service disable.
+09-12 04:10:29.328 16488 23865 I .download.debug: 【MiuiBoosterUtils】improve disable.
+09-12 04:10:29.329 16488 16488 D VRI[LogcatViewerActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
+09-12 04:10:29.329 16488 16488 D VRI[LogcatViewerActivity]: vri.Setup new sync=wmsSync-VRI[LogcatViewerActivity]#40
+09-12 04:10:29.344 16488 16488 D VRI[LogcatViewerActivity]: vri.reportDrawFinished
+09-12 04:10:29.368 16488 23602 I MediaCodec: [mId: 1] [video-debug-dec] Stats 15163ms:Client:com.omymaxz.download.debug,Component:c2.qti.vp9.decoder,Qin:52(Avg:291ms),DQin:0/0,Render:12(Avg:1263ms),Drop:32,DQout:0/0
+09-12 04:10:29.387 16488 20672 W cr_MediaCodecBridge: Releasing: c2.qti.vp9.decoder
+09-12 04:10:29.388 16488 23602 W libc    : Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+09-12 04:10:29.388 16488 23602 I MediaCodec: [mId: 1] [video-debug-dec] connectToSurface: surface 0xb400007d5d061830, mSurface 0xb400007d5d025e70
+09-12 04:10:29.388 16488 23602 D SurfaceUtils: connecting to surface 0xb400007d5d061840, reason connectToSurface
+09-12 04:10:29.388 16488 23602 I MediaCodec: [c2.qti.vp9.decoder] setting surface generation to 16883716
+09-12 04:10:29.388 16488 23602 D SurfaceUtils: disconnecting from surface 0xb400007d5d061840, reason connectToSurface(reconnect)
+09-12 04:10:29.388 16488 23602 D SurfaceUtils: connecting to surface 0xb400007d5d061830, reason connectToSurface(reconnect-with-listener)
+09-12 04:10:29.388 16488 23602 D Codec2-OutputBufferQueue: remote graphic buffer migration 0/0
+09-12 04:10:29.389 16488 23602 D Codec2Client: setOutputSurface -- failed to set consumer usage (6/BAD_INDEX)
+09-12 04:10:29.389 16488 23602 D Codec2Client: setOutputSurface -- generation=16883716 consumer usage=0x900
+09-12 04:10:29.389 16488 23602 D qdgralloc: Falling back to default YUV format - no camera/video specific format defined, usage 0x100
+09-12 04:10:29.390 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 2 is not owned by the producer (state = FREE)
+09-12 04:10:29.390 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 3 is not owned by the producer (state = FREE)
+09-12 04:10:29.391 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 5 is not owned by the producer (state = FREE)
+09-12 04:10:29.391 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 6 is not owned by the producer (state = FREE)
+09-12 04:10:29.391 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 7 is not owned by the producer (state = FREE)
+09-12 04:10:29.391 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 8 is not owned by the producer (state = FREE)
+09-12 04:10:29.391 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 9 is not owned by the producer (state = FREE)
+09-12 04:10:29.391 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 11 is not owned by the producer (state = QUEUED)
+09-12 04:10:29.392 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 23 is not owned by the producer (state = ACQUIRED)
+09-12 04:10:29.392 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 26 is not owned by the producer (state = FREE)
+09-12 04:10:29.392 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 27 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 28 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 29 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 30 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 31 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 32 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 33 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 34 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 35 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 36 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 37 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 38 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 39 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 40 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 41 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 42 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 43 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 44 is not owned by the producer (state = FREE)
+09-12 04:10:29.393 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 45 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 46 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 47 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 48 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 49 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 50 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 51 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 52 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 53 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 54 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 56 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 57 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 58 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 59 is not owned by the producer (state = FREE)
+09-12 04:10:29.394 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 60 is not owned by the producer (state = FREE)
+09-12 04:10:29.395 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 61 is not owned by the producer (state = FREE)
+09-12 04:10:29.395 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 62 is not owned by the producer (state = FREE)
+09-12 04:10:29.395 16488 23602 W BufferQueueProducer: [ImageReader-1x1f22u256m2-16488-1](id:40680000000d,api:3,p:16488,c:16488) detachBuffer: slot 63 is not owned by the producer (state = FREE)
+09-12 04:10:29.397 16488 23602 D Codec2Client: Surface configure completed
+09-12 04:10:29.397 16488 23602 I MediaCodec: [mId: 1] [video-debug-dec] disconnectFromSurface: mSurface 0xb400007d5d025e70
+09-12 04:10:29.397 16488 23602 D SurfaceUtils: disconnecting from surface 0xb400007d5d025e80, reason disconnectFromSurface
+09-12 04:10:29.397 16488 23602 I MediaCodec: [mId: 1] [video-debug-dec] setState: RELEASING
+09-12 04:10:29.397 16488 23602 D CCodecBufferChannel: [c2.qti.vp9.decoder#749] MediaCodec discarded an unknown buffer
+09-12 04:10:29.397 16488 23602 D CCodecBufferChannel: [c2.qti.vp9.decoder#749] MediaCodec discarded an unknown buffer
+09-12 04:10:29.398 16488 23602 D CCodecBufferChannel: [c2.qti.vp9.decoder#749] MediaCodec discarded an unknown buffer
+09-12 04:10:29.398 16488 23602 D CCodecBufferChannel: [c2.qti.vp9.decoder#749] MediaCodec discarded an unknown buffer
+09-12 04:10:29.400 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 17 is not owned by the producer (state = FREE)
+09-12 04:10:29.400 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 18 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 19 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 20 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 21 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 22 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 23 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 24 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 25 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 26 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 27 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 28 is not owned by the producer (state = FREE)
+09-12 04:10:29.401 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 29 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 30 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 31 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 32 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 33 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 34 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 35 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 36 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 37 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 38 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 39 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 40 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 41 is not owned by the producer (state = FREE)
+09-12 04:10:29.402 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 42 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 43 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 44 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 45 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 46 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 47 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 48 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 49 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 20672 W cr_MediaCodecBridge: Codec released
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 50 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 51 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 52 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 53 is not owned by the producer (state = FREE)
+09-12 04:10:29.403 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 54 is not owned by the producer (state = FREE)
+09-12 04:10:29.404 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 55 is not owned by the producer (state = FREE)
+09-12 04:10:29.404 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 56 is not owned by the producer (state = FREE)
+09-12 04:10:29.404 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 57 is not owned by the producer (state = FREE)
+09-12 04:10:29.404 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 58 is not owned by the producer (state = FREE)
+09-12 04:10:29.404 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 59 is not owned by the producer (state = FREE)
+09-12 04:10:29.404 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 60 is not owned by the producer (state = FREE)
+09-12 04:10:29.404 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 61 is not owned by the producer (state = FREE)
+09-12 04:10:29.404 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 62 is not owned by the producer (state = FREE)
+09-12 04:10:29.404 16488 23867 W BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) detachBuffer: slot 63 is not owned by the producer (state = FREE)
+09-12 04:10:29.410 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 0 is not owned by the producer (state = FREE)
+09-12 04:10:29.411 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 1 is not owned by the producer (state = FREE)
+09-12 04:10:29.411 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 2 is not owned by the producer (state = FREE)
+09-12 04:10:29.411 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 4 is not owned by the producer (state = FREE)
+09-12 04:10:29.411 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 5 is not owned by the producer (state = FREE)
+09-12 04:10:29.411 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 6 is not owned by the producer (state = FREE)
+09-12 04:10:29.413 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 7 is not owned by the producer (state = FREE)
+09-12 04:10:29.413 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 8 is not owned by the producer (state = FREE)
+09-12 04:10:29.413 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 9 is not owned by the producer (state = FREE)
+09-12 04:10:29.413 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 10 is not owned by the producer (state = FREE)
+09-12 04:10:29.414 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 11 is not owned by the producer (state = FREE)
+09-12 04:10:29.414 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 12 is not owned by the producer (state = FREE)
+09-12 04:10:29.414 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 13 is not owned by the producer (state = FREE)
+09-12 04:10:29.414 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 14 is not owned by the producer (state = FREE)
+09-12 04:10:29.414 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 15 is not owned by the producer (state = FREE)
+09-12 04:10:29.414 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 3 is not owned by the producer (state = FREE)
+09-12 04:10:29.415 16488 23204 E BufferQueueProducer: [MediaCodec.release](id:406800000011,api:3,p:16488,c:16488) cancelBuffer: slot 16 is not owned by the producer (state = FREE)
+09-12 04:10:29.416 16488 23867 I hw-BpHwBinder: onLastStrongRef automatically unlinking death recipients
+09-12 04:10:29.416 16488 23602 I MediaCodec: [mId: 1] [video-debug-dec] disconnectFromSurface: mSurface 0xb400007d5d061830
+09-12 04:10:29.416 16488 23602 D SurfaceUtils: disconnecting from surface 0xb400007d5d061840, reason disconnectFromSurface
+09-12 04:10:29.416 16488 23602 I MediaCodec: [mId: 1] [video-debug-dec] setState: UNINITIALIZED
+09-12 04:10:29.416 16488 23603 D BufferPoolAccessor2.0: bufferpool2 0xb400007d0d01fdb8 : 0(0 size) total buffers - 0(0 size) used buffers - 51/56 (recycle/alloc) - 5/53 (fetch/transfer)
+09-12 04:10:29.418 16488 23602 I MediaCodec: MediaStub sendHdrInfo/sendFrameRateFloatCal/updateFrcAieAisState
+09-12 04:10:29.418 16488 23602 D MediaImpl: FRC not support: valueSupport : 
+09-12 04:10:29.418 16488 23602 D MediaImpl: AIE not support: valueSupport : 
+09-12 04:10:29.418 16488 23602 D MediaImpl: AIS not support: valueSupport : 
+09-12 04:10:29.419 16488 23602 D .download.debug: VideoServiceClientImpl::reportCodecStatus
+09-12 04:10:29.419 16488 23602 I MiMediaCodec: send fps to display when stop, state:0 mLastSendedFps:25.000000 id:1
+09-12 04:10:29.420 16488 23602 D VideoCodecInfo: [6372081469677895681] ipb: 52 ipd: 147ms ipbd: 2040ms maxipi: 24ms
+09-12 04:10:29.420 16488 23602 D VideoCodecInfo: [6372081469677895681] opb: 52 opd: 137ms opbd: 2040ms maxopi: 30ms
+09-12 04:10:29.420 16488 23602 D VideoCodecInfo: [6372081469677895681] rdb: 12 rdd: 127ms rdbd: 1720ms maxrdi: 33ms
+09-12 04:10:29.420 16488 23602 D VideoCodecInfo: com.omymaxz.download.debug destroy video codec index: [6372081469677895681] 
+09-12 04:10:29.436 16488 16488 I HandWritingStubImpl: refreshLastKeyboardType: 1
+09-12 04:10:29.436 16488 16488 I HandWritingStubImpl: getCurrentKeyboardType: 1
+09-12 04:10:29.457 16488 20600 W RenderInspector: DequeueBuffer time out on com.omymaxz.download.debug/com.omymaxz.download.LogcatViewerActivity, count=1, avg=18 ms, max=18 ms.
