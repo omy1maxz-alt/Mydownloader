@@ -56,3 +56,5 @@
 - Enforced yt-dlp to extract direct, combined MP4 formats ('bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best') for YouTube URLs to prevent DASH format errors inside the Custom Player and allow seamless offline MP4 exports via existing caching.
 - Forced YoutubeDL extractors to use 'best[ext=mp4]/best' instead of separate streams to allow ExoPlayer to natively playback direct URLs without hitting DASH container parsing exceptions on unmerged raw chunks.
 - Implemented MediaDetectionEngine to intelligently track and score media candidates based on playback activity and request relationships, replacing simplistic URL extension matching.
+- Fixed preference mismatch causing the Pop-up Blocked notice to show even when disabled.
+- Silenced YouTube video detection and extraction toasts to prevent UI interruptions during standard background browsing.

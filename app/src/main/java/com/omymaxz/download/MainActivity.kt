@@ -1726,7 +1726,7 @@ private fun checkBatteryOptimization() {
 
                     bottomSheetDialog.setContentView(notifContainer)
 
-                    val popupPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                    val popupPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
                     val showNotice = popupPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
                     if (showNotice) {
                         bottomSheetDialog.show()
@@ -3858,7 +3858,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         bottomSheet?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         data class MenuItemCustom(val id: Int, val title: String)
-        val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
         val popupNoticeTitle = if (showNotice) "Popup Notice: ON" else "Popup Notice: OFF"
 
@@ -5374,7 +5374,8 @@ if (isDesktopMode) {
 
         runOnUiThread {
             updateFabVisibility()
-            android.widget.Toast.makeText(this, "YouTube video detected. Extracting stream...", android.widget.Toast.LENGTH_SHORT).show()
+            // Silenced notification to prevent annoyance during standard web browsing
+            // android.widget.Toast.makeText(this, "YouTube video detected. Extracting stream...", android.widget.Toast.LENGTH_SHORT).show()
         }
         this.lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             val mediaFile = YoutubeExtractorHelper.extractMedia(applicationContext, url)
@@ -5389,12 +5390,14 @@ if (isDesktopMode) {
                         }
                         updateFabVisibility()
                         currentMediaListAdapter?.notifyDataSetChanged()
-                        android.widget.Toast.makeText(this@MainActivity, "YouTube stream ready! Tap the floating button to play/download.", android.widget.Toast.LENGTH_LONG).show()
+                        // Silenced success notification to avoid interruption
+                        // android.widget.Toast.makeText(this@MainActivity, "YouTube stream ready! Tap the floating button to play/download.", android.widget.Toast.LENGTH_LONG).show()
                     }
                 }
             } else {
                  kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                     android.widget.Toast.makeText(this@MainActivity, "Failed to extract YouTube stream.", android.widget.Toast.LENGTH_SHORT).show()
+                     // Silenced error notification because background extraction can fail normally on non-video youtube pages
+                     // android.widget.Toast.makeText(this@MainActivity, "Failed to extract YouTube stream.", android.widget.Toast.LENGTH_SHORT).show()
                  }
             }
         }
