@@ -2,10 +2,15 @@ package com.omymaxz.download
 
 import android.content.Context
 import android.util.Log
-import com.yausername.youtubedl_android.YoutubeDL
-import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.ServiceList
+import org.schabi.newpipe.extractor.stream.StreamExtractor
+import org.schabi.newpipe.extractor.stream.VideoStream
+import org.schabi.newpipe.extractor.stream.AudioStream
+import org.schabi.newpipe.extractor.localization.Localization
+import org.schabi.newpipe.extractor.MediaFormat
 
 object YoutubeExtractorHelper {
     private const val TAG = "YoutubeExtractorHelper"
@@ -13,59 +18,89 @@ object YoutubeExtractorHelper {
     @Synchronized
     fun init(context: Context) {
         try {
-            YoutubeDL.getInstance().init(context.applicationContext)
-            Log.d(TAG, "YoutubeDL initialized successfully.")
+            if (!NewPipe.getDownloader().equals(null)) {
+                // Already initialized
+                return
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize YoutubeDL: ${e.message}")
+            // NewPipe throws if downloader is null
+        }
+
+        try {
+            NewPipe.init(NewPipeDownloader(), Localization.DEFAULT)
+            Log.d(TAG, "NewPipeExtractor initialized successfully.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize NewPipeExtractor: ${e.message}")
         }
     }
 
     suspend fun extractMedia(context: Context, url: String): MediaFile? = withContext(Dispatchers.IO) {
         try {
-            // Ensure initialized before extraction
             init(context)
 
-            val request = YoutubeDLRequest(url)
+            val service = ServiceList.YouTube
+            val extractor = service.getStreamExtractor(url)
+            extractor.fetchPage()
 
-            // CRITICAL FIX: Force yt-dlp to find the absolute best SINGLE pre-combined MP4 file.
-            // When we use `bestvideo+bestaudio`, yt-dlp needs local FFmpeg to merge them into a single file on disk.
-            // Because we are streaming `info.url` over the network directly into ExoPlayer, we MUST request a pre-merged format.
-            request.addOption("-f", "best[ext=mp4]/best")
+            val title = extractor.name ?: "YouTube_Video"
 
-            val info = YoutubeDL.getInstance().getInfo(request)
+            // NewPipe categorizes streams into VideoOnly, AudioOnly, and VideoStreams (which usually contain both if available on older formats,
+            // but YouTube mostly uses DASH where they are separate).
+            // ExoPlayer can seamlessly play DASH manifests, so we should look for DASH manifest URL first if available.
+            val dashManifestUrl = extractor.dashMpdUrl
+            val hlsManifestUrl = extractor.hlsUrl
 
-            val title = info.title ?: "YouTube_Video"
-            // Fallback to manifest URL if direct URL is not available or is a raw format that requires DASH
-            val streamUrl = if (info.manifestUrl != null && info.manifestUrl.isNotEmpty()) info.manifestUrl else info.url
-
-            if (streamUrl.isNullOrEmpty()) {
-                Log.e(TAG, "Failed to extract a direct MP4 stream URL. Info: ${info.title}")
-                return@withContext null
+            if (!dashManifestUrl.isNullOrEmpty()) {
+                Log.d(TAG, "Successfully extracted YouTube DASH manifest: $dashManifestUrl")
+                return@withContext MediaFile(
+                    url = dashManifestUrl,
+                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
+                    mimeType = "application/dash+xml",
+                    quality = "Adaptive DASH",
+                    category = MediaCategory.VIDEO,
+                    fileSize = "Unknown",
+                    language = null,
+                    isMainContent = true
+                )
             }
 
-            Log.d(TAG, "Successfully extracted YouTube MP4: $streamUrl")
-
-            // yt-dlp might still return a DASH manifest or HLS manifest if a direct mp4 isn't available
-            // we must properly type it to prevent ExoPlayer ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED
-            var finalMimeType = "video/mp4"
-            if (streamUrl.contains(".mpd") || streamUrl.contains("manifest/dash")) {
-                finalMimeType = "application/dash+xml"
-            } else if (streamUrl.contains(".m3u8") || streamUrl.contains("manifest/hls")) {
-                finalMimeType = "application/x-mpegURL"
+            if (!hlsManifestUrl.isNullOrEmpty()) {
+                Log.d(TAG, "Successfully extracted YouTube HLS manifest: $hlsManifestUrl")
+                return@withContext MediaFile(
+                    url = hlsManifestUrl,
+                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
+                    mimeType = "application/x-mpegURL",
+                    quality = "Adaptive HLS",
+                    category = MediaCategory.VIDEO,
+                    fileSize = "Unknown",
+                    language = null,
+                    isMainContent = true
+                )
             }
 
-            return@withContext MediaFile(
-                url = streamUrl,
-                title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
-                mimeType = finalMimeType,
-                quality = "Best Available",
-                category = MediaCategory.VIDEO,
-                fileSize = "Unknown",
-                language = null,
-                isMainContent = true
-            )
+            // Fallback to searching for the highest quality combined video/audio stream (like 360p or 720p non-DASH if it exists)
+            val videoStreams = extractor.videoStreams
+            val bestCombinedStream = videoStreams.maxByOrNull { it.resolution.replace(Regex("[^0-9]"), "").toIntOrNull() ?: 0 }
+
+            if (bestCombinedStream != null && !bestCombinedStream.content.isNullOrEmpty()) {
+                Log.d(TAG, "Successfully extracted YouTube MP4 combined: ${bestCombinedStream.content}")
+                return@withContext MediaFile(
+                    url = bestCombinedStream.content,
+                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
+                    mimeType = "video/mp4",
+                    quality = bestCombinedStream.resolution,
+                    category = MediaCategory.VIDEO,
+                    fileSize = "Unknown",
+                    language = null,
+                    isMainContent = true
+                )
+            }
+
+            Log.e(TAG, "Failed to extract any suitable streams. VideoOnly+AudioOnly merge without DASH not natively supported by basic ExoPlayer setup yet.")
+            return@withContext null
+
         } catch (e: Exception) {
-            Log.e(TAG, "YoutubeDL extraction failed: ${e.message}")
+            Log.e(TAG, "NewPipeExtractor extraction failed: ${e.message}")
             e.printStackTrace()
             return@withContext null
         }

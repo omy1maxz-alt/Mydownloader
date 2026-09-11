@@ -59,3 +59,4 @@
 - Fixed preference mismatch causing the Pop-up Blocked notice to show even when disabled.
 - Silenced YouTube video detection and extraction toasts to prevent UI interruptions during standard background browsing.
 - Fixed ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED in CustomPlayerActivity by correctly identifying yt-dlp extracted DASH and HLS manifest mime-types.
+- Switched Youtube extraction from youtubedl-android to NewPipeExtractor v0.24.2 due to initialization crashes on some devices.

@@ -358,7 +358,7 @@ private fun checkBatteryOptimization() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize YoutubeDL in the background
+        // Initialize NewPipe Extractor in the background
         Thread { YoutubeExtractorHelper.init(applicationContext) }.start()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
