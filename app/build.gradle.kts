@@ -110,9 +110,9 @@ dependencies {
     // FFmpeg
     implementation("io.github.maitrungduc1410:ffmpeg-kit-https:8.1.2")
 
-    // YoutubeDL Android
-    implementation("com.github.yausername.youtubedl-android:library:0.14.0")
-    implementation("com.github.yausername.youtubedl-android:ffmpeg:0.14.0")
+    // NewPipe Extractor
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.24.2") // v0.24.2 is stable for Android compatibility
+    // Using v0.24.2 as some newer versions require Java 11/Android API changes that might conflict with this older codebase. We will test first.
 
     // Testing Dependencies
     testImplementation("junit:junit:4.13.2")
