@@ -63,3 +63,4 @@
 - Fixed Youtube Play in App crashes by intercepting embedded iframes, blocking generic video payloads from entering NewPipeExtractor, and correctly propagating the extracted MIME type to Media3.
 - Completed Play in App bug fix for YouTube embedded iframes routing directly to Media3 without Extraction process.
 - Fixed kisskh.co export failures by using URI path substring stripping for domain mismatch cache fallbacks and relaxing cache gap IOExceptions to allow fragment stitching.
+- Resolved CustomPlayerActivity YouTube playback bug caused by extraction intent mapping bypassing MIME extraction types.

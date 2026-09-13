@@ -3530,6 +3530,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             if (ytUrl != null && (ytUrl.contains("youtube.com") || ytUrl.contains("youtu.be"))) {
                 android.util.Log.d("PlayInApp", "Intercepted googlevideo.com raw URL. Rerouting to YoutubeExtractorHelper using: $ytUrl")
                 checkForYouTube(ytUrl)
+                // Note: The UI will stay open, but we show a toast indicating extraction.
+                Toast.makeText(this, "Extracting YouTube stream...", Toast.LENGTH_SHORT).show()
                 return
             } else {
                 android.util.Log.e("PlayInApp", "Detected googlevideo.com chunk but could not find a valid YouTube origin URL to extract. Fallback referrer was: $ytUrl")
@@ -3571,6 +3573,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             if (ytUrl != null && (ytUrl.contains("youtube.com") || ytUrl.contains("youtu.be"))) {
                 android.util.Log.d("PlayInApp", "Intercepted googlevideo.com raw URL. Rerouting to YoutubeExtractorHelper using: $ytUrl")
                 checkForYouTube(ytUrl)
+                Toast.makeText(this, "Extracting YouTube stream...", Toast.LENGTH_SHORT).show()
                 return
             } else {
                 android.util.Log.e("PlayInApp", "Detected googlevideo.com chunk but could not find a valid YouTube origin URL to extract. Fallback referrer was: $ytUrl")
@@ -3648,6 +3651,46 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             builder.setNegativeButton("Play in App") { _, _ ->
                 val newName = input.text.toString().trim()
                 val finalName = if (newName.isNotEmpty()) "$newName.${mediaFile.title.substringAfterLast('.')}" else mediaFile.title
+
+                // Skip MediaDetectionEngine if this is already an extracted YouTube or directly injected media file
+                if (mediaFile.url.contains("googlevideo.com") && (mediaFile.mimeType == "application/dash+xml" || mediaFile.mimeType == "application/x-mpegURL")) {
+                    android.util.Log.d("PlayInApp", "Launching extracted YouTube DASH/HLS media directly bypassing engine: ${mediaFile.url}")
+                    // DO NOT go back through launchLegacyPlayer's googlevideo interceptor which would bounce it back to extraction!
+                    val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
+                        if (mediaFile.mimeType != null) {
+                            putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
+                        }
+                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
+                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
+                        putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
+                        val refererToUse = mediaFile.referer ?: webView.url
+                        putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
+                        val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
+                        if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                    }
+                    startActivity(intent)
+                    return@setNegativeButton
+                }
+
+                if (mediaFile.url.contains("youtube.com") || mediaFile.url.contains("youtu.be") || mediaFile.url.contains("googlevideo.com") || mediaFile.url.contains("manifest/dash") || mediaFile.mimeType == "application/dash+xml") {
+                    android.util.Log.d("PlayInApp", "Launching extracted media directly bypassing engine: ${mediaFile.url}")
+
+                    // Directly construct intent to avoid googlevideo interception loop inside launchLegacyPlayer!
+                    val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
+                        if (mediaFile.mimeType != null) {
+                            putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
+                        }
+                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
+                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
+                        putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
+                        val refererToUse = mediaFile.referer ?: webView.url
+                        putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
+                        val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
+                        if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                    }
+                    startActivity(intent)
+                    return@setNegativeButton
+                }
 
                 // Query MediaDetectionEngine for the best candidate
                 val bestCandidate = mediaEngine.getBestCandidate()
