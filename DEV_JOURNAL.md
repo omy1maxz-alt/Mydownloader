@@ -64,3 +64,4 @@
 - Completed Play in App bug fix for YouTube embedded iframes routing directly to Media3 without Extraction process.
 - Fixed kisskh.co export failures by using URI path substring stripping for domain mismatch cache fallbacks and relaxing cache gap IOExceptions to allow fragment stitching.
 - Resolved CustomPlayerActivity YouTube playback bug caused by extraction intent mapping bypassing MIME extraction types.
+- Checked extraction log errors, found user was requesting trace tracking for exception payloads, updated YoutubeExtractorHelper e.message tracking parameters.
