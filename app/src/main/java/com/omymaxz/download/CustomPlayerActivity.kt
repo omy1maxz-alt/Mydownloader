@@ -53,6 +53,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         const val EXTRA_USER_AGENT    = "extra_user_agent"
         const val EXTRA_REFERER       = "extra_referer"
         const val EXTRA_COOKIE        = "extra_cookie"
+        const val EXTRA_MIME_TYPE     = "extra_mime_type"
         var activePlayer: ExoPlayer? = null
     }
 
@@ -469,7 +470,9 @@ class CustomPlayerActivity : AppCompatActivity() {
         subtitleConfigs.add(emptySubtitleConfig)
 
 
+        val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
         val actualMimeType = when {
+            intentMimeType != null -> intentMimeType
             isHls -> MimeTypes.APPLICATION_M3U8
             videoUrl?.contains(".mpd") == true || videoUrl?.contains("manifest/dash") == true -> MimeTypes.APPLICATION_MPD
             else -> MimeTypes.APPLICATION_MP4
@@ -628,7 +631,9 @@ class CustomPlayerActivity : AppCompatActivity() {
                 .build()
             subtitleConfigs.add(emptySubtitleConfig)
 
+            val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
             val actualMimeType = when {
+                intentMimeType != null -> intentMimeType
                 isHls -> MimeTypes.APPLICATION_M3U8
                 videoUrl?.contains(".mpd") == true || videoUrl?.contains("manifest/dash") == true -> MimeTypes.APPLICATION_MPD
                 else -> MimeTypes.APPLICATION_MP4

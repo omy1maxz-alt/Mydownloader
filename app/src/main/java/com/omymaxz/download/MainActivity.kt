@@ -1329,6 +1329,16 @@ private fun checkBatteryOptimization() {
                     val reqReferer = reqHeaders?.get("Referer") ?: reqHeaders?.get("referer")
                     val userAgent = reqHeaders?.get("User-Agent") ?: reqHeaders?.get("user-agent")
 
+                    // Check for embedded YouTube iframes
+                    if (url.contains("youtube.com/embed/") || url.contains("youtube-nocookie.com/embed/")) {
+                        // Extract video ID and normalize to watch URL
+                        val videoId = url.substringAfter("/embed/").substringBefore("?")
+                        if (videoId.isNotEmpty()) {
+                            val normalizedUrl = "https://www.youtube.com/watch?v=$videoId"
+                            checkForYouTube(normalizedUrl)
+                        }
+                    }
+
                     // Safely process through MediaDetectionEngine on background thread
                     mediaEngine.processRequest(url, reqReferer, userAgent)
 
@@ -3537,8 +3547,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         startActivity(intent)
     }
 
-    private fun launchLegacyPlayer(url: String, title: String, fallbackReferer: String?) {
+    private fun launchLegacyPlayer(url: String, title: String, fallbackReferer: String?, mimeType: String? = null) {
         val intent = Intent(this, CustomPlayerActivity::class.java).apply {
+            if (mimeType != null) {
+                putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mimeType)
+            }
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, url)
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
             putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
@@ -3644,12 +3657,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                                     // Fallback to legacy behavior
                                     if (mediaFile.url.startsWith("blob:")) {
                                         if (currentVideoUrl != null && !currentVideoUrl!!.startsWith("blob:")) {
-                                            launchLegacyPlayer(currentVideoUrl!!, finalName, mediaFile.referer)
+                                            launchLegacyPlayer(currentVideoUrl!!, finalName, mediaFile.referer, mediaFile.mimeType)
                                         } else {
                                             Toast.makeText(this@MainActivity, "Cannot play Blob URLs directly. Please wait for the real stream to be captured.", Toast.LENGTH_LONG).show()
                                         }
                                     } else {
-                                        launchLegacyPlayer(mediaFile.url, finalName, mediaFile.referer)
+                                        launchLegacyPlayer(mediaFile.url, finalName, mediaFile.referer, mediaFile.mimeType)
                                     }
                                 }
                                 return
@@ -5370,6 +5383,14 @@ if (isDesktopMode) {
 
     private fun checkForYouTube(url: String?) {
         if (url == null || url == lastYoutubeUrl) return
+
+        // Ensure we are passing a valid YouTube URL to NewPipe extractor.
+        // If it's a youtube-nocookie.com/embed/ URL, NewPipe might reject it directly if it expects watch?v=
+        // Actually NewPipe handles youtu.be, youtube.com/watch, and standard youtube endpoints well.
+        // We just need to make sure we don't pass `freegpt.tech` into here.
+        if (!url.contains("youtube.com") && !url.contains("youtu.be")) return
+        if (url.contains("googlevideo.com/videoplayback")) return
+
         lastYoutubeUrl = url
 
         runOnUiThread {
