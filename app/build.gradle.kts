@@ -59,6 +59,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -110,9 +111,9 @@ dependencies {
     // FFmpeg
     implementation("io.github.maitrungduc1410:ffmpeg-kit-https:8.1.2")
 
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.0.4")
     // NewPipe Extractor
-    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.24.2") // v0.24.2 is stable for Android compatibility
-    // Using v0.24.2 as some newer versions require Java 11/Android API changes that might conflict with this older codebase. We will test first.
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.5")
 
     // Testing Dependencies
     testImplementation("junit:junit:4.13.2")

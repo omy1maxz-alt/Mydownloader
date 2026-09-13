@@ -65,3 +65,4 @@
 - Fixed kisskh.co export failures by using URI path substring stripping for domain mismatch cache fallbacks and relaxing cache gap IOExceptions to allow fragment stitching.
 - Resolved CustomPlayerActivity YouTube playback bug caused by extraction intent mapping bypassing MIME extraction types.
 - Checked extraction log errors, found user was requesting trace tracking for exception payloads, updated YoutubeExtractorHelper e.message tracking parameters.
+- Fixed NewPipeExtractor YouTube crashes by migrating to v0.26.5 via Java 11 desugaring APIs and rewriting the checkForYouTube caching mechanism to correctly autoPlay extracted media streams.
