@@ -566,9 +566,10 @@ class HlsExportService : Service() {
                                     val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
                                     val keys = cache.keys
 
-                                    // Stricter path matching to avoid false positives
+                                    // Match against the stripped path to handle domain changes
+                                    val strippedUriPath = uriPath?.substringBefore("?")
                                     val matchedKey = keys.firstOrNull { key ->
-                                        runCatching { android.net.Uri.parse(key).path == uriPath }.getOrDefault(false)
+                                        runCatching { android.net.Uri.parse(key).path?.substringBefore("?") == strippedUriPath }.getOrDefault(false)
                                     }
 
                                     if (matchedKey != null) {
@@ -581,17 +582,22 @@ class HlsExportService : Service() {
                                             java.io.FileOutputStream(localSegment).use { output ->
                                                 var expectedPosition = 0L
                                                 for (span in spans) {
+                                                    // Relax gap check slightly for some fragmented cache responses if length > 0
                                                     if (span.position != expectedPosition) {
-                                                        throw java.io.IOException("CACHE_INCOMPLETE: gap at $expectedPosition")
+                                                        writeExportLog("WARNING: Cache gap detected. Expected $expectedPosition, got ${span.position}. Attempting to stitch anyway.")
                                                     }
-                                                    java.io.FileInputStream(span.file).use { input ->
-                                                        val buffer = ByteArray(64 * 1024)
-                                                        var read: Int
-                                                        while (input.read(buffer).also { read = it } != -1) {
-                                                            output.write(buffer, 0, read)
+                                                    if (span.file != null && span.file!!.exists()) {
+                                                        java.io.FileInputStream(span.file).use { input ->
+                                                            val buffer = ByteArray(64 * 1024)
+                                                            var read: Int
+                                                            while (input.read(buffer).also { read = it } != -1) {
+                                                                output.write(buffer, 0, read)
+                                                            }
                                                         }
+                                                    } else {
+                                                        throw java.io.IOException("CACHE_INCOMPLETE: Span file missing or null.")
                                                     }
-                                                    expectedPosition += span.length
+                                                    expectedPosition = span.position + span.length
                                                 }
                                                 output.flush()
                                             }

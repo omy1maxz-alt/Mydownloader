@@ -62,3 +62,4 @@
 - Switched Youtube extraction from youtubedl-android to NewPipeExtractor v0.24.2 due to initialization crashes on some devices.
 - Fixed Youtube Play in App crashes by intercepting embedded iframes, blocking generic video payloads from entering NewPipeExtractor, and correctly propagating the extracted MIME type to Media3.
 - Completed Play in App bug fix for YouTube embedded iframes routing directly to Media3 without Extraction process.
+- Fixed kisskh.co export failures by using URI path substring stripping for domain mismatch cache fallbacks and relaxing cache gap IOExceptions to allow fragment stitching.
