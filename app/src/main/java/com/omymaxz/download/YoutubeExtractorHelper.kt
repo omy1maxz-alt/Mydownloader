@@ -18,7 +18,8 @@ object YoutubeExtractorHelper {
     @Synchronized
     fun init(context: Context) {
         try {
-            if (!NewPipe.getDownloader().equals(null)) {
+            val downloader = NewPipe.getDownloader()
+            if (downloader != null) {
                 // Already initialized
                 return
             }

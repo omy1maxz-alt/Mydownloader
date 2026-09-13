@@ -3521,6 +3521,23 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
 
         private fun launchPlayerWithCandidate(candidate: MediaCandidate, title: String, fallbackReferer: String?) {
+
+        // INTERCEPT YOUTUBE PLAY IN APP
+        // If the candidate is a raw googlevideo chunk, do NOT pass it to CustomPlayerActivity natively
+        // Find the actual YouTube URL and send it to NewPipe extraction instead.
+        if (candidate.url.contains("googlevideo.com/videoplayback")) {
+            val ytUrl = candidate.referer ?: fallbackReferer ?: webView.url?.toString()
+            if (ytUrl != null && (ytUrl.contains("youtube.com") || ytUrl.contains("youtu.be"))) {
+                android.util.Log.d("PlayInApp", "Intercepted googlevideo.com raw URL. Rerouting to YoutubeExtractorHelper using: $ytUrl")
+                checkForYouTube(ytUrl)
+                return
+            } else {
+                android.util.Log.e("PlayInApp", "Detected googlevideo.com chunk but could not find a valid YouTube origin URL to extract. Fallback referrer was: $ytUrl")
+                Toast.makeText(this, "Cannot play raw YouTube data chunk. Please reload page.", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+
         val intent = Intent(this, CustomPlayerActivity::class.java).apply {
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, candidate.url)
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
@@ -3548,6 +3565,20 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
 
     private fun launchLegacyPlayer(url: String, title: String, fallbackReferer: String?, mimeType: String? = null) {
+        // INTERCEPT YOUTUBE PLAY IN APP
+        if (url.contains("googlevideo.com/videoplayback")) {
+            val ytUrl = fallbackReferer ?: webView.url?.toString()
+            if (ytUrl != null && (ytUrl.contains("youtube.com") || ytUrl.contains("youtu.be"))) {
+                android.util.Log.d("PlayInApp", "Intercepted googlevideo.com raw URL. Rerouting to YoutubeExtractorHelper using: $ytUrl")
+                checkForYouTube(ytUrl)
+                return
+            } else {
+                android.util.Log.e("PlayInApp", "Detected googlevideo.com chunk but could not find a valid YouTube origin URL to extract. Fallback referrer was: $ytUrl")
+                Toast.makeText(this, "Cannot play raw YouTube data chunk. Please reload page.", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+
         val intent = Intent(this, CustomPlayerActivity::class.java).apply {
             if (mimeType != null) {
                 putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mimeType)
