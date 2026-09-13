@@ -31,7 +31,7 @@ object YoutubeExtractorHelper {
             NewPipe.init(NewPipeDownloader(), Localization.DEFAULT)
             Log.d(TAG, "NewPipeExtractor initialized successfully.")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize NewPipeExtractor: ${e.message}")
+            Log.e(TAG, "Failed to initialize NewPipeExtractor: ${e.message}", e)
         }
     }
 
@@ -101,7 +101,7 @@ object YoutubeExtractorHelper {
             return@withContext null
 
         } catch (e: Exception) {
-            Log.e(TAG, "NewPipeExtractor extraction failed: ${e.message}")
+            Log.e(TAG, "NewPipeExtractor extraction failed: ${e.message}", e)
             e.printStackTrace()
             return@withContext null
         }
