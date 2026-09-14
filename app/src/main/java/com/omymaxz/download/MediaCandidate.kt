@@ -13,7 +13,9 @@ data class MediaCandidate(
     var playbackScore: Int = 0,
     var referer: String? = null,
     var userAgent: String? = null,
-    var cookie: String? = null
+    var cookie: String? = null,
+    var hasMSEActivity: Boolean = false,
+    var isDRMProtected: Boolean = false
 ) {
     val finalScore: Int
         get() {
@@ -28,6 +30,9 @@ data class MediaCandidate(
 
             // Significant boost if this stream started fetching after a play event
             if (startedAfterPlayback) score += 25
+
+            // MSE activity indicates real streaming
+            if (hasMSEActivity) score += 30
 
             return score
         }

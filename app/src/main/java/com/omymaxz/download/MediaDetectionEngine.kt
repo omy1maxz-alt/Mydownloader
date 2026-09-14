@@ -7,7 +7,7 @@ import java.net.URL
 
 class MediaDetectionEngine(private val context: Context) {
 
-    private val candidates = mutableMapOf<String, MediaCandidate>()
+    val candidates = mutableMapOf<String, MediaCandidate>()
     private val TAG = "MediaDetectionEngine"
 
     // Playback state tracker
@@ -125,6 +125,40 @@ class MediaDetectionEngine(private val context: Context) {
         return null
     }
 
+
+    fun updateCandidateMSEActivity(url: String) {
+        val candidate = candidates[url] ?: findParentManifestForSegment(url)
+        if (candidate != null) {
+            candidate.hasMSEActivity = true
+            candidate.lastSeenTime = System.currentTimeMillis()
+            candidate.requestCount++
+            Log.d(TAG, "MSE activity logged for: ${candidate.url}")
+        } else {
+            // Might be a new URL we haven't seen in processRequest yet
+            val c = processRequest(url, null, null)
+            c?.hasMSEActivity = true
+        }
+    }
+
+    fun markCandidateDRM(url: String) {
+        if (url == "ACTIVE_PLAYER_DRM") {
+            // Track this as a special candidate to signify DRM is active in the main player
+            var candidate = candidates[url]
+            if (candidate == null) {
+                candidate = MediaCandidate(url = url, type = "drm_signal")
+                candidates[url] = candidate
+            }
+            candidate.isDRMProtected = true
+            Log.d(TAG, "DRM active signal detected for main player")
+            return
+        }
+        val candidate = candidates[url] ?: findParentManifestForSegment(url)
+        if (candidate != null) {
+            candidate.isDRMProtected = true
+            Log.d(TAG, "DRM detected for: ${candidate.url}")
+        }
+    }
+
     fun getBestCandidate(): MediaCandidate? {
         if (candidates.isEmpty()) return null
 
@@ -151,7 +185,7 @@ class MediaDetectionEngine(private val context: Context) {
         val adKeywords = listOf(
             "vast", "preroll", "midroll", "postroll", "doubleclick", "googlesyndication",
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
-            "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver"
+            "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver", "/litevideo/", "msgnative", "ad_status"
         )
         return adKeywords.any { lowerUrl.contains(it) }
     }
