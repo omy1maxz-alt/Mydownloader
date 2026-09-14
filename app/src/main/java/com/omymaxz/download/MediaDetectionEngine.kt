@@ -163,6 +163,14 @@ class MediaDetectionEngine(private val context: Context) {
         // Filter out standalone segments if we have actual manifests or progressive videos
         val playables = candidates.values.filter { !it.isSegment || (it.isSegment && candidates.values.none { c -> c.isManifest }) }
 
+        // Check for strict DMM false-positive avoidance: if we have DRM streams, filter out short low-req non-DRM streams
+        val hasDRMPlayables = playables.any { it.isDRMProtected }
+        if (hasDRMPlayables) {
+            val drmFiltered = playables.filter { it.isDRMProtected || it.requestCount > 10 }
+            val safePlayables = drmFiltered.filter { it.adScore == 0 || it.finalScore > 0 }
+            if (safePlayables.isNotEmpty()) return safePlayables.maxByOrNull { it.finalScore }
+        }
+
         if (playables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
 
         return playables.maxByOrNull { it.finalScore }
