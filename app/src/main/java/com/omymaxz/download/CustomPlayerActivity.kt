@@ -485,7 +485,20 @@ class CustomPlayerActivity : AppCompatActivity() {
             .build()
 
         // Let DefaultMediaSourceFactory naturally handle HLS merging
-        player?.setMediaItem(newBaseItem)
+        val splitAudioUrl = intent.getStringExtra(YouTubeDownloadService.EXTRA_AUDIO_URL)
+        if (!splitAudioUrl.isNullOrEmpty()) {
+            val audioItem = MediaItem.Builder()
+                .setUri(Uri.parse(splitAudioUrl))
+                .setMimeType(intent.getStringExtra("EXTRA_AUDIO_MIME_TYPE") ?: MimeTypes.AUDIO_MP4)
+                .build()
+            val factory = DefaultMediaSourceFactory(this).setDataSourceFactory(cacheFactory)
+            val videoSource = factory.createMediaSource(newBaseItem)
+            val audioSource = factory.createMediaSource(audioItem)
+            val mergedSource = MergingMediaSource(videoSource, audioSource)
+            player?.setMediaSource(mergedSource)
+        } else {
+            player?.setMediaItem(newBaseItem)
+        }
 
         // Set English as the default preferred subtitle language and explicitly enable text rendering
         player?.trackSelectionParameters = player?.trackSelectionParameters

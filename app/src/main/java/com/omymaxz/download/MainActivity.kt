@@ -5564,6 +5564,10 @@ if (isDesktopMode) {
             android.webkit.CookieManager.getInstance().getCookie(referer)?.let {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, it)
             }
+            if (!mediaFile.audioUrl.isNullOrEmpty()) {
+                putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
+                putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
+            }
         }
         startActivity(intent)
     }

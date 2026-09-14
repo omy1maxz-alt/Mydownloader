@@ -40,7 +40,17 @@ object YoutubeExtractorHelper {
             init(context)
 
             val service = ServiceList.YouTube
-            val extractor = service.getStreamExtractor(url)
+            val cleanUrl = if (url.contains("youtube.com/embed/")) {
+                val videoId = url.substringAfter("embed/").substringBefore("?")
+                "https://www.youtube.com/watch?v=$videoId"
+            } else if (url.contains("youtube-nocookie.com/embed/")) {
+                val videoId = url.substringAfter("embed/").substringBefore("?")
+                "https://www.youtube.com/watch?v=$videoId"
+            } else {
+                url
+            }
+            Log.d(TAG, "Requesting NewPipe extraction for URL: $cleanUrl")
+            val extractor = service.getStreamExtractor(cleanUrl)
             extractor.fetchPage()
 
             val title = extractor.name ?: "YouTube_Video"
@@ -97,6 +107,26 @@ object YoutubeExtractorHelper {
                 )
             }
 
+            val audioStreams = extractor.audioStreams
+            val bestAudio = audioStreams.maxByOrNull { it.bitrate }
+            val videoOnlyStreams = extractor.videoOnlyStreams
+            if (videoOnlyStreams.isNotEmpty() && bestAudio != null) {
+                val highestVideo = videoOnlyStreams.maxByOrNull { it.resolution.replace(Regex("[^0-9]"), "").toIntOrNull() ?: 0 }
+                if (highestVideo != null && !highestVideo.content.isNullOrEmpty()) {
+                    Log.d(TAG, "Falling back to separate highest quality VideoOnly stream: ${highestVideo.content} and Audio: ${bestAudio.content}")
+                    return@withContext MediaFile(
+                        url = highestVideo.content,
+                        title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
+                        mimeType = "video/mp4",
+                        quality = highestVideo.resolution,
+                        category = MediaCategory.VIDEO,
+                        fileSize = "Unknown",
+                        language = null,
+                        isMainContent = true,
+                        audioUrl = bestAudio.content
+                    )
+                }
+            }
             Log.e(TAG, "Failed to extract any suitable streams. VideoOnly+AudioOnly merge without DASH not natively supported by basic ExoPlayer setup yet.")
             return@withContext null
 
