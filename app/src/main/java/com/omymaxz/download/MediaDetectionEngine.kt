@@ -45,7 +45,7 @@ class MediaDetectionEngine(private val context: Context) {
             // Might be an extensionless video, but we need more evidence. We'll track it if it comes through `onMediaDetected`.
             // For now, if we are just looking at raw intercepted network traffic, we only track obvious media types
             // to avoid tracking thousands of useless image/json requests.
-            if (!lowerUrl.contains("video") && !lowerUrl.contains("stream")) {
+            if (!lowerUrl.contains("video") && !lowerUrl.contains("stream") && !lowerUrl.contains("segment")) {
                return null
             }
         }
@@ -134,7 +134,6 @@ class MediaDetectionEngine(private val context: Context) {
             candidate.requestCount++
             Log.d(TAG, "MSE activity logged for: ${candidate.url}")
         } else {
-            // Might be a new URL we haven't seen in processRequest yet
             val c = processRequest(url, null, null)
             c?.hasMSEActivity = true
         }
@@ -142,7 +141,6 @@ class MediaDetectionEngine(private val context: Context) {
 
     fun markCandidateDRM(url: String) {
         if (url == "ACTIVE_PLAYER_DRM") {
-            // Track this as a special candidate to signify DRM is active in the main player
             var candidate = candidates[url]
             if (candidate == null) {
                 candidate = MediaCandidate(url = url, type = "drm_signal")
