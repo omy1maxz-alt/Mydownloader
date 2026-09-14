@@ -4,11 +4,10 @@ import android.content.Context
 import android.util.Log
 import android.webkit.CookieManager
 import java.net.URL
-import java.util.concurrent.ConcurrentHashMap
 
 class MediaDetectionEngine(private val context: Context) {
 
-    private val candidates = ConcurrentHashMap<String, MediaCandidate>()
+    val candidates = java.util.concurrent.ConcurrentHashMap<String, MediaCandidate>()
     private val TAG = "MediaDetectionEngine"
 
     // Playback state tracker
@@ -46,7 +45,7 @@ class MediaDetectionEngine(private val context: Context) {
             // Might be an extensionless video, but we need more evidence. We'll track it if it comes through `onMediaDetected`.
             // For now, if we are just looking at raw intercepted network traffic, we only track obvious media types
             // to avoid tracking thousands of useless image/json requests.
-            if (!lowerUrl.contains("video") && !lowerUrl.contains("stream")) {
+            if (!lowerUrl.contains("video") && !lowerUrl.contains("stream") && !lowerUrl.contains("segment")) {
                return null
             }
         }
@@ -126,6 +125,38 @@ class MediaDetectionEngine(private val context: Context) {
         return null
     }
 
+
+    fun updateCandidateMSEActivity(url: String) {
+        val candidate = candidates[url] ?: findParentManifestForSegment(url)
+        if (candidate != null) {
+            candidate.hasMSEActivity = true
+            candidate.lastSeenTime = System.currentTimeMillis()
+            candidate.requestCount++
+            Log.d(TAG, "MSE activity logged for: ${candidate.url}")
+        } else {
+            val c = processRequest(url, null, null)
+            c?.hasMSEActivity = true
+        }
+    }
+
+    fun markCandidateDRM(url: String) {
+        if (url == "ACTIVE_PLAYER_DRM") {
+            var candidate = candidates[url]
+            if (candidate == null) {
+                candidate = MediaCandidate(url = url, type = "drm_signal")
+                candidates[url] = candidate
+            }
+            candidate.isDRMProtected = true
+            Log.d(TAG, "DRM active signal detected for main player")
+            return
+        }
+        val candidate = candidates[url] ?: findParentManifestForSegment(url)
+        if (candidate != null) {
+            candidate.isDRMProtected = true
+            Log.d(TAG, "DRM detected for: ${candidate.url}")
+        }
+    }
+
     fun getBestCandidate(): MediaCandidate? {
         if (candidates.isEmpty()) return null
 
@@ -152,7 +183,7 @@ class MediaDetectionEngine(private val context: Context) {
         val adKeywords = listOf(
             "vast", "preroll", "midroll", "postroll", "doubleclick", "googlesyndication",
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
-            "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver"
+            "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver", "/litevideo/", "msgnative", "ad_status"
         )
         return adKeywords.any { lowerUrl.contains(it) }
     }

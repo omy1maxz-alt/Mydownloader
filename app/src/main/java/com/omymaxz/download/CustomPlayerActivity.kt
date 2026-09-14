@@ -484,21 +484,19 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setSubtitleConfigurations(subtitleConfigs)
             .build()
 
-        // Check if we need to manually construct a MergingMediaSource (e.g. for split YouTube streams)
+        // Let DefaultMediaSourceFactory naturally handle HLS merging
         val splitAudioUrl = intent.getStringExtra(YouTubeDownloadService.EXTRA_AUDIO_URL)
         if (!splitAudioUrl.isNullOrEmpty()) {
             val audioItem = MediaItem.Builder()
                 .setUri(Uri.parse(splitAudioUrl))
                 .setMimeType(intent.getStringExtra("EXTRA_AUDIO_MIME_TYPE") ?: MimeTypes.AUDIO_MP4)
                 .build()
-
             val factory = DefaultMediaSourceFactory(this).setDataSourceFactory(cacheFactory)
             val videoSource = factory.createMediaSource(newBaseItem)
             val audioSource = factory.createMediaSource(audioItem)
             val mergedSource = MergingMediaSource(videoSource, audioSource)
             player?.setMediaSource(mergedSource)
         } else {
-            // Let DefaultMediaSourceFactory naturally handle HLS merging
             player?.setMediaItem(newBaseItem)
         }
 
