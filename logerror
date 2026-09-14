@@ -155,7 +155,7 @@
 Consider increasing the value for the 'analyzeduration' (0) and 'probesize' (5000000) options
 Input #0, hls, from '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1789333993438/video_playlist.m3u8':
   Duration: 00:24:41.98, start: 1.000589, bitrate: 0 kb/s
-  Program 0
+  Program 0 
     Metadata:
       variant_bitrate : 0
   Stream #0:0[0x0]: Video: h264 ([27][0][0][0] / 0x001B), none, 23.98 fps, 23.98 tbr, 90k tbn, start 1.209544
@@ -166,7 +166,7 @@ Input #0, hls, from '/data/user/0/com.omymaxz.download.debug/files/tmp_export_17
       variant_bitrate : 0
 [mp4 @ 0xb400007317ae18b0] dimensions not set
 [out#0/mp4 @ 0xb4000073b7b89110] Could not write header (incorrect codec parameters ?): Invalid argument
-[aost#0:1/copy @ 0xb400007317af79d0] Error initializing output stream:
+[aost#0:1/copy @ 0xb400007317af79d0] Error initializing output stream: 
 Stream mapping:
   Stream #0:0 -> #0:0 (copy)
   Stream #0:1 -> #0:1 (copy)
@@ -203,7 +203,7 @@ Stream mapping:
 Consider increasing the value for the 'analyzeduration' (0) and 'probesize' (5000000) options
 Input #0, hls, from '/data/user/0/com.omymaxz.download.debug/files/tmp_export_1789334014492/video_playlist.m3u8':
   Duration: 00:24:41.98, start: 1.000589, bitrate: 0 kb/s
-  Program 0
+  Program 0 
     Metadata:
       variant_bitrate : 0
   Stream #0:0[0x0]: Video: h264 ([27][0][0][0] / 0x001B), none, 23.98 fps, 23.98 tbr, 90k tbn, start 1.209544
@@ -214,7 +214,7 @@ Input #0, hls, from '/data/user/0/com.omymaxz.download.debug/files/tmp_export_17
       variant_bitrate : 0
 [mp4 @ 0xb400007317b06750] dimensions not set
 [out#0/mp4 @ 0xb4000073b7b5e770] Could not write header (incorrect codec parameters ?): Invalid argument
-[aost#0:1/copy @ 0xb400007317b0a8f0] Error initializing output stream:
+[aost#0:1/copy @ 0xb400007317b0a8f0] Error initializing output stream: 
 Stream mapping:
   Stream #0:0 -> #0:0 (copy)
   Stream #0:1 -> #0:1 (copy)
@@ -335,7 +335,7 @@ Stream mapping:
 09-14 15:04:22.021 31625 12869 W libc    : Access denied finding property "vendor.display.enable_optimal_refresh_rate"
 09-14 15:04:22.020 31625 31625 W Chrome_InProcGp: type=1400 audit(0.0:48985): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
 09-14 15:04:22.022 31625 12611 I cr_MediaCodecBridge: create MediaCodec video decoder, mime video/x-vnd.on2.vp9, decoder name c2.qti.vp9.decoder, block_model=false
-09-14 15:04:22.025 31625 12611 I MediaCodec: The process name is com.omymaxz.download.debug
+09-14 15:04:22.025 31625 12611 I MediaCodec: The process name is com.omymaxz.download.debug 
 09-14 15:04:22.025 31625 12611 D MediaCodec: MediaCodec overwrite invalid pid -1->31625
 09-14 15:04:22.025 31625 12611 D MediaCodec: MediaCodec u-p-n client:10806-31625-com.omymaxz.download.debug process:10806-31625-com.omymaxz.download.debug
 09-14 15:04:22.036 31625 12611 I VideoBox: VideoBox::VideoBox
@@ -737,7 +737,7 @@ Stream mapping:
 09-14 15:04:22.870 31625 31625 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ffb6b9, reason: AppDarkModeEnable
 09-14 15:04:22.870 31625 13563 I .download.debug: 【MiuiBoosterUtils】improve disable.
 09-14 15:04:22.876 31625 31625 D ScrollerOptimizationManager: registerConfigChangedListener
-09-14 15:04:22.894 31625 31625 D VRI[MainActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
+09-14 15:04:22.894 31625 31625 D VRI[MainActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
 09-14 15:04:22.894 31625 31625 D VRI[MainActivity]: vri.Setup new sync=wmsSync-VRI[MainActivity]#32
 09-14 15:04:22.930 31625 31625 D VRI[MainActivity]: vri.reportDrawFinished
 09-14 15:04:22.933 31625 31625 W Glide   : Load failed for [https://www.google.com/s2/favicons?domain=mangapark.io&sz=128] with dimensions [132x132]
@@ -1116,7 +1116,7 @@ Stream mapping:
 09-14 15:04:24.740 31625 31625 W .download.debug: type=1400 audit(0.0:48990): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
 09-14 15:04:24.746 31625 31625 I ForceDarkHelperStubImpl: setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ffb6b9, reason: AppDarkModeEnable
 09-14 15:04:24.746 31625 13575 I .download.debug: 【MiuiBoosterUtils】improve disable.
-09-14 15:04:24.766 31625 31625 D VRI[MainActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
+09-14 15:04:24.766 31625 31625 D VRI[MainActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
 09-14 15:04:24.767 31625 31625 D VRI[MainActivity]: vri.Setup new sync=wmsSync-VRI[MainActivity]#34
 09-14 15:04:24.771 31625 31625 D VRI[MainActivity]: vri.reportDrawFinished
 09-14 15:04:24.775 31625 12595 W qdgralloc: getInterlacedFlag: getMetaData returned -22, defaulting to interlaced_flag = 0
@@ -1351,7 +1351,7 @@ Stream mapping:
 09-14 15:04:26.587 31625 31625 I .download.debug: 【MiuiBoosterUtils】package permission check disable.
 09-14 15:04:26.587 31625 31625 I .download.debug: 【MiuiBoosterUtils】get Service disable.
 09-14 15:04:26.589 31625 13593 I .download.debug: 【MiuiBoosterUtils】improve disable.
-09-14 15:04:26.590 31625 31625 D VRI[LogcatViewerActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742
+09-14 15:04:26.590 31625 31625 D VRI[LogcatViewerActivity]: vri.reportNextDraw android.view.ViewRootImpl.performTraversals:5014 android.view.ViewRootImpl.doTraversal:3592 android.view.ViewRootImpl$TraversalRunnable.run:11667 android.view.Choreographer$CallbackRecord.run:1733 android.view.Choreographer$CallbackRecord.run:1742 
 09-14 15:04:26.590 31625 31625 D VRI[LogcatViewerActivity]: vri.Setup new sync=wmsSync-VRI[LogcatViewerActivity]#36
 09-14 15:04:26.601 31625 31625 D VRI[LogcatViewerActivity]: vri.reportDrawFinished
 09-14 15:04:26.605 31625 12595 W qdgralloc: getInterlacedFlag: getMetaData returned -22, defaulting to interlaced_flag = 0

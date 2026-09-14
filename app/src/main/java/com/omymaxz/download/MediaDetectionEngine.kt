@@ -7,7 +7,7 @@ import java.net.URL
 
 class MediaDetectionEngine(private val context: Context) {
 
-    val candidates = java.util.concurrent.ConcurrentHashMap<String, MediaCandidate>()
+    val candidates = mutableMapOf<String, MediaCandidate>()
     private val TAG = "MediaDetectionEngine"
 
     // Playback state tracker
