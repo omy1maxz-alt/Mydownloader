@@ -3529,9 +3529,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             val ytUrl = candidate.referer ?: fallbackReferer ?: webView.url?.toString()
             if (ytUrl != null && (ytUrl.contains("youtube.com") || ytUrl.contains("youtu.be"))) {
                 android.util.Log.d("PlayInApp", "Intercepted googlevideo.com raw URL. Rerouting to YoutubeExtractorHelper using: $ytUrl")
-                checkForYouTube(ytUrl)
-                // Note: The UI will stay open, but we show a toast indicating extraction.
                 Toast.makeText(this, "Extracting YouTube stream...", Toast.LENGTH_SHORT).show()
+                checkForYouTube(ytUrl, force = true, autoPlay = true)
                 return
             } else {
                 android.util.Log.e("PlayInApp", "Detected googlevideo.com chunk but could not find a valid YouTube origin URL to extract. Fallback referrer was: $ytUrl")
@@ -3572,8 +3571,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             val ytUrl = fallbackReferer ?: webView.url?.toString()
             if (ytUrl != null && (ytUrl.contains("youtube.com") || ytUrl.contains("youtu.be"))) {
                 android.util.Log.d("PlayInApp", "Intercepted googlevideo.com raw URL. Rerouting to YoutubeExtractorHelper using: $ytUrl")
-                checkForYouTube(ytUrl)
                 Toast.makeText(this, "Extracting YouTube stream...", Toast.LENGTH_SHORT).show()
+                checkForYouTube(ytUrl, force = true, autoPlay = true)
                 return
             } else {
                 android.util.Log.e("PlayInApp", "Detected googlevideo.com chunk but could not find a valid YouTube origin URL to extract. Fallback referrer was: $ytUrl")
@@ -5454,28 +5453,26 @@ if (isDesktopMode) {
     }
 
     private var lastYoutubeUrl: String? = null
+    private var pendingYouTubeAutoPlay = false
 
-    private fun checkForYouTube(url: String?) {
-        if (url == null || url == lastYoutubeUrl) return
+    private fun checkForYouTube(url: String?, force: Boolean = false, autoPlay: Boolean = false) {
+        if (url == null) return
 
         // Ensure we are passing a valid YouTube URL to NewPipe extractor.
-        // If it's a youtube-nocookie.com/embed/ URL, NewPipe might reject it directly if it expects watch?v=
-        // Actually NewPipe handles youtu.be, youtube.com/watch, and standard youtube endpoints well.
-        // We just need to make sure we don't pass `freegpt.tech` into here.
         if (!url.contains("youtube.com") && !url.contains("youtu.be")) return
         if (url.contains("googlevideo.com/videoplayback")) return
 
+        if (autoPlay) pendingYouTubeAutoPlay = true
+        if (!force && url == lastYoutubeUrl) return
         lastYoutubeUrl = url
 
         runOnUiThread {
             updateFabVisibility()
-            // Silenced notification to prevent annoyance during standard web browsing
-            // android.widget.Toast.makeText(this, "YouTube video detected. Extracting stream...", android.widget.Toast.LENGTH_SHORT).show()
         }
         this.lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             val mediaFile = YoutubeExtractorHelper.extractMedia(applicationContext, url)
-            if (mediaFile != null) {
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                if (mediaFile != null) {
                     val existsAlready = synchronized(detectedMediaFiles) {
                         detectedMediaFiles.any { it.url == mediaFile.url }
                     }
@@ -5485,17 +5482,32 @@ if (isDesktopMode) {
                         }
                         updateFabVisibility()
                         currentMediaListAdapter?.notifyDataSetChanged()
-                        // Silenced success notification to avoid interruption
-                        // android.widget.Toast.makeText(this@MainActivity, "YouTube stream ready! Tap the floating button to play/download.", android.widget.Toast.LENGTH_LONG).show()
                     }
+                    if (pendingYouTubeAutoPlay) {
+                        pendingYouTubeAutoPlay = false
+                        launchYouTubeInCustomPlayer(mediaFile)
+                    }
+                } else if (pendingYouTubeAutoPlay) {
+                    pendingYouTubeAutoPlay = false
+                    android.widget.Toast.makeText(this@MainActivity, "YouTube extraction failed — see logcat tag YoutubeExtractorHelper", android.widget.Toast.LENGTH_LONG).show()
                 }
-            } else {
-                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                     // Silenced error notification because background extraction can fail normally on non-video youtube pages
-                     // android.widget.Toast.makeText(this@MainActivity, "Failed to extract YouTube stream.", android.widget.Toast.LENGTH_SHORT).show()
-                 }
             }
         }
+    }
+
+    private fun launchYouTubeInCustomPlayer(mediaFile: MediaFile) {
+        val intent = android.content.Intent(this, CustomPlayerActivity::class.java).apply {
+            putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
+            putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, mediaFile.title)
+            putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
+            putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
+            val referer = mediaFile.referer ?: "https://www.youtube.com"
+            putExtra(CustomPlayerActivity.EXTRA_REFERER, referer)
+            android.webkit.CookieManager.getInstance().getCookie(referer)?.let {
+                putExtra(CustomPlayerActivity.EXTRA_COOKIE, it)
+            }
+        }
+        startActivity(intent)
     }
 
 }
