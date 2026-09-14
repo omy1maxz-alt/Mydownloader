@@ -40,7 +40,20 @@ object YoutubeExtractorHelper {
             init(context)
 
             val service = ServiceList.YouTube
-            val extractor = service.getStreamExtractor(url)
+
+            // Clean the URL to ensure it's a valid YouTube video URL format for the extractor
+            val cleanUrl = if (url.contains("youtube.com/embed/")) {
+                val videoId = url.substringAfter("embed/").substringBefore("?")
+                "https://www.youtube.com/watch?v=$videoId"
+            } else if (url.contains("youtube-nocookie.com/embed/")) {
+                val videoId = url.substringAfter("embed/").substringBefore("?")
+                "https://www.youtube.com/watch?v=$videoId"
+            } else {
+                url
+            }
+
+            Log.d(TAG, "Requesting NewPipe extraction for URL: $cleanUrl")
+            val extractor = service.getStreamExtractor(cleanUrl)
             extractor.fetchPage()
 
             val title = extractor.name ?: "YouTube_Video"
@@ -77,6 +90,32 @@ object YoutubeExtractorHelper {
                     language = null,
                     isMainContent = true
                 )
+            }
+
+            // NewPipe sometimes fails to expose DASH/HLS on latest updates.
+            // Check videoOnlyStreams and audioStreams separately as fallback,
+            // even though ExoPlayer might struggle with unmerged streams, it's better than nothing.
+            val audioStreams = extractor.audioStreams
+            val bestAudio = audioStreams.maxByOrNull { it.bitrate }
+
+            val videoOnlyStreams = extractor.videoOnlyStreams
+            if (videoOnlyStreams.isNotEmpty() && bestAudio != null) {
+                val highestVideo = videoOnlyStreams.maxByOrNull { it.resolution.replace(Regex("[^0-9]"), "").toIntOrNull() ?: 0 }
+
+                if (highestVideo != null && !highestVideo.content.isNullOrEmpty()) {
+                    Log.d(TAG, "Falling back to separate highest quality VideoOnly stream: ${highestVideo.content} and Audio: ${bestAudio.content}")
+                    return@withContext MediaFile(
+                        url = highestVideo.content,
+                        title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
+                        mimeType = "video/mp4", // Most likely mp4/webm
+                        quality = highestVideo.resolution,
+                        category = MediaCategory.VIDEO,
+                        fileSize = "Unknown",
+                        language = null,
+                        isMainContent = true,
+                        audioUrl = bestAudio.content
+                    )
+                }
             }
 
             // Fallback to searching for the highest quality combined video/audio stream (like 360p or 720p non-DASH if it exists)

@@ -4,10 +4,11 @@ import android.content.Context
 import android.util.Log
 import android.webkit.CookieManager
 import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
 
 class MediaDetectionEngine(private val context: Context) {
 
-    private val candidates = mutableMapOf<String, MediaCandidate>()
+    private val candidates = ConcurrentHashMap<String, MediaCandidate>()
     private val TAG = "MediaDetectionEngine"
 
     // Playback state tracker

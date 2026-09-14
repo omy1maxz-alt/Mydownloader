@@ -66,3 +66,6 @@
 - Resolved CustomPlayerActivity YouTube playback bug caused by extraction intent mapping bypassing MIME extraction types.
 - Checked extraction log errors, found user was requesting trace tracking for exception payloads, updated YoutubeExtractorHelper e.message tracking parameters.
 - Fixed NewPipeExtractor YouTube crashes by migrating to v0.26.5 via Java 11 desugaring APIs and rewriting the checkForYouTube caching mechanism to correctly autoPlay extracted media streams.
+- Refactored `YoutubeExtractorHelper.kt` to explicitly parse out `embed/` URLs directly into standard `watch?v=` links before passing them to `NewPipeExtractor` to prevent URL format exceptions, and improved stream fallback mapping if DASH is unavailable.
+- Refactored `MediaDetectionEngine.kt` to use `ConcurrentHashMap` for `candidates` to fix threading crashes when tracking models asynchronously.
+- Implemented `MergingMediaSource` capabilities into `CustomPlayerActivity` to seamlessly handle `NewPipe` extracted URLs that separate audio (`audio/mp4`) from video (`video/mp4`) due to DASH un-merging limits.
