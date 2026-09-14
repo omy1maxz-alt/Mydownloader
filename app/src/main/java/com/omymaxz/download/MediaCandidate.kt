@@ -30,8 +30,6 @@ data class MediaCandidate(
 
             // Significant boost if this stream started fetching after a play event
             if (startedAfterPlayback) score += 25
-
-            // MSE activity indicates real streaming
             if (hasMSEActivity) score += 30
 
             return score

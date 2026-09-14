@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity() {
     private val detectedMediaFiles = Collections.synchronizedList(mutableListOf<MediaFile>())
     private var currentMediaListAdapter: MediaListAdapter? = null
     private var lastUsedName: String = "Video"
-    private var lastUsedUrl: String? = null
+    var lastUsedUrl: String? = null
     var cachedUserAgent: String? = null
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
@@ -364,7 +364,7 @@ private fun checkBatteryOptimization() {
         Thread { YoutubeExtractorHelper.init(applicationContext) }.start()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
-        cachedUserAgent = WebSettings.getDefaultUserAgent(this)
+        cachedUserAgent = android.webkit.WebSettings.getDefaultUserAgent(this)
         setContentView(binding.root)
 
         webView = findViewById(R.id.webView)
@@ -2896,17 +2896,18 @@ private fun injectMediaStateDetector() {
                                                         if (elapsed >= maxWait) {
                                                             pd.dismiss()
                                                             val fallbackCand = activity.mediaEngine.getBestCandidate()
-                                                            if (fallbackCand != null && !fallbackCand.url.startsWith("blob:") && (fallbackCand.confidence == "HIGH" || fallbackCand.confidence == "MEDIUM")) {
+                                                            if (fallbackCand != null) {
                                                                 activity.launchPlayerWithCandidate(fallbackCand, newTitle, activity.lastUsedUrl?.toString())
                                                             } else {
-                                                                val bestCandIsDRM = fallbackCand?.isDRMProtected == true
-                                                                val activeMainCandIsDRM = activity.mediaEngine.candidates.values.any { it.isDRMProtected && (it.startedAfterPlayback || it.confidence == "HIGH") }
-                                                                val generalDRM = activity.mediaEngine.candidates.values.any { it.url == "ACTIVE_PLAYER_DRM" && it.isDRMProtected }
-
-                                                                if (bestCandIsDRM || activeMainCandIsDRM || generalDRM) {
-                                                                    Toast.makeText(activity, "This video appears to be DRM-protected and cannot be handled by the current custom player.", Toast.LENGTH_LONG).show()
+                                                                // Legacy fallback
+                                                                if (url.startsWith("blob:")) {
+                                                                    if (activity.currentVideoUrl != null && !activity.currentVideoUrl!!.startsWith("blob:")) {
+                                                                        activity.launchLegacyPlayer(activity.currentVideoUrl!!, newTitle, activity.lastUsedUrl?.toString())
+                                                                    } else {
+                                                                        Toast.makeText(activity, "Cannot play Blob URLs directly. Please wait for the real video stream to be detected.", Toast.LENGTH_LONG).show()
+                                                                    }
                                                                 } else {
-                                                                    Toast.makeText(activity, "Main stream not captured yet. Press PLAY in the web player first, wait 2–3 seconds, then tap Play in App again.", Toast.LENGTH_LONG).show()
+                                                                    activity.launchLegacyPlayer(url, newTitle, activity.lastUsedUrl?.toString())
                                                                 }
                                                             }
                                                             return
@@ -3741,12 +3742,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                             if (elapsed >= maxWait) {
                                 pd.dismiss()
                                 val fallbackCand = mediaEngine.getBestCandidate()
-                                // Safeguard: don't launch blob URLs, they are unplayable
                                 if (fallbackCand != null && !fallbackCand.url.startsWith("blob:") && (fallbackCand.confidence == "HIGH" || fallbackCand.confidence == "MEDIUM")) {
                                     android.util.Log.d("PlayInApp", "Wait timeout. Launching best available: ${fallbackCand.url}")
                                     launchPlayerWithCandidate(fallbackCand, finalName, mediaFile.referer)
                                 } else {
-                                    // Check if the best candidate or an active candidate is DRM protected
                                     val bestCandIsDRM = fallbackCand?.isDRMProtected == true
                                     val activeMainCandIsDRM = mediaEngine.candidates.values.any { it.isDRMProtected && (it.startedAfterPlayback || it.confidence == "HIGH") }
                                     val generalDRM = mediaEngine.candidates.values.any { it.url == "ACTIVE_PLAYER_DRM" && it.isDRMProtected }
@@ -4219,24 +4218,17 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
                 function isAdOrPreview(el) {
                     if (!el) return false;
-                    // Check sizing (tiny previews)
                     if (el.offsetWidth > 0 && el.offsetWidth < 100) return true;
                     if (el.offsetHeight > 0 && el.offsetHeight < 100) return true;
-                    // Check duration (short trailers)
                     if (el.duration && el.duration > 0 && el.duration < 45) return true;
-
                     let curr = el;
                     while (curr && curr !== document.body) {
                         const style = window.getComputedStyle(curr);
                         if (style.display === 'none' || style.visibility === 'hidden') return true;
-
                         const className = (curr.className && typeof curr.className === 'string') ? curr.className.toLowerCase() : '';
                         const id = (curr.id && typeof curr.id === 'string') ? curr.id.toLowerCase() : '';
-
-                        // Look for known preview/ad container patterns like DMM
                         if (className.includes('video-thumb-wrapper') || className.includes('thumb') || className.includes('preview')) return true;
                         if (id.includes('msgnativewidget') || className.includes('widget') || className.includes('ad-')) return true;
-
                         curr = curr.parentElement;
                     }
                     return false;
@@ -4332,24 +4324,17 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
                 function isAdOrPreview(el) {
                     if (!el) return false;
-                    // Check sizing (tiny previews)
                     if (el.offsetWidth > 0 && el.offsetWidth < 100) return true;
                     if (el.offsetHeight > 0 && el.offsetHeight < 100) return true;
-                    // Check duration (short trailers)
                     if (el.duration && el.duration > 0 && el.duration < 45) return true;
-
                     let curr = el;
                     while (curr && curr !== document.body) {
                         const style = window.getComputedStyle(curr);
                         if (style.display === 'none' || style.visibility === 'hidden') return true;
-
                         const className = (curr.className && typeof curr.className === 'string') ? curr.className.toLowerCase() : '';
                         const id = (curr.id && typeof curr.id === 'string') ? curr.id.toLowerCase() : '';
-
-                        // Look for known preview/ad container patterns like DMM
                         if (className.includes('video-thumb-wrapper') || className.includes('thumb') || className.includes('preview')) return true;
                         if (id.includes('msgnativewidget') || className.includes('widget') || className.includes('ad-')) return true;
-
                         curr = curr.parentElement;
                     }
                     return false;
@@ -4471,66 +4456,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         }
                     } catch (e) {}
                 }
-
-                // --- MSE & DRM Observation ---
-if (!window._mseDrmObserverInjected) {
-    window._mseDrmObserverInjected = true;
-
-    const reportNetworkActivity = (url) => {
-         if (!url || typeof url !== 'string' || url.startsWith('blob:') || url.startsWith('data:')) return;
-         if (window.AndroidMediaState) {
-             const vids = Array.from(document.querySelectorAll('video'));
-             const activeVid = vids.find(v => v.src && (typeof isAdOrPreview !== 'function' || !isAdOrPreview(v)));
-             // Only report if we actually have an active video
-             if (activeVid) {
-                 window.AndroidMediaState.onMSEActivityDetected(url);
-             }
-         }
-    };
-
-    // Intercept Fetch
-    const origFetch = window.fetch;
-    window.fetch = async function(...args) {
-        try {
-            const url = (typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : null;
-            if (url && (url.includes('.m3u8') || url.includes('.mpd') || url.includes('.ts') || url.includes('.m4s') || url.includes('video'))) {
-                reportNetworkActivity(url);
-            }
-        } catch(e) {}
-        return origFetch.apply(this, args);
-    };
-
-    // Intercept XHR
-    const origOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url) {
-        try {
-            if (url && (url.includes('.m3u8') || url.includes('.mpd') || url.includes('.ts') || url.includes('.m4s') || url.includes('video'))) {
-                reportNetworkActivity(url);
-            }
-        } catch (e) {}
-        return origOpen.apply(this, arguments);
-    };
-
-    // DRM Observation
-    if (navigator.requestMediaKeySystemAccess) {
-        const origRequestMediaKeySystemAccess = navigator.requestMediaKeySystemAccess;
-        navigator.requestMediaKeySystemAccess = function(keySystem, supportedConfigurations) {
-            if (window.AndroidMediaState) {
-                 const vids = Array.from(document.querySelectorAll('video'));
-                 const activeVid = vids.find(v => v.src && (typeof isAdOrPreview !== 'function' || !isAdOrPreview(v)));
-                 // Only report DRM if there is an active valid video
-                 if (activeVid && activeVid.src && !activeVid.src.startsWith('blob:') && !activeVid.src.startsWith('data:')) {
-                     window.AndroidMediaState.onDRMDetected(activeVid.src);
-                 } else if (activeVid && activeVid.src && activeVid.src.startsWith('blob:')) {
-                     // For blob URLs we can't tie DRM to a real URL easily here, we'll mark a special flag
-                     window.AndroidMediaState.onDRMDetected("ACTIVE_PLAYER_DRM");
-                 }
-            }
-            return origRequestMediaKeySystemAccess.apply(this, arguments);
-        };
-    }
-}
-
                 searchFrames(window);
 
                 // De-duplicate results
