@@ -24,7 +24,7 @@ class MediaDetectionEngine(private val context: Context) {
         isPlaybackActive = false
     }
 
-    fun processRequest(url: String, referer: String?, userAgent: String?, isFromAdBlocker: Boolean = false): MediaCandidate? {
+    fun processRequest(url: String, referer: String?, userAgent: String?): MediaCandidate? {
         val cleanUrl = url.substringBefore('?')
         val lowerUrl = cleanUrl.lowercase()
 
@@ -96,7 +96,7 @@ class MediaDetectionEngine(private val context: Context) {
         )
 
         // Ad tracking
-        if (isLikelyAd || isFromAdBlocker) {
+        if (isLikelyAd) {
             candidate.adScore += 50
             Log.d(TAG, "Candidate marked as AD: $url")
         }
