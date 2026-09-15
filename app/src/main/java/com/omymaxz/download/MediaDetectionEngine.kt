@@ -24,7 +24,19 @@ class MediaDetectionEngine(private val context: Context) {
         isPlaybackActive = false
     }
 
+    private fun isProprietaryUnsupportedStream(url: String): Boolean {
+        val lower = url.lowercase()
+        return lower.contains("71edge.com") ||
+               lower.contains("iqiyi.com/videos/vts/") ||
+               lower.contains("zlayercdn")
+    }
+
     fun processRequest(url: String, referer: String?, userAgent: String?, contentType: String? = null): MediaCandidate? {
+        if (isProprietaryUnsupportedStream(url)) {
+            Log.d(TAG, "Blocked proprietary iQiyi/71edge chunk: $url")
+            return null
+        }
+
         val cleanUrl = url.substringBefore('?')
         val lowerUrl = cleanUrl.lowercase()
 
