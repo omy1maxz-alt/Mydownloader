@@ -2763,6 +2763,51 @@ private fun injectMediaStateDetector() {
         }
 
         @JavascriptInterface
+        fun onActiveMediaFound(url: String, type: String, isBlob: Boolean) {
+            activity.runOnUiThread {
+                var bestPlayable = activity.mediaEngine.getBestCandidate()
+
+                // If it's not a blob and we have a direct active URL, let's process it heavily
+                if (!isBlob && url.isNotEmpty() && !url.startsWith("data:")) {
+                    val activeCand = activity.mediaEngine.processRequest(url, activity.lastUsedUrl, activity.cachedUserAgent)
+                    if (activeCand != null) {
+                        activeCand.playbackScore += 100 // Absolute highest priority
+                        bestPlayable = activity.mediaEngine.getBestCandidate()
+                    }
+                }
+
+                if (bestPlayable != null) {
+                    // Update detection list with highest priority
+                    val detectedFormat = activity.detectVideoFormat(bestPlayable.url)
+                    val title = activity.generateSmartFileName(bestPlayable.url, detectedFormat.extension, activity.extractQualityFromUrl(bestPlayable.url), MediaCategory.VIDEO)
+
+                    val mediaFile = MediaFile(
+                        url = bestPlayable.url,
+                        title = title + " (Active)",
+                        mimeType = detectedFormat.mimeType,
+                        quality = activity.extractQualityFromUrl(bestPlayable.url),
+                        category = MediaCategory.VIDEO,
+                        fileSize = "Unknown",
+                        language = null,
+                        isMainContent = true,
+                        referer = activity.lastUsedUrl
+                    )
+
+                    synchronized(activity.detectedMediaFiles) {
+                        activity.detectedMediaFiles.removeIf { it.url == mediaFile.url }
+                        activity.detectedMediaFiles.add(0, mediaFile)
+                    }
+                    activity.updateFabVisibility()
+                    activity.currentMediaListAdapter?.notifyDataSetChanged()
+
+                    android.widget.Toast.makeText(activity, "Active media found! Check the download list.", android.widget.Toast.LENGTH_LONG).show()
+                } else {
+                    android.widget.Toast.makeText(activity, "No active media could be confidently detected.", android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        @JavascriptInterface
         fun onMediaDetectedWithHeaders(url: String, type: String, contentType: String?) {
             if (url.startsWith("blob:")) return
             if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
@@ -4000,6 +4045,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             MenuItemCustom(R.id.menu_theme_color, "Theme Color"),
             MenuItemCustom(R.id.menu_debug_site, "Debug Site"),
             MenuItemCustom(R.id.menu_enable_media_detection, "Advanced Media Sniffer"),
+            MenuItemCustom(R.id.menu_detect_active_media, "Detect Current Media"),
             MenuItemCustom(R.id.menu_debug_page, "Debug Page"),
             MenuItemCustom(R.id.menu_toggle_popup_notice, popupNoticeTitle)
         )
@@ -4045,6 +4091,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 R.id.menu_theme_color -> showThemeColorPickerDialog()
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
                 R.id.menu_enable_media_detection -> runAdvancedMediaSniffer()
+                R.id.menu_detect_active_media -> runActiveMediaDetection()
                 R.id.menu_debug_page -> showPageSource()
                 R.id.menu_toggle_popup_notice -> {
                     val currentSetting = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
@@ -4191,6 +4238,80 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
     }
 
+
+
+    private fun runActiveMediaDetection() {
+        Toast.makeText(this, "Detecting active media...", Toast.LENGTH_SHORT).show()
+        val script = """
+            (function() {
+                try {
+                    let bestElement = null;
+                    let bestScore = -1;
+
+                    const scoreElement = (el) => {
+                        if (!el) return -1;
+                        let score = 0;
+                        if (!el.paused && !el.ended && el.readyState > 2) score += 50; // Actively playing
+                        if (el.currentTime > 0 && !el.paused) score += 30;
+                        if (el.duration > 45) score += 20; // Filter out short ads
+                        if (el.offsetWidth > 100 && el.offsetHeight > 100) score += 10;
+                        // Determine if it's the main media session
+                        if (navigator.mediaSession && navigator.mediaSession.metadata && navigator.mediaSession.metadata.title) {
+                            score += 10;
+                        }
+                        return score;
+                    };
+
+                    const scanDocument = (doc) => {
+                        const mediaElements = Array.from(doc.querySelectorAll('video, audio'));
+                        mediaElements.forEach(el => {
+                            const score = scoreElement(el);
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestElement = el;
+                            }
+                        });
+
+                        // Check iframes
+                        doc.querySelectorAll('iframe').forEach(iframe => {
+                            try {
+                                if (iframe.contentWindow && iframe.contentWindow.document) {
+                                    scanDocument(iframe.contentWindow.document);
+                                }
+                            } catch(e) {}
+                        });
+                    };
+
+                    scanDocument(document);
+
+                    if (!bestElement) {
+                        return JSON.stringify({ error: "No media elements found" });
+                    }
+
+                    // Extract source
+                    let activeUrl = bestElement.currentSrc || bestElement.src;
+                    if (!activeUrl) {
+                        const source = bestElement.querySelector('source');
+                        if (source) activeUrl = source.src;
+                    }
+
+                    if (!activeUrl) {
+                         return JSON.stringify({ error: "Media element has no source" });
+                    }
+
+                    const isBlob = activeUrl.startsWith('blob:');
+
+                    if (window.AndroidMediaState && window.AndroidMediaState.onActiveMediaFound) {
+                        window.AndroidMediaState.onActiveMediaFound(activeUrl, bestElement.tagName.toLowerCase(), isBlob);
+                    }
+                    return JSON.stringify({ url: activeUrl, isBlob: isBlob });
+                } catch(e) {
+                    return JSON.stringify({ error: e.message });
+                }
+            })();
+        """
+        webView.evaluateJavascript(script, null)
+    }
 
     private fun runAdvancedMediaSniffer() {
         isManualScanPending = true
