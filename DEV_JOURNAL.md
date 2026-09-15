@@ -69,3 +69,4 @@
 - Implemented a centralized ad/preview URL classifier and DOM context scanner (isAdOrPreview) to strongly penalize hidden/tiny preview candidates on sites like DMM, and integrated MSE/DRM activity observation safely with WebViews to correctly score and rank the main playable video.
 - Implemented DRM-based playable fallback filtering in `MediaDetectionEngine.kt` to ensure short pre-roll ads are discarded if a protected DRM main-stream is identified, effectively preventing the user from accidentally capturing short DMM ads on complex player pages.
 -- - Fixed syntax error injected by the code review tool.
+- Implemented heuristic extensionless media detection (`/video/`, `/stream/`, etc.) by pulling `Content-Type` safely from `fetch()` and `XMLHttpRequest` via JS non-destructive overrides. Group orphaned stream segments into a `segmentGroup` fallback to allow exporting without crashing the native ExoPlayer.
