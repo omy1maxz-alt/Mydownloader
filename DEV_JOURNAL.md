@@ -68,3 +68,4 @@
 - Fixed NewPipeExtractor YouTube crashes by migrating to v0.26.5 via Java 11 desugaring APIs and rewriting the checkForYouTube caching mechanism to correctly autoPlay extracted media streams.
 - Implemented a centralized ad/preview URL classifier and DOM context scanner (isAdOrPreview) to strongly penalize hidden/tiny preview candidates on sites like DMM, and integrated MSE/DRM activity observation safely with WebViews to correctly score and rank the main playable video.
 - Implemented DRM-based playable fallback filtering in `MediaDetectionEngine.kt` to ensure short pre-roll ads are discarded if a protected DRM main-stream is identified, effectively preventing the user from accidentally capturing short DMM ads on complex player pages.
+-- - Fixed syntax error injected by the code review tool.
