@@ -465,8 +465,9 @@ class HlsExportService : Service() {
                             val uriStr = uriMatch.groupValues[1]
                             val fullUrl = if (uriStr.startsWith("http")) uriStr else java.net.URI(playlistUrl).resolve(uriStr).toString()
                             var ext = fullUrl.substringAfterLast(".", "mp4").substringBefore("?")
-                            if (ext.lowercase() in listOf("png", "jpg", "jpeg", "bmp", "gif", "bin", "php")) {
-                                ext = "mp4" // Assuming fMP4 init chunks shouldn't be fake images either
+                            val validExtensions = listOf("mp4", "m4s", "m4f", "m4a", "m4v", "aac", "ts")
+                            if (ext.lowercase() !in validExtensions || !fullUrl.contains(".")) {
+                                ext = "mp4" // Force proper init extension if obfuscated
                             }
                             val localFile = File(tmpDir, "init_${outputFileName}_$segmentIndex.$ext")
 
@@ -537,8 +538,9 @@ class HlsExportService : Service() {
                         val segmentUrl = if (line.startsWith("http")) line else java.net.URI(playlistUrl).resolve(line).toString()
                         var ext = segmentUrl.substringAfterLast(".", "ts").substringBefore("?")
                         // FFmpeg strictly blocks non-media extensions (like .PNG obfuscation) in LOCAL playlists for security.
-                        // We must normalize image/fake extensions back to .ts, while preserving real fMP4 extensions.
-                        if (ext.lowercase() in listOf("png", "jpg", "jpeg", "bmp", "gif", "bin", "php") || !segmentUrl.contains(".")) {
+                        // We must enforce a strict whitelist. If the extension is unknown/obfuscated, use the container type.
+                        val validExtensions = listOf("ts", "m4s", "mp4", "m4f", "m4a", "aac", "mp3", "webm", "m4v")
+                        if (ext.lowercase() !in validExtensions || !segmentUrl.contains(".")) {
                             ext = if (isFmp4) "m4s" else "ts"
                         }
                         val localSegment = File(tmpDir, "seg_${outputFileName}_%05d.$ext".format(segmentIndex))

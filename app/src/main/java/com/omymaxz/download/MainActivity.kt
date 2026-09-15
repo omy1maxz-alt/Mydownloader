@@ -4311,19 +4311,51 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     window._advancedSnifferActive = true;
 
                     const origFetch = window.fetch;
-                    window.fetch = async function(...args) {
+                    window.fetch = function(...args) {
+                        let requestUrl = null;
                         try {
-                            const url = (typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : null;
-                            if (url) checkString(url, 'FetchAPI');
+                            requestUrl = (typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : null;
                         } catch(e) {}
-                        return origFetch.apply(this, args);
+
+                        const p = origFetch.apply(this, args);
+                        if (requestUrl && window.AndroidMediaState) {
+                            p.then(response => {
+                                if (response && response.ok) {
+                                    try {
+                                        const ct = response.headers.get('content-type');
+                                        if (ct && (ct.includes('video/') || ct.includes('mpegurl') || ct.includes('dash+xml') || ct.includes('audio/') || ct.includes('text/vtt'))) {
+                                            if (window.AndroidMediaState.onMediaDetectedWithHeaders) {
+                                                window.AndroidMediaState.onMediaDetectedWithHeaders(requestUrl, 'unknown', ct);
+                                            }
+                                        } else {
+                                            checkString(requestUrl, 'FetchAPI');
+                                        }
+                                    } catch(e) {}
+                                }
+                                return response;
+                            }).catch(e => {});
+                        }
+                        return p;
                     };
 
                     const origOpen = XMLHttpRequest.prototype.open;
                     XMLHttpRequest.prototype.open = function(method, url) {
-                        try {
-                            if (url) checkString(url, 'XHR');
-                        } catch(e) {}
+                        if (typeof url === 'string' && window.AndroidMediaState) {
+                            this.addEventListener('readystatechange', function() {
+                                if (this.readyState === 2) {
+                                    try {
+                                        const ct = this.getResponseHeader('Content-Type');
+                                        if (ct && (ct.includes('video/') || ct.includes('mpegurl') || ct.includes('dash+xml') || ct.includes('audio/') || ct.includes('text/vtt'))) {
+                                            if (window.AndroidMediaState.onMediaDetectedWithHeaders) {
+                                                window.AndroidMediaState.onMediaDetectedWithHeaders(url, 'unknown', ct);
+                                            }
+                                        } else {
+                                            checkString(url, 'XHR');
+                                        }
+                                    } catch(e) {}
+                                }
+                            });
+                        }
                         return origOpen.apply(this, arguments);
                     };
                 }
