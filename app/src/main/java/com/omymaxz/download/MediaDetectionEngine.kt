@@ -24,18 +24,7 @@ class MediaDetectionEngine(private val context: Context) {
         isPlaybackActive = false
     }
 
-    private fun isProprietaryUnsupportedStream(url: String): Boolean {
-        val lower = url.lowercase()
-        return lower.contains("71edge.com") ||
-               lower.contains("iqiyi.com/videos/vts/") ||
-               lower.contains("zlayercdn")
-    }
-
     fun processRequest(url: String, referer: String?, userAgent: String?, contentType: String? = null): MediaCandidate? {
-        if (isProprietaryUnsupportedStream(url)) {
-            Log.d(TAG, "Blocked proprietary iQiyi/71edge chunk: $url")
-            return null
-        }
 
         val cleanUrl = url.substringBefore('?')
         val lowerUrl = cleanUrl.lowercase()
@@ -69,7 +58,8 @@ class MediaDetectionEngine(private val context: Context) {
         }
 
         // Try to associate segments with their parent manifest if they share a path
-        if (isSegment || (hasEvidencePath && ctLower == null && !isProgressiveFinal && !isManifest)) { // Group orphan segments and extensionless unproven chunks
+        // Do NOT group obvious ads/images
+        if (!isLikelyAd && (isSegment || (hasEvidencePath && ctLower == null && !isProgressiveFinal && !isManifest))) { // Group orphan segments and extensionless unproven chunks
             val parentCandidate = findParentManifestForSegment(url)
             if (parentCandidate != null) {
                 parentCandidate.requestCount++
@@ -146,20 +136,38 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
     private fun findParentManifestForSegment(segmentUrl: String): MediaCandidate? {
-        // Simple heuristic: Does the segment share a directory path with a known manifest?
+        // Advanced heuristic: Correlate segments to a parent manifest using host, path, referer, or existing tokens.
         try {
             val segUrlObj = URL(segmentUrl)
             val segPath = segUrlObj.path.substringBeforeLast("/")
+            val segHost = segUrlObj.host
+
+            var bestMatch: MediaCandidate? = null
+            var bestScore = -1
 
             for ((candUrl, candidate) in candidates) {
-                if (candidate.isManifest) {
+                if (candidate.isManifest && candidate.adScore == 0) {
+                    var matchScore = 0
                     val candUrlObj = URL(candUrl)
                     val candPath = candUrlObj.path.substringBeforeLast("/")
-                    if (segUrlObj.host == candUrlObj.host && segPath == candPath) {
-                        return candidate
+
+                    // Host + Path match
+                    if (segHost == candUrlObj.host && segPath == candPath) {
+                        matchScore += 10
+                    } else if (segHost == candUrlObj.host) {
+                        // Same host, maybe different path structure but same token/query?
+                        matchScore += 5
+                    }
+
+                    if (matchScore > 0) {
+                        if (matchScore > bestScore) {
+                            bestScore = matchScore
+                            bestMatch = candidate
+                        }
                     }
                 }
             }
+            return bestMatch
         } catch (e: Exception) {
             // Ignore malformed URLs
         }
@@ -270,8 +278,15 @@ class MediaDetectionEngine(private val context: Context) {
             "vast", "preroll", "midroll", "postroll", "doubleclick", "googlesyndication",
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
             "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver",
-            "scorecardresearch", "criteo", "outbrain", "taboola", "moatads", "advertising"
+            "scorecardresearch", "criteo", "outbrain", "taboola", "moatads", "advertising",
+            "tiktokcdn", "ad-site"
         )
-        return adKeywords.any { lowerUrl.contains(it) }
+        val isAdKeyword = adKeywords.any { lowerUrl.contains(it) }
+
+        val isImage = lowerUrl.endsWith(".image") || lowerUrl.endsWith(".jpg") ||
+                      lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") ||
+                      lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".webp")
+
+        return isAdKeyword || isImage
     }
 }

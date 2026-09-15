@@ -1356,6 +1356,12 @@ private fun checkBatteryOptimization() {
                         }
                     }
 
+                    // Targeted diagnostic logging for "stream_iq.m3u8" or related goplay.su iQIYI traffic
+                    if (url.contains("stream_iq.m3u8") || url.contains("iqiyi.com") || url.contains("71edge.com") || url.contains("goplay.su")) {
+                        android.util.Log.i("iQIYI_Diagnostic", "Intercepted: URL=$url")
+                        android.util.Log.i("iQIYI_Diagnostic", "Method=${request?.method}, Referer=$reqReferer")
+                    }
+
                     // Safely process through MediaDetectionEngine on background thread
                     mediaEngine.processRequest(url, reqReferer, userAgent)
 

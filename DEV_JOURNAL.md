@@ -76,3 +76,7 @@
 - Implemented explicit blacklist in `MediaDetectionEngine.kt` to block unplayable proprietary iQiyi / 71edge chunks natively.
 - Toughened `fetchSubtitleSnippet` in `MainActivity.kt` with synchronous removals to reject fake subtitle `.vtt` endpoints that return HTML, iframes, or scripts.
 - Injected `screen.orientation.lock` polyfill in `MainActivity`'s `onPageStarted` to bypass unhandled Promise rejections triggering native player hide/crashes on sites like goplay.su.
+- Removed aggressive proprietary iQiyi / 71edge explicit blacklisting to allow these chunks to natively flow into `MediaDetectionEngine.kt`.
+- Improved ad and image exclusion logic inside `MediaDetectionEngine.isAdUrl` (targeting tracker cdns and explicit non-media extensions) and strictly fenced `.isSegmentGroup` assignments to ignore these bad URLs entirely, fixing local export/demuxer collisions.
+- Refined `findParentManifestForSegment` inside `MediaDetectionEngine.kt` to natively boost an existing manifest's score whenever subsequent `.ts` chunks arrive from the same host, rather than lazily linking by path.
+- Added targeted diagnostic traffic logging inside `MainActivity`'s interceptors for `stream_iq.m3u8` domains to trace network payloads without duplicating native HTTP requests.
