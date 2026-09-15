@@ -2236,7 +2236,11 @@ private fun checkBatteryOptimization() {
                     },
 
                     checkUrl: function(url, type) {
-                        if (!url || url.startsWith('data:') || url.startsWith('blob:')) return;
+                        if (!url || url.startsWith('data:')) return;
+                    if (url.startsWith('blob:')) {
+                        if (window.AndroidMediaState) window.AndroidMediaState.onMediaDetected(url, 'video');
+                        return;
+                    }
                         if (url.match(/\.m3u8/i)) {
                              this.notify(url, 'video');
                         }
@@ -3742,7 +3746,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                             if (elapsed >= maxWait) {
                                 pd.dismiss()
                                 val fallbackCand = mediaEngine.getBestCandidate()
-                                if (fallbackCand != null && !fallbackCand.url.startsWith("blob:") && (fallbackCand.confidence == "HIGH" || fallbackCand.confidence == "MEDIUM")) {
+                                if (fallbackCand != null && !fallbackCand.url.startsWith("blob:") && (fallbackCand.confidence == "HIGH" || fallbackCand.confidence == "MEDIUM" || fallbackCand.isDRMProtected)) {
                                     android.util.Log.d("PlayInApp", "Wait timeout. Launching best available: ${fallbackCand.url}")
                                     launchPlayerWithCandidate(fallbackCand, finalName, mediaFile.referer)
                                 } else {
@@ -4178,7 +4182,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 'use strict';
                 const foundMedia = new Set();
                 const notify = (url, type, source) => {
-                    if (!url || url.startsWith('data:') || url.startsWith('blob:')) return;
+                    if (!url || url.startsWith('data:')) return;
+                    if (url.startsWith('blob:')) {
+                        if (window.AndroidMediaState) window.AndroidMediaState.onMediaDetected(url, 'video');
+                        return;
+                    }
                     if (url.startsWith('//')) url = 'https:' + url;
                     try {
                         const parsed = new URL(url, window.location.href).href;
@@ -4199,7 +4207,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         if (str.includes(".m3u8")) {
                             const regexM3u8 = /(https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*)/i;
                             let match = regexM3u8.exec(str);
-                            if (match) notify(match[1], 'video', sourceContext);
+                            if (match) { if(window.AndroidMediaState) { window.AndroidMediaState.onMediaDetected(match[1], 'video'); } }
                         }
                         const regex = /https?:\/\/[^"'\s<>]+\.(m3u8|mp4|mkv|webm|mpd|m4a|mp3|ogg)([^"'\s<>]*)/gi;
                         candidates.forEach(s => {
@@ -4348,14 +4356,14 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         if (str.includes(".m3u8")) {
                             const regexM3u8 = /(https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*)/i;
                             let match = regexM3u8.exec(str);
-                            if (match) notify(match[1], 'video', sourceContext);
+                            if (match) { if(window.AndroidMediaState) { window.AndroidMediaState.onMediaDetected(match[1], 'video'); } }
                         }
                         const regex = /https?:\/\/[^"'\s<>]+\.(m3u8|mp4|mkv|webm|mpd)([^"'\s<>]*)/gi;
 
                         candidates.forEach(s => {
                             let match;
                             while ((match = regex.exec(s)) !== null) {
-                                media.push({ url: match[0], title: document.title, type: 'video' });
+                                if (window.AndroidMediaState) { window.AndroidMediaState.onMediaDetected(match[0], 'video'); }
                             }
                         });
                     } catch(e) {}
@@ -4371,7 +4379,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                      if(!url) return;
                      url = url.trim();
                      if(url.startsWith('//')) url = 'https:' + url;
-                     media.push({ url: url, title: title || document.title, type: type || 'video', language: language });
+                     if(window.AndroidMediaState) {
+                         window.AndroidMediaState.onMediaDetected(url, type || 'video');
+                     }
                 }
 
                 // 1. Variable Scan (MacCMS / player_aaaa)

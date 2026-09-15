@@ -7,7 +7,7 @@ import java.net.URL
 
 class MediaDetectionEngine(private val context: Context) {
 
-    val candidates = mutableMapOf<String, MediaCandidate>()
+    val candidates = java.util.concurrent.ConcurrentHashMap<String, MediaCandidate>()
     private val TAG = "MediaDetectionEngine"
 
     // Playback state tracker
@@ -15,7 +15,7 @@ class MediaDetectionEngine(private val context: Context) {
         set(value) {
             field = value
             if (value) {
-                Log.d(TAG, "Playback active signal received.")
+                Log.d(TAG, "Playback active signal received. Bootstrapping relevant candidates.")
             }
         }
 
@@ -28,7 +28,7 @@ class MediaDetectionEngine(private val context: Context) {
         val cleanUrl = url.substringBefore('?')
         val lowerUrl = cleanUrl.lowercase()
 
-        // Ad detection (just a signal, not a hard block unless absolutely certain, handled outside)
+        // Deepen ad keyword detection
         val isLikelyAd = isAdUrl(lowerUrl)
 
         // Categorize
@@ -70,7 +70,9 @@ class MediaDetectionEngine(private val context: Context) {
         if (existing != null) {
             existing.requestCount++
             existing.lastSeenTime = System.currentTimeMillis()
-            if (isPlaybackActive) existing.startedAfterPlayback = true
+            if (isPlaybackActive) {
+                existing.startedAfterPlayback = true
+            }
             return existing
         }
 
@@ -93,7 +95,12 @@ class MediaDetectionEngine(private val context: Context) {
             cookie = cookie
         )
 
-        if (isLikelyAd) candidate.adScore += 50
+        // Ad tracking
+        if (isLikelyAd || isFromAdBlocker) {
+            candidate.adScore += 50
+            Log.d(TAG, "Candidate marked as AD: $url")
+        }
+
         if (isPlaybackActive) {
             candidate.startedAfterPlayback = true
             candidate.playbackScore += 10
@@ -125,12 +132,10 @@ class MediaDetectionEngine(private val context: Context) {
         return null
     }
 
-
     fun updateCandidateMSEActivity(url: String) {
         val candidate = candidates[url] ?: findParentManifestForSegment(url)
         if (candidate != null) {
             candidate.hasMSEActivity = true
-            candidate.lastSeenTime = System.currentTimeMillis()
             candidate.requestCount++
             Log.d(TAG, "MSE activity logged for: ${candidate.url}")
         } else {
@@ -171,9 +176,12 @@ class MediaDetectionEngine(private val context: Context) {
             if (safePlayables.isNotEmpty()) return safePlayables.maxByOrNull { it.finalScore }
         }
 
-        if (playables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
+        // Remove high probability ads from the final playable selection entirely unless they are the ONLY thing available
+        val safePlayables = playables.filter { it.adScore == 0 || it.finalScore > 0 }
 
-        return playables.maxByOrNull { it.finalScore }
+        if (safePlayables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
+
+        return safePlayables.maxByOrNull { it.finalScore }
     }
 
     fun getCandidate(url: String): MediaCandidate? = candidates[url]
@@ -191,7 +199,8 @@ class MediaDetectionEngine(private val context: Context) {
         val adKeywords = listOf(
             "vast", "preroll", "midroll", "postroll", "doubleclick", "googlesyndication",
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
-            "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver", "/litevideo/", "msgnative", "ad_status"
+            "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver",
+            "scorecardresearch", "criteo", "outbrain", "taboola", "moatads", "advertising"
         )
         return adKeywords.any { lowerUrl.contains(it) }
     }
