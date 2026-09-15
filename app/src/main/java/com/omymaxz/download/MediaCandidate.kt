@@ -15,7 +15,11 @@ data class MediaCandidate(
     var userAgent: String? = null,
     var cookie: String? = null,
     var hasMSEActivity: Boolean = false,
-    var isDRMProtected: Boolean = false
+    var isDRMProtected: Boolean = false,
+    var contentType: String? = null,
+    var isSegmentGroup: Boolean = false,
+    val segmentUrls: MutableSet<String> = mutableSetOf(),
+    var pathBase: String? = null
 ) {
     val finalScore: Int
         get() {
@@ -31,6 +35,12 @@ data class MediaCandidate(
             // Significant boost if this stream started fetching after a play event
             if (startedAfterPlayback) score += 25
             if (hasMSEActivity) score += 30
+
+            // Content-Type Corroboration
+            contentType?.lowercase()?.let { ct ->
+                if (ct.startsWith("video/")) score += 15
+                if (ct.contains("mpegurl") || ct.contains("dash+xml")) score += 20
+            }
 
             return score
         }

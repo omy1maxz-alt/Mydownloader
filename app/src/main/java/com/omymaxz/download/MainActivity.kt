@@ -2763,14 +2763,28 @@ private fun injectMediaStateDetector() {
         }
 
         @JavascriptInterface
-        fun onMediaDetected(url: String, type: String) {
+        fun onMediaDetectedWithHeaders(url: String, type: String, contentType: String?) {
             if (url.startsWith("blob:")) return
             if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
                 lastSubtitleUrl = url
             }
-            // Pass to engine on UI thread context
             activity.runOnUiThread {
-                activity.mediaEngine.processRequest(url, activity.lastUsedUrl, activity.cachedUserAgent)
+                activity.mediaEngine.processRequest(url, activity.lastUsedUrl, activity.cachedUserAgent, contentType)
+                handleIncomingMediaDetection(url, type, contentType)
+            }
+        }
+
+        @JavascriptInterface
+        fun onMediaDetected(url: String, type: String) {
+            onMediaDetectedWithHeaders(url, type, null)
+        }
+
+        private fun handleIncomingMediaDetection(url: String, type: String, contentType: String? = null) {
+            if (url.startsWith("blob:")) return
+            if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
+                lastSubtitleUrl = url
+            }
+            // Already on UI thread from onMediaDetectedWithHeaders
                 try {
                     if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:") && !url.startsWith("blob:")) {
                          val existsAlready = synchronized(activity.detectedMediaFiles) {
@@ -2813,7 +2827,6 @@ private fun injectMediaStateDetector() {
                 } catch (e: Exception) {
                     android.util.Log.e("MediaStateInterface", "Error in onMediaDetected: ${e.message}")
                 }
-            }
         }
 
         @JavascriptInterface
@@ -3544,6 +3557,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
 
         private fun launchPlayerWithCandidate(candidate: MediaCandidate, title: String, fallbackReferer: String?) {
+
+        // Prevent playback of pure segment groups without a manifest
+        if (candidate.isSegmentGroup) {
+            android.widget.Toast.makeText(this, "Stream requires manifest for playback. Segments can only be exported.", android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
 
         // INTERCEPT YOUTUBE PLAY IN APP
         // If the candidate is a raw googlevideo chunk, do NOT pass it to CustomPlayerActivity natively
