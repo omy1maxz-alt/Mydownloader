@@ -1216,6 +1216,19 @@ private fun checkBatteryOptimization() {
                     }
                     view?.evaluateJavascript(javascript.trimIndent(), null)
 
+                    // Polyfill screen.orientation.lock to prevent native player crashes
+                    val polyfill = """
+                        javascript:(function(){
+                          if (screen.orientation && screen.orientation.lock) {
+                            const origLock = screen.orientation.lock.bind(screen.orientation);
+                            screen.orientation.lock = function(orientation) {
+                              return origLock(orientation).catch(function() { return Promise.resolve(); });
+                            };
+                          }
+                        })();
+                    """
+                    view?.evaluateJavascript(polyfill.trimIndent(), null)
+
                     super.onPageStarted(view, url, favicon)
                     isPageLoading = true
 
@@ -3286,6 +3299,24 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
                 val text = connection.inputStream.bufferedReader().use { it.readText() }
                 val result = SubtitleUtils.extractSnippet(text)
+
+                val snippet = result.snippet ?: ""
+                if (snippet.isBlank() ||
+                    snippet.length < 15 ||
+                    snippet.contains("<script", ignoreCase = true) ||
+                    snippet.contains("<iframe", ignoreCase = true) ||
+                    snippet.contains("<!DOCTYPE", ignoreCase = true)) {
+
+                    android.util.Log.d("SubtitleUtils", "Discarding fake/invalid subtitle: ${mediaFile.url}")
+                    synchronized(detectedMediaFiles) {
+                        detectedMediaFiles.removeAll { it.url == mediaFile.url }
+                    }
+                    withContext(Dispatchers.Main) {
+                        updateFabVisibility()
+                        currentMediaListAdapter?.notifyDataSetChanged()
+                    }
+                    return@launch
+                }
 
                 val detectedFormat = detectVideoFormat(mediaFile.url)
                 if (!result.snippet.isNullOrBlank()) {
