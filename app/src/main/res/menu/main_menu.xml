@@ -53,6 +53,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/menu_detect_active_media"
+        android:title="Detect Current Media"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_debug_page"
         android:title="Debug Page"
         app:showAsAction="never" />
