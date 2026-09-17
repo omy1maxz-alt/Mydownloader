@@ -80,3 +80,5 @@
 - Improved ad and image exclusion logic inside `MediaDetectionEngine.isAdUrl` (targeting tracker cdns and explicit non-media extensions) and strictly fenced `.isSegmentGroup` assignments to ignore these bad URLs entirely, fixing local export/demuxer collisions.
 - Refined `findParentManifestForSegment` inside `MediaDetectionEngine.kt` to natively boost an existing manifest's score whenever subsequent `.ts` chunks arrive from the same host, rather than lazily linking by path.
 - Added targeted diagnostic traffic logging inside `MainActivity`'s interceptors for `stream_iq.m3u8` domains to trace network payloads without duplicating native HTTP requests.
+- Implemented robust Cross-Origin iframe tracking by extending `injectStandardMediaDetector` to push hidden iframe nodes back to Android's `MediaStateInterface.onIframeFound`. These URLs are safely routed back down into the background `IframeSniffer.kt` context where they are evaluated.
+- Upgraded `IframeSniffer.kt` to push found URLs transparently into the main `MediaDetectionEngine` to allow for unified caching and media candidate grading.

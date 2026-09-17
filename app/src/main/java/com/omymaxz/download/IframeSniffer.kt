@@ -52,6 +52,17 @@ class IframeSniffer(private val context: Context, private val onMediaFound: (Str
                                 addCandidate(reqUrl)
                             }
                         }
+
+                        // We also need to feed the main MediaDetectionEngine
+                        val reqHeaders = request?.requestHeaders
+                        val reqReferer = reqHeaders?.get("Referer") ?: reqHeaders?.get("referer")
+                        val userAgent = reqHeaders?.get("User-Agent") ?: reqHeaders?.get("user-agent")
+
+                        val act = context
+                        if (act is MainActivity) {
+                            act.mediaEngine.processRequest(reqUrl, reqReferer, userAgent)
+                        }
+
                         return super.shouldInterceptRequest(view, request)
                     }
                 }
