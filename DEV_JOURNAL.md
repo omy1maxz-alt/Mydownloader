@@ -82,3 +82,6 @@
 - Added targeted diagnostic traffic logging inside `MainActivity`'s interceptors for `stream_iq.m3u8` domains to trace network payloads without duplicating native HTTP requests.
 - Implemented robust Cross-Origin iframe tracking by extending `injectStandardMediaDetector` to push hidden iframe nodes back to Android's `MediaStateInterface.onIframeFound`. These URLs are safely routed back down into the background `IframeSniffer.kt` context where they are evaluated.
 - Upgraded `IframeSniffer.kt` to push found URLs transparently into the main `MediaDetectionEngine` to allow for unified caching and media candidate grading.
+- Implemented robust cache duplicate segment skip handling to prevent storage exhaustion inside `HlsExportService.kt` during `.m3u8` variant local rewrites.
+- Re-architected cache-gap detection: instead of "stitching anyway" silently, it explicitly detects gaps and triggers targeted network recovery explicitly over that missing byte range, keeping the rest of the export offline and intact.
+- Enforced Terminal ENOSPC failure. Export loops now immediately abort and bubble `java.io.IOException("TERMINAL_ENOSPC")` up to the top level UI if storage fills up. This immediately prevents the old bug where ENOSPC forced the app to fall back to FFmpeg network mode (which would also instantly fail via ENOSPC but without an explicit error toast).
