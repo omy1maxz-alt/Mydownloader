@@ -418,6 +418,7 @@ class HlsExportService : Service() {
             }
 
             suspend fun processPlaylist(playlistUrl: String, outputFileName: String): File {
+                val processedSegments = mutableMapOf<String, String>() // Normalized URL -> Local File Name
                 val dataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(playlistUrl))
                 var playlistContent = ""
                 try {
@@ -536,9 +537,18 @@ class HlsExportService : Service() {
 
                     if (!line.startsWith("#")) {
                         val segmentUrl = if (line.startsWith("http")) line else java.net.URI(playlistUrl).resolve(line).toString()
+
+                        val normalizedKey = segmentUrl.substringBefore("?")
+                        val existingLocalName = processedSegments[normalizedKey]
+
+                        if (existingLocalName != null) {
+                            writeExportLog("Skipping duplicate segment write, reusing: $existingLocalName")
+                            newLines.add(existingLocalName)
+                            segmentIndex++
+                            continue
+                        }
+
                         var ext = segmentUrl.substringAfterLast(".", "ts").substringBefore("?")
-                        // FFmpeg strictly blocks non-media extensions (like .PNG obfuscation) in LOCAL playlists for security.
-                        // We must enforce a strict whitelist. If the extension is unknown/obfuscated, use the container type.
                         val validExtensions = listOf("ts", "m4s", "mp4", "m4f", "m4a", "aac", "mp3", "webm", "m4v")
                         if (ext.lowercase() !in validExtensions || !segmentUrl.contains(".")) {
                             ext = if (isFmp4) "m4s" else "ts"
@@ -561,6 +571,10 @@ class HlsExportService : Service() {
                             fos.close()
                             success = true
                         } catch (e: Exception) {
+                            val msg = e.message ?: e.toString()
+                            if (msg.contains("ENOSPC") || msg.contains("No space left")) {
+                                throw java.io.IOException("TERMINAL_ENOSPC")
+                            }
                             // Cache miss on primary URI. Fallback to direct SimpleCache file reading.
                             try {
                                 val segUri = android.net.Uri.parse(segmentUrl)
@@ -590,29 +604,41 @@ class HlsExportService : Service() {
                                     if (matchedKey != null) {
                                         writeExportLog("Domain mismatch detected. Found segment in cache using path fallback: $matchedKey")
 
+                                        var targetedRecoveryNeeded = false
                                         // BULLETPROOF FIX: Read directly from SimpleCache spans, bypassing CacheDataSource entirely.
                                         val spans = cache.getCachedSpans(matchedKey).filter { it.length > 0 }.sortedBy { it.position }
 
                                         if (spans.isNotEmpty()) {
                                             java.io.FileOutputStream(localSegment).use { output ->
                                                 var expectedPosition = 0L
+                                                var hasGap = false
+                                                var gapPosition = 0L
                                                 for (span in spans) {
-                                                    // Relax gap check slightly for some fragmented cache responses if length > 0
                                                     if (span.position != expectedPosition) {
-                                                        writeExportLog("WARNING: Cache gap detected. Expected $expectedPosition, got ${span.position}. Attempting to stitch anyway.")
-                                                    }
-                                                    if (span.file != null && span.file!!.exists()) {
-                                                        java.io.FileInputStream(span.file).use { input ->
-                                                            val buffer = ByteArray(64 * 1024)
-                                                            var read: Int
-                                                            while (input.read(buffer).also { read = it } != -1) {
-                                                                output.write(buffer, 0, read)
-                                                            }
-                                                        }
-                                                    } else {
-                                                        throw java.io.IOException("CACHE_INCOMPLETE: Span file missing or null.")
+                                                        hasGap = true
+                                                        gapPosition = expectedPosition
+                                                        break
                                                     }
                                                     expectedPosition = span.position + span.length
+                                                }
+
+                                                if (hasGap) {
+                                                    writeExportLog("ERROR: Cache gap detected at $gapPosition. Refusing to stitch corrupted segment silently.")
+                                                    throw java.io.IOException("CACHE_GAP")
+                                                } else {
+                                                    for (span in spans) {
+                                                        if (span.file != null && span.file!!.exists()) {
+                                                            java.io.FileInputStream(span.file).use { input ->
+                                                                val buffer = ByteArray(64 * 1024)
+                                                                var read: Int
+                                                                while (input.read(buffer).also { read = it } != -1) {
+                                                                    output.write(buffer, 0, read)
+                                                                }
+                                                            }
+                                                        } else {
+                                                            throw java.io.IOException("CACHE_INCOMPLETE: Span file missing or null.")
+                                                        }
+                                                    }
                                                 }
                                                 output.flush()
                                             }
@@ -665,7 +691,37 @@ class HlsExportService : Service() {
                                     }
                                 }
                             } catch (fallbackEx: Exception) {
-                                writeExportLog("Fallback cache lookup failed: ${fallbackEx.message}")
+                                val fallbackMsg = fallbackEx.message ?: fallbackEx.toString()
+                                if (fallbackMsg.contains("TERMINAL_ENOSPC") || fallbackMsg.contains("ENOSPC") || fallbackMsg.contains("No space left")) {
+                                    throw java.io.IOException("TERMINAL_ENOSPC")
+                                }
+                                if (fallbackMsg.contains("CACHE_GAP") || fallbackMsg.contains("CACHE_INCOMPLETE") || fallbackMsg.contains("SIGNATURE REJECTION")) {
+                                    // Missing data, trigger targeted recovery
+                                    try {
+                                        writeExportLog("Attempting targeted network recovery for missing segment: $segmentUrl")
+                                        networkFactory.open(segmentSpec)
+                                        val fos = java.io.FileOutputStream(localSegment)
+                                        val buffer = ByteArray(1024 * 64)
+                                        var bytesRead: Int
+                                        while (networkFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                                            fos.write(buffer, 0, bytesRead)
+                                        }
+                                        fos.close()
+                                        success = true
+                                        writeExportLog("Successfully recovered segment from network: $segmentUrl")
+                                    } catch (recEx: Exception) {
+                                        val recMsg = recEx.message ?: recEx.toString()
+                                        if (recMsg.contains("ENOSPC") || recMsg.contains("No space left")) {
+                                            throw java.io.IOException("TERMINAL_ENOSPC")
+                                        }
+                                        writeExportLog("Targeted network recovery failed: $recMsg")
+                                        success = false
+                                    } finally {
+                                        try { networkFactory.close() } catch (e: Exception) {}
+                                    }
+                                } else {
+                                    writeExportLog("Fallback cache lookup failed: $fallbackMsg")
+                                }
                             }
                         } finally {
                             try { cacheOnlyFactory.close() } catch (ex: Exception) {}
@@ -675,6 +731,7 @@ class HlsExportService : Service() {
                             writeExportLog("Failed to read segment from cache: $segmentUrl")
                             throw Exception("Incomplete cache for segment: $segmentUrl")
                         }
+                        processedSegments[normalizedKey] = localSegment.name
 
                         newLines.add(localSegment.name)
                         segmentIndex++
