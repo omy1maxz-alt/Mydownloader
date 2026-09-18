@@ -1174,6 +1174,7 @@ private fun checkBatteryOptimization() {
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.clear()
                     }
+                    (webView.tag as? MediaStateInterface)?.clearState()
                     currentMediaListAdapter?.notifyDataSetChanged()
                     runOnUiThread {
                         updateFabVisibility()
@@ -1240,6 +1241,7 @@ private fun checkBatteryOptimization() {
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.clear()
                     }
+                    (webView.tag as? MediaStateInterface)?.clearState()
                     currentMediaListAdapter?.notifyDataSetChanged()
                     runOnUiThread { updateFabVisibility() }
                     if (url?.contains("perchance.org") == true) {
@@ -1265,6 +1267,7 @@ private fun checkBatteryOptimization() {
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.clear()
                     }
+                    (webView.tag as? MediaStateInterface)?.clearState()
                     mediaEngine.clear()
                     runOnUiThread {
                         currentMediaListAdapter?.notifyDataSetChanged()
@@ -2632,6 +2635,7 @@ private fun injectMediaStateDetector() {
     }
     inner class MediaStateInterface(private val activity: MainActivity) {
 
+
         private var lastSubtitleUrl: String = ""
 
 
@@ -2651,6 +2655,9 @@ private fun injectMediaStateDetector() {
 
         fun clearState() {
             lastSubtitleUrl = ""
+            synchronized(processedIframes) {
+                processedIframes.clear()
+            }
         }
 
         @JavascriptInterface
@@ -2779,6 +2786,38 @@ private fun injectMediaStateDetector() {
         @JavascriptInterface
         fun getCurrentVideoUrl(): String {
             return activity.currentVideoUrl ?: ""
+        }
+
+        private val processedIframes = mutableSetOf<String>()
+
+        @JavascriptInterface
+        fun onIframeFound(iframeUrl: String) {
+            val trimmedUrl = iframeUrl.trim()
+            if (trimmedUrl.isEmpty() || trimmedUrl == "about:blank" || trimmedUrl.startsWith("data:")) return
+
+            // Normalize URL to prevent redundant hidden WebViews
+            val normalizedUrl = try {
+                val uri = java.net.URI(trimmedUrl)
+                if (!uri.isAbsolute && activity.webView.url != null) {
+                    java.net.URI(activity.webView.url).resolve(uri).toString()
+                } else {
+                    trimmedUrl
+                }
+            } catch (e: Exception) { trimmedUrl }
+
+            synchronized(processedIframes) {
+                if (processedIframes.contains(normalizedUrl)) return
+                processedIframes.add(normalizedUrl)
+            }
+
+            android.util.Log.d("MediaStateInterface", "Discovered potential cross-origin player iframe: $normalizedUrl")
+
+            // Route the iframe URL cleanly into the existing IframeSniffer on the UI thread
+            activity.runOnUiThread {
+                IframeSniffer(activity) { sniffedMediaUrl ->
+                    onMediaDetected(sniffedMediaUrl, "video")
+                }.sniff(normalizedUrl)
+            }
         }
 
         @JavascriptInterface
@@ -4423,6 +4462,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         if (el.tagName !== 'IFRAME' && typeof isAdOrPreview === 'function' && isAdOrPreview(el)) return;
                         if (el.src) checkString(el.src, 'DOM ' + el.tagName);
                         if (el.tagName === 'IFRAME') {
+                            let iframeSrc = el.src || el.getAttribute('data-src') || el.getAttribute('data-link');
+                            if (iframeSrc && iframeSrc !== 'about:blank' && !iframeSrc.includes('recaptcha') && !iframeSrc.includes('facebook.com') && !iframeSrc.includes('twitter.com')) {
+                                if (window.AndroidMediaState && window.AndroidMediaState.onIframeFound) {
+                                    window.AndroidMediaState.onIframeFound(iframeSrc);
+                                }
+                            }
                             try {
                                 if (el.contentWindow && el.contentWindow.document) {
                                     scanDOM(el.contentWindow.document);
@@ -4580,6 +4625,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
                 // 1. Scan all iframes in the current document for embedded media URLs
                 document.querySelectorAll('iframe').forEach(iframe => {
+                    let iframeSrc = iframe.src || iframe.getAttribute('data-src') || iframe.getAttribute('data-link');
+                    if (iframeSrc && iframeSrc !== 'about:blank' && !iframeSrc.includes('recaptcha') && !iframeSrc.includes('facebook.com') && !iframeSrc.includes('twitter.com')) {
+                        if (window.AndroidMediaState && window.AndroidMediaState.onIframeFound) {
+                            window.AndroidMediaState.onIframeFound(iframeSrc);
+                        }
+                    }
                     extractMediaUrls(iframe.src);
                 });
 
