@@ -86,6 +86,25 @@ object HlsDownloadHelper {
                     cacheDir.deleteRecursively()
                 }
 
+                // Clear ExoPlayer DownloadManager directory if it exists.
+                // Media3's DownloadManager uses `getExternalFilesDir(null)/downloads` by default
+                // when no custom directory is specified via a custom cache.
+                // However, since we pass unified_video_cache as the cacheFactory, the downloaded segments
+                // sit in unified_video_cache. BUT the download actions/state sit in the standalone database.
+                // So let's nuke the StandaloneDatabaseProvider dir as well.
+
+                // Actually StandaloneDatabaseProvider uses "exoplayer_internal.db" in context.databasePath
+                val dbFile = context.getDatabasePath("exoplayer_internal.db")
+                if (dbFile.exists()) dbFile.delete()
+
+                val dbJourFile = context.getDatabasePath("exoplayer_internal.db-journal")
+                if (dbJourFile.exists()) dbJourFile.delete()
+
+                // Nuke the ExoPlayer download manager state
+                try {
+                    downloadManager?.removeAllDownloads()
+                } catch(e:Exception){}
+
                 // 5. Clear WebView cache (must be on Main Thread)
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                     try {
