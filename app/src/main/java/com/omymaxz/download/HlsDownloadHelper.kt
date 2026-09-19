@@ -64,15 +64,36 @@ object HlsDownloadHelper {
                     streamCache = null
                 }
 
-                // 2. Delete the directory recursively (instant compared to file-by-file deletion)
+                // 2. Delete the ExoPlayer directory recursively (instant compared to file-by-file deletion)
                 val dir = java.io.File(context.getExternalFilesDir(null), "unified_video_cache")
                 if (dir.exists()) {
                     dir.deleteRecursively()
                 }
 
-                // 3. Notify the user on the main thread
+                // 3. Clear orphaned FFmpeg export directories in filesDir
+                val filesDir = context.filesDir
+                if (filesDir.exists()) {
+                    filesDir.listFiles()?.forEach { file ->
+                        if (file.isDirectory && file.name.startsWith("tmp_export_")) {
+                            file.deleteRecursively()
+                        }
+                    }
+                }
+
+                // 4. Clear standard Android cacheDir
+                val cacheDir = context.cacheDir
+                if (cacheDir.exists()) {
+                    cacheDir.deleteRecursively()
+                }
+
+                // 5. Clear WebView cache (must be on Main Thread)
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(context, "Video cache cleared successfully", android.widget.Toast.LENGTH_SHORT).show()
+                    try {
+                        android.webkit.WebView(context).clearCache(true)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    android.widget.Toast.makeText(context, "All app caches cleared successfully", android.widget.Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
