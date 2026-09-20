@@ -147,21 +147,14 @@ class MainActivity : AppCompatActivity() {
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
         if (newConfig.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) {
-            binding.rootContainer.layoutParams = android.widget.FrameLayout.LayoutParams(
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-            )
             val rootParams = binding.rootContainer.layoutParams as? android.view.ViewGroup.MarginLayoutParams
             rootParams?.setMargins(0, 0, 0, 0)
             binding.rootContainer.setPadding(0, 0, 0, 0)
 
-            binding.mainContent.layoutParams = android.widget.FrameLayout.LayoutParams(
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-            )
             val params = binding.mainContent.layoutParams as? android.view.ViewGroup.MarginLayoutParams
             params?.setMargins(0, 0, 0, 0)
             binding.mainContent.setPadding(0, 0, 0, 0)
+
             window.decorView.requestLayout()
             binding.rootContainer.requestLayout()
             binding.mainContent.requestLayout()
@@ -585,6 +578,10 @@ private fun checkBatteryOptimization() {
             // Also apply theme color to the status bar and popup menu
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+
+                // Clear TRANSLUCENT_STATUS flag if it was ever set so we don't accidentally draw underneath the status bar/toolbar
+                window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+
                 // Strip the alpha channel to make the status bar solid, as some OS versions don't render translucent well.
                 val solidColor = android.graphics.Color.rgb(
                     android.graphics.Color.red(color),
@@ -1079,11 +1076,7 @@ private fun checkBatteryOptimization() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView(webView: WebView) {
-        // Dynamically apply padding to WebView so content isn't hidden under the transparent toolbar
         val density = resources.displayMetrics.density
-
-        // Removed WebView padding
-        // webView.clipToPadding = false
 
         // --- PERFORMANCE OPTIMIZATIONS ---
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null) // Enable hardware acceleration
