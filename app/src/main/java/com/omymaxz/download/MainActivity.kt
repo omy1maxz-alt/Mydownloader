@@ -1461,6 +1461,14 @@ private fun checkBatteryOptimization() {
                     }
                     fullscreenView = view
                     customViewCallback = callback
+
+                    // CRITICAL FIX: Ensure the video view inherits proper LayoutParams before attaching to the absolute DecorView (which is a FrameLayout)
+                    // Failing to do so causes the ViewRootImpl to crash with ClassCastException when measuring after switching activities.
+                    fullscreenView?.layoutParams = android.widget.FrameLayout.LayoutParams(
+                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+                    )
+
                     val decorView = window.decorView as android.view.ViewGroup
                     decorView.addView(fullscreenView)
 
@@ -1624,9 +1632,9 @@ private fun checkBatteryOptimization() {
                         settings.javaScriptCanOpenWindowsAutomatically = false
                         settings.domStorageEnabled = true
                         settings.userAgentString = this@MainActivity.webView.settings.userAgentString
-                        layoutParams = FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.MATCH_PARENT,
-                            FrameLayout.LayoutParams.MATCH_PARENT
+                        layoutParams = android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT
                         )
                     }
 
