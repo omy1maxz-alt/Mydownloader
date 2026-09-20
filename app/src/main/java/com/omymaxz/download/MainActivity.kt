@@ -1603,12 +1603,12 @@ private fun checkBatteryOptimization() {
 
                     requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
-                    binding.rootContainer.layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+                    binding.rootContainer.layoutParams = android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.MATCH_PARENT)
                     val rootParams = binding.rootContainer.layoutParams as? android.view.ViewGroup.MarginLayoutParams
                     rootParams?.setMargins(0, 0, 0, 0)
                     binding.rootContainer.setPadding(0, 0, 0, 0)
 
-                    binding.mainContent.layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+                    binding.mainContent.layoutParams = android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
                     val params = binding.mainContent.layoutParams as? android.view.ViewGroup.MarginLayoutParams
                     params?.setMargins(0, 0, 0, 0)
                     binding.mainContent.setPadding(0, 0, 0, 0)
@@ -1659,9 +1659,9 @@ private fun checkBatteryOptimization() {
                     // Create a wrapper layout for the popup if the user decides to open it
                     val popupWrapper = android.widget.LinearLayout(this@MainActivity).apply {
                         orientation = android.widget.LinearLayout.VERTICAL
-                        layoutParams = FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.MATCH_PARENT,
-                            FrameLayout.LayoutParams.MATCH_PARENT
+                        layoutParams = android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT
                         )
                         visibility = View.GONE // Hidden by default
                     }
@@ -4956,15 +4956,19 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             setPadding(50, 50, 50, 50)
         }
 
+        val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+
         val hostInput = EditText(this).apply {
             hint = "Proxy Host"
             setText(currentHost)
+            layoutParams = lp
         }
         dialogView.addView(hostInput)
 
         val portInput = EditText(this).apply {
             hint = "Proxy Port"
             inputType = InputType.TYPE_CLASS_NUMBER
+            layoutParams = lp
             if (currentPort != -1) {
                 setText(currentPort.toString())
             }
@@ -5115,6 +5119,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val layout = LinearLayout(this)
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(50, 40, 50, 10)
+
+        val layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        input.layoutParams = layoutParams
+        modelLabel.layoutParams = layoutParams
+        modelSpinner.layoutParams = layoutParams
+
         layout.addView(input)
         layout.addView(modelLabel)
         layout.addView(modelSpinner)
@@ -5451,6 +5461,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val input = EditText(this).apply {
             hint = "e.g., #AAFF0000 for semi-transparent red"
             setText(currentHex)
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         }
 
         val layout = LinearLayout(this).apply {
