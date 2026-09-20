@@ -52,9 +52,11 @@ class GeminiChatActivity : AppCompatActivity() {
         chatInputEditText = findViewById(R.id.chatInputEditText)
         sendButton = findViewById(R.id.sendButton)
 
-        chatAdapter = ChatAdapter(messages) { position ->
-            handleMessageLongClick(position)
-        }
+        chatAdapter = ChatAdapter(messages,
+            onMessageLongClick = { position -> handleMessageLongClick(position) },
+            onMessageEdit = { position -> editMessage(position) },
+            onMessageDelete = { position -> deleteMessage(position) }
+        )
         chatRecyclerView.layoutManager = LinearLayoutManager(this).apply {
             stackFromEnd = true
         }
@@ -202,47 +204,54 @@ class GeminiChatActivity : AppCompatActivity() {
         }
 
     }
-    private fun handleMessageLongClick(position: Int) {
+    private fun editMessage(position: Int) {
         val message = messages[position]
+        val input = EditText(this).apply {
+            setText(message.text)
+            selectAll()
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        }
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 10)
+            addView(input)
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Edit & Restart From Here")
+            .setView(layout)
+            .setPositiveButton("Send") { _, _ ->
+                val newText = input.text.toString()
+                if (newText.isNotBlank()) {
+                    val removeCount = messages.size - position
+                    while (messages.size > position) {
+                        messages.removeAt(messages.size - 1)
+                    }
+                    chatAdapter.notifyItemRangeRemoved(position, removeCount)
+                    saveChatHistory()
+                    sendMessage(newText)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteMessage(position: Int) {
+        val removeCount = messages.size - position
+        while (messages.size > position) {
+            messages.removeAt(messages.size - 1)
+        }
+        chatAdapter.notifyItemRangeRemoved(position, removeCount)
+        saveChatHistory()
+        Toast.makeText(this, "Messages deleted.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun handleMessageLongClick(position: Int) {
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("Chat Options")
             .setItems(arrayOf("Edit & Restart From Here", "Delete From Here")) { _, which ->
                 when (which) {
-                    0 -> {
-                        // Edit & Restart
-                        val input = EditText(this).apply {
-                            setText(message.text)
-                            selectAll()
-                        }
-                        androidx.appcompat.app.AlertDialog.Builder(this)
-                            .setTitle("Edit Message")
-                            .setView(input)
-                            .setPositiveButton("Send") { _, _ ->
-                                val newText = input.text.toString()
-                                if (newText.isNotBlank()) {
-                                    // Remove this message and everything after it safely
-                                    val removeCount = messages.size - position
-                                    while (messages.size > position) {
-                                        messages.removeAt(messages.size - 1)
-                                    }
-                                    chatAdapter.notifyItemRangeRemoved(position, removeCount)
-                                    saveChatHistory()
-                                    sendMessage(newText)
-                                }
-                            }
-                            .setNegativeButton("Cancel", null)
-                            .show()
-                    }
-                    1 -> {
-                        // Delete From Here
-                        val removeCount = messages.size - position
-                        while (messages.size > position) {
-                            messages.removeAt(messages.size - 1)
-                        }
-                        chatAdapter.notifyItemRangeRemoved(position, removeCount)
-                        saveChatHistory()
-                        Toast.makeText(this, "Messages deleted.", Toast.LENGTH_SHORT).show()
-                    }
+                    0 -> editMessage(position)
+                    1 -> deleteMessage(position)
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -261,14 +270,20 @@ data class ChatMessage(val text: String, val isUser: Boolean)
 
 class ChatAdapter(
     private val messages: List<ChatMessage>,
-    private val onMessageLongClick: (Int) -> Unit
+    private val onMessageLongClick: (Int) -> Unit,
+    private val onMessageEdit: (Int) -> Unit,
+    private val onMessageDelete: (Int) -> Unit
 ) : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
 
     private var markwon: Markwon? = null
 
     class ChatViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val messageContainer: LinearLayout = view.findViewById(R.id.messageContainer)
+        val messageInnerContainer: LinearLayout = view.findViewById(R.id.messageInnerContainer)
         val messageTextView: TextView = view.findViewById(R.id.messageTextView)
+        val actionButtonsContainer: LinearLayout = view.findViewById(R.id.actionButtonsContainer)
+        val btnEditMessage: android.widget.ImageButton = view.findViewById(R.id.btnEditMessage)
+        val btnDeleteMessage: android.widget.ImageButton = view.findViewById(R.id.btnDeleteMessage)
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
@@ -286,17 +301,26 @@ class ChatAdapter(
         val message = messages[position]
         markwon?.setMarkdown(holder.messageTextView, message.text)
 
-        val layoutParams = holder.messageTextView.layoutParams as LinearLayout.LayoutParams
         if (message.isUser) {
             holder.messageContainer.gravity = android.view.Gravity.END
+            holder.messageInnerContainer.gravity = android.view.Gravity.END
             holder.messageTextView.setBackgroundColor(0xFFDCF8C6.toInt()) // Light green
-            layoutParams.gravity = android.view.Gravity.END
         } else {
             holder.messageContainer.gravity = android.view.Gravity.START
+            holder.messageInnerContainer.gravity = android.view.Gravity.START
             holder.messageTextView.setBackgroundColor(0xFFE0E0E0.toInt()) // Light gray
-            layoutParams.gravity = android.view.Gravity.START
         }
-        holder.messageTextView.layoutParams = layoutParams
+
+        // Show buttons immediately or when clicked
+        holder.actionButtonsContainer.visibility = View.VISIBLE
+
+        holder.btnEditMessage.setOnClickListener {
+            onMessageEdit(holder.adapterPosition)
+        }
+
+        holder.btnDeleteMessage.setOnClickListener {
+            onMessageDelete(holder.adapterPosition)
+        }
 
         holder.messageContainer.setOnLongClickListener {
             onMessageLongClick(holder.adapterPosition)
