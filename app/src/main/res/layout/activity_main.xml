@@ -1,32 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:fitsSystemWindows="true">
-    <FrameLayout
-        android:id="@+id/mainContent"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <WebView
-            android:id="@+id/webView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/bookmarkRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="visible"
-            android:paddingTop="48dp"
-            android:clipToPadding="false" />
-
-    </FrameLayout>
-
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -39,9 +19,7 @@
             android:layout_height="48dp"
             android:background="?attr/colorPrimary"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:contentInsetStart="0dp"
-
->
+            app:contentInsetStart="0dp">
 
             <LinearLayout
                 android:id="@+id/toolbarLinearLayout"
@@ -183,6 +161,27 @@
 
     </LinearLayout>
 
+    <FrameLayout
+        android:id="@+id/mainContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/bookmarkRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible"
+            android:paddingTop="0dp"
+            android:clipToPadding="false" />
+
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/fullscreenContainer"
@@ -191,4 +190,4 @@
         android:background="@android:color/black"
         android:visibility="gone" />
 
-</FrameLayout>
+</LinearLayout>
