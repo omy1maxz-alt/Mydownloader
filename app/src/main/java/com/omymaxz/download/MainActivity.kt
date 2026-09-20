@@ -1277,29 +1277,7 @@ private fun checkBatteryOptimization() {
 
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
-                        // Inject CSS padding intelligently so the webpage starts below the overlapping transparent toolbar
-                        // Instead of a blind global padding (which breaks 100vh and kisskh), we apply padding-top to body
-                        // AND dynamically scan for fixed/sticky headers at the top of the viewport and push them down by 48px.
-                        val smartPaddingJs = "javascript:(function() { " +
-                                "if(window.__smartPaddingInjected) return;" +
-                                "window.__smartPaddingInjected = true;" +
-                                "var style = document.createElement('style'); " +
-                                "style.innerHTML = 'body { padding-top: 48px !important; }';" +
-                                "document.documentElement.appendChild(style); " +
-                                "setTimeout(function() {" +
-                                "  var all = document.querySelectorAll('header, nav, .navbar, .nav, div');" +
-                                "  for(var i=0; i<all.length; i++) {" +
-                                "    var el = all[i];" +
-                                "    var comp = window.getComputedStyle(el);" +
-                                "    if ((comp.position === 'fixed' || comp.position === 'sticky') && parseInt(comp.top) <= 10) {" +
-                                "      if(el.tagName === 'DIV' && el.offsetHeight > 150) continue;" + // Ignore large full-screen overlays
-                                "      el.style.setProperty('top', '48px', 'important');" +
-                                "      el.style.setProperty('margin-top', '0px', 'important');" +
-                                "    }" +
-                                "  }" +
-                                "}, 500);" +
-                                "})();"
-                        view?.evaluateJavascript(smartPaddingJs, null)
+                        // No longer injecting transparent toolbar CSS padding. Layout is now structurally vertical.
 
                     isPageLoading = false
                     binding.progressBar.visibility = View.GONE
