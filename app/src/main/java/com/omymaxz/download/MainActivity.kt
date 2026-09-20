@@ -1581,7 +1581,7 @@ private fun checkBatteryOptimization() {
 
                     requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
-                    binding.rootContainer.layoutParams = android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.MATCH_PARENT)
+                    binding.rootContainer.layoutParams = android.widget.FrameLayout.LayoutParams(android.widget.FrameLayout.LayoutParams.MATCH_PARENT, android.widget.FrameLayout.LayoutParams.MATCH_PARENT)
                     val rootParams = binding.rootContainer.layoutParams as? android.view.ViewGroup.MarginLayoutParams
                     rootParams?.setMargins(0, 0, 0, 0)
                     binding.rootContainer.setPadding(0, 0, 0, 0)
