@@ -487,19 +487,20 @@ private fun checkBatteryOptimization() {
         Intent(this, WebViewForegroundService::class.java).also { intent ->
             bindService(intent, webViewServiceConnection, Context.BIND_AUTO_CREATE)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(mediaControlReceiver, IntentFilter(ACTION_MEDIA_CONTROL), RECEIVER_EXPORTED)
-            registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), RECEIVER_EXPORTED)
-        } else {
-            registerReceiver(mediaControlReceiver, IntentFilter(ACTION_MEDIA_CONTROL))
-            registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(mediaControlReceiver, IntentFilter(ACTION_MEDIA_CONTROL), RECEIVER_EXPORTED)
+                registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), RECEIVER_EXPORTED)
+            } else {
+                registerReceiver(mediaControlReceiver, IntentFilter(ACTION_MEDIA_CONTROL))
+                registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+            }
+        } catch (e: Exception) {}
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(mediaControlReceiver)
-        unregisterReceiver(downloadReceiver)
+        // Receivers are now unregistered in onStop
         webView.destroy()
         if (hasStartedForegroundService) {
             stopPlaybackService()
@@ -509,6 +510,10 @@ private fun checkBatteryOptimization() {
 
     override fun onStop() {
         super.onStop()
+        try {
+            unregisterReceiver(mediaControlReceiver)
+            unregisterReceiver(downloadReceiver)
+        } catch (e: Exception) { }
 
         val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val backgroundLoadingEnabled = settingsPrefs.getBoolean("background_loading_enabled", false)
