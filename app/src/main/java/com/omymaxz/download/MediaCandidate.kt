@@ -15,6 +15,8 @@ data class MediaCandidate(
     var userAgent: String? = null,
     var cookie: String? = null,
     var hasMSEActivity: Boolean = false,
+    var durationSec: Int = 0,
+    var isActivePlayer: Boolean = false,
     var isDRMProtected: Boolean = false,
     var contentType: String? = null,
     var isProgressiveFinal: Boolean = false,
@@ -36,6 +38,11 @@ data class MediaCandidate(
             // Significant boost if this stream started fetching after a play event
             if (startedAfterPlayback) score += 25
             if (hasMSEActivity) score += 30
+            if (isActivePlayer) score += 50
+
+            // Duration penalization / boost
+            if (durationSec in 1..29) score -= 20
+            else if (durationSec >= 30) score += 10
 
             // Content-Type Corroboration
             contentType?.lowercase()?.let { ct ->
