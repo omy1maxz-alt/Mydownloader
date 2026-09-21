@@ -1460,12 +1460,9 @@ private fun checkBatteryOptimization() {
                     fullscreenView = view
                     customViewCallback = callback
 
-                    // CRITICAL FIX: Ensure the video view inherits proper LayoutParams before attaching to the absolute DecorView (which is a FrameLayout)
-                    // Failing to do so causes the ViewRootImpl to crash with ClassCastException when measuring after switching activities.
-                    fullscreenView?.layoutParams = android.widget.FrameLayout.LayoutParams(
-                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-                    )
+                    // No longer forcefully casting LayoutParams here.
+                    // Let Android natively assign them when added to the FrameLayout decorView,
+                    // or use a safe cast if we must modify margins.
 
                     val decorView = window.decorView as android.view.ViewGroup
                     decorView.addView(fullscreenView)
@@ -1587,12 +1584,10 @@ private fun checkBatteryOptimization() {
 
                     requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
-                    binding.rootContainer.layoutParams = android.widget.FrameLayout.LayoutParams(android.widget.FrameLayout.LayoutParams.MATCH_PARENT, android.widget.FrameLayout.LayoutParams.MATCH_PARENT)
                     val rootParams = binding.rootContainer.layoutParams as? android.view.ViewGroup.MarginLayoutParams
                     rootParams?.setMargins(0, 0, 0, 0)
                     binding.rootContainer.setPadding(0, 0, 0, 0)
 
-                    binding.mainContent.layoutParams = android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
                     val params = binding.mainContent.layoutParams as? android.view.ViewGroup.MarginLayoutParams
                     params?.setMargins(0, 0, 0, 0)
                     binding.mainContent.setPadding(0, 0, 0, 0)
