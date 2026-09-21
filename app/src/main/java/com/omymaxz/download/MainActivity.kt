@@ -2868,6 +2868,18 @@ private fun injectMediaStateDetector() {
         }
 
         @JavascriptInterface
+        fun onActivePlayerFound(url: String, durationStr: String?) {
+            if (url.startsWith("blob:") || isAdUrl(url)) return
+
+            activity.runOnUiThread {
+                try {
+                    val duration = durationStr?.toDoubleOrNull()?.toInt() ?: 0
+                    activity.mediaEngine.markCandidateAsActivePlayer(url, duration)
+                } catch (e: Exception) {}
+            }
+        }
+
+        @JavascriptInterface
         fun onMediaDetectedWithHeaders(url: String, type: String, contentType: String?) {
             if (url.startsWith("blob:")) return
             if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
@@ -4483,7 +4495,14 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
                     doc.querySelectorAll('video, audio, source, iframe').forEach(el => {
                         if (el.tagName !== 'IFRAME' && typeof isAdOrPreview === 'function' && isAdOrPreview(el)) return;
-                        if (el.src) checkString(el.src, 'DOM ' + el.tagName);
+                        if (el.src) {
+                            checkString(el.src, 'DOM ' + el.tagName);
+                            if (el.tagName === 'VIDEO' && el.currentTime > 0 && !el.paused) {
+                                if (window.AndroidMediaState && window.AndroidMediaState.onActivePlayerFound) {
+                                    window.AndroidMediaState.onActivePlayerFound(el.src, el.duration || 0);
+                                }
+                            }
+                        }
                         if (el.tagName === 'IFRAME') {
                             let iframeSrc = el.src || el.getAttribute('data-src') || el.getAttribute('data-link');
                             if (iframeSrc && iframeSrc !== 'about:blank' && !iframeSrc.includes('recaptcha') && !iframeSrc.includes('facebook.com') && !iframeSrc.includes('twitter.com')) {

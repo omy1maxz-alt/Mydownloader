@@ -187,6 +187,19 @@ class MediaDetectionEngine(private val context: Context) {
         }
     }
 
+    fun markCandidateAsActivePlayer(url: String, duration: Int) {
+        val candidate = candidates[url] ?: findParentManifestForSegment(url)
+        if (candidate != null) {
+            candidate.isActivePlayer = true
+            if (duration > 0) candidate.durationSec = duration
+            Log.d(TAG, "Active player associated with candidate: ${candidate.url} (duration: $duration)")
+        } else {
+            val c = processRequest(url, null, null)
+            c?.isActivePlayer = true
+            if (duration > 0) c?.durationSec = duration
+        }
+    }
+
     fun markCandidateDRM(url: String) {
         if (url == "ACTIVE_PLAYER_DRM") {
             var candidate = candidates[url]
@@ -242,6 +255,7 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
     fun getBestCandidate(): MediaCandidate? {
+        logCandidatesState()
         if (candidates.isEmpty()) return null
 
         // Filter out standalone segments and segment groups if we have actual manifests or progressive videos
@@ -270,11 +284,13 @@ class MediaDetectionEngine(private val context: Context) {
     fun getCandidate(url: String): MediaCandidate? = candidates[url]
 
     fun logCandidatesState() {
-        Log.d(TAG, "=== Current Candidates ===")
-        candidates.values.forEach {
-            Log.d(TAG, "Candidate: type=${it.type} manifest=${it.isManifest} reqs=${it.requestCount} afterPlay=${it.startedAfterPlayback} ad=${it.adScore} playScore=${it.playbackScore} FINAL=${it.finalScore} CONF=${it.confidence}\n URL: ${it.url}")
+        Log.d(TAG, "[MEDIA_SELECTION] === Current Candidates ===")
+        var i = 1
+        candidates.values.sortedByDescending { it.finalScore }.forEach {
+            Log.d(TAG, "[MEDIA_SELECTION] $i.\nurl=${it.url}\ntype=${it.type}\nmanifest=${it.isManifest}\nduration=${it.durationSec}s\nrequestCount=${it.requestCount}\nactivePlayer=${it.isActivePlayer}\nafterPlayback=${it.startedAfterPlayback}\nmse=${it.hasMSEActivity}\nadScore=${it.adScore}\nplaybackScore=${it.playbackScore}\nfinalScore=${it.finalScore}\nconfidence=${it.confidence}\n")
+            i++
         }
-        Log.d(TAG, "==========================")
+        Log.d(TAG, "[MEDIA_SELECTION] ==========================")
     }
 
     private fun isAdUrl(url: String): Boolean {
