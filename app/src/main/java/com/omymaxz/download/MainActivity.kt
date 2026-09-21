@@ -3692,7 +3692,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 mimeType = androidx.media3.common.MimeTypes.APPLICATION_M3U8
             } else if (ctLower?.contains("dash+xml") == true || candidate.url.endsWith(".mpd")) {
                 mimeType = androidx.media3.common.MimeTypes.APPLICATION_MPD
-            } else if (candidate.isProgressiveFinal || ctLower?.startsWith("video/") == true) {
+            } else if (candidate.isProgressiveFinal || ctLower?.startsWith("video/") == true || candidate.url.contains(".mp4", ignoreCase=true)) {
                 mimeType = androidx.media3.common.MimeTypes.VIDEO_MP4 // Fallback progressive, EXO will try to sniff it though
             }
 

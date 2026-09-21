@@ -99,3 +99,4 @@
 - Removed hardcoded LayoutParams reassignment in MainActivity's onShowCustomView to fix ClassCastException during Android measuring passes.
 - Improved media type inference for extensionless streams by evaluating 'Content-Type' and mapping it to explicit Media3 MIME constants when launching CustomPlayerActivity, fixing playback on sites like KissKH.
 - Patched HlsExportService to explicitly reconstruct the explicitly declared MIME type into Media3 Transformer's MediaItem, preventing 'UnrecognizedInputFormatException' fallback to ProgressiveMediaPeriod on extensionless endpoints.
+- Ensured robust playback of authenticated direct .mp4 URLs (e.g. bigf.imostatic.com) by explicitly forwarding the detected 'video/mp4' MIME type from MediaDetectionEngine and preserving auth-token query parameters through the entire CustomPlayerActivity and HlsDownloadHelper DataSource pipelines.

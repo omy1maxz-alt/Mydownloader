@@ -399,6 +399,8 @@ class CustomPlayerActivity : AppCompatActivity() {
     }
 
     private fun initializePlayer() {
+        val tracerMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
+        android.util.Log.d("PLAYER_TRACE", "[PLAYER_TRACE]\nvideoUrl=$videoUrl\nEXTRA_MIME_TYPE=$tracerMimeType\ndetectedFromUrl=null\nselectedMimeType=null")
         if (activePlayer != null) {
             player = activePlayer
             attachPlayerView()
@@ -485,6 +487,8 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setMimeType(actualMimeType)
             .setSubtitleConfigurations(subtitleConfigs)
             .build()
+
+        android.util.Log.d("PLAYER_TRACE", "[PLAYER_TRACE]\nMediaItem URI=${newBaseItem.localConfiguration?.uri}\nMediaItem MIME=${newBaseItem.localConfiguration?.mimeType}\nMediaItem mediaId=${newBaseItem.mediaId}")
 
         // Let DefaultMediaSourceFactory naturally handle HLS merging
         val splitAudioUrl = intent.getStringExtra(YouTubeDownloadService.EXTRA_AUDIO_URL)
