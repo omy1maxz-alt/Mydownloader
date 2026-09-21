@@ -64,11 +64,12 @@ class LogcatViewerActivity : AppCompatActivity() {
             val exportLogFile = java.io.File(filesDir, "export_logs.txt")
             if (exportLogFile.exists()) {
                 logOutput.append("=== EXPORT LOGS ===\n")
-                val exportLogs = exportLogFile.readText()
+                val exportLines = exportLogFile.readLines()
+                val recentExportLines = exportLines.takeLast(1000) // Bound to 1000 lines
                 if (filter.isEmpty()) {
-                    logOutput.append(exportLogs)
+                    recentExportLines.forEach { logOutput.append(it).append("\n") }
                 } else {
-                    exportLogs.lines().forEach { line ->
+                    recentExportLines.forEach { line ->
                         if (line.contains(filter, ignoreCase = true)) {
                             logOutput.append(line).append("\n")
                         }
@@ -77,13 +78,23 @@ class LogcatViewerActivity : AppCompatActivity() {
                 logOutput.append("\n=== SYSTEM LOGCAT ===\n")
             }
 
+            // We must bound the size of the logcat output because it can easily exceed the memory limits of a standard TextView.
+            // Using a deque to keep only the last ~2000 lines max.
+            val maxLines = 2000
+            val lineBuffer = java.util.ArrayDeque<String>()
+
             reader.forEachLine { line ->
                 if (line.contains(pid) || line.contains("MediaCodec") || line.contains("ExoPlayer") || line.contains("Transformer")) {
                     if (filter.isEmpty() || line.contains(filter, ignoreCase = true)) {
-                        logOutput.append(line).append("\n")
+                        if (lineBuffer.size >= maxLines) {
+                            lineBuffer.removeFirst()
+                        }
+                        lineBuffer.addLast(line)
                     }
                 }
             }
+
+            lineBuffer.forEach { logOutput.append(it).append("\n") }
 
             withContext(Dispatchers.Main) {
                 tvLogs.text = logOutput.toString()
