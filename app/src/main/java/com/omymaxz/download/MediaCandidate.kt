@@ -17,6 +17,7 @@ data class MediaCandidate(
     var hasMSEActivity: Boolean = false,
     var isDRMProtected: Boolean = false,
     var contentType: String? = null,
+    var isProgressiveFinal: Boolean = false,
     var isSegmentGroup: Boolean = false,
     val segmentUrls: MutableSet<String> = mutableSetOf(),
     var pathBase: String? = null
