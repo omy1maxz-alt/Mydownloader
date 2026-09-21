@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
 
     val mediaEngine = MediaDetectionEngine(this)
     @Volatile private var approvedNavigationUrl: String? = null
+    var isUserExplicitFullscreenExit = false
     var isManualScanPending = false
     private lateinit var binding: ActivityMainBinding
     private lateinit var webView: WebView
@@ -1060,6 +1061,7 @@ private fun checkBatteryOptimization() {
 
     override fun onBackPressed() {
         if (fullscreenView != null) {
+            isUserExplicitFullscreenExit = true
             webView.webChromeClient?.onHideCustomView()
         } else if (currentTabIndex in tabs.indices && tabs[currentTabIndex].historyStack.size > 1) {
             tabs[currentTabIndex].historyStack.removeAt(tabs[currentTabIndex].historyStack.size - 1)
@@ -1476,6 +1478,7 @@ private fun checkBatteryOptimization() {
                     return true
                 }
                 override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+                    android.util.Log.d("WEB_FULLSCREEN_TRACE", "[WEB_FULLSCREEN_TRACE] event=onShowCustomView state=entering")
                     if (fullscreenView != null) {
                         callback?.onCustomViewHidden()
                         return
@@ -1531,6 +1534,7 @@ private fun checkBatteryOptimization() {
                         layoutParams = params
 
                         setOnClickListener {
+                            isUserExplicitFullscreenExit = true
                             onHideCustomView()
                         }
                     }
@@ -1579,6 +1583,7 @@ private fun checkBatteryOptimization() {
                     binding.mainContent.visibility = View.GONE
                 }
                                 override fun onHideCustomView() {
+                    android.util.Log.d("WEB_FULLSCREEN_TRACE", "[WEB_FULLSCREEN_TRACE] event=onHideCustomView state=exiting")
                     if (fullscreenView == null) return
                     val decorView = window.decorView as android.view.ViewGroup
                     decorView.removeView(fullscreenView)
