@@ -86,6 +86,8 @@ class HlsExportService : Service() {
         val videoUrl = intent.getStringExtra(EXTRA_VIDEO_URL)
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
         val mimeType   = intent.getStringExtra(EXTRA_MIME_TYPE) ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
+
+        android.util.Log.d("HLS_EXPORT_DEBUG", "[HLS_EXPORT_DEBUG] intentVideoUrl=$videoUrl, intentMimeType=$mimeType")
         val streamKeyStrings = intent.getStringArrayListExtra(EXTRA_STREAM_KEYS)
         val forceTransformer = intent.getBooleanExtra(EXTRA_FORCE_TRANSFORMER, false)
         val mediaItemBundle = intent.getBundleExtra(EXTRA_MEDIA_ITEM_BUNDLE)
@@ -109,6 +111,11 @@ class HlsExportService : Service() {
                 .setMimeType(mimeType)
                 .setStreamKeys(streamKeys)
                 .build()
+        } else if (bundledMediaItem == null && videoUrl != null) {
+            bundledMediaItem = androidx.media3.common.MediaItem.Builder()
+                .setUri(videoUrl)
+                .setMimeType(mimeType)
+                .build()
         }
 
         intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
@@ -127,7 +134,7 @@ class HlsExportService : Service() {
         serviceScope.launch {
             try {
                 when {
-                    extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title)
+                    extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title, mimeType)
                     bundledMediaItem != null -> {
                         // Use the new muxToMp4FromCache method which reads the exact cached segments based on the exact quality the user chose in the player.
                         try {
@@ -172,7 +179,7 @@ class HlsExportService : Service() {
         return START_NOT_STICKY
     }
 
-    private suspend fun exportFromDownloadId(extraDownloadId: String, title: String) {
+    private suspend fun exportFromDownloadId(extraDownloadId: String, title: String, mimeType: String?) {
         val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
         val download = dm.downloadIndex.getDownload(extraDownloadId)
             ?: run {
@@ -184,7 +191,13 @@ class HlsExportService : Service() {
         if (download.state == Download.STATE_COMPLETED) {
             // Strip streamKeys from the download mediaItem to prevent track index mismatch during export
             val rawMediaItem = download.request.toMediaItem()
-            val mediaItem = rawMediaItem.buildUpon().setStreamKeys(emptyList()).build()
+            // CRITICAL FIX: The original download request might not have stored the explicit MIME type,
+            // relying on its own extension parser. We MUST re-inject the explicitly passed MIME type
+            // into the MediaItem here so Transformer doesn't fallback to ProgressiveMediaPeriod on extensionless URLs.
+            val mediaItem = rawMediaItem.buildUpon()
+                .setMimeType(mimeType)
+                .setStreamKeys(emptyList())
+                .build()
             try {
                 muxToMp4WithTransformer(mediaItem, title)
             } catch (e: Exception) {
@@ -226,6 +239,7 @@ class HlsExportService : Service() {
 
     private suspend fun muxToMp4WithTransformer(mediaItem: MediaItem, title: String) =
         suspendCancellableCoroutine<Unit> { cont ->
+            android.util.Log.d("HLS_EXPORT_DEBUG", "[HLS_EXPORT_DEBUG] muxToMp4WithTransformer MediaItem URI=${mediaItem.localConfiguration?.uri} MIME=${mediaItem.localConfiguration?.mimeType}")
             val cacheFactory: CacheDataSource.Factory =
                 HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
 
