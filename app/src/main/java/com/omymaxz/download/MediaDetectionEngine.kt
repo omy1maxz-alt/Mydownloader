@@ -116,7 +116,8 @@ class MediaDetectionEngine(private val context: Context) {
             referer = referer,
             userAgent = userAgent,
             cookie = cookie,
-            contentType = contentType
+            contentType = contentType,
+            isProgressiveFinal = isProgressiveFinal
         )
 
         // Ad tracking
@@ -244,7 +245,11 @@ class MediaDetectionEngine(private val context: Context) {
         if (candidates.isEmpty()) return null
 
         // Filter out standalone segments and segment groups if we have actual manifests or progressive videos
-        val playables = candidates.values.filter { (!it.isSegment && !it.isSegmentGroup) || ((it.isSegment || it.isSegmentGroup) && candidates.values.none { c -> c.isManifest || (c.type == "video" && !c.isSegmentGroup) }) }
+        // Also strictly filter out blob: URLs from being considered valid playables
+        val playables = candidates.values.filter {
+            !it.url.startsWith("blob:") &&
+            ((!it.isSegment && !it.isSegmentGroup) || ((it.isSegment || it.isSegmentGroup) && candidates.values.none { c -> c.isManifest || (c.type == "video" && !c.isSegmentGroup) }))
+        }
 
         // Check for strict DMM false-positive avoidance: if we have DRM streams, filter out short low-req non-DRM streams
         val hasDRMPlayables = playables.any { it.isDRMProtected }

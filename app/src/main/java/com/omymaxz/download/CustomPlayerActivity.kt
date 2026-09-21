@@ -478,6 +478,8 @@ class CustomPlayerActivity : AppCompatActivity() {
             else -> MimeTypes.APPLICATION_MP4
         }
 
+        android.util.Log.d("PLAYER_DEBUG", "[PLAYER_DEBUG]\nvideoUrl=$videoUrl\nmimeType=$actualMimeType\nsourceType=$intentMimeType")
+
         val newBaseItem = MediaItem.Builder()
             .setUri(Uri.parse(videoUrl!!))
             .setMimeType(actualMimeType)
@@ -651,6 +653,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 videoUrl?.contains(".mpd") == true || videoUrl?.contains("manifest/dash") == true -> MimeTypes.APPLICATION_MPD
                 else -> MimeTypes.APPLICATION_MP4
             }
+            android.util.Log.d("PLAYER_DEBUG", "[PLAYER_DEBUG]\nvideoUrl=$videoUrl\nmimeType=$actualMimeType\nsourceType=$intentMimeType")
 
             val newBaseItem = MediaItem.Builder()
                 .setUri(Uri.parse(videoUrl!!))

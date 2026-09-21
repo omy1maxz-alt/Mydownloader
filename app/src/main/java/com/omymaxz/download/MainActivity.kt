@@ -3684,6 +3684,24 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val intent = Intent(this, CustomPlayerActivity::class.java).apply {
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, candidate.url)
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
+
+            // Determine explicit MIME type from candidate metadata
+            var mimeType: String? = null
+            val ctLower = candidate.contentType?.lowercase()
+            if (ctLower?.contains("mpegurl") == true || ctLower?.contains("x-mpegurl") == true || candidate.url.endsWith(".m3u8")) {
+                mimeType = androidx.media3.common.MimeTypes.APPLICATION_M3U8
+            } else if (ctLower?.contains("dash+xml") == true || candidate.url.endsWith(".mpd")) {
+                mimeType = androidx.media3.common.MimeTypes.APPLICATION_MPD
+            } else if (candidate.isProgressiveFinal || ctLower?.startsWith("video/") == true) {
+                mimeType = androidx.media3.common.MimeTypes.VIDEO_MP4 // Fallback progressive, EXO will try to sniff it though
+            }
+
+            if (mimeType != null) {
+                putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mimeType)
+            }
+
+            android.util.Log.d("KISSHKH_DEBUG", "[KISSHKH_DEBUG]\nsourcePageUrl=${webView.url}\ncandidateUrl=${candidate.url}\ncandidateType=${candidate.type}\nmimeType=${mimeType}\nisManifest=${candidate.isManifest}\nisSegment=${candidate.isSegment}\nrequestCount=${candidate.requestCount}\nplaybackScore=${candidate.playbackScore}\nadScore=${candidate.adScore}\nreferer=${candidate.referer}\nuserAgentPresent=${candidate.userAgent != null}\ncookiePresent=${candidate.cookie != null}")
+
             putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, candidate.userAgent ?: webView.settings.userAgentString)
 
             val refererToUse = candidate.referer ?: fallbackReferer ?: webView.url
