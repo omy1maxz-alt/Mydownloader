@@ -428,8 +428,18 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setTargetBufferBytes(androidx.media3.common.C.LENGTH_UNSET) // Uncapped RAM usage
             .build()
 
+        // Bypass the shared HLS cache for direct progressive videos.
+        // Progressive MP4s with auth-tokens (e.g. KissKH) can be corrupted by over-aggressive caching
+        // if the CacheKeyFactory strips query params, leading to UnrecognizedInputFormatExceptions.
+        val dataSourceFactory = if (tracerMimeType == androidx.media3.common.MimeTypes.VIDEO_MP4 || tracerMimeType == androidx.media3.common.MimeTypes.VIDEO_WEBM || tracerMimeType == androidx.media3.common.MimeTypes.VIDEO_MATROSKA) {
+            android.util.Log.d("DIRECT_MP4_TRACE", "[DIRECT_MP4_TRACE]\nurl=${videoUrl?.replace(Regex("auth-token=[^&]+"), "auth-token=[REDACTED]")}\nmime=$tracerMimeType\nreferer=${HlsDownloadHelper.currentReferer}\nuserAgent=${HlsDownloadHelper.currentUserAgent}\ndata_source=direct_http")
+            HlsDownloadHelper.getDataSourceFactory(this)
+        } else {
+            cacheFactory
+        }
+
         player = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(cacheFactory))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory))
             .setLoadControl(loadControl)
             .build()
 

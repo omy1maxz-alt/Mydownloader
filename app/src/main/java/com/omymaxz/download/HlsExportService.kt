@@ -136,6 +136,17 @@ class HlsExportService : Service() {
                 when {
                     extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title, mimeType)
                     bundledMediaItem != null -> {
+                        // Ensure direct progressive URLs that bypass cache aren't sent to the manual cache-assembly script
+                        if (mimeType == androidx.media3.common.MimeTypes.VIDEO_MP4 || mimeType == androidx.media3.common.MimeTypes.VIDEO_WEBM || mimeType == androidx.media3.common.MimeTypes.VIDEO_MATROSKA) {
+                             if (videoUrl != null) {
+                                 withContext(kotlinx.coroutines.Dispatchers.Main) { android.widget.Toast.makeText(applicationContext, "Starting background download...", android.widget.Toast.LENGTH_SHORT).show() }
+                                 val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(title, android.net.Uri.parse(videoUrl)).build()
+                                 androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, request, false)
+                             }
+                             if (activeExports.decrementAndGet() == 0) stopSelf(startId)
+                             return@launch
+                        }
+
                         // Use the new muxToMp4FromCache method which reads the exact cached segments based on the exact quality the user chose in the player.
                         try {
                             if (videoUrl != null) {
