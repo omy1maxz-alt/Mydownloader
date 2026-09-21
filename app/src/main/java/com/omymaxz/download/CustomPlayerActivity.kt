@@ -431,7 +431,23 @@ class CustomPlayerActivity : AppCompatActivity() {
         // Bypass the shared HLS cache for direct progressive videos.
         // Progressive MP4s with auth-tokens (e.g. KissKH) can be corrupted by over-aggressive caching
         // if the CacheKeyFactory strips query params, leading to UnrecognizedInputFormatExceptions.
-        val dataSourceFactory = if (tracerMimeType == androidx.media3.common.MimeTypes.VIDEO_MP4 || tracerMimeType == androidx.media3.common.MimeTypes.VIDEO_WEBM || tracerMimeType == androidx.media3.common.MimeTypes.VIDEO_MATROSKA) {
+        // Check if the URL is strongly identified as a direct progressive format that should bypass the shared HLS cache
+        val isDirectProgressiveUrl = videoUrl?.contains(".mp4", ignoreCase = true) == true ||
+                                     videoUrl?.contains(".webm", ignoreCase = true) == true ||
+                                     videoUrl?.contains(".mkv", ignoreCase = true) == true
+
+        val isExplicitProgressiveMime = tracerMimeType == androidx.media3.common.MimeTypes.VIDEO_MP4 ||
+                                        tracerMimeType == androidx.media3.common.MimeTypes.VIDEO_WEBM ||
+                                        tracerMimeType == androidx.media3.common.MimeTypes.VIDEO_MATROSKA
+
+        val isHlsOrDash = tracerMimeType == androidx.media3.common.MimeTypes.APPLICATION_M3U8 ||
+                          tracerMimeType == androidx.media3.common.MimeTypes.APPLICATION_MPD ||
+                          videoUrl?.contains(".m3u8", ignoreCase = true) == true ||
+                          videoUrl?.contains(".mpd", ignoreCase = true) == true ||
+                          videoUrl?.contains("manifest", ignoreCase = true) == true
+
+        // If it looks like progressive media and we have no evidence it's HLS/DASH, bypass the HLS chunk cache.
+        val dataSourceFactory = if ((isExplicitProgressiveMime || isDirectProgressiveUrl) && !isHlsOrDash) {
             android.util.Log.d("DIRECT_MP4_TRACE", "[DIRECT_MP4_TRACE]\nurl=${videoUrl?.replace(Regex("auth-token=[^&]+"), "auth-token=[REDACTED]")}\nmime=$tracerMimeType\nreferer=${HlsDownloadHelper.currentReferer}\nuserAgent=${HlsDownloadHelper.currentUserAgent}\ndata_source=direct_http")
             HlsDownloadHelper.getDataSourceFactory(this)
         } else {
@@ -536,10 +552,18 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         player?.addListener(object : Player.Listener {
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                Log.e("CustomPlayerActivity", "Player error", error)
+                var causeChain = ""
+                var currentCause: Throwable? = error.cause
+                while (currentCause != null) {
+                    causeChain += "\nCause: ${currentCause.javaClass.simpleName} - ${currentCause.message}"
+                    currentCause = currentCause.cause
+                }
+
+                android.util.Log.e("PLAYER_ERROR_TRACE", "[PLAYER_ERROR_TRACE] Code: ${error.errorCode} Name: ${error.errorCodeName}\nException: ${error.javaClass.name} - ${error.message}\n$causeChain")
+
                 AlertDialog.Builder(this@CustomPlayerActivity)
                     .setTitle("Playback Error")
-                    .setMessage("Error (${error.errorCodeName}):\n${error.message}")
+                    .setMessage("Error (${error.errorCodeName}):\n${error.message}\n$causeChain")
                     .setPositiveButton("OK", null).show()
             }
         })

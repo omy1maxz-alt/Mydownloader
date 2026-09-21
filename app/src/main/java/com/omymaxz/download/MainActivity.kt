@@ -67,6 +67,7 @@ import android.widget.LinearLayout
 class MainActivity : AppCompatActivity() {
 
     val mediaEngine = MediaDetectionEngine(this)
+    @Volatile private var approvedNavigationUrl: String? = null
     var isManualScanPending = false
     private lateinit var binding: ActivityMainBinding
     private lateinit var webView: WebView
@@ -1305,7 +1306,29 @@ private fun checkBatteryOptimization() {
                 }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
+                    val isMainFrame = request?.isForMainFrame ?: false
+
+                    // Only process top-level main frame navigations for these checks
+                    if (!isMainFrame) return false
+
+                    // One-shot safe navigation bypass if user explicitly approved it
+                    if (url == approvedNavigationUrl) {
+                        approvedNavigationUrl = null
+                        return false // Let it load
+                    }
+
                     val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+
+                    // Confirm Navigation overrides all other redirect logic to ask the user.
+                    val isConfirmNavEnabled = prefs.getBoolean("CONFIRM_NAVIGATION_ENABLED", false)
+                    if (isConfirmNavEnabled) {
+                        // Do not show the prompt if this URL is exactly the one the user typed/opened initially
+                        // (We need to distinguish initial load vs subsequent redirect).
+                        // If it's a redirect, or an unsolicited new page load:
+                        showConfirmNavigationDialog(url, view)
+                        return true // Block execution and wait for user input
+                    }
+
                     if (!prefs.getBoolean("block_popups_redirects", true)) return false
 
                     if (redirectLogic.shouldOverrideUrlLoading(request, view?.url)) {
@@ -5635,6 +5658,42 @@ if (isDesktopMode) {
         }
         pendingScriptsToInject.clear()
     }
+    private fun showConfirmNavigationDialog(url: String, view: WebView?) {
+        runOnUiThread {
+            // Mask common auth tokens so they aren't exposed in UI
+            var displayUrl = url
+            val sensitiveParams = listOf("auth-token", "token", "sig", "signature", "key", "auth")
+            try {
+                val uri = android.net.Uri.parse(url)
+                val queryParams = uri.queryParameterNames
+                if (queryParams.isNotEmpty()) {
+                    var builder = uri.buildUpon().clearQuery()
+                    for (param in queryParams) {
+                        if (sensitiveParams.any { param.contains(it, ignoreCase = true) }) {
+                            builder = builder.appendQueryParameter(param, "[REDACTED]")
+                        } else {
+                            builder = builder.appendQueryParameter(param, uri.getQueryParameter(param))
+                        }
+                    }
+                    displayUrl = builder.build().toString()
+                }
+            } catch (e: Exception) {}
+
+            createThemedDialogBuilder(this@MainActivity)
+                .setTitle("Navigation Request")
+                .setMessage("This page wants to navigate to:\n\n$displayUrl")
+                .setPositiveButton("Allow") { _, _ ->
+                    approvedNavigationUrl = url
+                    view?.loadUrl(url)
+                }
+                .setNegativeButton("Block") { _, _ ->
+                    android.widget.Toast.makeText(this@MainActivity, "Navigation blocked", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                .setCancelable(false)
+                .show()
+        }
+    }
+
     fun showBlockedNavigationDialog(url: String) {
         createThemedDialogBuilder(this)
             .setTitle("Suspicious Redirect Blocked")
