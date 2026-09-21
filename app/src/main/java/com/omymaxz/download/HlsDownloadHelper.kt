@@ -130,19 +130,28 @@ object HlsDownloadHelper {
 
     @Synchronized
     fun getDataSourceFactory(context: Context): DataSource.Factory {
-        val upstream = DefaultHttpDataSource.Factory()
-            .setAllowCrossProtocolRedirects(true)
-            .setConnectTimeoutMs(15_000)
-            .setReadTimeoutMs(15_000)
-        return DataSource.Factory {
+        // Instantiate a NEW factory per request rather than mutating the global singleton
+        // to prevent race conditions or missing headers on background fetches.
+        // Also use a ResolvingDataSource to explicitly log the final resolved DataSpec URI.
+        val upstreamFactory = DataSource.Factory {
+            val upstream = DefaultHttpDataSource.Factory()
+                .setAllowCrossProtocolRedirects(true)
+                .setConnectTimeoutMs(15_000)
+                .setReadTimeoutMs(15_000)
+
             currentUserAgent?.let { upstream.setUserAgent(it) }
             val props = mutableMapOf<String, String>()
             currentCookie?.let { props["Cookie"] = it }
             currentReferer?.let { props["Referer"] = it }
-            if (props.isNotEmpty()) {
-                upstream.setDefaultRequestProperties(props)
-            }
+            props["Accept"] = "*/*"
+            upstream.setDefaultRequestProperties(props)
+
             upstream.createDataSource()
+        }
+
+        return androidx.media3.datasource.ResolvingDataSource.Factory(upstreamFactory) { dataSpec ->
+            android.util.Log.d("MP4_TRACE", "[MP4_TRACE] ResolvingDataSource requested URI: ${dataSpec.uri}")
+            dataSpec
         }
     }
 
@@ -153,6 +162,8 @@ object HlsDownloadHelper {
         val f = androidx.media3.datasource.cache.CacheDataSource.Factory()
             .setCache(getUnifiedCache(context))
             .setUpstreamDataSourceFactory(DefaultDataSource.Factory(context, getDataSourceFactory(context)))
+            // DO NOT STRIP QUERY FROM CACHE KEY if it's the primary content identifier, or at least
+            // ensure the query is not mistakenly stripped from the URI itself by some Exoplayer bug.
             .setCacheKeyFactory(customCacheKeyFactory)
             .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         if (readOnly) f.setCacheWriteDataSinkFactory(null)
@@ -242,7 +253,12 @@ object HlsDownloadHelper {
         val prepFactory = DefaultHttpDataSource.Factory()
             .setAllowCrossProtocolRedirects(true)
         userAgent?.let { prepFactory.setUserAgent(it) }
-        cookie?.let { prepFactory.setDefaultRequestProperties(mapOf("Cookie" to it)) }
+
+        val props = mutableMapOf<String, String>()
+        cookie?.let { props["Cookie"] = it }
+        currentReferer?.let { props["Referer"] = it }
+        props["Accept"] = "*/*"
+        if (props.isNotEmpty()) prepFactory.setDefaultRequestProperties(props)
 
         val helper = DownloadHelper.forMediaItem(context, mediaItem, null, prepFactory)
         helper.prepare(object : DownloadHelper.Callback {

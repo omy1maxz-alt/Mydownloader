@@ -475,9 +475,9 @@ class CustomPlayerActivity : AppCompatActivity() {
         val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
         val actualMimeType = when {
             intentMimeType != null -> intentMimeType
-            isHls -> MimeTypes.APPLICATION_M3U8
-            videoUrl?.contains(".mpd") == true || videoUrl?.contains("manifest/dash") == true -> MimeTypes.APPLICATION_MPD
-            else -> MimeTypes.APPLICATION_MP4
+            isHls -> androidx.media3.common.MimeTypes.APPLICATION_M3U8
+            videoUrl?.contains(".mpd") == true || videoUrl?.contains("manifest/dash") == true -> androidx.media3.common.MimeTypes.APPLICATION_MPD
+            else -> androidx.media3.common.MimeTypes.APPLICATION_MP4
         }
 
         android.util.Log.d("PLAYER_DEBUG", "[PLAYER_DEBUG]\nvideoUrl=$videoUrl\nmimeType=$actualMimeType\nsourceType=$intentMimeType")
@@ -489,6 +489,14 @@ class CustomPlayerActivity : AppCompatActivity() {
             .build()
 
         android.util.Log.d("PLAYER_TRACE", "[PLAYER_TRACE]\nMediaItem URI=${newBaseItem.localConfiguration?.uri}\nMediaItem MIME=${newBaseItem.localConfiguration?.mimeType}\nMediaItem mediaId=${newBaseItem.mediaId}")
+
+        // In ExoPlayer 1.2.0+, DefaultMediaSourceFactory has strict Extractor requirements for ProgressiveMediaSource.
+        // It requires the MP4 format to be readable by FragmentedMp4Extractor or Mp4Extractor.
+        // The error explicitly says "None of the available extractors (FragmentedMp4Extractor, Mp4Extractor... could read the stream".
+        // This implies one of two things:
+        // 1. The stream returned a 403/Forbidden HTML/JSON response instead of video bytes, causing the parsers to choke.
+        // 2. The MP4 is a raw stream (like an FLV or a strange progressive chunk) that the bundled extractors don't like.
+        // Let's explicitly log the HTTP response status for this URI via our helper.
 
         // Let DefaultMediaSourceFactory naturally handle HLS merging
         val splitAudioUrl = intent.getStringExtra(YouTubeDownloadService.EXTRA_AUDIO_URL)
@@ -653,9 +661,9 @@ class CustomPlayerActivity : AppCompatActivity() {
             val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
             val actualMimeType = when {
                 intentMimeType != null -> intentMimeType
-                isHls -> MimeTypes.APPLICATION_M3U8
-                videoUrl?.contains(".mpd") == true || videoUrl?.contains("manifest/dash") == true -> MimeTypes.APPLICATION_MPD
-                else -> MimeTypes.APPLICATION_MP4
+                isHls -> androidx.media3.common.MimeTypes.APPLICATION_M3U8
+                videoUrl?.contains(".mpd") == true || videoUrl?.contains("manifest/dash") == true -> androidx.media3.common.MimeTypes.APPLICATION_MPD
+                else -> androidx.media3.common.MimeTypes.APPLICATION_MP4
             }
             android.util.Log.d("PLAYER_DEBUG", "[PLAYER_DEBUG]\nvideoUrl=$videoUrl\nmimeType=$actualMimeType\nsourceType=$intentMimeType")
 
