@@ -98,3 +98,4 @@
 - Restored visual Chat Action buttons (Edit & Delete) to individual messages within the `GeminiChatActivity` UI layout (`item_chat_message.xml`), replacing the hidden "long-click" alert dialog approach which was unintuitive. Added direct `onClickListener` bindings inside the `ChatAdapter` to trigger native message deletion and edits securely.
 - Removed hardcoded LayoutParams reassignment in MainActivity's onShowCustomView to fix ClassCastException during Android measuring passes.
 - Improved media type inference for extensionless streams by evaluating 'Content-Type' and mapping it to explicit Media3 MIME constants when launching CustomPlayerActivity, fixing playback on sites like KissKH.
+- Patched HlsExportService to explicitly reconstruct the explicitly declared MIME type into Media3 Transformer's MediaItem, preventing 'UnrecognizedInputFormatException' fallback to ProgressiveMediaPeriod on extensionless endpoints.

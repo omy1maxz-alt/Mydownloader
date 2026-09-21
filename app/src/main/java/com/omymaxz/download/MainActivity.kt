@@ -3997,6 +3997,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         val intent = Intent(this, HlsExportService::class.java).apply {
                             putExtra(HlsExportService.EXTRA_VIDEO_URL, mediaFile.url)
                             putExtra(HlsExportService.EXTRA_TITLE, mediaFile.title)
+                            if (mediaFile.mimeType != null) {
+                                putExtra(HlsExportService.EXTRA_MIME_TYPE, mediaFile.mimeType)
+                            }
                             putExtra(HlsExportService.EXTRA_USER_AGENT, userAgent)
                             putExtra(HlsExportService.EXTRA_REFERER, mediaFile.referer ?: webView.url)
                             putExtra(HlsExportService.EXTRA_COOKIE, cookie)
