@@ -5080,28 +5080,38 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
 
     private fun showExportLogsDialog() {
-        val logFile = java.io.File(filesDir, "export_logs.txt")
-        val logContent = if (logFile.exists()) logFile.readText() else "No export logs found."
-
-        val scrollView = android.widget.ScrollView(this)
-        val textView = android.widget.TextView(this).apply {
-            text = logContent
-            setPadding(32, 32, 32, 32)
-            textSize = 12f
-            typeface = android.graphics.Typeface.MONOSPACE
-            setTextIsSelectable(true)
-        }
-        scrollView.addView(textView)
-
-        createThemedDialogBuilder(this)
-            .setTitle("Export Logs")
-            .setView(scrollView)
-            .setPositiveButton("Close", null)
-            .setNegativeButton("Clear Logs") { _, _ ->
-                if (logFile.exists()) logFile.delete()
-                Toast.makeText(this, "Logs cleared", Toast.LENGTH_SHORT).show()
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            val logFile = java.io.File(filesDir, "export_logs.txt")
+            val logContent = if (logFile.exists()) {
+                val lines = logFile.readLines()
+                // Limit to the last 1000 lines so we don't freeze the UI rendering a massive string
+                lines.takeLast(1000).joinToString("\n")
+            } else {
+                "No export logs found."
             }
-            .show()
+
+            withContext(kotlinx.coroutines.Dispatchers.Main) {
+                val scrollView = android.widget.ScrollView(this@MainActivity)
+                val textView = android.widget.TextView(this@MainActivity).apply {
+                    text = logContent
+                    setPadding(32, 32, 32, 32)
+                    textSize = 12f
+                    typeface = android.graphics.Typeface.MONOSPACE
+                    setTextIsSelectable(true)
+                }
+                scrollView.addView(textView)
+
+                createThemedDialogBuilder(this@MainActivity)
+                    .setTitle("Export Logs")
+                    .setView(scrollView)
+                    .setPositiveButton("Close", null)
+                    .setNegativeButton("Clear Logs") { _, _ ->
+                        if (logFile.exists()) logFile.delete()
+                        Toast.makeText(this@MainActivity, "Logs cleared", Toast.LENGTH_SHORT).show()
+                    }
+                    .show()
+            }
+        }
     }
 
     private fun showPopupBlockerSettingsDialog() {
