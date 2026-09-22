@@ -110,3 +110,4 @@
 - Fixed a bug where Web Media fullscreen mode would unexpectedly exit when the WebView experienced non-user-initiated layout changes by requiring explicit user exit confirmation through onBackPressed or the exit button.
 - Fixed UI freezing crash when 'View Export Logs' was pressed by shifting the  read to an IO coroutine and bounding the string output to the last 1000 lines.
 - Fixed UI freezing crash when 'View Export Logs' was pressed by shifting the export_logs.txt read to an IO coroutine and bounding the string output to the last 1000 lines.
+- Fixed UI freezing crash when 'View Export Logs' was pressed by shifting the 'export_logs.txt' read to an IO coroutine and bounding the string output to the last 1000 lines.

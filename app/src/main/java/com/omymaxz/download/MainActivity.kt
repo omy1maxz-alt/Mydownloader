@@ -1583,8 +1583,20 @@ private fun checkBatteryOptimization() {
                     binding.mainContent.visibility = View.GONE
                 }
                                 override fun onHideCustomView() {
-                    android.util.Log.d("WEB_FULLSCREEN_TRACE", "[WEB_FULLSCREEN_TRACE] event=onHideCustomView state=exiting")
+                    android.util.Log.d("WEB_FULLSCREEN_TRACE", "[WEB_FULLSCREEN_TRACE] event=onHideCustomView state=exiting explicit=$isUserExplicitFullscreenExit")
                     if (fullscreenView == null) return
+
+                    // The WebView often calls onHideCustomView() spuriously on rotation, layout changes, or when elements inside the page shift.
+                    // If the user hasn't explicitly clicked the exit button (or hardware back), we should ignore this system callback
+                    // and keep the fullscreen view attached to the DecorView to prevent the uncommanded exit bug.
+                    if (!isUserExplicitFullscreenExit) {
+                        android.util.Log.d("WEB_FULLSCREEN_TRACE", "[WEB_FULLSCREEN_TRACE] event=onHideCustomView ignored (not explicit user exit)")
+                        // Tell the WebView we handled it, but don't actually remove our views
+                        customViewCallback?.onCustomViewHidden()
+                        return
+                    }
+
+                    isUserExplicitFullscreenExit = false // Reset
                     val decorView = window.decorView as android.view.ViewGroup
                     decorView.removeView(fullscreenView)
                     fullscreenView = null
