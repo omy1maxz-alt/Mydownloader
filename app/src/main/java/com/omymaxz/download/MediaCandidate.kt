@@ -1,6 +1,32 @@
 package com.omymaxz.download
 
+
+enum class MediaKind {
+    HLS_MANIFEST,
+    DASH_MANIFEST,
+    PROGRESSIVE,
+    SEGMENT,
+    UNKNOWN
+}
+
+data class PlayerTelemetry(
+    val url: String,
+    val width: Int,
+    val height: Int,
+    val durationSec: Double,
+    val currentTimeSec: Double,
+    val paused: Boolean,
+    val muted: Boolean,
+    val autoplay: Boolean,
+    val fullscreen: Boolean,
+    val visibleAreaRatio: Double,
+    val displayedWidth: Double,
+    val displayedHeight: Double
+)
+
 data class MediaCandidate(
+    var mediaKind: MediaKind = MediaKind.UNKNOWN,
+    var telemetry: PlayerTelemetry? = null,
     val url: String,
     var type: String,
     var isManifest: Boolean = false,
@@ -27,7 +53,9 @@ data class MediaCandidate(
     val finalScore: Int
         get() {
             var score = 0
-            if (isManifest) score += 20
+            if (isManifest || mediaKind == MediaKind.HLS_MANIFEST || mediaKind == MediaKind.DASH_MANIFEST) score += 20
+            if (mediaKind == MediaKind.PROGRESSIVE) score += 15
+
             score += playbackScore
             score -= adScore
 
@@ -48,6 +76,30 @@ data class MediaCandidate(
             contentType?.lowercase()?.let { ct ->
                 if (ct.startsWith("video/")) score += 15
                 if (ct.contains("mpegurl") || ct.contains("dash+xml")) score += 20
+            }
+
+            // Telemetry Scoring
+            telemetry?.let { t ->
+                if (!t.paused) score += 35
+                if (t.currentTimeSec > 1.0) score += 20
+                if (t.durationSec > 30.0) score += 10
+                if (t.fullscreen) score += 30
+
+                if (t.visibleAreaRatio >= 0.35) score += 35
+                else if (t.visibleAreaRatio >= 0.10) score += 20
+                else if (t.visibleAreaRatio >= 0.02) score += 5
+
+                if (t.width >= 1920 || t.height >= 1080) score += 20
+                else if (t.width >= 1280 || t.height >= 720) score += 15
+                else if (t.width >= 640 || t.height >= 360) score += 5
+
+                if (t.muted && t.autoplay && t.visibleAreaRatio < 0.05) {
+                    score -= 35
+                }
+
+                if (t.displayedWidth < 180 || t.displayedHeight < 100) {
+                    score -= 25
+                }
             }
 
             return score

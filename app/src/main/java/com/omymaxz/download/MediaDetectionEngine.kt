@@ -7,6 +7,51 @@ import java.net.URL
 
 class MediaDetectionEngine(private val context: Context) {
 
+    private fun classifyMedia(rawUrl: String, contentType: String?): MediaKind {
+        val lowerUrl = rawUrl.lowercase()
+        val mime = contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
+
+        val isHls = lowerUrl.contains(".m3u8") || lowerUrl.contains("format=m3u8") || lowerUrl.contains("type=hls") || mime == "application/vnd.apple.mpegurl" || mime == "application/x-mpegurl"
+        val isDash = lowerUrl.contains(".mpd") || lowerUrl.contains("format=dash") || lowerUrl.contains("type=dash") || mime == "application/dash+xml"
+        val isVideoMime = mime.startsWith("video/")
+        val isProgressive = lowerUrl.matches(Regex(".*\\.(mp4|webm|mkv|mov|avi)(\\?.*)?$")) || isVideoMime
+        val isSegment = lowerUrl.matches(Regex(".*\\.(ts|m4s|cmfv|cmfa|aac|mp4)(\\?.*)?$")) && !isProgressive
+
+        return when {
+            isHls -> MediaKind.HLS_MANIFEST
+            isDash -> MediaKind.DASH_MANIFEST
+            isSegment -> MediaKind.SEGMENT
+            isProgressive -> MediaKind.PROGRESSIVE
+            else -> MediaKind.UNKNOWN
+        }
+    }
+
+
+    private fun buildMediaGroupingKey(rawUrl: String): String {
+        return try {
+            val uri = java.net.URL(rawUrl)
+            val path = uri.path.lowercase().substringBeforeLast("/", "")
+
+            val queryKeys = uri.query
+                ?.split("&")
+                ?.mapNotNull { part ->
+                    val key = part.substringBefore("=").lowercase()
+                    if (key.isNotBlank()) key else null
+                }
+                ?.filterNot {
+                    it in setOf("token", "signature", "sig", "expires", "expires_at", "hdntl", "auth_key", "hash")
+                }
+                ?.sorted()
+                ?.joinToString(",")
+                .orEmpty()
+
+            "${uri.host.lowercase()}|$path|$queryKeys"
+        } catch (_: Exception) {
+            rawUrl
+        }
+    }
+
+
     val candidates = java.util.concurrent.ConcurrentHashMap<String, MediaCandidate>()
     private val TAG = "MediaDetectionEngine"
 
@@ -26,52 +71,54 @@ class MediaDetectionEngine(private val context: Context) {
 
     fun processRequest(url: String, referer: String?, userAgent: String?, contentType: String? = null): MediaCandidate? {
 
-        val cleanUrl = url.substringBefore('?')
-        val lowerUrl = cleanUrl.lowercase()
+        val mediaKind = classifyMedia(url, contentType)
 
-        // Deepen ad keyword detection
-        val isLikelyAd = isAdUrl(lowerUrl)
-
-        // Categorize
-        val isHlsManifest = lowerUrl.endsWith(".m3u8")
-        val isDashManifest = lowerUrl.endsWith(".mpd")
-        val isProgressive = lowerUrl.endsWith(".mp4") || lowerUrl.endsWith(".webm") || lowerUrl.endsWith(".mkv")
-
-        val isHlsSegment = lowerUrl.endsWith(".ts")
-        val isDashSegment = lowerUrl.endsWith(".m4s") || lowerUrl.endsWith(".m4f")
-        val ctLower = contentType?.lowercase()
-        var isManifest = isHlsManifest || isDashManifest || (lowerUrl.contains("manifest") && !isHlsSegment && !isDashSegment) || (ctLower?.contains("mpegurl") == true) || (ctLower?.contains("dash+xml") == true)
-        var isSegment = isHlsSegment || isDashSegment
-        var isProgressiveFinal = isProgressive || (ctLower?.startsWith("video/") == true)
-
-        // Extensionless endpoint path heuristics
-        val hasEvidencePath = lowerUrl.contains("/video") || lowerUrl.contains("/stream") || lowerUrl.contains("/play") ||
-                              lowerUrl.contains("/vod") || lowerUrl.contains("/media") || lowerUrl.contains("/movie") ||
-                              lowerUrl.contains("/hls") || lowerUrl.contains("/dash") || lowerUrl.contains("/segment") ||
-                              lowerUrl.contains("?sub=") || lowerUrl.contains("/subtitle") || lowerUrl.contains("/caption")
-
-        if (!isManifest && !isSegment && !isProgressiveFinal && !url.contains("videoplayback")) {
-            // Might be an extensionless video. We track it if it has strong path evidence or content-type evidence.
-            if (!hasEvidencePath && ctLower == null) {
-               return null
+        if (mediaKind == MediaKind.UNKNOWN) {
+            val lowerUrl = url.lowercase()
+            val hasEvidencePath = lowerUrl.contains("/video") || lowerUrl.contains("/stream") || lowerUrl.contains("/play") ||
+                                  lowerUrl.contains("/vod") || lowerUrl.contains("/media") || lowerUrl.contains("/movie") ||
+                                  lowerUrl.contains("/hls") || lowerUrl.contains("/dash") || lowerUrl.contains("/segment") ||
+                                  lowerUrl.contains("?sub=") || lowerUrl.contains("/subtitle") || lowerUrl.contains("/caption")
+            if (!hasEvidencePath && contentType == null && !url.contains("videoplayback")) {
+                return null
             }
         }
 
+        var isManifest = mediaKind == MediaKind.HLS_MANIFEST || mediaKind == MediaKind.DASH_MANIFEST
+        var isSegment = mediaKind == MediaKind.SEGMENT
+        var isProgressiveFinal = mediaKind == MediaKind.PROGRESSIVE
+
+        // Check for ad URL signals
+        val isLikelyAd = isAdUrl(url)
+
+        // Image blocking specifically for thumbnail segments masquerading as media
+        if (!isManifest && !isProgressiveFinal && isLikelyAd) {
+             isSegment = false
+        }
+
+        if (!isManifest && !isProgressiveFinal && !isSegment && mediaKind == MediaKind.UNKNOWN) return null
+
+        val type = when (mediaKind) {
+            MediaKind.HLS_MANIFEST -> "hls"
+            MediaKind.DASH_MANIFEST -> "dash"
+            MediaKind.PROGRESSIVE -> "video"
+            MediaKind.SEGMENT -> "segment"
+            else -> "unknown"
+        }
+
         // Try to associate segments with their parent manifest if they share a path
-        // Do NOT group obvious ads/images
-        if (!isLikelyAd && (isSegment || (hasEvidencePath && ctLower == null && !isProgressiveFinal && !isManifest))) { // Group orphan segments and extensionless unproven chunks
+        if (!isLikelyAd && (isSegment || (mediaKind == MediaKind.UNKNOWN && !isProgressiveFinal && !isManifest))) {
             val parentCandidate = findParentManifestForSegment(url)
             if (parentCandidate != null) {
                 parentCandidate.requestCount++
                 parentCandidate.lastSeenTime = System.currentTimeMillis()
                 if (isPlaybackActive) {
                     parentCandidate.startedAfterPlayback = true
-                    parentCandidate.playbackScore += 5 // Reward active segments
+                    parentCandidate.playbackScore += 5
                 }
                 Log.d(TAG, "Correlated segment to manifest: ${parentCandidate.url}")
                 return parentCandidate
             } else {
-                // No manifest found. Try to find an existing Segment Group or create one.
                 val groupCand = findOrCreateSegmentGroup(url, referer, userAgent)
                 if (groupCand != null) {
                     groupCand.requestCount++
@@ -87,7 +134,6 @@ class MediaDetectionEngine(private val context: Context) {
             }
         }
 
-        // It's a new media entity or a standalone segment without a known manifest
         val existing = candidates[url]
         if (existing != null) {
             existing.requestCount++
@@ -98,40 +144,27 @@ class MediaDetectionEngine(private val context: Context) {
             return existing
         }
 
-        val type = when {
-            isManifest -> "manifest"
-            isSegment -> "segment"
-            isProgressiveFinal -> "video"
-            ctLower?.contains("subtitle") == true || ctLower?.contains("vtt") == true -> "subtitle"
-            else -> "unknown"
-        }
-
-        val cookie = CookieManager.getInstance().getCookie(url)
-
+        val cookie = android.webkit.CookieManager.getInstance().getCookie(url)
         val candidate = MediaCandidate(
             url = url,
             type = type,
+            mediaKind = mediaKind,
             isManifest = isManifest,
             isSegment = isSegment,
+            isProgressiveFinal = isProgressiveFinal,
             referer = referer,
             userAgent = userAgent,
             cookie = cookie,
-            contentType = contentType,
-            isProgressiveFinal = isProgressiveFinal
+            contentType = contentType
         )
 
-        // Ad tracking
-        if (isLikelyAd) {
-            candidate.adScore += 50
-            Log.d(TAG, "Candidate marked as AD: $url")
-        }
+        applyAdPenalty(candidate)
+        candidates[url] = candidate
 
         if (isPlaybackActive) {
             candidate.startedAfterPlayback = true
-            candidate.playbackScore += 10
         }
 
-        candidates[url] = candidate
         Log.d(TAG, "New Candidate Tracking: $url | type=$type | manifest=$isManifest")
         return candidate
     }
@@ -139,8 +172,8 @@ class MediaDetectionEngine(private val context: Context) {
     private fun findParentManifestForSegment(segmentUrl: String): MediaCandidate? {
         // Advanced heuristic: Correlate segments to a parent manifest using host, path, referer, or existing tokens.
         try {
+            val segKey = buildMediaGroupingKey(segmentUrl)
             val segUrlObj = URL(segmentUrl)
-            val segPath = segUrlObj.path.substringBeforeLast("/")
             val segHost = segUrlObj.host
 
             var bestMatch: MediaCandidate? = null
@@ -149,14 +182,12 @@ class MediaDetectionEngine(private val context: Context) {
             for ((candUrl, candidate) in candidates) {
                 if (candidate.isManifest && candidate.adScore == 0) {
                     var matchScore = 0
+                    val candKey = buildMediaGroupingKey(candUrl)
                     val candUrlObj = URL(candUrl)
-                    val candPath = candUrlObj.path.substringBeforeLast("/")
 
-                    // Host + Path match
-                    if (segHost == candUrlObj.host && segPath == candPath) {
-                        matchScore += 10
+                    if (segKey == candKey) {
+                        matchScore += 15
                     } else if (segHost == candUrlObj.host) {
-                        // Same host, maybe different path structure but same token/query?
                         matchScore += 5
                     }
 
@@ -184,6 +215,15 @@ class MediaDetectionEngine(private val context: Context) {
             // Ignore malformed URLs
         }
         return null
+    }
+
+    fun updatePlayerTelemetry(url: String, telemetry: PlayerTelemetry) {
+        val candidate = candidates[url] ?: findParentManifestForSegment(url)
+        if (candidate != null) {
+            candidate.telemetry = telemetry
+            if (telemetry.durationSec > 0) candidate.durationSec = telemetry.durationSec.toInt()
+            if (!telemetry.paused) candidate.isActivePlayer = true
+        }
     }
 
     fun updateCandidateMSEActivity(url: String) {
@@ -235,9 +275,7 @@ class MediaDetectionEngine(private val context: Context) {
             val path = urlObj.path
             if (path.isEmpty()) return null
 
-            val basePath = path.substringBeforeLast("/")
-            val queryParams = urlObj.query?.split("&")?.map { it.substringBefore("=") }?.sorted()?.joinToString(",") ?: ""
-            val groupingKey = "${urlObj.host}:$basePath?$queryParams"
+            val groupingKey = buildMediaGroupingKey(url)
 
             // Look for existing group
             val existingGroup = candidates.values.find { it.isSegmentGroup && it.pathBase == groupingKey }
@@ -258,6 +296,7 @@ class MediaDetectionEngine(private val context: Context) {
                 cookie = cookie
             )
             groupCand.segmentUrls.add(url)
+            groupCand.mediaKind = MediaKind.SEGMENT
             candidates[groupCand.url] = groupCand // Using the first segment URL as the dictionary key for the group
             return groupCand
         } catch (e: Exception) {
@@ -324,8 +363,14 @@ class MediaDetectionEngine(private val context: Context) {
         Log.d(TAG, "[MEDIA_SELECTION] ==========================")
     }
 
-    private fun isAdUrl(url: String): Boolean {
+    fun isAdUrl(url: String): Boolean {
         val lowerUrl = url.lowercase()
+
+        val isImage = lowerUrl.endsWith(".image") || lowerUrl.endsWith(".jpg") ||
+                      lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") ||
+                      lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".webp")
+        if (isImage) return true
+
         val adKeywords = listOf(
             "vast", "preroll", "midroll", "postroll", "doubleclick", "googlesyndication",
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
@@ -333,12 +378,14 @@ class MediaDetectionEngine(private val context: Context) {
             "scorecardresearch", "criteo", "outbrain", "taboola", "moatads", "advertising",
             "tiktokcdn", "ad-site"
         )
-        val isAdKeyword = adKeywords.any { lowerUrl.contains(it) }
 
-        val isImage = lowerUrl.endsWith(".image") || lowerUrl.endsWith(".jpg") ||
-                      lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") ||
-                      lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".webp")
-
-        return isAdKeyword || isImage
+        return adKeywords.any { lowerUrl.contains(it) }
     }
+
+    private fun applyAdPenalty(candidate: MediaCandidate) {
+        if (isAdUrl(candidate.url)) {
+            candidate.adScore += 50
+        }
+    }
+
 }
