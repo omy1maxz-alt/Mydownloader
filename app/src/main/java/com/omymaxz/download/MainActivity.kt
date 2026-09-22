@@ -2759,6 +2759,19 @@ private fun injectMediaStateDetector() {
                                         currentVideoUrl = url
                                     }
                                     val detectedFormat = activity.detectVideoFormat(url)
+
+                                    val isVariantOfExistingMaster = synchronized(activity.detectedMediaFiles) {
+                                        activity.detectedMediaFiles.any {
+                                            it.url != url &&
+                                            (it.mimeType?.contains("mpegurl", ignoreCase = true) == true || it.url.contains(".m3u8", ignoreCase = true)) &&
+                                            it.url.substringBeforeLast("/") == url.substringBeforeLast("/")
+                                        }
+                                    }
+
+                                    if (isVariantOfExistingMaster && (detectedFormat.mimeType?.contains("mpegurl", ignoreCase = true) == true || url.contains(".m3u8", ignoreCase = true))) {
+                                        return@runOnUiThread // Skip adding variant playlist to the UI list
+                                    }
+
                                     val quality = activity.extractQualityFromUrl(url)
                                     val enhancedTitle = activity.generateSmartFileName(url, detectedFormat.extension, quality, category)
                                     val fileSize = activity.estimateFileSize(url, category)
@@ -2921,6 +2934,19 @@ private fun injectMediaStateDetector() {
             // Already on UI thread from onMediaDetectedWithHeaders
                 try {
                     if (url.isNotEmpty() && url != "about:blank" && !url.startsWith("data:") && !url.startsWith("blob:")) {
+                         // Prevent UI flooding: Do not add an HLS variant playlist if a master playlist from the same host/path is already present.
+                         val isVariantOfExistingMaster = synchronized(activity.detectedMediaFiles) {
+                             activity.detectedMediaFiles.any {
+                                 it.url != url &&
+                                 (it.mimeType?.contains("mpegurl", ignoreCase = true) == true || it.url.contains(".m3u8", ignoreCase = true)) &&
+                                 it.url.substringBeforeLast("/") == url.substringBeforeLast("/")
+                             }
+                         }
+
+                         if (isVariantOfExistingMaster && (contentType?.contains("mpegurl", ignoreCase = true) == true || url.contains(".m3u8", ignoreCase = true))) {
+                             return // Skip adding variant playlist to the UI list to force the user to pick the Master or use the FAB
+                         }
+
                          val existsAlready = synchronized(activity.detectedMediaFiles) {
                             activity.detectedMediaFiles.any { it.url == url }
                          }

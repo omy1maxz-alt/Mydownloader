@@ -402,9 +402,19 @@ class CustomPlayerActivity : AppCompatActivity() {
         val tracerMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
         android.util.Log.d("PLAYER_TRACE", "[PLAYER_TRACE]\nvideoUrl=$videoUrl\nEXTRA_MIME_TYPE=$tracerMimeType\ndetectedFromUrl=null\nselectedMimeType=null")
         if (activePlayer != null) {
-            player = activePlayer
-            attachPlayerView()
-            return
+            // Do not blindly reuse the active player if the requested URL has changed!
+            // This prevents a single-variant player from being preserved when a multi-quality master is requested later.
+            val currentActiveUrl = activePlayer?.currentMediaItem?.localConfiguration?.uri?.toString()
+            if (currentActiveUrl == videoUrl) {
+                android.util.Log.d("KISKH_PLAYER_IDENTITY", "[KISKH_PLAYER_IDENTITY]\nrequestedUrl=$videoUrl\nactivePlayerCurrentUrl=$currentActiveUrl\nsameSource=true\nreusePlayer=true")
+                player = activePlayer
+                attachPlayerView()
+                return
+            } else {
+                android.util.Log.d("KISKH_PLAYER_IDENTITY", "[KISKH_PLAYER_IDENTITY]\nrequestedUrl=$videoUrl\nactivePlayerCurrentUrl=$currentActiveUrl\nsameSource=false\nreusePlayer=false")
+                activePlayer?.release()
+                activePlayer = null
+            }
         }
 
         // Seed global headers so any lazy HTTP request the cache makes uses them.
@@ -551,6 +561,17 @@ class CustomPlayerActivity : AppCompatActivity() {
             ?.build()!!
 
         player?.addListener(object : Player.Listener {
+            override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
+                var videoTracks = 0
+                var audioTracks = 0
+                val trackGroups = tracks.groups.size
+                for (group in tracks.groups) {
+                    if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO) videoTracks += group.length
+                    if (group.type == androidx.media3.common.C.TRACK_TYPE_AUDIO) audioTracks += group.length
+                }
+                android.util.Log.d("KISKH_HLS_TRACE", "[KISKH_HLS_TRACE]\nfinalUrl=$videoUrl\ntrackGroups=$trackGroups\nvideoTracks=$videoTracks\naudioTracks=$audioTracks")
+            }
+
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                 var causeChain = ""
                 var currentCause: Throwable? = error.cause

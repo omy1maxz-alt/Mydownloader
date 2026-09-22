@@ -161,9 +161,20 @@ class MediaDetectionEngine(private val context: Context) {
                     }
 
                     if (matchScore > 0) {
+                        // If it's an explicit master or the oldest manifest on the same path, give it a massive priority boost
+                        // so segments attach to the presentation master, not just the variant!
+                        if (candidate.url.lowercase().contains("master") || candidate.url.lowercase().contains("index")) {
+                            matchScore += 20
+                        }
+
                         if (matchScore > bestScore) {
                             bestScore = matchScore
                             bestMatch = candidate
+                        } else if (matchScore == bestScore && bestMatch != null) {
+                            // Tie-breaker: oldest manifest wins (master is requested before variant)
+                            if (candidate.firstSeenTime < bestMatch!!.firstSeenTime) {
+                                bestMatch = candidate
+                            }
                         }
                     }
                 }
@@ -277,6 +288,26 @@ class MediaDetectionEngine(private val context: Context) {
         val safePlayables = playables.filter { it.adScore == 0 || it.finalScore > 0 }
 
         if (safePlayables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
+
+        // We want the best presentation.
+        // If there are multiple manifests with high confidence, prefer the one fetched FIRST (which is typically the master manifest).
+        // If a variant manifest outscores the master because segments attached to it, the master will be lost if we only use `maxByOrNull`.
+        val manifests = safePlayables.filter { it.isManifest }
+        if (manifests.isNotEmpty()) {
+            // Find an explicit master playlist first
+            val explicitMaster = manifests.find { (it.url.lowercase().contains("master") || it.url.lowercase().contains("index")) && it.finalScore > 0 }
+            if (explicitMaster != null) return explicitMaster
+
+            // Otherwise, get the active/high-scoring manifests.
+            // If multiple related manifests exist, the oldest one is the master.
+            val activeManifests = manifests.filter { it.isActivePlayer || it.finalScore >= 45 || it.startedAfterPlayback }
+            if (activeManifests.isNotEmpty()) {
+                return activeManifests.minByOrNull { it.firstSeenTime }
+            }
+
+            // Fallback to highest scored manifest
+            return manifests.maxByOrNull { it.finalScore }
+        }
 
         return safePlayables.maxByOrNull { it.finalScore }
     }
