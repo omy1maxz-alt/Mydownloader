@@ -5189,7 +5189,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
         val savedModel = sharedPrefs.getString("gemini_model", null)
         val currentModel = when (savedModel) {
-            null, "", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-flash-latest", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest" -> "gemini-2.5-flash"
+            null, "", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-flash-latest", "gemini-1.5-flash-latest" -> "gemini-2.5-flash"
             else -> savedModel
         }
 
