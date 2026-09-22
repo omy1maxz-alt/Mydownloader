@@ -296,10 +296,18 @@ class HlsExportService : Service() {
                 .build()
 
             val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-            val out = File(
+            var out = File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                 "$safeTitle.mp4"
             )
+            var counter = 1
+            while (out.exists()) {
+                out = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    "${safeTitle}_$counter.mp4"
+                )
+                counter++
+            }
             transformer.start(mediaItem, out.absolutePath)
             cont.invokeOnCancellation { transformer.cancel() }
         }
@@ -326,11 +334,18 @@ class HlsExportService : Service() {
 
     private suspend fun copyMp4FromCache(url: String, title: String) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-        val out = File(
+        var out = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
             "$safeTitle.mp4"
         )
-        if (out.exists()) out.delete()
+        var counter = 1
+        while (out.exists()) {
+            out = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "${safeTitle}_$counter.mp4"
+            )
+            counter++
+        }
 
         val cacheOnlyFactory = cacheOnlyDataSource()
         val uri = android.net.Uri.parse(url)
@@ -366,11 +381,18 @@ class HlsExportService : Service() {
 
     private suspend fun muxToMp4FromCache(masterUrl: String, streamKeyStrings: List<String>?, title: String) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-        val out = File(
+        var out = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
             "$safeTitle.mp4"
         )
-        if (out.exists()) out.delete()
+        var counter = 1
+        while (out.exists()) {
+            out = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "${safeTitle}_$counter.mp4"
+            )
+            counter++
+        }
 
         val tmpDir = File(applicationContext.filesDir, "tmp_export_${System.currentTimeMillis()}")
         tmpDir.mkdirs()
@@ -808,12 +830,18 @@ class HlsExportService : Service() {
 
     private suspend fun muxToMp4(url: String, title: String) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
-        val out = File(
+        var out = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
             "$safeTitle.mp4"
         )
-
-        if (out.exists()) out.delete()
+        var counter = 1
+        while (out.exists()) {
+            out = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "${safeTitle}_$counter.mp4"
+            )
+            counter++
+        }
 
         val userAgent = HlsDownloadHelper.currentUserAgent ?: ""
         val referer = HlsDownloadHelper.currentReferer ?: ""
