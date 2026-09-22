@@ -111,3 +111,5 @@
 - Fixed UI freezing crash when 'View Export Logs' was pressed by shifting the  read to an IO coroutine and bounding the string output to the last 1000 lines.
 - Fixed UI freezing crash when 'View Export Logs' was pressed by shifting the export_logs.txt read to an IO coroutine and bounding the string output to the last 1000 lines.
 - Fixed UI freezing crash when 'View Export Logs' was pressed by shifting the 'export_logs.txt' read to an IO coroutine and bounding the string output to the last 1000 lines.
+- Modified  to actively group and sort candidate variants. If multiple valid manifests are present (e.g., KissKH multi-quality variants), the  explicitly resolves the original Master Playlist, preventing  from inadvertently loading a single-variant source.
+- Modified MediaDetectionEngine.getBestCandidate to actively group and sort candidate variants. If multiple valid manifests are present, the firstSeenTime explicitly resolves the original Master Playlist, preventing CustomPlayerActivity from inadvertently loading a single-variant source.
