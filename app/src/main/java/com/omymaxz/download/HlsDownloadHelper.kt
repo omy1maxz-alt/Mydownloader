@@ -36,8 +36,31 @@ object HlsDownloadHelper {
 
     // ---- SINGLE cache-key strategy used EVERYWHERE (player, download, export, subs) ----
     val customCacheKeyFactory = CacheKeyFactory { dataSpec ->
-        // Strip query + fragment so tokens/session ids don't fragment the cache.
-        dataSpec.uri.buildUpon().clearQuery().fragment("").build().toString()
+        val uri = dataSpec.uri
+
+        // Preserve crucial authentication tokens to prevent cache collisions
+        // while stripping dynamic session IDs
+        val importantKeys = setOf("auth-token", "token", "sig", "mac")
+        val newQuery = StringBuilder()
+
+        uri.queryParameterNames?.forEach { key ->
+            if (importantKeys.contains(key.lowercase())) {
+                val value = uri.getQueryParameter(key)
+                if (value != null) {
+                    if (newQuery.isNotEmpty()) newQuery.append("&")
+                    newQuery.append("$key=$value")
+                }
+            }
+        }
+
+        val builder = uri.buildUpon().fragment("")
+        if (newQuery.isEmpty()) {
+            builder.clearQuery()
+        } else {
+            builder.encodedQuery(newQuery.toString())
+        }
+
+        builder.build().toString()
     }
 
     // ---- Unified cache instance ----
@@ -150,7 +173,8 @@ object HlsDownloadHelper {
         }
 
         return androidx.media3.datasource.ResolvingDataSource.Factory(upstreamFactory) { dataSpec ->
-            android.util.Log.d("MP4_TRACE", "[MP4_TRACE] ResolvingDataSource requested URI: ${dataSpec.uri}")
+            val redactedUri = dataSpec.uri.buildUpon().clearQuery().build().toString()
+            android.util.Log.d("MP4_TRACE", "[MP4_TRACE] ResolvingDataSource requested URI: $redactedUri (redacted)")
             dataSpec
         }
     }

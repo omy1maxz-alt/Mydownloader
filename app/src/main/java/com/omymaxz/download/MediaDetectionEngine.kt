@@ -96,7 +96,7 @@ class MediaDetectionEngine(private val context: Context) {
              isSegment = false
         }
 
-        if (!isManifest && !isProgressiveFinal && !isSegment && mediaKind == MediaKind.UNKNOWN) return null
+
 
         val type = when (mediaKind) {
             MediaKind.HLS_MANIFEST -> "hls"
@@ -239,16 +239,25 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
     fun markCandidateAsActivePlayer(url: String, duration: Int) {
-        val candidate = candidates[url] ?: findParentManifestForSegment(url)
-        if (candidate != null) {
-            candidate.isActivePlayer = true
-            if (duration > 0) candidate.durationSec = duration
-            Log.d(TAG, "Active player associated with candidate: ${candidate.url} (duration: $duration)")
-        } else {
-            val c = processRequest(url, null, null)
-            c?.isActivePlayer = true
-            if (duration > 0) c?.durationSec = duration
+        var candidate = candidates[url] ?: findParentManifestForSegment(url)
+        if (candidate == null) {
+            candidate = processRequest(url, null, null)
+
+            // Force tracking for extensionless URLs that are explicitly playing in the active player
+            if (candidate == null) {
+                candidate = MediaCandidate(
+                    url = url,
+                    type = "video",
+                    mediaKind = MediaKind.PROGRESSIVE,
+                    isProgressiveFinal = true
+                )
+                candidates[url] = candidate
+            }
         }
+
+        candidate.isActivePlayer = true
+        if (duration > 0) candidate.durationSec = duration
+        Log.d(TAG, "Active player associated with candidate: ${candidate.url} (duration: $duration)")
     }
 
     fun markCandidateDRM(url: String) {
