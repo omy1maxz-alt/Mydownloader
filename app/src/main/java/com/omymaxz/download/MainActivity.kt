@@ -1292,6 +1292,7 @@ private fun checkBatteryOptimization() {
                     injectMediaStateDetector()
                     injectAdvancedMediaDetector()
                     injectStandardMediaDetector()
+                    injectTelemetryScript()
                     view?.evaluateJavascript("(function() { AndroidMediaState.parseHtmlForHiddenM3u8(document.documentElement.innerHTML); })();", null)
                     if (url?.contains("jules.google.com", ignoreCase = true) == true) {
                         injectJulesLongPress(view)
@@ -2654,6 +2655,38 @@ private fun injectMediaStateDetector() {
     }
     inner class MediaStateInterface(private val activity: MainActivity) {
 
+        @JavascriptInterface
+        fun onPlayerTelemetry(jsonStr: String) {
+            try {
+                val jsonArray = org.json.JSONArray(jsonStr)
+                for (i in 0 until jsonArray.length()) {
+                    val obj = jsonArray.getJSONObject(i)
+                    val url = obj.getString("src")
+                    if (url.isNullOrEmpty() || url.startsWith("blob:")) continue
+
+                    val telemetry = PlayerTelemetry(
+                        url = url,
+                        width = obj.optInt("width", 0),
+                        height = obj.optInt("height", 0),
+                        durationSec = obj.optDouble("duration", 0.0),
+                        currentTimeSec = obj.optDouble("currentTime", 0.0),
+                        paused = obj.optBoolean("paused", true),
+                        muted = obj.optBoolean("muted", false),
+                        autoplay = obj.optBoolean("autoplay", false),
+                        fullscreen = obj.optBoolean("fullscreen", false),
+                        visibleAreaRatio = obj.optDouble("visibleAreaRatio", 0.0),
+                        displayedWidth = obj.optDouble("displayedWidth", 0.0),
+                        displayedHeight = obj.optDouble("displayedHeight", 0.0)
+                    )
+
+                    activity.runOnUiThread {
+                        activity.mediaEngine.updatePlayerTelemetry(url, telemetry)
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore parse errors
+            }
+        }
 
         private var lastSubtitleUrl: String = ""
 
@@ -2899,7 +2932,7 @@ private fun injectMediaStateDetector() {
 
         @JavascriptInterface
         fun onActivePlayerFound(url: String, durationStr: String?) {
-            if (url.startsWith("blob:") || isAdUrl(url)) return
+            if (url.startsWith("blob:") || mediaEngine.isAdUrl(url)) return
 
             activity.runOnUiThread {
                 try {
@@ -4663,7 +4696,60 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
     }
 
+
+    private fun injectTelemetryScript() {
+        val script = """
+            (function () {
+                if (window.telemetryIntervalId) return;
+                window.telemetryIntervalId = setInterval(() => {
+                    try {
+                        const videos = Array.from(document.querySelectorAll("video"));
+                        if (videos.length === 0) return;
+
+                        const telemetryData = videos.map((video, index) => {
+                            const rect = video.getBoundingClientRect();
+                            const style = window.getComputedStyle(video);
+
+                            const visibleWidth = Math.max(0, Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0));
+                            const visibleHeight = Math.max(0, Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0));
+                            const visibleArea = visibleWidth * visibleHeight;
+                            const viewportArea = window.innerWidth * window.innerHeight;
+
+                            return {
+                                index: index,
+                                src: video.currentSrc || video.src || "",
+                                width: video.videoWidth || 0,
+                                height: video.videoHeight || 0,
+                                duration: Number.isFinite(video.duration) ? video.duration : 0,
+                                currentTime: video.currentTime || 0,
+                                paused: video.paused,
+                                muted: video.muted,
+                                autoplay: video.autoplay,
+                                controls: video.controls,
+                                fullscreen: document.fullscreenElement === video,
+                                visibleAreaRatio: viewportArea > 0 ? visibleArea / viewportArea : 0,
+                                displayedWidth: rect.width,
+                                displayedHeight: rect.height,
+                                display: style.display,
+                                visibility: style.visibility,
+                                opacity: parseFloat(style.opacity || "1")
+                            };
+                        });
+
+                        if (window.AndroidMediaState && window.AndroidMediaState.onPlayerTelemetry) {
+                            window.AndroidMediaState.onPlayerTelemetry(JSON.stringify(telemetryData));
+                        }
+                    } catch (e) {
+                        console.error("Telemetry error", e);
+                    }
+                }, 1500);
+            })();
+        """
+        webView.evaluateJavascript(script, null)
+    }
+
     private fun injectStandardMediaDetector() {
+        injectTelemetryScript()
         val script = """
             (function() {
                 const media = [];
@@ -5189,7 +5275,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
         val savedModel = sharedPrefs.getString("gemini_model", null)
         val currentModel = when (savedModel) {
-            null, "", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-flash-latest", "gemini-1.5-flash-latest" -> "gemini-2.5-flash"
+            null, "", "gemini-1.5-flash", "gemini-flash-latest", "gemini-1.5-flash-latest" -> "gemini-2.5-flash"
             else -> savedModel
         }
 
@@ -5198,6 +5284,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             "gemini-2.5-flash",
             "gemini-2.5-flash-lite",
             "gemini-2.5-pro",
+            "gemini-1.5-pro",
             "gemini-3.5-flash",
             "gemini-3.6-flash",
             "gemini-3.7-flash",
