@@ -2892,9 +2892,12 @@ private fun injectMediaStateDetector() {
 
                 // If it's not a blob and we have a direct active URL, let's process it heavily
                 if (!isBlob && url.isNotEmpty() && !url.startsWith("data:")) {
-                    val activeCand = activity.mediaEngine.processRequest(url, activity.lastUsedUrl, activity.cachedUserAgent)
+                    activity.mediaEngine.markCandidateAsActivePlayer(url, 0)
+                    val activeCand = activity.mediaEngine.getCandidate(url)
                     if (activeCand != null) {
                         activeCand.playbackScore += 100 // Absolute highest priority
+                        activeCand.referer = activity.lastUsedUrl
+                        activeCand.userAgent = activity.cachedUserAgent
                         bestPlayable = activity.mediaEngine.getBestCandidate()
                     }
                 }
