@@ -38,29 +38,41 @@ object HlsDownloadHelper {
     val customCacheKeyFactory = CacheKeyFactory { dataSpec ->
         val uri = dataSpec.uri
 
+        if (!uri.isHierarchical || (uri.scheme != "http" && uri.scheme != "https")) {
+            if (uri.scheme != "data") { // Suppress logging for standard data URI subtitles as it causes noise
+                android.util.Log.d("CACHE_KEY", "[CACHE_KEY] non-http-or-non-hierarchical scheme=${uri.scheme} fallback=true")
+            }
+            return@CacheKeyFactory uri.toString()
+        }
+
         // Preserve crucial authentication tokens to prevent cache collisions
         // while stripping dynamic session IDs
         val importantKeys = setOf("auth-token", "token", "sig", "mac")
         val newQuery = StringBuilder()
 
-        uri.queryParameterNames?.forEach { key ->
-            if (importantKeys.contains(key.lowercase())) {
-                val value = uri.getQueryParameter(key)
-                if (value != null) {
-                    if (newQuery.isNotEmpty()) newQuery.append("&")
-                    newQuery.append("$key=$value")
+        try {
+            uri.queryParameterNames?.forEach { key ->
+                if (importantKeys.contains(key.lowercase())) {
+                    val value = uri.getQueryParameter(key)
+                    if (value != null) {
+                        if (newQuery.isNotEmpty()) newQuery.append("&")
+                        newQuery.append("$key=$value")
+                    }
                 }
             }
-        }
 
-        val builder = uri.buildUpon().fragment("")
-        if (newQuery.isEmpty()) {
-            builder.clearQuery()
-        } else {
-            builder.encodedQuery(newQuery.toString())
-        }
+            val builder = uri.buildUpon().fragment("")
+            if (newQuery.isEmpty()) {
+                builder.clearQuery()
+            } else {
+                builder.encodedQuery(newQuery.toString())
+            }
 
-        builder.build().toString()
+            builder.build().toString()
+        } catch (e: UnsupportedOperationException) {
+            // Fallback for unexpected non-hierarchical URIs escaping the check
+            uri.toString()
+        }
     }
 
     // ---- Unified cache instance ----
