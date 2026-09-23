@@ -165,7 +165,14 @@ object HlsDownloadHelper {
             currentUserAgent?.let { upstream.setUserAgent(it) }
             val props = mutableMapOf<String, String>()
             currentCookie?.let { props["Cookie"] = it }
-            currentReferer?.let { props["Referer"] = it }
+            currentReferer?.let {
+                props["Referer"] = it
+                try {
+                    val refererUri = java.net.URL(it)
+                    val origin = "${refererUri.protocol}://${refererUri.host}"
+                    props["Origin"] = origin
+                } catch (e: Exception) {}
+            }
             props["Accept"] = "*/*"
             upstream.setDefaultRequestProperties(props)
 
@@ -173,8 +180,34 @@ object HlsDownloadHelper {
         }
 
         return androidx.media3.datasource.ResolvingDataSource.Factory(upstreamFactory) { dataSpec ->
-            val redactedUri = dataSpec.uri.buildUpon().clearQuery().build().toString()
-            android.util.Log.d("MP4_TRACE", "[MP4_TRACE] ResolvingDataSource requested URI: $redactedUri (redacted)")
+            val uri = dataSpec.uri
+            val host = uri.host ?: "unknown"
+            val path = uri.path ?: ""
+            val isManifest = path.endsWith(".m3u8") || path.endsWith(".mpd")
+            val kind = if (isManifest) "manifest" else "media_segment"
+
+            val headers = dataSpec.httpRequestHeaders
+            val userAgentPresent = headers.containsKey("User-Agent") || headers.containsKey("user-agent")
+            val refererPresent = headers.containsKey("Referer") || headers.containsKey("referer")
+            val originPresent = headers.containsKey("Origin") || headers.containsKey("origin")
+            val cookiePresent = headers.containsKey("Cookie") || headers.containsKey("cookie")
+
+            val redactedPath = path.substringBeforeLast("/") + "/REDACTED" + (if (isManifest) ".m3u8" else ".ts")
+
+            android.util.Log.d("HLS_HTTP", """
+                HLS_HTTP
+                host=$host
+                path=$redactedPath
+                kind=$kind
+                userAgentPresent=$userAgentPresent
+                refererPresent=$refererPresent
+                originPresent=$originPresent
+                cookiePresent=$cookiePresent
+                cacheEnabled=true
+                retryCount=0
+                responseCode=PENDING_UPSTREAM
+            """.trimIndent())
+
             dataSpec
         }
     }

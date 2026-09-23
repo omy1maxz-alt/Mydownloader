@@ -465,7 +465,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
 
         player = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory).setLoadErrorHandlingPolicy(CustomRetryPolicy()))
             .setLoadControl(loadControl)
             .build()
 
