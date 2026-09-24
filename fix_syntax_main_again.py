@@ -1,17 +1,25 @@
-import sys
-
 with open("app/src/main/java/com/omymaxz/download/MainActivity.kt", "r") as f:
     content = f.read()
 
 import re
 
-old_update = re.search(r"    private fun updateFabVisibility\(\) \{.*?    \}", content, re.DOTALL)
-if old_update:
-    new_update = """    fun updateFabVisibility() {
+# We need to find the definition of `updateFabVisibility` and everything up to `private var lastYoutubeUrl: String? = null`
+pattern = r"    fun updateFabVisibility\(\) \{.*?    \}(?=\n\n    private var lastYoutubeUrl: String\? = null)"
+
+new_update = """    fun updateFabVisibility() {
         val hasMedia = synchronized(detectedMediaFiles) {
             detectedMediaFiles.isNotEmpty()
         }
-        binding.fabShowMedia.visibility = if (hasMedia) View.VISIBLE else View.GONE
+        binding.fabShowMedia.visibility = if (hasMedia) android.view.View.VISIBLE else android.view.View.GONE
+
+        binding.fabShowMedia.setOnLongClickListener {
+            if (hasMedia) {
+                showMediaListDialog()
+            } else {
+                android.widget.Toast.makeText(this, "No media intercepted yet. Play the video first.", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            true
+        }
 
         // Update the new WebMedia Detector Floating Button
         val bestPlayable = mediaEngine.getBestCandidate()
@@ -21,17 +29,18 @@ if old_update:
         // Ensure ONLY verified, playing media shows the floating detector.
         // We require duration validation (> 60s) AND active playing state.
         if (bestPlayable != null && bestPlayable.isActivePlayer && bestPlayable.durationSec >= 60) {
-            floatingDetector?.visibility = View.VISIBLE
+            floatingDetector?.visibility = android.view.View.VISIBLE
             val typeStr = if (bestPlayable.isManifest) "HLS" else "MP4"
             txtState?.text = "Verified: $typeStr"
             floatingDetector?.setOnClickListener {
                 showMediaListDialog()
             }
         } else {
-            floatingDetector?.visibility = View.GONE
+            floatingDetector?.visibility = android.view.View.GONE
         }
     }"""
-    content = content.replace(old_update.group(0), new_update)
+
+content = re.sub(pattern, new_update, content, flags=re.DOTALL)
 
 with open("app/src/main/java/com/omymaxz/download/MainActivity.kt", "w") as f:
     f.write(content)

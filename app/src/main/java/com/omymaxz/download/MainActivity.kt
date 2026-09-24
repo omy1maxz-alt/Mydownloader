@@ -5966,27 +5966,37 @@ if (isDesktopMode) {
             }
         }
     }
-    private fun updateFabVisibility() {
-        val hasFiles = detectedMediaFiles.isNotEmpty()
+    fun updateFabVisibility() {
+        val hasMedia = synchronized(detectedMediaFiles) {
+            detectedMediaFiles.isNotEmpty()
+        }
+        binding.fabShowMedia.visibility = if (hasMedia) android.view.View.VISIBLE else android.view.View.GONE
 
-        if (hasFiles) {
-            binding.fabShowMedia.visibility = android.view.View.VISIBLE
-            binding.fabShowMedia.setImageResource(android.R.drawable.ic_menu_add)
+        binding.fabShowMedia.setOnLongClickListener {
+            if (hasMedia) {
+                showMediaListDialog()
+            } else {
+                android.widget.Toast.makeText(this, "No media intercepted yet. Play the video first.", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            true
+        }
 
-            binding.fabShowMedia.setOnClickListener {
+        // Update the new WebMedia Detector Floating Button
+        val bestPlayable = mediaEngine.getBestCandidate()
+        val floatingDetector = findViewById<android.widget.LinearLayout>(R.id.floatingDetectorUI)
+        val txtState = findViewById<android.widget.TextView>(R.id.txtDetectorState)
+
+        // Ensure ONLY verified, playing media shows the floating detector.
+        // We require duration validation (> 60s) AND active playing state.
+        if (bestPlayable != null && bestPlayable.isActivePlayer && bestPlayable.durationSec >= 60) {
+            floatingDetector?.visibility = android.view.View.VISIBLE
+            val typeStr = if (bestPlayable.isManifest) "HLS" else "MP4"
+            txtState?.text = "Verified: $typeStr"
+            floatingDetector?.setOnClickListener {
                 showMediaListDialog()
             }
-
-            binding.fabShowMedia.setOnLongClickListener {
-                if (detectedMediaFiles.isNotEmpty()) {
-                    showMediaListDialog()
-                } else {
-                    android.widget.Toast.makeText(this, "No media intercepted yet. Play the video first.", android.widget.Toast.LENGTH_SHORT).show()
-                }
-                true
-            }
         } else {
-            binding.fabShowMedia.visibility = android.view.View.GONE
+            floatingDetector?.visibility = android.view.View.GONE
         }
     }
 
