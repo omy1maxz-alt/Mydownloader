@@ -11,7 +11,16 @@ class MediaDetectionEngine(private val context: Context) {
         val lowerUrl = rawUrl.lowercase()
         val mime = contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
 
-        val isHls = lowerUrl.contains(".m3u8") || lowerUrl.contains("format=m3u8") || lowerUrl.contains("type=hls") || mime == "application/vnd.apple.mpegurl" || mime == "application/x-mpegurl"
+        // Exclude trackers and images masquerading as manifests
+        if (lowerUrl.contains(".gif") || lowerUrl.contains(".png") || lowerUrl.contains("/ping") ||
+            lowerUrl.contains("/pixel/") || lowerUrl.contains("/analytics/")) {
+            return MediaKind.UNKNOWN
+        }
+
+        val isHls = lowerUrl.contains(".m3u8") || lowerUrl.contains("format=m3u8") || lowerUrl.contains("type=hls") ||
+                    mime == "application/vnd.apple.mpegurl" || mime == "application/x-mpegurl" ||
+                    lowerUrl.contains("/master.txt") || lowerUrl.contains("/hls/") || lowerUrl.contains("/hls3/")
+
         val isDash = lowerUrl.contains(".mpd") || lowerUrl.contains("format=dash") || lowerUrl.contains("type=dash") || mime == "application/dash+xml"
         val isVideoMime = mime.startsWith("video/")
         val isProgressive = lowerUrl.matches(Regex(".*\\.(mp4|webm|mkv|mov|avi)(\\?.*)?$")) || isVideoMime

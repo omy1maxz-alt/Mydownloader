@@ -8,8 +8,6 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.ResolvingDataSource
-import android.util.Log
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.cache.Cache
@@ -169,14 +167,14 @@ object HlsDownloadHelper {
     fun getDataSourceFactory(context: Context): DataSource.Factory {
         // Instantiate a NEW factory per request rather than mutating the global singleton
         // to prevent race conditions or missing headers on background fetches.
-        // Wrap the HttpDataSource in a DefaultDataSource so it can safely handle data: URIs and file: URIs
+        // Also use a ResolvingDataSource to explicitly log the final resolved DataSpec URI.
         val upstreamFactory = DataSource.Factory {
-            val httpDataSource = DefaultHttpDataSource.Factory()
+            val upstream = DefaultHttpDataSource.Factory()
                 .setAllowCrossProtocolRedirects(true)
                 .setConnectTimeoutMs(15_000)
                 .setReadTimeoutMs(15_000)
 
-            currentUserAgent?.let { httpDataSource.setUserAgent(it) }
+            currentUserAgent?.let { upstream.setUserAgent(it) }
             val props = mutableMapOf<String, String>()
             currentCookie?.let { props["Cookie"] = it }
             currentReferer?.let {
@@ -188,18 +186,44 @@ object HlsDownloadHelper {
                 } catch (e: Exception) {}
             }
             props["Accept"] = "*/*"
-            httpDataSource.setDefaultRequestProperties(props)
+            upstream.setDefaultRequestProperties(props)
 
-            val baseDataSource = DefaultDataSource.Factory(context, httpDataSource).createDataSource()
-            baseDataSource
+            androidx.media3.datasource.DefaultDataSource.Factory(context, upstream).createDataSource()
         }
 
-        return ResolvingDataSource.Factory(upstreamFactory) { dataSpec ->
-            val redactedUri = dataSpec.uri.toString().replace(Regex("([?&])(auth-token|sig|mac|token)=([^&]+)"), "$1$2=REDACTED")
-            Log.d("HLS_HTTP", "Requesting: $redactedUri")
+        return androidx.media3.datasource.ResolvingDataSource.Factory(upstreamFactory) { dataSpec ->
+            val uri = dataSpec.uri
+            val host = uri.host ?: "unknown"
+            val path = uri.path ?: ""
+            val isManifest = path.endsWith(".m3u8") || path.endsWith(".mpd")
+            val kind = if (isManifest) "manifest" else "media_segment"
+
+            val headers = dataSpec.httpRequestHeaders
+            val userAgentPresent = headers.containsKey("User-Agent") || headers.containsKey("user-agent")
+            val refererPresent = headers.containsKey("Referer") || headers.containsKey("referer")
+            val originPresent = headers.containsKey("Origin") || headers.containsKey("origin")
+            val cookiePresent = headers.containsKey("Cookie") || headers.containsKey("cookie")
+
+            val redactedPath = path.substringBeforeLast("/") + "/REDACTED" + (if (isManifest) ".m3u8" else ".ts")
+
+            android.util.Log.d("HLS_HTTP", """
+                HLS_HTTP
+                host=$host
+                path=$redactedPath
+                kind=$kind
+                userAgentPresent=$userAgentPresent
+                refererPresent=$refererPresent
+                originPresent=$originPresent
+                cookiePresent=$cookiePresent
+                cacheEnabled=true
+                retryCount=0
+                responseCode=PENDING_UPSTREAM
+            """.trimIndent())
+
             dataSpec
         }
     }
+
     /** CacheDataSource used by player + export. `readOnly` disables writes (export path). */
     @Synchronized
     fun getCacheDataSourceFactory(context: Context, readOnly: Boolean = false):

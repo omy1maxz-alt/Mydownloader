@@ -197,12 +197,12 @@ class YouTubeDownloadService : Service() {
         android.util.Log.d("YouTubeDownloadService", "[YOUTUBE_TRACE] Starting download for: $redactedUrl")
 
         while (attempt < maxRetries) {
-            var input: BufferedInputStream? = null
-            var output: FileOutputStream? = null
-            var connection: HttpURLConnection? = null
+            var input: java.io.BufferedInputStream? = null
+            var output: java.io.FileOutputStream? = null
+            var connection: java.net.HttpURLConnection? = null
             try {
-                val url = URL(urlStr)
-                connection = url.openConnection() as HttpURLConnection
+                val url = java.net.URL(urlStr)
+                connection = url.openConnection() as java.net.HttpURLConnection
                 if (userAgent != null) connection.setRequestProperty("User-Agent", userAgent)
                 connection.setRequestProperty("Referer", referer)
                 connection.setRequestProperty("Origin", "https://www.youtube.com")
@@ -234,8 +234,8 @@ class YouTubeDownloadService : Service() {
                 }
 
                 val fileLength = connection.contentLength
-                input = BufferedInputStream(connection.inputStream)
-                output = FileOutputStream(destination)
+                input = java.io.BufferedInputStream(connection.inputStream)
+                output = java.io.FileOutputStream(destination)
 
                 val data = ByteArray(4096)
                 var total: Long = 0
