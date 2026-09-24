@@ -2768,7 +2768,9 @@ private fun injectMediaStateDetector() {
                                     val existsAlready = synchronized(detectedMediaFiles) {
                                         detectedMediaFiles.any { it.url == url }
                                     }
-                                    if (!existsAlready) {
+                                    val candidate = mediaEngine.getCandidate(url)
+                                    val isEligible = candidate == null || (candidate.durationSec == 0 || candidate.durationSec >= 60)
+                                    if (!existsAlready && isEligible) {
                                         synchronized(detectedMediaFiles) {
                                             detectedMediaFiles.add(mediaFile)
                                         }
@@ -2868,9 +2870,13 @@ private fun injectMediaStateDetector() {
                         referer = activity.lastUsedUrl
                     )
 
-                    synchronized(activity.detectedMediaFiles) {
-                        activity.detectedMediaFiles.removeIf { it.url == mediaFile.url }
-                        activity.detectedMediaFiles.add(0, mediaFile)
+                    val cand = activity.mediaEngine.getCandidate(bestPlayable.url)
+                    val isEligible = cand == null || (cand.durationSec == 0 || cand.durationSec >= 60)
+                    if (isEligible) {
+                        synchronized(activity.detectedMediaFiles) {
+                            activity.detectedMediaFiles.removeIf { it.url == mediaFile.url }
+                            activity.detectedMediaFiles.add(0, mediaFile)
+                        }
                     }
                     activity.updateFabVisibility()
                     activity.currentMediaListAdapter?.notifyDataSetChanged()
@@ -2961,8 +2967,12 @@ private fun injectMediaStateDetector() {
                                 referer = activity.lastUsedUrl
                             )
 
-                            synchronized(activity.detectedMediaFiles) {
-                                activity.detectedMediaFiles.add(mediaFile)
+                            val cand = activity.mediaEngine.getCandidate(url)
+                            val isEligible = cand == null || (cand.durationSec == 0 || cand.durationSec >= 60)
+                            if (isEligible) {
+                                synchronized(activity.detectedMediaFiles) {
+                                    activity.detectedMediaFiles.add(mediaFile)
+                                }
                             }
                             activity.updateFabVisibility()
                             android.util.Log.d("MediaStateInterface", "Advanced detection found: $url")
@@ -4965,7 +4975,9 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     synchronized(detectedMediaFiles) {
                         val existingUrls = detectedMediaFiles.map { it.url }.toSet()
                         newMediaFiles.forEach {
-                            if (!existingUrls.contains(it.url)) {
+                            val cand = mediaEngine.getCandidate(it.url)
+                            val isEligible = cand == null || (cand.durationSec == 0 || cand.durationSec >= 60)
+                            if (!existingUrls.contains(it.url) && isEligible) {
                                 detectedMediaFiles.add(it)
                                 addedCount++
                                 // Trigger http fetch if needed

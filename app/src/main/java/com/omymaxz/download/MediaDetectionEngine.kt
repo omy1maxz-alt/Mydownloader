@@ -253,16 +253,29 @@ class MediaDetectionEngine(private val context: Context) {
         return null
     }
 
+    // Internal state to track playback progression
+    private val playbackSnapshots = java.util.concurrent.ConcurrentHashMap<String, Double>()
+
     fun updatePlayerTelemetry(url: String, telemetry: PlayerTelemetry) {
         // Sanitize: Do not grant active player status for 0 duration non-live streams or tiny outstream/banner ad dimensions.
         val isRealPlayer = (telemetry.durationSec > 0.0 || telemetry.currentTimeSec > 0.0) &&
                            (telemetry.width >= 300 || telemetry.height >= 250)
 
+        var playbackVerified = false
+        if (!telemetry.paused && isRealPlayer) {
+            val lastTime = playbackSnapshots[url] ?: 0.0
+            if (telemetry.currentTimeSec > lastTime + 0.5) {
+                // Time has materially progressed since the last snapshot. We have verified continuous playback!
+                playbackVerified = true
+            }
+            playbackSnapshots[url] = telemetry.currentTimeSec
+        }
+
         val candidate = candidates[url] ?: findParentManifestForSegment(url)
         if (candidate != null) {
             candidate.telemetry = telemetry
             if (telemetry.durationSec > 0) candidate.durationSec = telemetry.durationSec.toInt()
-            if (!telemetry.paused && isRealPlayer) candidate.isActivePlayer = true
+            if (playbackVerified) candidate.isActivePlayer = true
         }
 
         // Propagate evidence: if this is a blob URL (MSE player), associate its active telemetry with the actual underlying network presentations.
@@ -273,7 +286,7 @@ class MediaDetectionEngine(private val context: Context) {
                     Log.d(TAG, "Propagating Blob Telemetry to network presentation: ${relatedCandidate.url}")
                     relatedCandidate.telemetry = telemetry
                     if (telemetry.durationSec > 0) relatedCandidate.durationSec = telemetry.durationSec.toInt()
-                    if (!telemetry.paused && isRealPlayer) relatedCandidate.isActivePlayer = true
+                    if (playbackVerified) relatedCandidate.isActivePlayer = true
                 }
             }
         }
@@ -395,14 +408,15 @@ class MediaDetectionEngine(private val context: Context) {
         val hasDRMPlayables = playables.any { it.isDRMProtected }
         if (hasDRMPlayables) {
             val drmFiltered = playables.filter { it.isDRMProtected || it.requestCount > 10 }
-            val safePlayables = drmFiltered.filter { (it.durationSec == 0 || it.durationSec >= 60) && (it.adScore == 0 || it.finalScore > 0) }
+            val safePlayables = drmFiltered.filter { (it.durationSec == 0 || it.durationSec >= 60) && it.adScore == 0 }
             if (safePlayables.isNotEmpty()) return safePlayables.maxByOrNull { it.finalScore }
         }
 
         // Group into presentations logically before scoring them against each other.
         // We do not want an isolated MP4 ad url to beat an underlying HLS manifest just because of raw score.
         // We filter out high-probability ads AND explicitly reject known videos under 60 seconds (MIN_ACCEPTED_VIDEO_DURATION_SECONDS).
-        val safePlayables = playables.filter { (it.durationSec == 0 || it.durationSec >= 60) && (it.adScore == 0 || it.finalScore > 0) }
+        // A known strong ad (adScore > 0) is hard-excluded from ever winning, regardless of how high its playback/telemetry score gets.
+        val safePlayables = playables.filter { (it.durationSec == 0 || it.durationSec >= 60) && it.adScore == 0 }
 
         if (safePlayables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
 
