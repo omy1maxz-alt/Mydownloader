@@ -1505,7 +1505,21 @@ private fun checkBatteryOptimization() {
                     val decorView = window.decorView as android.view.ViewGroup
                     decorView.addView(fullscreenView)
 
-
+                    // Add floating buttons back for WebMedia Fullscreen
+                    fullscreenDownloadButton = android.widget.ImageView(this@MainActivity).apply {
+                        setImageResource(android.R.drawable.ic_menu_save)
+                        setBackgroundResource(R.drawable.rounded_background)
+                        setPadding(20, 20, 20, 20)
+                        setOnClickListener {
+                            showMediaListDialog()
+                        }
+                    }
+                    val btnParams = android.widget.FrameLayout.LayoutParams(140, 140).apply {
+                        gravity = Gravity.TOP or Gravity.END
+                        topMargin = 150
+                        marginEnd = 50
+                    }
+                    decorView.addView(fullscreenDownloadButton, btnParams)
 
                     // Use modern WindowInsetsControllerCompat if possible to prevent brittle deprecated flag behavior
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -1537,6 +1551,11 @@ private fun checkBatteryOptimization() {
                     val decorView = window.decorView as android.view.ViewGroup
                     decorView.removeView(fullscreenView)
                     fullscreenView = null
+
+                    if (fullscreenDownloadButton != null) {
+                        decorView.removeView(fullscreenDownloadButton)
+                        fullscreenDownloadButton = null
+                    }
 
                     window.decorView.setOnSystemUiVisibilityChangeListener(null)
                     window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
