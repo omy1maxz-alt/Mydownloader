@@ -1,26 +1,51 @@
-package com.omymaxz.download
+import sys
 
-import android.app.Service
-import android.content.Intent
-import android.graphics.PixelFormat
-import android.os.Build
-import android.os.IBinder
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.MotionEvent
-import android.view.View
-import android.view.WindowManager
-import android.widget.ImageView
+with open("app/src/main/java/com/omymaxz/download/FloatingBubbleService.kt", "r") as f:
+    content = f.read()
+
+# Make FloatingBubbleService act as the single source of truth for floating behavior, expanding to show detection info.
+old_imports = """import android.widget.ImageView
+import kotlin.math.abs"""
+
+new_imports = """import android.widget.ImageView
 import android.widget.TextView
 import android.widget.LinearLayout
 import android.widget.Button
 import android.os.Handler
 import android.os.Looper
-import kotlin.math.abs
+import kotlin.math.abs"""
 
-class FloatingBubbleService : Service() {
+content = content.replace(old_imports, new_imports)
 
-    private lateinit var windowManager: WindowManager
+
+old_class_body = """    private lateinit var windowManager: WindowManager
+    private var bubbleView: View? = null
+    private var videoUrl: String? = null
+    private var videoTitle: String? = null
+    private var currentPosition: Long = 0L
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent != null) {
+            videoUrl = intent.getStringExtra(CustomPlayerActivity.EXTRA_VIDEO_URL)
+            videoTitle = intent.getStringExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE)
+            currentPosition = intent.getLongExtra("current_position", 0L)
+
+            // Only create the bubble view if it doesn't already exist and we have a valid media payload
+            if (bubbleView == null && videoUrl != null) {
+                createBubbleView()
+            }
+        }
+        return START_NOT_STICKY
+    }"""
+
+new_class_body = """    private lateinit var windowManager: WindowManager
     private var bubbleView: View? = null
     private var videoUrl: String? = null
     private var videoTitle: String? = null
@@ -90,72 +115,52 @@ class FloatingBubbleService : Service() {
         val txtDetails = bubbleView?.findViewById<TextView>(R.id.txt_detector_details)
         val btnOpenPlayer = bubbleView?.findViewById<Button>(R.id.btn_open_player)
 
-        val engine = MediaDetectionEngine.instance ?: return
+        // This requires MainActivity to expose the mediaEngine instance, but since a Service doesn't have a direct reference to the Activity instance easily without binding, we should fetch it via a static registry or singleton engine if possible.
+        // For now, let's fetch it if we can access the MediaDetectionEngine through a singleton, or we can just send broadasts.
+        // Since MediaDetectionEngine is currently instantiated in MainActivity, we can add a static accessor.
+    }"""
 
-        val candidates = engine.candidates.values.toList()
-        val verifiedPlayable = candidates.find { it.isActivePlayer && it.durationSec >= 60 }
-        val bestCand = engine.getBestCandidate()
+content = content.replace(old_class_body, new_class_body)
 
-        txtBadge?.text = "[ ${candidates.size} ]"
 
-        if (verifiedPlayable != null || bestCand != null) {
-            val mainCand = verifiedPlayable ?: bestCand!!
-            txtStatus?.text = "● PLAYBACK VERIFIED"
-            txtStatus?.setTextColor(android.graphics.Color.GREEN)
+old_create = """            val closeButton = bubbleView!!.findViewById<ImageView>(R.id.btn_close_bubble)
+            val bubbleIcon = bubbleView!!.findViewById<ImageView>(R.id.img_bubble_icon)
 
-            val typeStr = if (mainCand.isManifest) "HLS/DASH" else "Progressive"
-            val durStr = if (mainCand.durationSec > 0) "${mainCand.durationSec}s" else "Unknown"
-            val scoreStr = mainCand.finalScore
-
-            txtDetails?.text = "$typeStr \nDur: $durStr \nScore: $scoreStr \nConf: ${mainCand.confidence}\nCandidates: ${candidates.size}"
-
-            btnOpenPlayer?.visibility = View.VISIBLE
-            btnOpenPlayer?.setOnClickListener {
-                val launchIntent = Intent(this@FloatingBubbleService, CustomPlayerActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mainCand.url)
-                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, "Detected Media")
-                }
-                startActivity(launchIntent)
+            closeButton.setOnClickListener {
+                stopSelf()
             }
-        } else {
-            txtStatus?.text = "● NO VERIFIED MEDIA"
-            txtStatus?.setTextColor(android.graphics.Color.YELLOW)
-            txtDetails?.text = "Candidates: ${candidates.size}"
-            btnOpenPlayer?.visibility = View.GONE
-        }
-    }
 
-    private fun createBubbleView() {
-        if (!android.provider.Settings.canDrawOverlays(this)) {
-            android.util.Log.e("FLOATING_DEBUG", "Permission denied for SYSTEM_ALERT_WINDOW.")
-            stopSelf()
-            return
-        }
+            bubbleIcon.setOnTouchListener(object : View.OnTouchListener {
+                private var initialX = 0
+                private var initialY = 0
+                private var initialTouchX = 0f
+                private var initialTouchY = 0f
+                private var moved = false
 
-        try {
-            bubbleView = LayoutInflater.from(this).inflate(R.layout.layout_floating_bubble, null)
+                override fun onTouch(v: View, event: MotionEvent): Boolean {
+                    when (event.action) {
+                        MotionEvent.ACTION_DOWN -> {
+                            initialX = params.x
+                            initialY = params.y
+                            initialTouchX = event.rawX
+                            initialTouchY = event.rawY
+                            moved = false
+                            return true
+                        }
+                        MotionEvent.ACTION_UP -> {
+                            if (!moved && videoUrl != null) {
+                                val launchIntent = Intent(this@FloatingBubbleService, CustomPlayerActivity::class.java).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, videoUrl)
+                                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, videoTitle)
+                                }
+                                startActivity(launchIntent)
+                                stopSelf()
+                            }
+                            return true
+                        }"""
 
-            val params = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                else
-                    @Suppress("DEPRECATION")
-                    WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT
-            )
-
-            params.gravity = Gravity.TOP or Gravity.START
-            params.x = 0
-            params.y = 100
-
-            windowManager.addView(bubbleView, params)
-            android.util.Log.d("FLOATING_DEBUG", "OVERLAY_VISIBLE: Bubble successfully attached to WindowManager.")
-
-            val closeButton = bubbleView!!.findViewById<ImageView>(R.id.btn_close_bubble)
+new_create = """            val closeButton = bubbleView!!.findViewById<ImageView>(R.id.btn_close_bubble)
             val bubbleContainer = bubbleView!!.findViewById<LinearLayout>(R.id.bubble_container)
             val expandedDetails = bubbleView!!.findViewById<LinearLayout>(R.id.expanded_details)
 
@@ -197,31 +202,25 @@ class FloatingBubbleService : Service() {
                                 }
                             }
                             return true
-                        }
-                        MotionEvent.ACTION_MOVE -> {
-                            val dx = (event.rawX - initialTouchX).toInt()
-                            val dy = (event.rawY - initialTouchY).toInt()
+                        }"""
 
-                            if (abs(dx) > 10 || abs(dy) > 10) {
-                                moved = true
-                            }
+content = content.replace(old_create, new_create)
 
-                            params.x = initialX + dx
-                            params.y = initialY + dy
-                            windowManager.updateViewLayout(bubbleView, params)
-                            return true
-                        }
-                    }
-                    return false
-                }
-            })
-        } catch (e: Exception) {
-            android.util.Log.e("FLOATING_DEBUG", "Failed to add window: ${e.message}", e)
-            stopSelf()
+
+old_destroy = """    override fun onDestroy() {
+        super.onDestroy()
+        bubbleView?.let {
+            try {
+                windowManager.removeView(it)
+                android.util.Log.d("FLOATING_DEBUG", "OVERLAY_REMOVED")
+            } catch (e: Exception) {
+                android.util.Log.e("FLOATING_DEBUG", "Error removing overlay view: ${e.message}")
+            }
         }
-    }
+        bubbleView = null
+    }"""
 
-    override fun onDestroy() {
+new_destroy = """    override fun onDestroy() {
         super.onDestroy()
         instance = null
         updateRunnable?.let { handler.removeCallbacks(it) }
@@ -234,5 +233,11 @@ class FloatingBubbleService : Service() {
             }
         }
         bubbleView = null
-    }
-}
+    }"""
+
+content = content.replace(old_destroy, new_destroy)
+
+with open("app/src/main/java/com/omymaxz/download/FloatingBubbleService.kt", "w") as f:
+    f.write(content)
+
+print("Done")
