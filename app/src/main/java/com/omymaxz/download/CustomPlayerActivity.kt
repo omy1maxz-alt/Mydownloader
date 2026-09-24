@@ -177,8 +177,8 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
 
         val serviceIntent = Intent(this, FloatingBubbleService::class.java).apply {
-            putExtra("video_url", videoUrl)
-            putExtra("video_title", videoTitle)
+            putExtra(EXTRA_VIDEO_URL, videoUrl)
+            putExtra(EXTRA_VIDEO_TITLE, videoTitle)
             putExtra("current_position", player?.currentPosition ?: 0L)
         }
         startService(serviceIntent)
