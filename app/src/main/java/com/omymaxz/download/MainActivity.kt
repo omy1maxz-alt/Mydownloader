@@ -2815,6 +2815,9 @@ private fun injectMediaStateDetector() {
                         activeCand.userAgent = activity.cachedUserAgent
                         bestPlayable = activity.mediaEngine.getBestCandidate()
                     }
+                } else if (isBlob) {
+                     // If it IS a blob, we just trust the MediaDetectionEngine to have mapped the blob active state to the manifest
+                     bestPlayable = activity.mediaEngine.getBestCandidate()
                 }
 
                 if (bestPlayable != null) {
@@ -2950,12 +2953,17 @@ private fun injectMediaStateDetector() {
             activity.runOnUiThread {
                 var finalUrl = url
                 if (url.startsWith("blob:")) {
-                    val mainMedia = synchronized(activity.detectedMediaFiles) {
-                        activity.detectedMediaFiles.firstOrNull { it.isMainContent && !it.url.startsWith("blob:") }
-                            ?: activity.detectedMediaFiles.firstOrNull { !it.url.startsWith("blob:") && it.category == MediaCategory.VIDEO }
-                    }
-                    if (mainMedia != null) {
-                        finalUrl = mainMedia.url
+                    val bestCand = activity.mediaEngine.getBestCandidate()
+                    if (bestCand != null && !bestCand.url.startsWith("blob:")) {
+                        finalUrl = bestCand.url
+                    } else {
+                        val mainMedia = synchronized(activity.detectedMediaFiles) {
+                            activity.detectedMediaFiles.firstOrNull { it.isMainContent && !it.url.startsWith("blob:") }
+                                ?: activity.detectedMediaFiles.firstOrNull { !it.url.startsWith("blob:") && it.category == MediaCategory.VIDEO }
+                        }
+                        if (mainMedia != null) {
+                            finalUrl = mainMedia.url
+                        }
                     }
                 }
 
