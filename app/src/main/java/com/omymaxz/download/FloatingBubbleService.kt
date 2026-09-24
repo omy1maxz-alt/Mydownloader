@@ -73,8 +73,8 @@ class FloatingBubbleService : Service() {
                         if (!moved) {
                             val intent = Intent(this@FloatingBubbleService, CustomPlayerActivity::class.java).apply {
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                                putExtra("video_url", videoUrl)
-                                putExtra("video_title", videoTitle)
+                                putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, videoUrl)
+                                putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, videoTitle)
                             }
                             startActivity(intent)
                             stopSelf()
@@ -102,8 +102,8 @@ class FloatingBubbleService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent != null) {
-            videoUrl = intent.getStringExtra("video_url")
-            videoTitle = intent.getStringExtra("video_title")
+            videoUrl = intent.getStringExtra(CustomPlayerActivity.EXTRA_VIDEO_URL)
+            videoTitle = intent.getStringExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE)
             currentPosition = intent.getLongExtra("current_position", 0L)
         }
         return START_NOT_STICKY
