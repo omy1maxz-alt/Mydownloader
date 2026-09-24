@@ -6,6 +6,14 @@ import android.webkit.CookieManager
 import java.net.URL
 
 class MediaDetectionEngine(private val context: Context) {
+    companion object {
+        var instance: MediaDetectionEngine? = null
+    }
+
+    init {
+        instance = this
+    }
+
 
     private fun classifyMedia(rawUrl: String, contentType: String?): MediaKind {
         val lowerUrl = rawUrl.lowercase()

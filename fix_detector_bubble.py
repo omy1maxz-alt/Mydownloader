@@ -1,4 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
+import sys
+
+with open("app/src/main/res/layout/layout_floating_bubble.xml", "r") as f:
+    content = f.read()
+
+new_layout = """<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -63,8 +68,7 @@
                 android:id="@+id/txt_detector_details"
                 android:layout_width="200dp"
                 android:layout_height="wrap_content"
-                android:text="Candidates: 0
-Verified: 0"
+                android:text="Candidates: 0\nVerified: 0"
                 android:textColor="#DDDDDD"
                 android:textSize="12sp"
                 android:layout_marginTop="4dp" />
@@ -88,4 +92,9 @@ Verified: 0"
         android:background="#80000000"
         android:elevation="6dp"/>
 
-</FrameLayout>
+</FrameLayout>"""
+
+with open("app/src/main/res/layout/layout_floating_bubble.xml", "w") as f:
+    f.write(new_layout)
+
+print("Done")
