@@ -16,6 +16,7 @@ import android.os.Build
 import android.os.Environment
 import android.os.IBinder
 import android.provider.MediaStore
+import android.webkit.CookieManager
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.*
@@ -60,15 +61,14 @@ class YouTubeDownloadService : Service() {
             val title = intent.getStringExtra(EXTRA_TITLE) ?: "YouTube Video"
             val mimeType = intent.getStringExtra(EXTRA_MIME_TYPE) ?: "video/mp4"
             val userAgent = intent.getStringExtra(EXTRA_USER_AGENT)
-            val cookie = intent.getStringExtra(EXTRA_COOKIE)
-            val referer = intent.getStringExtra(EXTRA_REFERER)
+            val referer = intent.getStringExtra(EXTRA_REFERER) ?: "https://www.youtube.com/"
 
             if (videoUrl != null) {
                 val notificationId = NOTIFICATION_ID_BASE + (System.currentTimeMillis() % 1000).toInt()
                 startForeground(notificationId, createNotification(title, "Starting download...", 0, true))
 
                 serviceScope.launch {
-                    processDownload(videoUrl, audioUrl, title, mimeType, userAgent, cookie, referer, notificationId)
+                    processDownload(videoUrl, audioUrl, title, mimeType, userAgent, referer, notificationId)
                 }
             }
         }
@@ -109,8 +109,7 @@ class YouTubeDownloadService : Service() {
         title: String,
         mimeType: String,
         userAgent: String?,
-        cookie: String?,
-        referer: String?,
+        referer: String,
         notificationId: Int
     ) {
         val tempDir = cacheDir
@@ -121,7 +120,7 @@ class YouTubeDownloadService : Service() {
         try {
             // 1. Download Video
             updateNotification(notificationId, title, "Downloading video...", 0, true)
-            val videoSuccess = downloadFile(videoUrl, videoTempFile, userAgent, cookie, referer) { progress ->
+            val videoSuccess = downloadFile(videoUrl, videoTempFile, userAgent, referer) { progress ->
                 updateNotification(notificationId, title, "Downloading video: $progress%", progress, false)
             }
             if (!videoSuccess) throw Exception("Failed to download video")
@@ -129,7 +128,7 @@ class YouTubeDownloadService : Service() {
             // 2. Download Audio if needed
             if (audioUrl != null) {
                 updateNotification(notificationId, title, "Downloading audio...", 0, true)
-                val audioSuccess = downloadFile(audioUrl, audioTempFile, userAgent, cookie, referer) { progress ->
+                val audioSuccess = downloadFile(audioUrl, audioTempFile, userAgent, referer) { progress ->
                     updateNotification(notificationId, title, "Downloading audio: $progress%", progress, false)
                 }
                 if (!audioSuccess) throw Exception("Failed to download audio")
@@ -146,7 +145,7 @@ class YouTubeDownloadService : Service() {
                     saveToDownloads(outFile, finalFileName, mimeType)
                     outFile.delete()
                 } else {
-                    throw Exception("Muxing failed")
+                    throw Exception("YOUTUBE_MUXING_FAILED")
                 }
             } else {
                 saveToDownloads(videoTempFile, finalFileName, mimeType)
@@ -191,61 +190,96 @@ class YouTubeDownloadService : Service() {
         notificationManager?.notify(id, createNotification(title, status, progress, indeterminate))
     }
 
-    private suspend fun downloadFile(urlStr: String, destination: File, userAgent: String?, cookie: String?, referer: String?, onProgress: (Int) -> Unit): Boolean = withContext(Dispatchers.IO) {
-        var input: BufferedInputStream? = null
-        var output: FileOutputStream? = null
-        var connection: HttpURLConnection? = null
-        try {
-            val url = URL(urlStr)
-            connection = url.openConnection() as HttpURLConnection
-            if (userAgent != null) connection.setRequestProperty("User-Agent", userAgent)
-            if (cookie != null) connection.setRequestProperty("Cookie", cookie)
-            if (referer != null) connection.setRequestProperty("Referer", referer) else connection.setRequestProperty("Referer", "https://www.youtube.com/")
-            connection.setRequestProperty("Accept", "*/*")
-            connection.connectTimeout = 30000
-            connection.readTimeout = 30000
-            connection.connect()
+    private suspend fun downloadFile(urlStr: String, destination: File, userAgent: String?, referer: String, onProgress: (Int) -> Unit): Boolean = withContext(Dispatchers.IO) {
+        val maxRetries = 3
+        var attempt = 0
+        val redactedUrl = urlStr.replace(Regex("([?&])(sig|signature|s|key|ip|expire|token|n)=([^&]+)"), "$1$2=REDACTED")
+        android.util.Log.d("YouTubeDownloadService", "[YOUTUBE_TRACE] Starting download for: $redactedUrl")
 
-            val responseCode = connection.responseCode
-            if (responseCode !in 200..299) {
-                 throw Exception("HTTP $responseCode: ${connection.responseMessage}")
-            }
+        while (attempt < maxRetries) {
+            var input: BufferedInputStream? = null
+            var output: FileOutputStream? = null
+            var connection: HttpURLConnection? = null
+            try {
+                val url = URL(urlStr)
+                connection = url.openConnection() as HttpURLConnection
+                if (userAgent != null) connection.setRequestProperty("User-Agent", userAgent)
+                connection.setRequestProperty("Referer", referer)
+                connection.setRequestProperty("Origin", "https://www.youtube.com")
+                connection.setRequestProperty("Accept", "*/*")
 
-            val fileLength = connection.contentLength
-            input = BufferedInputStream(connection.inputStream)
-            output = FileOutputStream(destination)
+                // Dynamically fetch cookies strictly scoped to the actual destination host
+                val cookie = CookieManager.getInstance().getCookie(urlStr)
+                android.util.Log.d("YouTubeDownloadService", "[YOUTUBE_TRACE] media request cookies available: ${cookie != null}")
+                if (cookie != null) {
+                    connection.setRequestProperty("Cookie", cookie)
+                }
 
-            val data = ByteArray(4096)
-            var total: Long = 0
-            var count: Int
-            var lastProgress = 0
+                connection.connectTimeout = 30000
+                connection.readTimeout = 30000
+                connection.connect()
 
-            while (input.read(data).also { count = it } != -1) {
-                if (!isActive) return@withContext false
-                total += count
-                output.write(data, 0, count)
-                if (fileLength > 0) {
-                    val progress = (total * 100 / fileLength).toInt()
-                    if (progress > lastProgress) {
-                        lastProgress = progress
-                        onProgress(progress)
+                val responseCode = connection.responseCode
+                if (responseCode == 401 || responseCode == 403 || responseCode == 404) {
+                    throw Exception("YOUTUBE_MEDIA_URL_EXPIRED")
+                }
+                if (responseCode !in 200..299) {
+                     throw Exception("YOUTUBE_MEDIA_REQUEST_FAILED: HTTP $responseCode")
+                }
+
+                val contentType = connection.contentType ?: ""
+                android.util.Log.d("YouTubeDownloadService", "[YOUTUBE_TRACE] Content-Type: $contentType")
+                if (contentType.contains("text/html") || contentType.contains("application/json") || contentType.startsWith("image/")) {
+                     throw Exception("YOUTUBE_MEDIA_INVALID_RESPONSE")
+                }
+
+                val fileLength = connection.contentLength
+                input = BufferedInputStream(connection.inputStream)
+                output = FileOutputStream(destination)
+
+                val data = ByteArray(4096)
+                var total: Long = 0
+                var count: Int
+                var lastProgress = 0
+
+                while (input.read(data).also { count = it } != -1) {
+                    if (!isActive) return@withContext false
+                    total += count
+                    output.write(data, 0, count)
+                    if (fileLength > 0) {
+                        val progress = (total * 100 / fileLength).toInt()
+                        if (progress > lastProgress) {
+                            lastProgress = progress
+                            onProgress(progress)
+                        }
                     }
                 }
+                output.flush()
+                return@withContext true
+            } catch (e: Exception) {
+                val eMsg = e.message ?: ""
+                if (eMsg.contains("YOUTUBE_MEDIA_URL_EXPIRED") || eMsg.contains("YOUTUBE_MEDIA_INVALID_RESPONSE")) {
+                    throw e // Permanent errors, do not retry
+                }
+                android.util.Log.e("YouTubeDownloadService", "[YOUTUBE_TRACE] Transient error on attempt ${attempt + 1}: ${e.message}")
+                attempt++
+                if (attempt >= maxRetries) {
+                    throw Exception("YOUTUBE_MEDIA_REQUEST_FAILED")
+                }
+                kotlinx.coroutines.delay(1000L * attempt) // Exponential backoff 1s, 2s
+            } finally {
+                output?.close()
+                input?.close()
+                connection?.disconnect()
             }
-            output.flush()
-            return@withContext true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return@withContext false
-        } finally {
-            output?.close()
-            input?.close()
-            connection?.disconnect()
         }
+        return@withContext false
     }
+
 
     private fun muxVideoAndAudio(videoFile: File, audioFile: File, outFile: File, mimeType: String): Boolean {
         try {
+            android.util.Log.d("YouTubeDownloadService", "[YOUTUBE_TRACE] mux started")
             val videoExtractor = MediaExtractor()
             videoExtractor.setDataSource(videoFile.absolutePath)
 
@@ -266,29 +300,30 @@ class YouTubeDownloadService : Service() {
 
             // Find Video Track
             for (i in 0 until videoExtractor.trackCount) {
-                val format = videoExtractor.getTrackFormat(i)
-                val mime = format.getString(MediaFormat.KEY_MIME)
+                val trackFormat = videoExtractor.getTrackFormat(i)
+                val mime = trackFormat.getString(MediaFormat.KEY_MIME)
                 if (mime?.startsWith("video/") == true) {
                     videoExtractor.selectTrack(i)
                     videoTrackIndex = i
-                    muxerVideoTrackIndex = muxer.addTrack(format)
+                    muxerVideoTrackIndex = muxer.addTrack(trackFormat)
                     break
                 }
             }
 
             // Find Audio Track
             for (i in 0 until audioExtractor.trackCount) {
-                val format = audioExtractor.getTrackFormat(i)
-                val mime = format.getString(MediaFormat.KEY_MIME)
+                val trackFormat = audioExtractor.getTrackFormat(i)
+                val mime = trackFormat.getString(MediaFormat.KEY_MIME)
                 if (mime?.startsWith("audio/") == true) {
                     audioExtractor.selectTrack(i)
                     audioTrackIndex = i
-                    muxerAudioTrackIndex = muxer.addTrack(format)
+                    muxerAudioTrackIndex = muxer.addTrack(trackFormat)
                     break
                 }
             }
 
             if (videoTrackIndex == -1 || audioTrackIndex == -1) {
+                android.util.Log.e("YouTubeDownloadService", "[YOUTUBE_TRACE] Required tracks not found for muxing")
                 return false
             }
 
@@ -327,10 +362,12 @@ class YouTubeDownloadService : Service() {
             videoExtractor.release()
             audioExtractor.release()
 
+            android.util.Log.d("YouTubeDownloadService", "[YOUTUBE_TRACE] mux succeeded")
             return true
 
         } catch (e: Exception) {
             e.printStackTrace()
+            android.util.Log.e("YouTubeDownloadService", "[YOUTUBE_TRACE] mux failed: ${e.message}")
             return false
         }
     }

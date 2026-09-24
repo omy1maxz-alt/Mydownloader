@@ -3468,10 +3468,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             putExtra(YouTubeDownloadService.EXTRA_TITLE, title)
 
             val userAgent = webView.settings.userAgentString
-            val cookie = CookieManager.getInstance().getCookie(webView.url)
             putExtra(YouTubeDownloadService.EXTRA_USER_AGENT, userAgent)
-            if (cookie != null) putExtra(YouTubeDownloadService.EXTRA_COOKIE, cookie)
-            putExtra(YouTubeDownloadService.EXTRA_REFERER, webView.url)
+            putExtra(YouTubeDownloadService.EXTRA_REFERER, "https://www.youtube.com/")
 
             if (option.videoFormat != null) {
                 putExtra(YouTubeDownloadService.EXTRA_VIDEO_URL, option.videoFormat.url)
