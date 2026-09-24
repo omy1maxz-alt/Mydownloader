@@ -1423,7 +1423,9 @@ private fun checkBatteryOptimization() {
                             val existsAlready = synchronized(detectedMediaFiles) {
                                 detectedMediaFiles.any { it.url == url || (candidate != null && mediaEngine.getCandidate(it.url) == candidate) }
                             }
-                            if (!existsAlready) {
+                            // 60-Second Hard Eligibility Check
+                            val isEligible = candidate == null || (candidate.durationSec == 0 || candidate.durationSec >= 60)
+                            if (!existsAlready && isEligible) {
                                 synchronized(detectedMediaFiles) {
                                     detectedMediaFiles.add(mediaFile)
                                 }
@@ -3131,13 +3133,17 @@ private fun injectMediaStateDetector() {
                             }
                         } else {
                             // URL was not previously caught by shouldInterceptRequest but is playing, add it now
-                            activity.detectedMediaFiles.add(0, MediaFile(
-                                url = videoUrl, title = "Detected_Video_${System.currentTimeMillis()}",
-                                mimeType = "video/*", quality = "Auto", category = MediaCategory.VIDEO,
-                                fileSize = "Unknown", language = null, isMainContent = true,
-                                referer = activity.lastUsedUrl
-                            ))
-                            updated = true
+                            val cand = activity.mediaEngine.getCandidate(videoUrl)
+                            val isEligible = cand == null || (cand.durationSec == 0 || cand.durationSec >= 60)
+                            if (isEligible) {
+                                activity.detectedMediaFiles.add(0, MediaFile(
+                                    url = videoUrl, title = "Detected_Video_${System.currentTimeMillis()}",
+                                    mimeType = "video/*", quality = "Auto", category = MediaCategory.VIDEO,
+                                    fileSize = "Unknown", language = null, isMainContent = true,
+                                    referer = activity.lastUsedUrl
+                                ))
+                                updated = true
+                            }
                         }
                     }
                     if (updated) {

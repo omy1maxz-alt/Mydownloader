@@ -387,14 +387,14 @@ class MediaDetectionEngine(private val context: Context) {
         val hasDRMPlayables = playables.any { it.isDRMProtected }
         if (hasDRMPlayables) {
             val drmFiltered = playables.filter { it.isDRMProtected || it.requestCount > 10 }
-            val safePlayables = drmFiltered.filter { it.adScore == 0 || it.finalScore > 0 }
+            val safePlayables = drmFiltered.filter { (it.durationSec == 0 || it.durationSec >= 60) && (it.adScore == 0 || it.finalScore > 0) }
             if (safePlayables.isNotEmpty()) return safePlayables.maxByOrNull { it.finalScore }
         }
 
         // Group into presentations logically before scoring them against each other.
         // We do not want an isolated MP4 ad url to beat an underlying HLS manifest just because of raw score.
-        // We filter out high-probability ads.
-        val safePlayables = playables.filter { it.adScore == 0 || it.finalScore > 0 }
+        // We filter out high-probability ads AND explicitly reject known videos under 60 seconds (MIN_ACCEPTED_VIDEO_DURATION_SECONDS).
+        val safePlayables = playables.filter { (it.durationSec == 0 || it.durationSec >= 60) && (it.adScore == 0 || it.finalScore > 0) }
 
         if (safePlayables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
 
@@ -421,7 +421,7 @@ class MediaDetectionEngine(private val context: Context) {
         // If no active manifests, check if we have a strong progressive presentation.
         if (progressives.isNotEmpty()) {
             // Find progressive streams that are actually playing and have decent duration/size, separating them from short pre-rolls
-            val strongProgressives = progressives.filter { it.isActivePlayer && (it.durationSec == 0 || it.durationSec > 45) && it.adScore == 0 }
+            val strongProgressives = progressives.filter { it.isActivePlayer && (it.durationSec == 0 || it.durationSec >= 60) && it.adScore == 0 }
             if (strongProgressives.isNotEmpty()) {
                 return strongProgressives.maxByOrNull { it.finalScore }
             }

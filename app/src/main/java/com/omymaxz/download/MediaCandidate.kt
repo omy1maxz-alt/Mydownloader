@@ -66,11 +66,10 @@ data class MediaCandidate(
             // Significant boost if this stream started fetching after a play event
             if (startedAfterPlayback) score += 25
             if (hasMSEActivity) score += 30
-            if (isActivePlayer) score += 50
+            if (isActivePlayer) score += 15
 
-            // Duration penalization / boost
-            if (durationSec in 1..29) score -= 20
-            else if (durationSec >= 30) score += 10
+            // Duration handling: do not heavily penalize or boost here, let the hard filter handle <60s eligibility in MainActivity.
+            if (durationSec >= 60) score += 5
 
             // Content-Type Corroboration
             contentType?.lowercase()?.let { ct ->
@@ -80,9 +79,9 @@ data class MediaCandidate(
 
             // Telemetry Scoring
             telemetry?.let { t ->
-                if (!t.paused) score += 35
-                if (t.currentTimeSec > 1.0) score += 20
-                if (t.durationSec > 30.0) score += 10
+                if (!t.paused) score += 15
+                if (t.currentTimeSec > 3.0) score += 10
+                if (t.durationSec >= 60.0) score += 5
                 if (t.fullscreen) score += 30
 
                 if (t.visibleAreaRatio >= 0.35) score += 35
