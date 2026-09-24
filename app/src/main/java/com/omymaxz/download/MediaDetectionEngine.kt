@@ -399,17 +399,22 @@ class MediaDetectionEngine(private val context: Context) {
         if (safePlayables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
 
         // Isolate presentations
-        val manifests = safePlayables.filter { it.isManifest }
-        val progressives = safePlayables.filter { !it.isManifest && it.isProgressiveFinal }
-        val segmentGroups = safePlayables.filter { it.isSegmentGroup }
+        val now = System.currentTimeMillis()
+        val recentPlayables = safePlayables.filter { (now - it.lastSeenTime) < 45000 || it.isActivePlayer } // Ignore stale candidates from old servers unless actively playing
+
+        val manifests = recentPlayables.filter { it.isManifest }
+        val progressives = recentPlayables.filter { !it.isManifest && it.isProgressiveFinal }
+        val segmentGroups = recentPlayables.filter { it.isSegmentGroup }
 
         // If we have an actively playing manifest with strong evidence, it wins.
         if (manifests.isNotEmpty()) {
-            val activeManifests = manifests.filter { it.isActivePlayer || it.hasMSEActivity || it.requestCount > 2 }
+            // Actively playing or recently requested (e.g. streaming segments right now)
+            val activeManifests = manifests.filter { it.isActivePlayer || it.hasMSEActivity || (now - it.lastSeenTime < 15000 && it.requestCount > 2) }
             if (activeManifests.isNotEmpty()) {
                 val explicitMaster = activeManifests.find { (it.url.lowercase().contains("master") || it.url.lowercase().contains("index")) }
                 if (explicitMaster != null) return explicitMaster
-                return activeManifests.minByOrNull { it.firstSeenTime } // Oldest active manifest is likely master
+                // If multiple active manifests, pick the one most recently seen (current server), breaking ties by oldest firstSeen (master vs variant)
+                return activeManifests.sortedWith(compareByDescending<MediaCandidate> { it.lastSeenTime }.thenBy { it.firstSeenTime }).first()
             }
         }
 
