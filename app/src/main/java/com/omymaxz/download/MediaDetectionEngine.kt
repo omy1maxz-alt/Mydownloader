@@ -39,7 +39,7 @@ class MediaDetectionEngine(private val context: Context) {
                     if (key.isNotBlank()) key else null
                 }
                 ?.filterNot {
-                    it in setOf("token", "signature", "sig", "expires", "expires_at", "hdntl", "auth_key", "hash")
+                    it in setOf("token", "signature", "sig", "expires", "expires_at", "hdntl", "auth_key", "hash", "_t", "rnd", "time", "client")
                 }
                 ?.sorted()
                 ?.joinToString(",")
@@ -96,7 +96,16 @@ class MediaDetectionEngine(private val context: Context) {
              isSegment = false
         }
 
-
+        // Deduplication: If we already have an identical progressive candidate (ignoring noisy query params), ignore this duplicate
+        if (isProgressiveFinal) {
+            val groupKey = buildMediaGroupingKey(url)
+            val existing = candidates.values.find { it.isProgressiveFinal && buildMediaGroupingKey(it.url) == groupKey }
+            if (existing != null) {
+                existing.requestCount++
+                existing.lastSeenTime = System.currentTimeMillis()
+                return existing
+            }
+        }
 
         val type = when (mediaKind) {
             MediaKind.HLS_MANIFEST -> "hls"
