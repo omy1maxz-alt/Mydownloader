@@ -113,7 +113,7 @@ class MediaDetectionEngine(private val context: Context) {
         var isProgressiveFinal = mediaKind == MediaKind.PROGRESSIVE
 
         // Check for ad URL signals
-        val isLikelyAd = isAdUrl(url)
+        val isLikelyAd = isAdUrl(url) || url.contains("media-hls.growcdnssedge.com/b-hls-") // Specifically block the known SupJav 6s segment ads from flooding the candidate pool
 
         // Image blocking specifically for thumbnail segments masquerading as media
         if (!isManifest && !isProgressiveFinal && isLikelyAd) {
@@ -413,10 +413,11 @@ class MediaDetectionEngine(private val context: Context) {
         }
 
         // Group into presentations logically before scoring them against each other.
-        // We do not want an isolated MP4 ad url to beat an underlying HLS manifest just because of raw score.
         // We filter out high-probability ads AND explicitly reject known videos under 60 seconds (MIN_ACCEPTED_VIDEO_DURATION_SECONDS).
-        // A known strong ad (adScore > 0) is hard-excluded from ever winning, regardless of how high its playback/telemetry score gets.
-        val safePlayables = playables.filter { (it.durationSec == 0 || it.durationSec >= 60) && it.adScore == 0 }
+        val safePlayables = playables.filter {
+            val isShortAd = it.durationSec in 1..59
+            !isShortAd && it.adScore == 0
+        }
 
         if (safePlayables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
 
@@ -443,7 +444,7 @@ class MediaDetectionEngine(private val context: Context) {
         // If no active manifests, check if we have a strong progressive presentation.
         if (progressives.isNotEmpty()) {
             // Find progressive streams that are actually playing and have decent duration/size, separating them from short pre-rolls
-            val strongProgressives = progressives.filter { it.isActivePlayer && (it.durationSec == 0 || it.durationSec >= 60) && it.adScore == 0 }
+            val strongProgressives = progressives.filter { it.isActivePlayer && !(it.durationSec in 1..59) && it.adScore == 0 }
             if (strongProgressives.isNotEmpty()) {
                 return strongProgressives.maxByOrNull { it.finalScore }
             }
