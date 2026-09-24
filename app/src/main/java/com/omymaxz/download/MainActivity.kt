@@ -1386,8 +1386,13 @@ private fun checkBatteryOptimization() {
                         if (url.contains(".m3u8", ignoreCase = true) || url.endsWith(".mp4") || url.contains("videoplayback")) {
                             currentVideoUrl = url
                             runOnUiThread {
-                                // DO NOT CALL GETURL() HERE. It will crash. Just run JS eval.
-                                webView.evaluateJavascript("if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) { window.AndroidMediaState.onMediaDetected('$url', 'video'); }", null)
+                                // Map back through our advanced MediaDetectionEngine to check if we should actually show this in UI
+                                val candidate = mediaEngine.getCandidate(url)
+                                if (candidate != null && (candidate.adScore > 0 || candidate.finalScore < 0)) {
+                                    // Skip adding to UI if engine strongly thinks it's an ad
+                                } else {
+                                    webView.evaluateJavascript("if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) { window.AndroidMediaState.onMediaDetected('$url', 'video'); }", null)
+                                }
                             }
                         }
                         try {
@@ -1411,8 +1416,13 @@ private fun checkBatteryOptimization() {
                                 language = language,
                                 isMainContent = isMainContent
                             )
+                            val candidate = mediaEngine.getCandidate(url)
+                            if (candidate != null && (candidate.adScore > 0 || candidate.finalScore < 0)) {
+                                return super.shouldInterceptRequest(view, request)
+                            }
+
                             val existsAlready = synchronized(detectedMediaFiles) {
-                                detectedMediaFiles.any { it.url == url }
+                                detectedMediaFiles.any { it.url == url || (candidate != null && mediaEngine.getCandidate(it.url) == candidate) }
                             }
                             if (!existsAlready) {
                                 synchronized(detectedMediaFiles) {
