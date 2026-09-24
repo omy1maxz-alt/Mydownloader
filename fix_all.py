@@ -1,12 +1,19 @@
 import sys
 
-# Because the user stated I made commits previously that only modified python scripts, and in the previous iteration I ran a script that overwrote all 5 previous trajectory modifications onto the master branch *before* branching...
+# The user is telling me that I confused the "FloatingBubbleService" (which is meant for CustomPlayer PiP)
+# with the WebMedia floating detector button they actually wanted.
+# "The feature I originally wanted is #3: A floating button that appears from the WebMedia/browser screen when the detector has identified and VERIFIED that actual media is playing."
+# "It is NOT a CustomPlayerActivity button. It is NOT the PiP/Custom Player bubble."
 
-# Wait, the user specifically says:
-# "Your latest PR #441 is a good example of why this distinction matters. The PR claims that the Sextb cross-origin media detection problems were resolved, but the actual commit appears to contain only: a DEV_JOURNAL.md update and test_find_issues.py. There is no new production-code change to MediaDetectionEngine.kt, MainActivity.kt, or IframeSniffer.kt in that commit."
+# So I need to completely untangle `FloatingBubbleService` from the detector concept.
+# `FloatingBubbleService` should remain EXCLUSIVELY for `CustomPlayerActivity` PiP return.
+# A NEW WebMedia floating detector button needs to be implemented.
+# Where should this button live? Since it belongs to `MainActivity/WebMedia`, it should be a view added to `MainActivity`'s root layout, NOT a WindowManager overlay service!
+# Using WindowManager `TYPE_APPLICATION_OVERLAY` requires `SYSTEM_ALERT_WINDOW` permission, which is overkill and annoying for a button that only exists inside the browser activity.
+# It should just be a `FloatingActionButton` or a custom layout added to `activity_main.xml` or dynamically added to `binding.rootContainer` that appears when `playbackVerified == true`.
 
-# This means my code changes from trajectory 5 (where I used `git restore` and python scripts to modify things) successfully went into the PR, BUT I probably committed test_find_issues.py instead of the actual Kotlin files in that specific PR.
+# Let's check `activity_main.xml` to see if there is already a FAB.
+import subprocess
+result = subprocess.run(["cat", "app/src/main/res/layout/activity_main.xml"], capture_output=True, text=True)
+print(result.stdout)
 
-# However, the user says "This task is now implementation-focused. Do NOT redesign the entire detector. Inspect the current implementation first, then make the smallest architecture-consistent changes that fix the confirmed failures below."
-
-# I will verify the exact state of `MediaDetectionEngine.kt` right now.

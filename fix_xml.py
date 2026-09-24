@@ -1,4 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+import sys
+
+new_xml = """<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -22,4 +24,7 @@
         android:background="#80000000"
         android:elevation="6dp"/>
 
-</FrameLayout>
+</FrameLayout>"""
+
+with open("app/src/main/res/layout/layout_floating_bubble.xml", "w") as f:
+    f.write(new_xml)
