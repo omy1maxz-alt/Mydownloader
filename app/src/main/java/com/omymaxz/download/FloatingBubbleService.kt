@@ -27,17 +27,9 @@ class FloatingBubbleService : Service() {
     private var currentPosition: Long = 0L
     private var isExpanded = false
 
-    // For WebMedia Detector state updates
-    private var isDetectorMode = false
-    private val handler = Handler(Looper.getMainLooper())
-    private var updateRunnable: Runnable? = null
-
     // Global reference for MainActivity to talk to this service
     companion object {
         var instance: FloatingBubbleService? = null
-        const val ACTION_START_DETECTOR = "com.omymaxz.download.action.START_DETECTOR"
-        const val ACTION_START_CUSTOM_PLAYER = "com.omymaxz.download.action.START_CUSTOM_PLAYER"
-        const val EXTRA_IS_DETECTOR = "extra_is_detector"
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -50,80 +42,15 @@ class FloatingBubbleService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent != null) {
-            val isDet = intent.getBooleanExtra(EXTRA_IS_DETECTOR, false)
-            if (isDet) {
-                isDetectorMode = true
-                if (bubbleView == null) {
-                    createBubbleView()
-                }
-                startDetectorUpdates()
-            } else {
-                isDetectorMode = false
-                videoUrl = intent.getStringExtra(CustomPlayerActivity.EXTRA_VIDEO_URL)
-                videoTitle = intent.getStringExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE)
-                currentPosition = intent.getLongExtra("current_position", 0L)
+            videoUrl = intent.getStringExtra(CustomPlayerActivity.EXTRA_VIDEO_URL)
+            videoTitle = intent.getStringExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE)
+            currentPosition = intent.getLongExtra("current_position", 0L)
 
-                if (bubbleView == null && videoUrl != null) {
-                    createBubbleView()
-                }
+            if (bubbleView == null && videoUrl != null) {
+                createBubbleView()
             }
         }
         return START_NOT_STICKY
-    }
-
-    private fun startDetectorUpdates() {
-        updateRunnable?.let { handler.removeCallbacks(it) }
-        updateRunnable = object : Runnable {
-            override fun run() {
-                updateDetectorState()
-                handler.postDelayed(this, 1000)
-            }
-        }
-        handler.post(updateRunnable!!)
-    }
-
-    fun updateDetectorState() {
-        if (!isDetectorMode || bubbleView == null) return
-
-        val txtBadge = bubbleView?.findViewById<TextView>(R.id.txt_bubble_badge)
-        val txtStatus = bubbleView?.findViewById<TextView>(R.id.txt_detector_status)
-        val txtDetails = bubbleView?.findViewById<TextView>(R.id.txt_detector_details)
-        val btnOpenPlayer = bubbleView?.findViewById<Button>(R.id.btn_open_player)
-
-        val engine = MediaDetectionEngine.instance ?: return
-
-        val candidates = engine.candidates.values.toList()
-        val verifiedPlayable = candidates.find { it.isActivePlayer && it.durationSec >= 60 }
-        val bestCand = engine.getBestCandidate()
-
-        txtBadge?.text = "[ ${candidates.size} ]"
-
-        if (verifiedPlayable != null || bestCand != null) {
-            val mainCand = verifiedPlayable ?: bestCand!!
-            txtStatus?.text = "● PLAYBACK VERIFIED"
-            txtStatus?.setTextColor(android.graphics.Color.GREEN)
-
-            val typeStr = if (mainCand.isManifest) "HLS/DASH" else "Progressive"
-            val durStr = if (mainCand.durationSec > 0) "${mainCand.durationSec}s" else "Unknown"
-            val scoreStr = mainCand.finalScore
-
-            txtDetails?.text = "$typeStr \nDur: $durStr \nScore: $scoreStr \nConf: ${mainCand.confidence}\nCandidates: ${candidates.size}"
-
-            btnOpenPlayer?.visibility = View.VISIBLE
-            btnOpenPlayer?.setOnClickListener {
-                val launchIntent = Intent(this@FloatingBubbleService, CustomPlayerActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mainCand.url)
-                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, "Detected Media")
-                }
-                startActivity(launchIntent)
-            }
-        } else {
-            txtStatus?.text = "● NO VERIFIED MEDIA"
-            txtStatus?.setTextColor(android.graphics.Color.YELLOW)
-            txtDetails?.text = "Candidates: ${candidates.size}"
-            btnOpenPlayer?.visibility = View.GONE
-        }
     }
 
     private fun createBubbleView() {
@@ -156,14 +83,13 @@ class FloatingBubbleService : Service() {
             android.util.Log.d("FLOATING_DEBUG", "OVERLAY_VISIBLE: Bubble successfully attached to WindowManager.")
 
             val closeButton = bubbleView!!.findViewById<ImageView>(R.id.btn_close_bubble)
-            val bubbleContainer = bubbleView!!.findViewById<LinearLayout>(R.id.bubble_container)
-            val expandedDetails = bubbleView!!.findViewById<LinearLayout>(R.id.expanded_details)
+            val bubbleIcon = bubbleView!!.findViewById<ImageView>(R.id.img_bubble_icon)
 
             closeButton.setOnClickListener {
                 stopSelf()
             }
 
-            bubbleContainer.setOnTouchListener(object : View.OnTouchListener {
+            bubbleIcon.setOnTouchListener(object : View.OnTouchListener {
                 private var initialX = 0
                 private var initialY = 0
                 private var initialTouchX = 0f
@@ -181,20 +107,14 @@ class FloatingBubbleService : Service() {
                             return true
                         }
                         MotionEvent.ACTION_UP -> {
-                            if (!moved) {
-                                if (isDetectorMode) {
-                                    isExpanded = !isExpanded
-                                    expandedDetails.visibility = if (isExpanded) View.VISIBLE else View.GONE
-                                    if (isExpanded) updateDetectorState()
-                                } else if (videoUrl != null) {
-                                    val launchIntent = Intent(this@FloatingBubbleService, CustomPlayerActivity::class.java).apply {
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, videoUrl)
-                                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, videoTitle)
-                                    }
-                                    startActivity(launchIntent)
-                                    stopSelf()
+                            if (!moved && videoUrl != null) {
+                                val launchIntent = Intent(this@FloatingBubbleService, CustomPlayerActivity::class.java).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, videoUrl)
+                                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, videoTitle)
                                 }
+                                startActivity(launchIntent)
+                                stopSelf()
                             }
                             return true
                         }
@@ -224,7 +144,6 @@ class FloatingBubbleService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         instance = null
-        updateRunnable?.let { handler.removeCallbacks(it) }
         bubbleView?.let {
             try {
                 windowManager.removeView(it)
