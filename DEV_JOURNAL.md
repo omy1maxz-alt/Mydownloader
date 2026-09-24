@@ -127,3 +127,5 @@
 - Refactored `MediaDetectionEngine.kt` to explicitly reject analytics and tracker endpoints (`/ping`, `/pixel/`, `.gif`) from being classified as manifests. Expanded HLS detection heuristic to correctly classify obfuscated `/master.txt` and `/hls/` streams as `isManifest = true`.
 - Sanitized `isActivePlayer` tracking to prevent zero-duration tracker videos and tiny outstream ads from falsely triggering active player status bonuses.
 - Ensured segments correctly funnel uncapped `playbackScore` bumps back up to their parent manifest to organically defeat highly-scored progressive ads.
+- Resolved `java.net.MalformedURLException: unknown protocol: data` crashes in `CustomPlayerActivity.kt` and `HlsDownloadHelper.kt` by wrapping `DefaultHttpDataSource` inside a `DefaultDataSource`, allowing ExoPlayer to natively playback `data:` inline manifest streams without throwing URI scheme errors.
+- Fixed `HlsDownloadHelper.getCacheDataSourceFactory` cache writes by ensuring `FLAG_BLOCK_ON_CACHE` is explicitly set when `readOnly = false` instead of defaulting to `FLAG_IGNORE_CACHE_ON_ERROR`, resolving the "Save from cache" incomplete spans issue.
