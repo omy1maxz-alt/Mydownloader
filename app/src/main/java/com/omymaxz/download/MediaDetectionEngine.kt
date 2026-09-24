@@ -75,6 +75,13 @@ class MediaDetectionEngine(private val context: Context) {
 
         if (mediaKind == MediaKind.UNKNOWN) {
             val lowerUrl = url.lowercase()
+
+            // Explicitly reject API and JSON endpoints from being treated as media endpoints,
+            // even if they contain the word 'player' or 'stream'
+            if (lowerUrl.contains("/api/") || lowerUrl.endsWith(".json") || lowerUrl.endsWith(".js") || lowerUrl.endsWith(".css")) {
+                return null
+            }
+
             val hasEvidencePath = lowerUrl.contains("/video") || lowerUrl.contains("/stream") || lowerUrl.contains("/play") ||
                                   lowerUrl.contains("/vod") || lowerUrl.contains("/media") || lowerUrl.contains("/movie") ||
                                   lowerUrl.contains("/hls") || lowerUrl.contains("/dash") || lowerUrl.contains("/segment") ||
@@ -192,14 +199,14 @@ class MediaDetectionEngine(private val context: Context) {
             var bestScore = -1
 
             for ((candUrl, candidate) in candidates) {
-                if (candidate.isManifest && candidate.adScore == 0) {
+                if ((candidate.isManifest || candidate.isSegmentGroup) && candidate.adScore == 0) {
                     var matchScore = 0
                     val candKey = buildMediaGroupingKey(candUrl)
-                    val candUrlObj = URL(candUrl)
+                    val candUrlObj = try { URL(candUrl) } catch (e: Exception) { null }
 
                     if (segKey == candKey) {
                         matchScore += 15
-                    } else if (segHost == candUrlObj.host) {
+                    } else if (candUrlObj != null && segHost == candUrlObj.host) {
                         matchScore += 5
                     }
 
