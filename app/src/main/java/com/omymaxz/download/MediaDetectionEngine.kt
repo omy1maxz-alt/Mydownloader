@@ -112,11 +112,14 @@ class MediaDetectionEngine(private val context: Context) {
             if (parentCandidate != null) {
                 parentCandidate.requestCount++
                 parentCandidate.lastSeenTime = System.currentTimeMillis()
+
+                // Uncapped boost so dynamic chunk loading overwhelms static MP4 ads
+                parentCandidate.playbackScore += 5
+
                 if (isPlaybackActive) {
                     parentCandidate.startedAfterPlayback = true
-                    parentCandidate.playbackScore += 5
                 }
-                Log.d(TAG, "Correlated segment to manifest: ${parentCandidate.url}")
+                Log.d(TAG, "Correlated segment to manifest: ${parentCandidate.url} (Score: ${parentCandidate.playbackScore})")
                 return parentCandidate
             } else {
                 val groupCand = findOrCreateSegmentGroup(url, referer, userAgent)
@@ -218,11 +221,15 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
     fun updatePlayerTelemetry(url: String, telemetry: PlayerTelemetry) {
+        // Sanitize: Do not grant active player status for 0 duration non-live streams or tiny outstream/banner ad dimensions.
+        val isRealPlayer = (telemetry.durationSec > 0.0 || telemetry.currentTimeSec > 0.0) &&
+                           (telemetry.width >= 300 || telemetry.height >= 250)
+
         val candidate = candidates[url] ?: findParentManifestForSegment(url)
         if (candidate != null) {
             candidate.telemetry = telemetry
             if (telemetry.durationSec > 0) candidate.durationSec = telemetry.durationSec.toInt()
-            if (!telemetry.paused) candidate.isActivePlayer = true
+            if (!telemetry.paused && isRealPlayer) candidate.isActivePlayer = true
         }
 
         // Propagate evidence: if this is a blob URL (MSE player), associate its active telemetry with the actual underlying network presentations.
@@ -233,7 +240,7 @@ class MediaDetectionEngine(private val context: Context) {
                     Log.d(TAG, "Propagating Blob Telemetry to network presentation: ${relatedCandidate.url}")
                     relatedCandidate.telemetry = telemetry
                     if (telemetry.durationSec > 0) relatedCandidate.durationSec = telemetry.durationSec.toInt()
-                    if (!telemetry.paused) relatedCandidate.isActivePlayer = true
+                    if (!telemetry.paused && isRealPlayer) relatedCandidate.isActivePlayer = true
                 }
             }
         }
@@ -252,6 +259,9 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
     fun markCandidateAsActivePlayer(url: String, duration: Int) {
+        // Sanitize: Ignore 0 duration outstream tracking injections if we just use duration signal alone here
+        if (duration == 0) return
+
         var candidate = candidates[url] ?: findParentManifestForSegment(url)
         if (candidate == null) {
             candidate = processRequest(url, null, null)

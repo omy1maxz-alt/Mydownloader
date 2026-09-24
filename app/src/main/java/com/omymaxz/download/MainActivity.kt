@@ -4490,8 +4490,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         if (el.src) {
                             checkString(el.src, 'DOM ' + el.tagName);
                             if (el.tagName === 'VIDEO' && el.currentTime > 0 && !el.paused) {
-                                if (window.AndroidMediaState && window.AndroidMediaState.onActivePlayerFound) {
-                                    window.AndroidMediaState.onActivePlayerFound(el.src, el.duration || 0);
+                                // Ensure only videos with real progress and duration (or live) are tracked as the main active player
+                                if (el.duration > 0 || el.duration === Infinity || el.readyState >= 2) {
+                                    if (window.AndroidMediaState && window.AndroidMediaState.onActivePlayerFound) {
+                                        window.AndroidMediaState.onActivePlayerFound(el.src, el.duration || 0);
+                                    }
                                 }
                             }
                         }
