@@ -432,7 +432,8 @@ class MediaDetectionEngine(private val context: Context) {
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
             "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver",
             "scorecardresearch", "criteo", "outbrain", "taboola", "moatads", "advertising",
-            "tiktokcdn", "ad-site"
+            "tiktokcdn", "ad-site", "/heat-preview/", "heatmap", "preview_v", "/trailer/",
+            "/teaser/", "short_preview", "/preview/"
         )
 
         return adKeywords.any { lowerUrl.contains(it) }
