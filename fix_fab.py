@@ -1,9 +1,5 @@
 import sys
 
-# Now we have correctly separated FloatingBubbleService (for CustomPlayer) and floatingDetectorUI (for WebMedia playback verification state).
-# In MainActivity.kt, the `floatingDetectorUI` in `activity_main.xml` is controlled by `updateFabVisibility`.
-# Let's check `MainActivity.kt`'s `updateFabVisibility` implementation again.
-
 with open("app/src/main/java/com/omymaxz/download/MainActivity.kt", "r") as f:
     content = f.read()
 
