@@ -1526,7 +1526,6 @@ private fun checkBatteryOptimization() {
                     // DO NOT attach a setOnSystemUiVisibilityChangeListener that forces state changes,
                     // as tapping the screen triggers system UI visibility changes which can confuse the WebView.
                     window.decorView.setOnSystemUiVisibilityChangeListener(null)
-
                     binding.mainContent.visibility = View.GONE
                 }
                                 override fun onHideCustomView() {
