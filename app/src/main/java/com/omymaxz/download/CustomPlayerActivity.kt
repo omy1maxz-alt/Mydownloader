@@ -344,7 +344,15 @@ class CustomPlayerActivity : AppCompatActivity() {
                     val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, safeTitle)
 
                     for (subUrl in newSubUrls) {
-                        val bytes = HlsDownloadHelper.httpGetBytes(subUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentReferer, HlsDownloadHelper.currentCookie)
+                        val bytes = if (subUrl.startsWith("file://")) {
+                            try {
+                                java.io.File(java.net.URI.create(subUrl)).readBytes()
+                            } catch (e: Exception) {
+                                null
+                            }
+                        } else {
+                            HlsDownloadHelper.httpGetBytes(subUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentReferer, HlsDownloadHelper.currentCookie)
+                        }
                         if (bytes != null) {
                             val contentString = String(bytes, Charsets.UTF_8)
                             var detectedLang = "und"
@@ -609,7 +617,15 @@ class CustomPlayerActivity : AppCompatActivity() {
                 if (!intentSubUrls.isNullOrEmpty()) {
                     val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, videoTitle!!)
                     for (subUrl in intentSubUrls) {
-                        val bytes = HlsDownloadHelper.httpGetBytes(subUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentReferer, HlsDownloadHelper.currentCookie)
+                        val bytes = if (subUrl.startsWith("file://")) {
+                            try {
+                                java.io.File(java.net.URI.create(subUrl)).readBytes()
+                            } catch (e: Exception) {
+                                null
+                            }
+                        } else {
+                            HlsDownloadHelper.httpGetBytes(subUrl, HlsDownloadHelper.currentUserAgent, HlsDownloadHelper.currentReferer, HlsDownloadHelper.currentCookie)
+                        }
                         if (bytes != null) {
                             val contentString = String(bytes, Charsets.UTF_8)
                             var detectedLang = "und"

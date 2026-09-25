@@ -380,6 +380,21 @@ class MediaDetectionEngine(private val context: Context) {
         }
     }
 
+    fun getUniquePresentations(): List<MediaCandidate> {
+        val playables = candidates.values.filter {
+            !it.url.startsWith("blob:") &&
+            ((!it.isSegment && !it.isSegmentGroup) || ((it.isSegment || it.isSegmentGroup) && candidates.values.none { c -> c.isManifest || (c.type == "video" && !c.isSegmentGroup) }))
+        }
+
+        // Group by pathBase to collapse variants of the same presentation
+        val grouped = playables.groupBy { it.pathBase ?: it.url }
+
+        // From each group, pick the highest scoring candidate (usually the Master Playlist)
+        return grouped.values.mapNotNull { group ->
+            group.maxByOrNull { it.finalScore }
+        }
+    }
+
     fun getBestCandidate(): MediaCandidate? {
         logCandidatesState()
         if (candidates.isEmpty()) return null
