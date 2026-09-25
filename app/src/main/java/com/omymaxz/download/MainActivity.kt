@@ -2794,6 +2794,22 @@ private fun injectMediaStateDetector() {
         }
 
         @JavascriptInterface
+        fun onSubtitleBlobExtracted(content: String, originalUrl: String, language: String?, label: String?) {
+            if (content.isBlank()) return
+
+            // Limit payload size to 2MB to prevent OOM from malicious blobs masquerading as subtitles
+            val maxBytes = 2 * 1024 * 1024
+            if (content.toByteArray().size > maxBytes) {
+                android.util.Log.e("SUBTITLE_BLOB", "Subtitle blob rejected: exceeds 2MB limit.")
+                return
+            }
+
+            activity.runOnUiThread {
+                activity.handleExtractedSubtitleBlob(content, originalUrl, language ?: "und", label ?: "Subtitle")
+            }
+        }
+
+        @JavascriptInterface
         fun getLastDetectedSubtitle(): String {
             return lastSubtitleUrl
         }
@@ -2915,7 +2931,9 @@ private fun injectMediaStateDetector() {
             onMediaDetectedWithHeaders(url, type, null)
         }
 
-        private fun handleIncomingMediaDetection(url: String, type: String, contentType: String? = null) {
+
+
+    private fun handleIncomingMediaDetection(url: String, type: String, contentType: String? = null) {
             if (url.startsWith("blob:")) return
             if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
                 lastSubtitleUrl = url
@@ -4577,10 +4595,31 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         win.document.querySelectorAll('track').forEach(track => {
                             if (track.src && typeof track.src === 'string' && track.src.trim() !== '' && (track.kind === 'subtitles' || track.kind === 'captions')) {
                                 try {
-                                    const absUrl = new URL(track.src, win.document.baseURI).href;
                                     const lang = track.srclang || '';
                                     const label = track.label || 'Subtitle';
-                                    addMedia(absUrl, label, 'subtitle', lang);
+
+                                    if (track.src.startsWith("blob:")) {
+                                        // Use a Set to avoid redundant fetching
+                                        if (!window._processedBlobSubtitles) window._processedBlobSubtitles = new Set();
+                                        if (!window._processedBlobSubtitles.has(track.src)) {
+                                            window._processedBlobSubtitles.add(track.src);
+                                            fetch(track.src).then(res => {
+                                                if (res.ok) return res.text();
+                                                throw new Error("Blob fetch failed");
+                                            }).then(text => {
+                                                if (text && window.AndroidMediaState && window.AndroidMediaState.onSubtitleBlobExtracted) {
+                                                    // Pass the actual content over the bridge
+                                                    window.AndroidMediaState.onSubtitleBlobExtracted(text, track.src, lang, label);
+                                                }
+                                            }).catch(err => {
+                                                console.error("[SUBTITLE_BLOB] Failed to extract blob subtitle: " + track.src + " - " + err.message);
+                                                window._processedBlobSubtitles.delete(track.src); // Allow retry if page recovers
+                                            });
+                                        }
+                                    } else {
+                                        const absUrl = new URL(track.src, win.document.baseURI).href;
+                                        addMedia(absUrl, label, 'subtitle', lang);
+                                    }
                                 } catch (e) {}
                             }
                         });
@@ -5754,6 +5793,62 @@ if (isDesktopMode) {
             } else {
                 floatingDetector?.visibility = android.view.View.GONE
             }
+        }
+    }
+
+    fun handleExtractedSubtitleBlob(content: String, originalUrl: String, language: String, label: String) {
+        // Validate subtitle content format (VTT or SRT)
+        val isVtt = content.startsWith("WEBVTT", ignoreCase = true) || content.contains("WEBVTT\n", ignoreCase = true)
+        val isSrt = content.contains(Regex("\\d{2}:\\d{2}:\\d{2},\\d{3}\\s*-->\\s*\\d{2}:\\d{2}:\\d{2},\\d{3}"))
+
+        if (!isVtt && !isSrt) {
+            android.util.Log.e("SUBTITLE_BLOB", "Validation failed: Content is not valid WebVTT or SRT.\nURL: $originalUrl")
+            return
+        }
+
+        val extension = if (isVtt) ".vtt" else ".srt"
+        val mimeType = if (isVtt) "text/vtt" else "application/x-subrip"
+
+        // Create a unique hash for the filename based on URL and language to avoid duplicates
+        val hash = java.util.UUID.nameUUIDFromBytes(originalUrl.toByteArray()).toString()
+        val safeTitle = "\$label [\$language]".replace(Regex("[^a-zA-Z0-9.\\[\\] -]"), "_")
+        val fileName = "blob_sub_\$hash\$extension"
+        val subtitleFile = java.io.File(filesDir, fileName)
+
+        // Prevent duplicate writing if we already processed this exact Blob URL
+        if (!subtitleFile.exists()) {
+            try {
+                subtitleFile.writeText(content)
+                android.util.Log.d("SUBTITLE_BLOB", "Saved blob subtitle to: \${subtitleFile.absolutePath}")
+            } catch (e: Exception) {
+                android.util.Log.e("SUBTITLE_BLOB", "Failed to write subtitle file: \${e.message}")
+                return
+            }
+        }
+
+        val localUriString = android.net.Uri.fromFile(subtitleFile).toString()
+
+        val existsAlready = synchronized(detectedMediaFiles) {
+            detectedMediaFiles.any { it.url == localUriString }
+        }
+
+        if (!existsAlready) {
+            val mediaFile = MediaFile(
+                url = localUriString,
+                title = safeTitle,
+                mimeType = mimeType,
+                quality = "Auto",
+                category = MediaCategory.SUBTITLE,
+                fileSize = "\${subtitleFile.length() / 1024} KB",
+                language = language,
+                isMainContent = false
+            )
+
+            synchronized(detectedMediaFiles) {
+                detectedMediaFiles.add(mediaFile)
+            }
+            updateFabVisibility()
+            currentMediaListAdapter?.notifyDataSetChanged()
         }
     }
 
