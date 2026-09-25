@@ -66,6 +66,10 @@ import android.widget.LinearLayout
 
 class MainActivity : AppCompatActivity() {
 
+    private val detectorHideHandler = Handler(Looper.getMainLooper())
+    private val detectorHideRunnable = Runnable { findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = android.view.View.GONE }
+
+
     val mediaEngine = MediaDetectionEngine(this)
     @Volatile private var approvedNavigationUrl: String? = null
 
@@ -4190,8 +4194,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             MenuItemCustom(R.id.menu_settings, "Settings"),
             MenuItemCustom(R.id.menu_theme_color, "Theme Color"),
             MenuItemCustom(R.id.menu_debug_site, "Debug Site"),
-            MenuItemCustom(R.id.menu_enable_media_detection, "Advanced Media Sniffer"),
-            MenuItemCustom(R.id.menu_detect_active_media, "Detect Current Media"),
             MenuItemCustom(R.id.menu_debug_page, "Debug Page"),
             MenuItemCustom(R.id.menu_toggle_popup_notice, popupNoticeTitle)
         )
@@ -4236,8 +4238,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 R.id.menu_settings -> showMasterSettingsDialog()
                 R.id.menu_theme_color -> showThemeColorPickerDialog()
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
-                R.id.menu_enable_media_detection -> runAdvancedMediaSniffer()
-                R.id.menu_detect_active_media -> runActiveMediaDetection()
                 R.id.menu_debug_page -> showPageSource()
                 R.id.menu_toggle_popup_notice -> {
                     val currentSetting = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
@@ -4386,277 +4386,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
 
 
-    private fun runActiveMediaDetection() {
-        Toast.makeText(this, "Detecting active media...", Toast.LENGTH_SHORT).show()
-        val script = """
-            (function() {
-                try {
-                    let bestElement = null;
-                    let bestScore = -1;
 
-                    const scoreElement = (el) => {
-                        if (!el) return -1;
-                        let score = 0;
-                        if (!el.paused && !el.ended && el.readyState > 2) score += 50; // Actively playing
-                        if (el.currentTime > 0 && !el.paused) score += 30;
-                        if (el.duration > 45) score += 20; // Filter out short ads
-                        if (el.offsetWidth > 100 && el.offsetHeight > 100) score += 10;
-                        // Determine if it's the main media session
-                        if (navigator.mediaSession && navigator.mediaSession.metadata && navigator.mediaSession.metadata.title) {
-                            score += 10;
-                        }
-                        return score;
-                    };
 
-                    const scanDocument = (doc) => {
-                        const mediaElements = Array.from(doc.querySelectorAll('video, audio'));
-                        mediaElements.forEach(el => {
-                            const score = scoreElement(el);
-                            if (score > bestScore) {
-                                bestScore = score;
-                                bestElement = el;
-                            }
-                        });
-
-                        // Check iframes
-                        doc.querySelectorAll('iframe').forEach(iframe => {
-                            try {
-                                if (iframe.contentWindow && iframe.contentWindow.document) {
-                                    scanDocument(iframe.contentWindow.document);
-                                }
-                            } catch(e) {}
-                        });
-                    };
-
-                    scanDocument(document);
-
-                    if (!bestElement) {
-                        return JSON.stringify({ error: "No media elements found" });
-                    }
-
-                    // Extract source
-                    let activeUrl = bestElement.currentSrc || bestElement.src;
-                    if (!activeUrl) {
-                        const source = bestElement.querySelector('source');
-                        if (source) activeUrl = source.src;
-                    }
-
-                    if (!activeUrl) {
-                         return JSON.stringify({ error: "Media element has no source" });
-                    }
-
-                    const isBlob = activeUrl.startsWith('blob:');
-
-                    if (window.AndroidMediaState && window.AndroidMediaState.onActiveMediaFound) {
-                        window.AndroidMediaState.onActiveMediaFound(activeUrl, bestElement.tagName.toLowerCase(), isBlob);
-                    }
-                    return JSON.stringify({ url: activeUrl, isBlob: isBlob });
-                } catch(e) {
-                    return JSON.stringify({ error: e.message });
-                }
-            })();
-        """
-        webView.evaluateJavascript(script, null)
-    }
-
-    private fun runAdvancedMediaSniffer() {
-        isManualScanPending = true
-        Toast.makeText(this, "Running Advanced Media Sniffer...", Toast.LENGTH_SHORT).show()
-        isManualScanPending = true
-        val script = """
-            (function() {
-                'use strict';
-                const foundMedia = new Set();
-                const notify = (url, type, source) => {
-                    if (!url || url.startsWith('data:')) return;
-                    if (url.startsWith('blob:')) {
-                        if (window.AndroidMediaState) window.AndroidMediaState.onMediaDetected(url, 'video');
-                        return;
-                    }
-                    if (url.startsWith('//')) url = 'https:' + url;
-                    try {
-                        const parsed = new URL(url, window.location.href).href;
-                        if (!foundMedia.has(parsed)) {
-                            foundMedia.add(parsed);
-                            if (window.AndroidMediaState) {
-                                window.AndroidMediaState.onMediaDetected(parsed, type);
-                            }
-                        }
-                    } catch(e) {}
-                };
-
-                const checkString = (str, sourceContext) => {
-                    if (!str || typeof str !== 'string') return;
-                    try {
-                        const decoded = decodeURIComponent(str);
-                        const candidates = [str, decoded];
-                        if (str.includes(".m3u8")) {
-                            const regexM3u8 = /(https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*)/i;
-                            let match = regexM3u8.exec(str);
-                            if (match) { if(window.AndroidMediaState) { window.AndroidMediaState.onMediaDetected(match[1], 'video'); } }
-                        }
-                        const regex = /https?:\/\/[^"'\s<>]+\.(m3u8|mp4|mkv|webm|mpd|m4a|mp3|ogg)([^"'\s<>]*)/gi;
-                        candidates.forEach(s => {
-                            let match;
-                            while ((match = regex.exec(s)) !== null) {
-                                let ext = match[1].toLowerCase();
-                                let type = ['mp3', 'm4a', 'ogg'].includes(ext) ? 'audio' : 'video';
-                                notify(match[0], type, sourceContext);
-                            }
-                        });
-                    } catch(e) {}
-                };
-
-                // 1. Deep DOM Inspection
-                const scanDOM = (doc) => {
-
-                function isAdOrPreview(el) {
-                    if (!el) return false;
-                    if (el.offsetWidth > 0 && el.offsetWidth < 100) return true;
-                    if (el.offsetHeight > 0 && el.offsetHeight < 100) return true;
-                    if (el.duration && el.duration > 0 && el.duration < 45) return true;
-                    let curr = el;
-                    while (curr && curr !== document.body) {
-                        const style = window.getComputedStyle(curr);
-                        if (style.display === 'none' || style.visibility === 'hidden') return true;
-                        const className = (curr.className && typeof curr.className === 'string') ? curr.className.toLowerCase() : '';
-                        const id = (curr.id && typeof curr.id === 'string') ? curr.id.toLowerCase() : '';
-                        if (className.includes('video-thumb-wrapper') || className.includes('thumb') || className.includes('preview')) return true;
-                        if (id.includes('msgnativewidget') || className.includes('widget') || className.includes('ad-')) return true;
-                        curr = curr.parentElement;
-                    }
-                    return false;
-                }
-
-                    doc.querySelectorAll('video, audio, source, iframe').forEach(el => {
-                        if (el.tagName !== 'IFRAME' && typeof isAdOrPreview === 'function' && isAdOrPreview(el)) return;
-                        if (el.src) {
-                            checkString(el.src, 'DOM ' + el.tagName);
-                            if (el.tagName === 'VIDEO' && el.currentTime > 0 && !el.paused) {
-                                // Ensure only videos with real progress and duration (or live) are tracked as the main active player
-                                if (el.duration > 0 || el.duration === Infinity || el.readyState >= 2) {
-                                    if (window.AndroidMediaState && window.AndroidMediaState.onActivePlayerFound) {
-                                        window.AndroidMediaState.onActivePlayerFound(el.src, el.duration || 0);
-                                    }
-                                }
-                            }
-                        }
-                        if (el.tagName === 'IFRAME') {
-                            let iframeSrc = el.src || el.getAttribute('data-src') || el.getAttribute('data-link');
-                            if (iframeSrc && iframeSrc !== 'about:blank' && !iframeSrc.includes('recaptcha') && !iframeSrc.includes('facebook.com') && !iframeSrc.includes('twitter.com')) {
-                                if (window.AndroidMediaState && window.AndroidMediaState.onIframeFound) {
-                                    window.AndroidMediaState.onIframeFound(iframeSrc);
-                                }
-                            }
-                            try {
-                                if (el.contentWindow && el.contentWindow.document) {
-                                    scanDOM(el.contentWindow.document);
-                                    scanGlobalVars(el.contentWindow);
-                                }
-                            } catch(e) {
-                                // Cross-origin iframe
-                                checkString(el.src, 'Iframe SRC');
-                            }
-                        }
-                    });
-
-                    // Inspect all script tags for embedded JSON configs
-                    doc.querySelectorAll('script').forEach(script => {
-                        if (script.innerHTML) {
-                            checkString(script.innerHTML, 'Script Inline');
-                        }
-                    });
-                };
-
-                // 2. Scan Window / Global Variables for Player Configs
-                const scanGlobalVars = (win) => {
-                    const keys = ['player_aaaa', 'jwplayer', 'videojs', 'hls', 'dp', 'playerConfig', 'config', 'source', 'media'];
-                    keys.forEach(k => {
-                        try {
-                            if (win[k]) {
-                                checkString(JSON.stringify(win[k]), 'GlobalVar: ' + k);
-                            }
-                        } catch(e) {}
-                    });
-
-                    // Brute force check top level primitive strings
-                    try {
-                        for (let k in win) {
-                            if (typeof win[k] === 'string' && win[k].length > 10 && win[k].includes('http')) {
-                                checkString(win[k], 'GlobalVarString: ' + k);
-                            }
-                        }
-                    } catch(e) {}
-                };
-
-                // 3. Network Interception (Override fetch and XHR for dynamically loaded chunks/manifests)
-                if (!window._advancedSnifferActive) {
-                    window._advancedSnifferActive = true;
-
-                    const origFetch = window.fetch;
-                    window.fetch = function(...args) {
-                        let requestUrl = null;
-                        try {
-                            requestUrl = (typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : null;
-                        } catch(e) {}
-
-                        const p = origFetch.apply(this, args);
-                        if (requestUrl && window.AndroidMediaState) {
-                            p.then(response => {
-                                if (response && response.ok) {
-                                    try {
-                                        const ct = response.headers.get('content-type');
-                                        if (ct && (ct.includes('video/') || ct.includes('mpegurl') || ct.includes('dash+xml') || ct.includes('audio/') || ct.includes('text/vtt'))) {
-                                            if (window.AndroidMediaState.onMediaDetectedWithHeaders) {
-                                                window.AndroidMediaState.onMediaDetectedWithHeaders(requestUrl, 'unknown', ct);
-                                            }
-                                        } else {
-                                            checkString(requestUrl, 'FetchAPI');
-                                        }
-                                    } catch(e) {}
-                                }
-                                return response;
-                            }).catch(e => {});
-                        }
-                        return p;
-                    };
-
-                    const origOpen = XMLHttpRequest.prototype.open;
-                    XMLHttpRequest.prototype.open = function(method, url) {
-                        if (typeof url === 'string' && window.AndroidMediaState) {
-                            this.addEventListener('readystatechange', function() {
-                                if (this.readyState === 2) {
-                                    try {
-                                        const ct = this.getResponseHeader('Content-Type');
-                                        if (ct && (ct.includes('video/') || ct.includes('mpegurl') || ct.includes('dash+xml') || ct.includes('audio/') || ct.includes('text/vtt'))) {
-                                            if (window.AndroidMediaState.onMediaDetectedWithHeaders) {
-                                                window.AndroidMediaState.onMediaDetectedWithHeaders(url, 'unknown', ct);
-                                            }
-                                        } else {
-                                            checkString(url, 'XHR');
-                                        }
-                                    } catch(e) {}
-                                }
-                            });
-                        }
-                        return origOpen.apply(this, arguments);
-                    };
-                }
-
-                // Execute scans
-                scanDOM(document);
-                scanGlobalVars(window);
-
-                // Alert if we found anything new immediately
-                if (foundMedia.size > 0 && window.AndroidMediaState) {
-                    // Let Android handle the toast
-                }
-            })();
-        """
-        webView.evaluateJavascript(script) { result ->
-            Toast.makeText(this, "Advanced scan complete. Check Detected Media list.", Toast.LENGTH_SHORT).show()
-        }
-    }
 
 
     private fun injectTelemetryScript() {
@@ -5966,37 +5697,63 @@ if (isDesktopMode) {
             }
         }
     }
-    fun updateFabVisibility() {
-        val hasMedia = synchronized(detectedMediaFiles) {
-            detectedMediaFiles.isNotEmpty()
-        }
-        binding.fabShowMedia.visibility = if (hasMedia) android.view.View.VISIBLE else android.view.View.GONE
+    private fun updateFabVisibility() {
+        val hasFiles = detectedMediaFiles.isNotEmpty()
 
-        binding.fabShowMedia.setOnLongClickListener {
-            if (hasMedia) {
+        if (hasFiles) {
+            binding.fabShowMedia.visibility = android.view.View.VISIBLE
+            binding.fabShowMedia.setImageResource(android.R.drawable.ic_menu_add)
+
+            binding.fabShowMedia.setOnClickListener {
                 showMediaListDialog()
-            } else {
-                android.widget.Toast.makeText(this, "No media intercepted yet. Play the video first.", android.widget.Toast.LENGTH_SHORT).show()
             }
-            true
-        }
 
-        // Update the new WebMedia Detector Floating Button
-        val bestPlayable = mediaEngine.getBestCandidate()
-        val floatingDetector = findViewById<android.widget.LinearLayout>(R.id.floatingDetectorUI)
-        val txtState = findViewById<android.widget.TextView>(R.id.txtDetectorState)
-
-        // Ensure ONLY verified, playing media shows the floating detector.
-        // We require duration validation (> 60s) AND active playing state.
-        if (bestPlayable != null && bestPlayable.isActivePlayer && bestPlayable.durationSec >= 60) {
-            floatingDetector?.visibility = android.view.View.VISIBLE
-            val typeStr = if (bestPlayable.isManifest) "HLS" else "MP4"
-            txtState?.text = "Verified: $typeStr"
-            floatingDetector?.setOnClickListener {
-                showMediaListDialog()
+            binding.fabShowMedia.setOnLongClickListener {
+                if (detectedMediaFiles.isNotEmpty()) {
+                    showMediaListDialog()
+                } else {
+                    android.widget.Toast.makeText(this, "No media intercepted yet. Play the video first.", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                true
             }
         } else {
-            floatingDetector?.visibility = android.view.View.GONE
+            binding.fabShowMedia.visibility = android.view.View.GONE
+        }
+
+        runOnUiThread {
+            val bestPlayable = mediaEngine.getBestCandidate()
+            val floatingDetector = findViewById<android.widget.LinearLayout>(R.id.floatingDetectorUI)
+            val txtState = findViewById<android.widget.TextView>(R.id.txtDetectorState)
+            val txtTitle = findViewById<android.widget.TextView>(R.id.txtDetectorTitle)
+
+            // Show overlay whenever mediaEngine has a non-null best playable candidate.
+            if (bestPlayable != null) {
+                floatingDetector?.visibility = android.view.View.VISIBLE
+
+                txtTitle?.text = "Media Detected"
+
+                val typeStr = if (bestPlayable.isManifest) "HLS" else "MP4"
+                val qualityStr = "Auto"
+                txtState?.text = "$typeStr • $qualityStr"
+
+                val btnDownload = findViewById<android.widget.ImageView>(R.id.btnDetectorDownload)
+                btnDownload?.setOnClickListener {
+                    showMediaListDialog()
+                }
+
+                val btnClose = findViewById<android.widget.ImageButton>(R.id.btnDetectorClose)
+                btnClose?.setOnClickListener {
+                    floatingDetector?.visibility = android.view.View.GONE
+                    detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                }
+
+                // Auto hide after 10 seconds
+                detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                detectorHideHandler.postDelayed(detectorHideRunnable, 10000)
+
+            } else {
+                floatingDetector?.visibility = android.view.View.GONE
+            }
         }
     }
 
