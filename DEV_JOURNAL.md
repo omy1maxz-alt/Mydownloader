@@ -136,3 +136,6 @@
 - Fix: Implemented blob subtitle extraction on KissKH. The injected Javascript now correctly calls `fetch()` on `blob:` tracks and bridges the actual subtitle payload to `AndroidMediaState`. Extracted payloads are validated and stored natively without blocking HTTP downloads.
 - Updated FloatingBubbleService floating detector to display the grouped stream count () instead of raw individual candidate chunk files.
 - Fixed a bug where `CustomPlayerActivity` would fail to resume/play new videos chosen from the MainActivity list. Intent parameters were erroneously retained across new `singleTask` launches. Added `setIntent(intent)` inside `onNewIntent` and appended `Intent.FLAG_ACTIVITY_CLEAR_TOP` to direct intent builds.
+- Added an API Network Sniffer directly into the  three-dot overflow menu. It overrides Javascript  and  on the fly to push API logs into a scrollable, easily-copied UI , allowing mobile users to perform live network tracing.
+
+- Added an API Network Sniffer directly into the MainActivity.kt three-dot overflow menu. It overrides Javascript fetch and XMLHttpRequest on the fly to push API logs into a scrollable, easily-copied UI AlertDialog, allowing mobile users to perform live network tracing.

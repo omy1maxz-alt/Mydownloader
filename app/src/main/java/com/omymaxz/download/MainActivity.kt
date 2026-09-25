@@ -2655,6 +2655,21 @@ private fun injectMediaStateDetector() {
             }
         }
 
+                @JavascriptInterface
+        fun onApiSniffed(url: String, type: String) {
+            val fullUrl = if (url.startsWith("/")) {
+                val base = activity.webView.url
+                if (base != null) java.net.URI(base).resolve(url).toString() else url
+            } else {
+                url
+            }
+
+            val logEntry = "[\\$type] \\$fullUrl"
+            if (!activity.sniffedApiLogs.contains(logEntry)) {
+                activity.sniffedApiLogs.add(0, logEntry) // add to top
+            }
+        }
+
         fun clearState() {
             lastSubtitleUrl = ""
             synchronized(processedIframes) {
@@ -2859,7 +2874,7 @@ private fun injectMediaStateDetector() {
                 // If it's not a blob and we have a direct active URL, let's process it heavily
                 if (!isBlob && url.isNotEmpty() && !url.startsWith("data:")) {
                     activity.mediaEngine.markCandidateAsActivePlayer(url, 0)
-                    val activeCand = activity.mediaEngine.getCandidate(url)
+                    val activeCand = activity.mediaEngine.candidates[url]
                     if (activeCand != null) {
                         activeCand.playbackScore += 100 // Absolute highest priority
                         activeCand.referer = activity.lastUsedUrl
@@ -4214,6 +4229,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             MenuItemCustom(R.id.menu_settings, "Settings"),
             MenuItemCustom(R.id.menu_theme_color, "Theme Color"),
             MenuItemCustom(R.id.menu_debug_site, "Debug Site"),
+            MenuItemCustom(R.id.menu_api_sniffer, "API Network Sniffer"),
             MenuItemCustom(R.id.menu_debug_page, "Debug Page"),
             MenuItemCustom(R.id.menu_toggle_popup_notice, popupNoticeTitle)
         )
@@ -4258,6 +4274,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 R.id.menu_settings -> showMasterSettingsDialog()
                 R.id.menu_theme_color -> showThemeColorPickerDialog()
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
+                R.id.menu_api_sniffer -> launchApiSniffer()
                 R.id.menu_debug_page -> showPageSource()
                 R.id.menu_toggle_popup_notice -> {
                     val currentSetting = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
@@ -4790,6 +4807,88 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 }
             }
         }
+    }
+
+
+
+    private fun launchApiSniffer() {
+        Toast.makeText(this, "Injecting API Sniffer...", Toast.LENGTH_SHORT).show()
+        val script = """
+            (function() {
+                if (window._apiSnifferInjected) {
+                    alert("API Sniffer is already running! Look at the logs.");
+                    return;
+                }
+                window._apiSnifferInjected = true;
+
+                // Override Fetch
+                const originalFetch = window.fetch;
+                window.fetch = async function(...args) {
+                    const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : 'unknown');
+                    try {
+                        if (window.AndroidMediaState && window.AndroidMediaState.onApiSniffed) {
+                            window.AndroidMediaState.onApiSniffed(url, "fetch");
+                        }
+                    } catch(e) {}
+                    return originalFetch.apply(this, args);
+                };
+
+                // Override XHR
+                const originalOpen = XMLHttpRequest.prototype.open;
+                XMLHttpRequest.prototype.open = function(method, url) {
+                    this._url = url;
+                    return originalOpen.apply(this, arguments);
+                };
+
+                const originalSend = XMLHttpRequest.prototype.send;
+                XMLHttpRequest.prototype.send = function(...args) {
+                    try {
+                        if (this._url && window.AndroidMediaState && window.AndroidMediaState.onApiSniffed) {
+                            window.AndroidMediaState.onApiSniffed(this._url, "xhr");
+                        }
+                    } catch(e) {}
+                    return originalSend.apply(this, args);
+                };
+
+                alert("API Sniffer Injected! Make some requests on the page, then check your logs.");
+            })();
+        """.trimIndent()
+
+        webView.evaluateJavascript(script, null)
+
+        // Open the Sniffer Log Dialog automatically
+        showApiSnifferLogDialog()
+    }
+
+    private val sniffedApiLogs = java.util.concurrent.CopyOnWriteArrayList<String>()
+
+    private fun showApiSnifferLogDialog() {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val currentHex = prefs.getString("glossy_theme_color", "#A0000000")
+        val textColor = if (androidx.core.graphics.ColorUtils.calculateLuminance(android.graphics.Color.parseColor(currentHex)) > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+
+        val listView = android.widget.ListView(this).apply {
+            adapter = android.widget.ArrayAdapter(this@MainActivity, android.R.layout.simple_list_item_1, sniffedApiLogs)
+            setOnItemClickListener { _, _, position, _ ->
+                val fullText = sniffedApiLogs[position]
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("API URL", fullText)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this@MainActivity, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        val dialog = createThemedDialogBuilder(this)
+            .setTitle("Intercepted APIs (Click to Copy)")
+            .setView(listView)
+            .setPositiveButton("Close", null)
+            .setNeutralButton("Clear") { _, _ ->
+                sniffedApiLogs.clear()
+            }
+            .show()
+
+        // We will keep a reference to auto-update the list if new APIs come in while dialog is open?
+        // Let's just let them re-open it or we could notifyDataSetChanged on the adapter.
     }
 
     private fun showPageSource() {
@@ -5813,17 +5912,17 @@ if (isDesktopMode) {
 
         // Create a unique hash for the filename based on URL and language to avoid duplicates
         val hash = java.util.UUID.nameUUIDFromBytes(originalUrl.toByteArray()).toString()
-        val safeTitle = "\$label [\$language]".replace(Regex("[^a-zA-Z0-9.\\[\\] -]"), "_")
-        val fileName = "blob_sub_\$hash\$extension"
+        val safeTitle = "$label [$language]".replace(Regex("[^a-zA-Z0-9.\\[\\] -]"), "_")
+        val fileName = "blob_sub_${hash}${extension}"
         val subtitleFile = java.io.File(filesDir, fileName)
 
         // Prevent duplicate writing if we already processed this exact Blob URL
         if (!subtitleFile.exists()) {
             try {
                 subtitleFile.writeText(content)
-                android.util.Log.d("SUBTITLE_BLOB", "Saved blob subtitle to: \${subtitleFile.absolutePath}")
+                android.util.Log.d("SUBTITLE_BLOB", "Saved blob subtitle to: ${subtitleFile.absolutePath}")
             } catch (e: Exception) {
-                android.util.Log.e("SUBTITLE_BLOB", "Failed to write subtitle file: \${e.message}")
+                android.util.Log.e("SUBTITLE_BLOB", "Failed to write subtitle file: ${e.message}")
                 return
             }
         }
@@ -5841,7 +5940,7 @@ if (isDesktopMode) {
                 mimeType = mimeType,
                 quality = "Auto",
                 category = MediaCategory.SUBTITLE,
-                fileSize = "\${subtitleFile.length() / 1024} KB",
+                fileSize = "${subtitleFile.length() / 1024} KB",
                 language = language,
                 isMainContent = false
             )
