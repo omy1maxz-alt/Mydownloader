@@ -310,6 +310,10 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        // CRITICAL: Update the activity's intent so initializePlayer() reads the new extras!
+        if (intent != null) {
+            setIntent(intent)
+        }
         val newUrl = intent?.getStringExtra(EXTRA_VIDEO_URL)
         val newTitle = intent?.getStringExtra(EXTRA_VIDEO_TITLE)
 
@@ -321,13 +325,14 @@ class CustomPlayerActivity : AppCompatActivity() {
         if (newUrl != null && newUrl != videoUrl) {
             videoUrl = newUrl
             videoTitle = newTitle ?: "Offline_Video_${System.currentTimeMillis()}"
-            setIntent(intent)
             player?.release()
             player = null
             activePlayer = null
             initializePlayer()
             return
         }
+
+        // Keep original intent to retain EXTRA_VIDEO_URL if new intent doesn't have it
 
         // Keep original intent to retain EXTRA_VIDEO_URL if new intent doesn't have it
         if (intent?.hasExtra(EXTRA_VIDEO_URL) == true) {

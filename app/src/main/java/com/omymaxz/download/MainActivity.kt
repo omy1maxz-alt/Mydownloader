@@ -3833,7 +3833,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             }
         }
 
-        val intent = Intent(this, CustomPlayerActivity::class.java).apply {
+        val intent = Intent(this, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK) }.apply {
             if (mimeType != null) {
                 putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mimeType)
             }
@@ -3908,6 +3908,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     android.util.Log.d("PlayInApp", "Launching extracted YouTube DASH/HLS media directly bypassing engine: ${mediaFile.url}")
                     // DO NOT go back through launchLegacyPlayer's googlevideo interceptor which would bounce it back to extraction!
                     val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                         if (mediaFile.mimeType != null) {
                             putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
                         }
@@ -3928,6 +3929,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
                     // Directly construct intent to avoid googlevideo interception loop inside launchLegacyPlayer!
                     val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                         if (mediaFile.mimeType != null) {
                             putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
                         }
