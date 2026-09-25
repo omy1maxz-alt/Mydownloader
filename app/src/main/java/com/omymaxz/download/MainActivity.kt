@@ -165,6 +165,20 @@ class MainActivity : AppCompatActivity() {
             binding.rootContainer.requestLayout()
             binding.mainContent.requestLayout()
         }
+
+        // Re-apply viewport configurations to prevent Android from aggressively resetting WideViewPort on rotation
+        val settings = webView.settings
+        if (isDesktopMode) {
+            settings.useWideViewPort = true
+            settings.loadWithOverviewMode = true
+            settings.builtInZoomControls = true
+            settings.displayZoomControls = false
+        } else {
+            settings.useWideViewPort = false
+            settings.loadWithOverviewMode = false
+            settings.builtInZoomControls = true
+            settings.displayZoomControls = false
+        }
     }
 
     companion object {
@@ -1193,33 +1207,28 @@ private fun checkBatteryOptimization() {
 
                     injectAntiHijackingScripts(view)
 
-                    val javascript = if (isDesktopMode) {
-                        """
-                        javascript:(function() {
-                            var vpf = document.querySelector('meta[name="viewport"]');
-                            if(vpf){ vpf.remove(); }
-                            var meta = document.createElement('meta');
-                            meta.setAttribute('name', 'viewport');
-                            meta.setAttribute('content', 'width=1920, user-scalable=yes, initial-scale=0.5');
-                            document.getElementsByTagName('head')[0].appendChild(meta);
-
-                            Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
-                            Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
-                        })();
-                        """
-                    } else {
-                        """
-                        javascript:(function() {
-                            var vpf = document.querySelector('meta[name="viewport"]');
-                            if(vpf){ vpf.remove(); }
-                            var meta = document.createElement('meta');
-                            meta.setAttribute('name', 'viewport');
-                            meta.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=yes');
-                            document.getElementsByTagName('head')[0].appendChild(meta);
-                        })();
-                        """
+                    // Apply viewport correction after page load to force responsive sites into desktop width
+                    if (isDesktopMode) {
+                        val viewportJs = """
+                            (function() {
+                                var meta = document.querySelector('meta[name="viewport"]');
+                                if (!meta) {
+                                    meta = document.createElement('meta');
+                                    meta.name = 'viewport';
+                                    if (document.head) {
+                                        document.head.appendChild(meta);
+                                    } else {
+                                        return;
+                                    }
+                                }
+                                meta.setAttribute(
+                                    'content',
+                                    'width=1280, initial-scale=' + (screen.width / 1280)
+                                );
+                            })();
+                        """.trimIndent()
+                        view?.evaluateJavascript(viewportJs, null)
                     }
-                    view?.evaluateJavascript(javascript.trimIndent(), null)
 
                     // Polyfill screen.orientation.lock to prevent native player crashes
                     val polyfill = """
@@ -5527,13 +5536,13 @@ private fun showUserAgentDialog() {
             val newUserAgent: String
             when (which) {
                1, 2 -> { 
-    isDesktopMode = true
-    settings.useWideViewPort = true
-    settings.loadWithOverviewMode = true  
-    settings.setSupportZoom(true)
-    settings.builtInZoomControls = true
-    settings.displayZoomControls = false
-    settings.textZoom = 100
+                    isDesktopMode = true
+                    settings.useWideViewPort = true
+                    settings.loadWithOverviewMode = true
+                    settings.setSupportZoom(true)
+                    settings.builtInZoomControls = true
+                    settings.displayZoomControls = false
+                    settings.textZoom = 100
 
                     newUserAgent = if (which == 1) {
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -5545,23 +5554,16 @@ private fun showUserAgentDialog() {
                     isDesktopMode = false
                     settings.useWideViewPort = false
                     settings.loadWithOverviewMode = false
-                    settings.setSupportZoom(false)
-                    settings.builtInZoomControls = false
+                    settings.setSupportZoom(true) // Maintain standard zoom behaviors on mobile
+                    settings.builtInZoomControls = true
+                    settings.displayZoomControls = false
                     settings.textZoom = 100
-                    newUserAgent = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                    newUserAgent = cachedUserAgent ?: "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                 }
             }
 
             settings.userAgentString = newUserAgent
-if (isDesktopMode) {
-    webView.postDelayed({
-        webView.evaluateJavascript(
-            "document.body.style.zoom = '0.5';", null
-        )
-    }, 100)
-}
             webView.reload()
-            webView.requestLayout() 
 
             Toast.makeText(this, "Switched to ${userAgents[which]}", Toast.LENGTH_SHORT).show()
         }
