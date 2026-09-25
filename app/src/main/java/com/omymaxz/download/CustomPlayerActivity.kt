@@ -321,8 +321,10 @@ class CustomPlayerActivity : AppCompatActivity() {
         intent?.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
         intent?.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
 
-        // If the new intent is playing a completely different video, re-initialize the player
+        // Always re-initialize the player if a DIFFERENT video URL is requested.
+        // If the URL is the same (e.g. adding a subtitle to the currently playing video), we do not reset the player.
         if (newUrl != null && newUrl != videoUrl) {
+            android.util.Log.d("PLAYER_STATE_RESET", "[PLAYER_STATE_RESET]\npreviousUrl=$videoUrl\nnewUrl=$newUrl\nplayerReleased=true\nmediaItemsCleared=true\nnewMediaItemPrepared=true")
             videoUrl = newUrl
             videoTitle = newTitle ?: "Offline_Video_${System.currentTimeMillis()}"
             player?.release()
@@ -332,12 +334,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             return
         }
 
-        // Keep original intent to retain EXTRA_VIDEO_URL if new intent doesn't have it
 
-        // Keep original intent to retain EXTRA_VIDEO_URL if new intent doesn't have it
-        if (intent?.hasExtra(EXTRA_VIDEO_URL) == true) {
-            setIntent(intent)
-        }
 
         val newSubUrls = intent?.getStringArrayListExtra(EXTRA_SUBTITLE_URLS)
         if (!newSubUrls.isNullOrEmpty() && player != null) {
@@ -537,7 +534,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setSubtitleConfigurations(subtitleConfigs)
             .build()
 
-        android.util.Log.d("PLAYER_TRACE", "[PLAYER_TRACE]\nMediaItem URI=${newBaseItem.localConfiguration?.uri}\nMediaItem MIME=${newBaseItem.localConfiguration?.mimeType}\nMediaItem mediaId=${newBaseItem.mediaId}")
+        android.util.Log.d("PLAYER_TRACE", "[PLAYER_TRACE]\nlaunchSource=initializePlayer\nvideoUrl=$videoUrl\nmimeType=$actualMimeType\nhasUserAgent=${intent.hasExtra(EXTRA_USER_AGENT)}\nhasReferer=${intent.hasExtra(EXTRA_REFERER)}\nhasCookie=${intent.hasExtra(EXTRA_COOKIE)}\nhasSubtitles=${intent.hasExtra(EXTRA_SUBTITLE_URLS)}\nMediaItem URI=${newBaseItem.localConfiguration?.uri}")
 
         // In ExoPlayer 1.2.0+, DefaultMediaSourceFactory has strict Extractor requirements for ProgressiveMediaSource.
         // It requires the MP4 format to be readable by FragmentedMp4Extractor or Mp4Extractor.

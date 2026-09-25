@@ -139,3 +139,4 @@
 - Added an API Network Sniffer directly into the  three-dot overflow menu. It overrides Javascript  and  on the fly to push API logs into a scrollable, easily-copied UI , allowing mobile users to perform live network tracing.
 
 - Added an API Network Sniffer directly into the MainActivity.kt three-dot overflow menu. It overrides Javascript fetch and XMLHttpRequest on the fly to push API logs into a scrollable, easily-copied UI AlertDialog, allowing mobile users to perform live network tracing.
+- Fixed a bug where `CustomPlayerActivity` would fail to resume/play new videos chosen from the MainActivity list. Intent parameters were erroneously retained across new `singleTask` launches. Added `setIntent(intent)` inside `onNewIntent`, appended `Intent.FLAG_ACTIVITY_CLEAR_TOP` to direct intent builds, and ensured the exact user-clicked stream candidate bypasses the `getBestCandidate()` default fallback inside `MainActivity`.
