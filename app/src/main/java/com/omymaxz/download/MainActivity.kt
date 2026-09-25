@@ -65,6 +65,7 @@ import java.util.regex.Pattern
 import android.widget.LinearLayout
 
 class MainActivity : AppCompatActivity() {
+    private var isApiSnifferActive = false
 
     private val detectorHideHandler = Handler(Looper.getMainLooper())
     private val detectorHideRunnable = Runnable { findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = android.view.View.GONE }
@@ -1207,7 +1208,43 @@ private fun checkBatteryOptimization() {
 
                     injectAntiHijackingScripts(view)
 
-                    // Apply viewport correction after page load to force responsive sites into desktop width
+                    if (isApiSnifferActive) {
+                        val apiSnifferJsLocal = """
+                            (function() {
+                                if (window._apiSnifferInjected) return;
+                                window._apiSnifferInjected = true;
+
+                                const originalFetch = window.fetch;
+                                window.fetch = async function(...args) {
+                                    const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : 'unknown');
+                                    try {
+                                        if (window.AndroidMediaState && window.AndroidMediaState.onApiSniffed) {
+                                            window.AndroidMediaState.onApiSniffed(url, "fetch");
+                                        }
+                                    } catch(e) {}
+                                    return originalFetch.apply(this, args);
+                                };
+
+                                const originalOpen = XMLHttpRequest.prototype.open;
+                                XMLHttpRequest.prototype.open = function(method, url) {
+                                    this._url = url;
+                                    return originalOpen.apply(this, arguments);
+                                };
+
+                                const originalSend = XMLHttpRequest.prototype.send;
+                                XMLHttpRequest.prototype.send = function(...args) {
+                                    try {
+                                        if (this._url && window.AndroidMediaState && window.AndroidMediaState.onApiSniffed) {
+                                            window.AndroidMediaState.onApiSniffed(this._url, "xhr");
+                                        }
+                                    } catch(e) {}
+                                    return originalSend.apply(this, args);
+                                };
+                            })();
+                        """.trimIndent()
+                        view?.evaluateJavascript(apiSnifferJsLocal, null)
+                    }
+
                     if (isDesktopMode) {
                         val viewportJs = """
                             (function() {
@@ -1223,7 +1260,7 @@ private fun checkBatteryOptimization() {
                                 }
                                 meta.setAttribute(
                                     'content',
-                                    'width=1280, initial-scale=' + (screen.width / 1280)
+                                    'width=1280, initial-scale=' + (window.innerWidth / 1280)
                                 );
                             })();
                         """.trimIndent()
@@ -4779,6 +4816,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
 
     private fun launchApiSniffer() {
+        isApiSnifferActive = true
         Toast.makeText(this, "Injecting API Sniffer...", Toast.LENGTH_SHORT).show()
         val script = """
             (function() {
@@ -5540,6 +5578,7 @@ private fun showUserAgentDialog() {
                     settings.useWideViewPort = true
                     settings.loadWithOverviewMode = true
                     settings.setSupportZoom(true)
+                    webView.setInitialScale(100)
                     settings.builtInZoomControls = true
                     settings.displayZoomControls = false
                     settings.textZoom = 100
@@ -5555,6 +5594,7 @@ private fun showUserAgentDialog() {
                     settings.useWideViewPort = false
                     settings.loadWithOverviewMode = false
                     settings.setSupportZoom(true) // Maintain standard zoom behaviors on mobile
+                    webView.setInitialScale(0)
                     settings.builtInZoomControls = true
                     settings.displayZoomControls = false
                     settings.textZoom = 100
