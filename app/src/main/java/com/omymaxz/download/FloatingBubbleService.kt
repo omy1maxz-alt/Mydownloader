@@ -92,7 +92,7 @@ class FloatingBubbleService : Service() {
 
         val engine = MediaDetectionEngine.instance ?: return
 
-        val candidates = engine.candidates.values.toList()
+        val candidates = engine.getUniquePresentations()
         val verifiedPlayable = candidates.find { it.isActivePlayer && it.durationSec >= 60 }
         val bestCand = engine.getBestCandidate()
 
@@ -107,7 +107,7 @@ class FloatingBubbleService : Service() {
             val durStr = if (mainCand.durationSec > 0) "${mainCand.durationSec}s" else "Unknown"
             val scoreStr = mainCand.finalScore
 
-            txtDetails?.text = "$typeStr \nDur: $durStr \nScore: $scoreStr \nConf: ${mainCand.confidence}\nCandidates: ${candidates.size}"
+            txtDetails?.text = "$typeStr \nDur: $durStr \nScore: $scoreStr \nConf: ${mainCand.confidence}\nStreams: ${candidates.size}"
 
             btnOpenPlayer?.visibility = View.VISIBLE
             btnOpenPlayer?.setOnClickListener {
@@ -121,7 +121,7 @@ class FloatingBubbleService : Service() {
         } else {
             txtStatus?.text = "● NO VERIFIED MEDIA"
             txtStatus?.setTextColor(android.graphics.Color.YELLOW)
-            txtDetails?.text = "Candidates: ${candidates.size}"
+            txtDetails?.text = "Streams: ${candidates.size}"
             btnOpenPlayer?.visibility = View.GONE
         }
     }
