@@ -3788,7 +3788,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             }
         }
 
-        val intent = Intent(this, CustomPlayerActivity::class.java).apply {
+        val intent = Intent(this, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK);
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, candidate.url)
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
 
@@ -3898,7 +3898,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             builder.setNegativeButton("Add to Player") { _, _ ->
                 if (CustomPlayerActivity.activePlayer != null) {
                     val activePlayerUrl = CustomPlayerActivity.activePlayer?.currentMediaItem?.localConfiguration?.uri?.toString()
-                    val intent = Intent(this, CustomPlayerActivity::class.java).apply {
+                    val intent = Intent(this, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK);
                         addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                         putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, arrayListOf(mediaFile.url))
                         putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, mediaFile.title)
@@ -3922,7 +3922,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 if (mediaFile.url.contains("googlevideo.com") && (mediaFile.mimeType == "application/dash+xml" || mediaFile.mimeType == "application/x-mpegURL")) {
                     android.util.Log.d("PlayInApp", "Launching extracted YouTube DASH/HLS media directly bypassing engine: ${mediaFile.url}")
                     // DO NOT go back through launchLegacyPlayer's googlevideo interceptor which would bounce it back to extraction!
-                    val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
+                    val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK);
                         addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                         if (mediaFile.mimeType != null) {
                             putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
@@ -3943,7 +3943,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     android.util.Log.d("PlayInApp", "Launching extracted media directly bypassing engine: ${mediaFile.url}")
 
                     // Directly construct intent to avoid googlevideo interception loop inside launchLegacyPlayer!
-                    val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
+                    val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK);
                         addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                         if (mediaFile.mimeType != null) {
                             putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
@@ -3960,58 +3960,16 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     return@setNegativeButton
                 }
 
-                // Query MediaDetectionEngine for the best candidate
-                val bestCandidate = mediaEngine.getBestCandidate()
-                mediaEngine.logCandidatesState()
-
-                if (bestCandidate != null && (bestCandidate.confidence == "HIGH" || bestCandidate.confidence == "MEDIUM")) {
-                    android.util.Log.d("PlayInApp", "Launching best candidate directly: ${bestCandidate.url} (Confidence: ${bestCandidate.confidence})")
-                    launchPlayerWithCandidate(bestCandidate, finalName, mediaFile.referer)
+                // The user explicitly selected THIS specific mediaFile from the download list.
+                // We MUST launch this specific URL, not the engine's generic "best candidate", otherwise it just resumes the old video!
+                val exactCandidate = mediaEngine.candidates[mediaFile.url]
+                if (exactCandidate != null) {
+                    android.util.Log.d("PlayInApp", "Launching user-selected candidate directly: ${exactCandidate.url}")
+                    launchPlayerWithCandidate(exactCandidate, finalName, mediaFile.referer)
                 } else {
-                    // Start analyzing dialog
-                    val pd = android.app.ProgressDialog(this).apply {
-                        setMessage("Analyzing video... please wait.")
-                        setCancelable(true)
-                        show()
-                    }
-
-                    var elapsed = 0
-                    val maxWait = 4000 // wait max 4 seconds
-                    val handler = android.os.Handler(android.os.Looper.getMainLooper())
-                    val checkRunnable = object : Runnable {
-                        override fun run() {
-                            val candidate = mediaEngine.getBestCandidate()
-                            if (candidate != null && !candidate.url.startsWith("blob:") && candidate.confidence == "HIGH") {
-                                pd.dismiss()
-                                android.util.Log.d("PlayInApp", "Found high confidence candidate after observation: ${candidate.url}")
-                                launchPlayerWithCandidate(candidate, finalName, mediaFile.referer)
-                                return
-                            }
-
-                            elapsed += 500
-                            if (elapsed >= maxWait) {
-                                pd.dismiss()
-                                val fallbackCand = mediaEngine.getBestCandidate()
-                                if (fallbackCand != null && !fallbackCand.url.startsWith("blob:") && (fallbackCand.confidence == "HIGH" || fallbackCand.confidence == "MEDIUM" || fallbackCand.isDRMProtected)) {
-                                    android.util.Log.d("PlayInApp", "Wait timeout. Launching best available: ${fallbackCand.url}")
-                                    launchPlayerWithCandidate(fallbackCand, finalName, mediaFile.referer)
-                                } else {
-                                    val bestCandIsDRM = fallbackCand?.isDRMProtected == true
-                                    val activeMainCandIsDRM = mediaEngine.candidates.values.any { it.isDRMProtected && (it.startedAfterPlayback || it.confidence == "HIGH") }
-                                    val generalDRM = mediaEngine.candidates.values.any { it.url == "ACTIVE_PLAYER_DRM" && it.isDRMProtected }
-
-                                    if (bestCandIsDRM || activeMainCandIsDRM || generalDRM) {
-                                        Toast.makeText(this@MainActivity, "This video appears to be DRM-protected and cannot be handled by the current custom player.", Toast.LENGTH_LONG).show()
-                                    } else {
-                                        Toast.makeText(this@MainActivity, "Main stream not captured yet. Press PLAY in the web player first, wait 2–3 seconds, then tap Play in App again.", Toast.LENGTH_LONG).show()
-                                    }
-                                }
-                                return
-                            }
-                            handler.postDelayed(this, 500)
-                        }
-                    }
-                    handler.postDelayed(checkRunnable, 500)
+                    // Fallback if it's a manually injected file without a candidate
+                    android.util.Log.d("PlayInApp", "No exact candidate found, launching legacy player: ${mediaFile.url}")
+                    launchLegacyPlayer(mediaFile.url, finalName, mediaFile.referer, mediaFile.mimeType)
                 }
             }
         }
@@ -5997,7 +5955,7 @@ if (isDesktopMode) {
     }
 
     private fun launchYouTubeInCustomPlayer(mediaFile: MediaFile) {
-        val intent = android.content.Intent(this, CustomPlayerActivity::class.java).apply {
+        val intent = android.content.Intent(this, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK);
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, mediaFile.title)
             putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
