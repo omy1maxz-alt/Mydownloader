@@ -113,7 +113,7 @@ class MediaDetectionEngine(private val context: Context) {
         var isProgressiveFinal = mediaKind == MediaKind.PROGRESSIVE
 
         // Check for ad URL signals
-        val isLikelyAd = isAdUrl(url) || url.contains("media-hls.growcdnssedge.com/b-hls-") // Specifically block the known SupJav 6s segment ads from flooding the candidate pool
+        val isLikelyAd = isAdUrl(url)
 
         // Image blocking specifically for thumbnail segments masquerading as media
         if (!isManifest && !isProgressiveFinal && isLikelyAd) {
@@ -253,29 +253,16 @@ class MediaDetectionEngine(private val context: Context) {
         return null
     }
 
-    // Internal state to track playback progression
-    private val playbackSnapshots = java.util.concurrent.ConcurrentHashMap<String, Double>()
-
     fun updatePlayerTelemetry(url: String, telemetry: PlayerTelemetry) {
         // Sanitize: Do not grant active player status for 0 duration non-live streams or tiny outstream/banner ad dimensions.
         val isRealPlayer = (telemetry.durationSec > 0.0 || telemetry.currentTimeSec > 0.0) &&
                            (telemetry.width >= 300 || telemetry.height >= 250)
 
-        var playbackVerified = false
-        if (!telemetry.paused && isRealPlayer) {
-            val lastTime = playbackSnapshots[url] ?: 0.0
-            if (telemetry.currentTimeSec > lastTime + 0.5) {
-                // Time has materially progressed since the last snapshot. We have verified continuous playback!
-                playbackVerified = true
-            }
-            playbackSnapshots[url] = telemetry.currentTimeSec
-        }
-
         val candidate = candidates[url] ?: findParentManifestForSegment(url)
         if (candidate != null) {
             candidate.telemetry = telemetry
             if (telemetry.durationSec > 0) candidate.durationSec = telemetry.durationSec.toInt()
-            if (playbackVerified) candidate.isActivePlayer = true
+            if (!telemetry.paused && isRealPlayer) candidate.isActivePlayer = true
         }
 
         // Propagate evidence: if this is a blob URL (MSE player), associate its active telemetry with the actual underlying network presentations.
@@ -286,7 +273,7 @@ class MediaDetectionEngine(private val context: Context) {
                     Log.d(TAG, "Propagating Blob Telemetry to network presentation: ${relatedCandidate.url}")
                     relatedCandidate.telemetry = telemetry
                     if (telemetry.durationSec > 0) relatedCandidate.durationSec = telemetry.durationSec.toInt()
-                    if (playbackVerified) relatedCandidate.isActivePlayer = true
+                    if (!telemetry.paused && isRealPlayer) relatedCandidate.isActivePlayer = true
                 }
             }
         }
@@ -408,16 +395,14 @@ class MediaDetectionEngine(private val context: Context) {
         val hasDRMPlayables = playables.any { it.isDRMProtected }
         if (hasDRMPlayables) {
             val drmFiltered = playables.filter { it.isDRMProtected || it.requestCount > 10 }
-            val safePlayables = drmFiltered.filter { (it.durationSec == 0 || it.durationSec >= 60) && it.adScore == 0 }
+            val safePlayables = drmFiltered.filter { (it.durationSec == 0 || it.durationSec >= 60) && (it.adScore == 0 || it.finalScore > 0) }
             if (safePlayables.isNotEmpty()) return safePlayables.maxByOrNull { it.finalScore }
         }
 
         // Group into presentations logically before scoring them against each other.
+        // We do not want an isolated MP4 ad url to beat an underlying HLS manifest just because of raw score.
         // We filter out high-probability ads AND explicitly reject known videos under 60 seconds (MIN_ACCEPTED_VIDEO_DURATION_SECONDS).
-        val safePlayables = playables.filter {
-            val isShortAd = it.durationSec in 1..59
-            !isShortAd && it.adScore == 0
-        }
+        val safePlayables = playables.filter { (it.durationSec == 0 || it.durationSec >= 60) && (it.adScore == 0 || it.finalScore > 0) }
 
         if (safePlayables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
 
@@ -444,7 +429,7 @@ class MediaDetectionEngine(private val context: Context) {
         // If no active manifests, check if we have a strong progressive presentation.
         if (progressives.isNotEmpty()) {
             // Find progressive streams that are actually playing and have decent duration/size, separating them from short pre-rolls
-            val strongProgressives = progressives.filter { it.isActivePlayer && !(it.durationSec in 1..59) && it.adScore == 0 }
+            val strongProgressives = progressives.filter { it.isActivePlayer && (it.durationSec == 0 || it.durationSec >= 60) && it.adScore == 0 }
             if (strongProgressives.isNotEmpty()) {
                 return strongProgressives.maxByOrNull { it.finalScore }
             }
