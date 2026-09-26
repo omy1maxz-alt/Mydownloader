@@ -2,11 +2,11 @@ package com.omymaxz.download
 
 data class MediaFile(
     val url: String,
-    var title: String,
+    val title: String,
     val mimeType: String,
     val quality: String,
     val category: MediaCategory,
-    var fileSize: String,
+    val fileSize: String,
     val language: String?,
     var isMainContent: Boolean,
     var referer: String? = null,

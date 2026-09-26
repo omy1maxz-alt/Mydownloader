@@ -65,7 +65,6 @@ import java.util.regex.Pattern
 import android.widget.LinearLayout
 
 class MainActivity : AppCompatActivity() {
-    private var isApiSnifferActive = false
 
     private val detectorHideHandler = Handler(Looper.getMainLooper())
     private val detectorHideRunnable = Runnable { findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = android.view.View.GONE }
@@ -116,9 +115,7 @@ class MainActivity : AppCompatActivity() {
         "outbrain.com", "taboola.com", "popads.net", "adnxs.com",
         "adsymptotic.com", "advertising.com", "adsystem.com",
         "profitableratecpm.com", "popunder.net", "pop-ads.com", "adcash.com",
-        "propellerads.com", "revcontent.com", "mgid.com",
-        "youtube.com/api/stats/ads", "youtube.com/pagead/", "youtube.com/ptracking",
-        "google.com/pagead/", "s.youtube.com/api/stats/ads"
+        "propellerads.com", "revcontent.com", "mgid.com"
     )
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private val fileChooserLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -167,20 +164,6 @@ class MainActivity : AppCompatActivity() {
             window.decorView.requestLayout()
             binding.rootContainer.requestLayout()
             binding.mainContent.requestLayout()
-        }
-
-        // Re-apply viewport configurations to prevent Android from aggressively resetting WideViewPort on rotation
-        val settings = webView.settings
-        if (isDesktopMode) {
-            settings.useWideViewPort = true
-            settings.loadWithOverviewMode = true
-            settings.builtInZoomControls = true
-            settings.displayZoomControls = false
-        } else {
-            settings.useWideViewPort = false
-            settings.loadWithOverviewMode = false
-            settings.builtInZoomControls = true
-            settings.displayZoomControls = false
         }
     }
 
@@ -1210,64 +1193,33 @@ private fun checkBatteryOptimization() {
 
                     injectAntiHijackingScripts(view)
 
-                    if (isApiSnifferActive) {
-                        val apiSnifferJsLocal = """
-                            (function() {
-                                if (window._apiSnifferInjected) return;
-                                window._apiSnifferInjected = true;
+                    val javascript = if (isDesktopMode) {
+                        """
+                        javascript:(function() {
+                            var vpf = document.querySelector('meta[name="viewport"]');
+                            if(vpf){ vpf.remove(); }
+                            var meta = document.createElement('meta');
+                            meta.setAttribute('name', 'viewport');
+                            meta.setAttribute('content', 'width=1920, user-scalable=yes, initial-scale=0.5');
+                            document.getElementsByTagName('head')[0].appendChild(meta);
 
-                                const originalFetch = window.fetch;
-                                window.fetch = async function(...args) {
-                                    const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : 'unknown');
-                                    try {
-                                        if (window.AndroidMediaState && window.AndroidMediaState.onApiSniffed) {
-                                            window.AndroidMediaState.onApiSniffed(url, "fetch");
-                                        }
-                                    } catch(e) {}
-                                    return originalFetch.apply(this, args);
-                                };
-
-                                const originalOpen = XMLHttpRequest.prototype.open;
-                                XMLHttpRequest.prototype.open = function(method, url) {
-                                    this._url = url;
-                                    return originalOpen.apply(this, arguments);
-                                };
-
-                                const originalSend = XMLHttpRequest.prototype.send;
-                                XMLHttpRequest.prototype.send = function(...args) {
-                                    try {
-                                        if (this._url && window.AndroidMediaState && window.AndroidMediaState.onApiSniffed) {
-                                            window.AndroidMediaState.onApiSniffed(this._url, "xhr");
-                                        }
-                                    } catch(e) {}
-                                    return originalSend.apply(this, args);
-                                };
-                            })();
-                        """.trimIndent()
-                        view?.evaluateJavascript(apiSnifferJsLocal, null)
+                            Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
+                            Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+                        })();
+                        """
+                    } else {
+                        """
+                        javascript:(function() {
+                            var vpf = document.querySelector('meta[name="viewport"]');
+                            if(vpf){ vpf.remove(); }
+                            var meta = document.createElement('meta');
+                            meta.setAttribute('name', 'viewport');
+                            meta.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=yes');
+                            document.getElementsByTagName('head')[0].appendChild(meta);
+                        })();
+                        """
                     }
-
-                    if (isDesktopMode) {
-                        val viewportJs = """
-                            (function() {
-                                var meta = document.querySelector('meta[name="viewport"]');
-                                if (!meta) {
-                                    meta = document.createElement('meta');
-                                    meta.name = 'viewport';
-                                    if (document.head) {
-                                        document.head.appendChild(meta);
-                                    } else {
-                                        return;
-                                    }
-                                }
-                                meta.setAttribute(
-                                    'content',
-                                    'width=1280, initial-scale=' + (window.innerWidth / 1280)
-                                );
-                            })();
-                        """.trimIndent()
-                        view?.evaluateJavascript(viewportJs, null)
-                    }
+                    view?.evaluateJavascript(javascript.trimIndent(), null)
 
                     // Polyfill screen.orientation.lock to prevent native player crashes
                     val polyfill = """
@@ -1418,21 +1370,16 @@ private fun checkBatteryOptimization() {
                         android.util.Log.i("iQIYI_Diagnostic", "Method=${request?.method}, Referer=$reqReferer")
                     }
 
-                    val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-                    val isDetectionEnabled = settingsPrefs.getBoolean("MEDIA_DETECTION_ENABLED", true)
-
                     // Safely process through MediaDetectionEngine on background thread
-                    if (isDetectionEnabled) {
-                        mediaEngine.processRequest(url, reqReferer, userAgent)
-                    }
+                    mediaEngine.processRequest(url, reqReferer, userAgent)
 
                     if (isUrlWhitelisted(url)) {
                         return super.shouldInterceptRequest(view, request)
                     }
-                    if (isAdDomain(url) || url.contains("/pagead/") || url.contains("/api/stats/ads")) {
+                    if (isAdDomain(url)) {
                         return createEmptyResponse()
                     }
-                    if (isDetectionEnabled && isMediaUrl(url)) {
+                    if (isMediaUrl(url)) {
                         if (isAdUrl(url)) {
                             android.util.Log.d("WebViewClient", "Ignoring AD request: $url")
                             return super.shouldInterceptRequest(view, request)
@@ -1500,11 +1447,6 @@ private fun checkBatteryOptimization() {
 
                 private fun createEmptyResponse(): WebResourceResponse {
                     return WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
-                }
-
-                override fun onReceivedSslError(view: WebView?, handler: android.webkit.SslErrorHandler?, error: android.net.http.SslError?) {
-                    // Ignore SSL certificate errors to allow certain proxy or expired-cert websites to load
-                    handler?.proceed()
                 }
             }
             webChromeClient = object : WebChromeClient() {
@@ -2078,49 +2020,10 @@ private fun checkBatteryOptimization() {
     }
 
     private fun injectAntiHijackingScripts(view: WebView?) {
-        val url = view?.url ?: ""
-        if (url.contains("youtube.com") || url.contains("youtu.be")) {
-            val ytAdblockJs = """
-            javascript:(function() {
-                // CSS to hide ad containers
-                var style = document.createElement('style');
-                style.innerHTML = `
-                    ytd-promoted-sparkles-web-renderer,
-                    ytd-display-ad-renderer,
-                    ytd-in-feed-ad-layout-renderer,
-                    .ytd-video-masthead-ad-v3-renderer,
-                    .ytd-promoted-sparkles-text-search-renderer,
-                    .ytd-compact-promoted-video-renderer,
-                    .ytp-ad-overlay-container,
-                    .ytp-ad-message-container,
-                    .ytp-ad-action-interstitial,
-                    .ytp-ad-module,
-                    #masthead-ad,
-                    #player-ads {
-                        display: none !important;
-                    }
-                `;
-                document.head.appendChild(style);
-
-                // Auto-skip pre-roll ads if they appear in the player
-                setInterval(function() {
-                    var skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button');
-                    if (skipBtn) {
-                        skipBtn.click();
-                    }
-                    var adOverlay = document.querySelector('.ytp-ad-overlay-close-button');
-                    if (adOverlay) {
-                        adOverlay.click();
-                    }
-                }, 1000);
-            })();
-            """.trimIndent()
-            view?.evaluateJavascript(ytAdblockJs, null)
-        }
-
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         if (!prefs.getBoolean("block_popups_redirects", true)) return
 
+        val url = view?.url ?: ""
         val host = android.net.Uri.parse(url).host?.lowercase() ?: ""
         // Do not inject anti-hijacking script on whitelisted domains
         if (isUrlWhitelisted(url)) {
@@ -3680,38 +3583,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }, { mediaFile ->
             // Long press to "Open With" (do not dismiss to keep scroll position)
             openMediaWith(mediaFile)
-        }, { mediaFile, position ->
-            val cand = mediaEngine.getCandidate(mediaFile.url)
-            if (cand != null) {
-                mediaEngine.parseMetadataAsync(cand, isManual = true) { updatedCand ->
-                    // Update MediaFile info from Candidate
-                    if (updatedCand.durationSec > 0) {
-                        val hours = updatedCand.durationSec / 3600
-                        val mins = (updatedCand.durationSec % 3600) / 60
-                        val secs = updatedCand.durationSec % 60
-                        val durStr = if (hours > 0) "${hours}h${mins}m${secs}s" else "${mins}m${secs}s"
-
-                        // We append this explicitly so it shows up via MediaFile's standard title binding logic
-                        if (!mediaFile.title.contains("Duration:")) {
-                            mediaFile.title += "\nDuration: $durStr"
-                        }
-                    }
-                    if (updatedCand.resolution != null && !mediaFile.title.contains("Resolution:")) {
-                        mediaFile.title += " | Resolution: ${updatedCand.resolution}"
-                    }
-                    if (updatedCand.estimatedSize != null) {
-                        val mb = updatedCand.estimatedSize!! / (1024.0 * 1024.0)
-                        mediaFile.fileSize = "~%.1fMB".format(mb)
-                    } else {
-                        mediaFile.fileSize = "Unknown"
-                    }
-
-                    currentMediaListAdapter?.notifyItemChanged(position)
-                }
-            } else {
-                Toast.makeText(this, "Could not find underlying candidate to analyze", Toast.LENGTH_SHORT).show()
-                currentMediaListAdapter?.notifyItemChanged(position)
-            }
         })
         dialog.setOnDismissListener {
             currentMediaListAdapter = null
@@ -4899,7 +4770,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
 
     private fun launchApiSniffer() {
-        isApiSnifferActive = true
         Toast.makeText(this, "Injecting API Sniffer...", Toast.LENGTH_SHORT).show()
         val script = """
             (function() {
@@ -5097,7 +4967,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .show()
     }
     private fun showMasterSettingsDialog() {
-        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache", "Popup & Redirect Blocker", "Confirm Navigation", "View Export Logs", "Media Detection Settings", "Floating Detector Settings")
+        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache", "Popup & Redirect Blocker", "Confirm Navigation", "View Export Logs")
         createThemedDialogBuilder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
@@ -5119,82 +4989,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     8 -> showPopupBlockerSettingsDialog()
                     9 -> showConfirmNavigationSettingsDialog()
                     10 -> showExportLogsDialog()
-                    11 -> showMediaDetectionSettingsDialog()
-                    12 -> showFloatingDetectorSettingsDialog()
                 }
             }
-            .show()
-    }
-
-    private fun showMediaDetectionSettingsDialog() {
-        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-        val isDetectionEnabled = prefs.getBoolean("MEDIA_DETECTION_ENABLED", true)
-        val isAutoAnalyzeEnabled = prefs.getBoolean("AUTO_ANALYZE_MEDIA", false) // Default false as requested
-
-        val items = arrayOf(
-            "Media Detection: ${if (isDetectionEnabled) "ON" else "OFF"}",
-            "Automatic Metadata Analysis: ${if (isAutoAnalyzeEnabled) "ON" else "OFF"}"
-        )
-
-        createThemedDialogBuilder(this)
-            .setTitle("Media Detection Settings")
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> {
-                        prefs.edit().putBoolean("MEDIA_DETECTION_ENABLED", !isDetectionEnabled).apply()
-                        showMediaDetectionSettingsDialog() // Refresh
-                    }
-                    1 -> {
-                        prefs.edit().putBoolean("AUTO_ANALYZE_MEDIA", !isAutoAnalyzeEnabled).apply()
-                        showMediaDetectionSettingsDialog() // Refresh
-                    }
-                }
-            }
-            .setPositiveButton("Close", null)
-            .show()
-    }
-
-    private fun showFloatingDetectorSettingsDialog() {
-        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-        val isFloatingEnabled = prefs.getBoolean("FLOATING_DETECTOR_ENABLED", true)
-        val minDuration = prefs.getInt("FLOATING_MIN_DURATION", 60)
-
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(40, 20, 40, 20)
-        }
-
-        val toggleBtn = Button(this).apply {
-            text = "Floating Detector: ${if (isFloatingEnabled) "ON" else "OFF"}"
-            setOnClickListener {
-                val newState = !prefs.getBoolean("FLOATING_DETECTOR_ENABLED", true)
-                prefs.edit().putBoolean("FLOATING_DETECTOR_ENABLED", newState).apply()
-                text = "Floating Detector: ${if (newState) "ON" else "OFF"}"
-            }
-        }
-        layout.addView(toggleBtn)
-
-        val durationLabel = TextView(this).apply {
-            text = "Minimum Duration (seconds):"
-            setPadding(0, 30, 0, 10)
-        }
-        layout.addView(durationLabel)
-
-        val durationInput = EditText(this).apply {
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-            setText(minDuration.toString())
-        }
-        layout.addView(durationInput)
-
-        createThemedDialogBuilder(this)
-            .setTitle("Floating Detector Settings")
-            .setView(layout)
-            .setPositiveButton("Save") { _, _ ->
-                val newDur = durationInput.text.toString().toIntOrNull() ?: 60
-                prefs.edit().putInt("FLOATING_MIN_DURATION", newDur).apply()
-                Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -5731,14 +5527,13 @@ private fun showUserAgentDialog() {
             val newUserAgent: String
             when (which) {
                1, 2 -> { 
-                    isDesktopMode = true
-                    settings.useWideViewPort = true
-                    settings.loadWithOverviewMode = true
-                    settings.setSupportZoom(true)
-                    webView.setInitialScale(100)
-                    settings.builtInZoomControls = true
-                    settings.displayZoomControls = false
-                    settings.textZoom = 100
+    isDesktopMode = true
+    settings.useWideViewPort = true
+    settings.loadWithOverviewMode = true
+    settings.setSupportZoom(true)
+    settings.builtInZoomControls = true
+    settings.displayZoomControls = false
+    settings.textZoom = 100
 
                     newUserAgent = if (which == 1) {
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -5750,17 +5545,23 @@ private fun showUserAgentDialog() {
                     isDesktopMode = false
                     settings.useWideViewPort = false
                     settings.loadWithOverviewMode = false
-                    settings.setSupportZoom(true) // Maintain standard zoom behaviors on mobile
-                    webView.setInitialScale(0)
-                    settings.builtInZoomControls = true
-                    settings.displayZoomControls = false
+                    settings.setSupportZoom(false)
+                    settings.builtInZoomControls = false
                     settings.textZoom = 100
-                    newUserAgent = cachedUserAgent ?: "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    newUserAgent = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 }
             }
 
             settings.userAgentString = newUserAgent
+if (isDesktopMode) {
+    webView.postDelayed({
+        webView.evaluateJavascript(
+            "document.body.style.zoom = '0.5';", null
+        )
+    }, 100)
+}
             webView.reload()
+            webView.requestLayout()
 
             Toast.makeText(this, "Switched to ${userAgents[which]}", Toast.LENGTH_SHORT).show()
         }

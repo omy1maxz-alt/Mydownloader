@@ -14,8 +14,7 @@ import android.net.Uri
 class MediaListAdapter(
     var mediaFiles: MutableList<MediaFile>,
     private val onItemClicked: (MediaFile) -> Unit,
-    private val onItemLongClicked: (MediaFile) -> Unit,
-    private val onAnalyzeClicked: ((MediaFile, Int) -> Unit)? = null
+    private val onItemLongClicked: (MediaFile) -> Unit
 ) : RecyclerView.Adapter<MediaListAdapter.MediaViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MediaViewHolder {
@@ -56,11 +55,10 @@ class MediaListAdapter(
 
     override fun getItemCount(): Int = mediaFiles.size
 
-    inner class MediaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class MediaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val titleTextView: TextView = itemView.findViewById(R.id.media_title)
         private val typeTextView: TextView = itemView.findViewById(R.id.media_type)
         private val thumbnailView: ImageView = itemView.findViewById(R.id.media_thumbnail)
-        private val btnAnalyzeMedia: android.widget.Button? = itemView.findViewById(R.id.btn_analyze_media)
 
         fun bind(mediaFile: MediaFile) {
             val categoryIndicator = when (mediaFile.category) {
@@ -95,24 +93,6 @@ class MediaListAdapter(
                 mediaFile.isMainContent && mediaFile.category == MediaCategory.VIDEO -> 16f
                 mediaFile.category == MediaCategory.VIDEO -> 14f
                 else -> 12f
-            }
-
-            if (mediaFile.category == MediaCategory.VIDEO) {
-                val needsAnalysis = mediaFile.fileSize == "Unknown" || !mediaFile.title.contains("Duration:")
-                if (needsAnalysis && onAnalyzeClicked != null) {
-                    btnAnalyzeMedia?.visibility = View.VISIBLE
-                    btnAnalyzeMedia?.text = "Analyze Media"
-                    btnAnalyzeMedia?.isEnabled = true
-                    btnAnalyzeMedia?.setOnClickListener {
-                        btnAnalyzeMedia.text = "Analyzing..."
-                        btnAnalyzeMedia.isEnabled = false
-                        onAnalyzeClicked.invoke(mediaFile, absoluteAdapterPosition)
-                    }
-                } else {
-                    btnAnalyzeMedia?.visibility = View.GONE
-                }
-            } else {
-                btnAnalyzeMedia?.visibility = View.GONE
             }
         }
 

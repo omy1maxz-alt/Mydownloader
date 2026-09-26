@@ -24,9 +24,6 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
 import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.exoplayer.dash.manifest.DashManifestParser
-import androidx.media3.exoplayer.dash.manifest.DashManifest
-import androidx.media3.exoplayer.dash.DashSegmentIndex
 import com.arthenica.ffmpegkit.FFmpegKit
 import kotlinx.coroutines.*
 import java.io.File
@@ -114,11 +111,6 @@ class HlsExportService : Service() {
                 .setMimeType(mimeType)
                 .setStreamKeys(streamKeys)
                 .build()
-        } else if (bundledMediaItem == null && videoUrl != null) {
-            bundledMediaItem = androidx.media3.common.MediaItem.Builder()
-                .setUri(videoUrl)
-                .setMimeType(mimeType)
-                .build()
         }
 
         intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
@@ -137,8 +129,12 @@ class HlsExportService : Service() {
         serviceScope.launch {
             try {
                 when {
-                    extraDownloadId != null -> exportFromDownloadId(extraDownloadId, title, mimeType)
+                    extraDownloadId != null -> {
+                        writeExportLog("source=PATH_C_DOWNLOAD_ID\ndownload_id=$extraDownloadId\nhas_media_item_bundle=${bundledMediaItem != null}\nhas_video_url=${videoUrl != null}\ninput_uri=null\nmimeType=$mimeType\nexport_method=exportFromDownloadId")
+                        exportFromDownloadId(extraDownloadId, title, mimeType)
+                    }
                     bundledMediaItem != null -> {
+                        writeExportLog("source=PATH_A_CACHE\ndownload_id=null\nhas_media_item_bundle=true\nhas_video_url=${videoUrl != null}\ninput_uri=$videoUrl\nmimeType=$mimeType\nexport_method=muxToMp4FromCache\ncache_export=true")
                         // Ensure direct progressive URLs that bypass cache aren't sent to the manual cache-assembly script
                         if (mimeType == androidx.media3.common.MimeTypes.VIDEO_MP4 || mimeType == androidx.media3.common.MimeTypes.VIDEO_WEBM || mimeType == androidx.media3.common.MimeTypes.VIDEO_MATROSKA) {
                              if (videoUrl != null) {
@@ -178,6 +174,7 @@ class HlsExportService : Service() {
                         }
                     }
                     videoUrl != null -> {
+                        writeExportLog("source=PATH_B_NETWORK_FFMPEG\ndownload_id=null\nhas_media_item_bundle=false\nhas_video_url=true\ninput_uri=$videoUrl\nmimeType=$mimeType\nexport_method=muxToMp4\ncache_export=false")
                         val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
                         muxToMp4(finalUrl, title) // Fallback to FFmpeg
                     }
@@ -187,15 +184,7 @@ class HlsExportService : Service() {
                 Log.e(TAG, "Export failed", t)
                 withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export failed: ${t.message}", Toast.LENGTH_LONG).show() }
             } finally {
-                if (activeExports.decrementAndGet() == 0) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        stopForeground(STOP_FOREGROUND_REMOVE)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        stopForeground(true)
-                    }
-                    stopSelf()
-                }
+                if (activeExports.decrementAndGet() == 0) stopSelf()
             }
         }
         return START_NOT_STICKY
@@ -211,13 +200,12 @@ class HlsExportService : Service() {
 
         // Check if fully cached. If yes, use Transformer. If not, fallback to FFmpeg network download.
         if (download.state == Download.STATE_COMPLETED) {
+            val downloadRequestMimeType = download.request.mimeType ?: mimeType
             // Strip streamKeys from the download mediaItem to prevent track index mismatch during export
             val rawMediaItem = download.request.toMediaItem()
-            // CRITICAL FIX: The original download request might not have stored the explicit MIME type,
-            // relying on its own extension parser. We MUST re-inject the explicitly passed MIME type
-            // into the MediaItem here so Transformer doesn't fallback to ProgressiveMediaPeriod on extensionless URLs.
+            // Ensure we use the exact MIME type stored in the DownloadRequest, with a fallback if needed
             val mediaItem = rawMediaItem.buildUpon()
-                .setMimeType(mimeType)
+                .setMimeType(downloadRequestMimeType)
                 .setStreamKeys(emptyList())
                 .build()
             try {
@@ -235,27 +223,21 @@ class HlsExportService : Service() {
                     }
                 } catch (cacheEx: Exception) {
                     writeExportLog("Cache export failed, falling back to network FFmpeg: ${cacheEx.message}")
-                    if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
-                        withContext(Dispatchers.Main) { android.widget.Toast.makeText(applicationContext, "Starting background download...", android.widget.Toast.LENGTH_SHORT).show() }
-                        val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(title, android.net.Uri.parse(url)).build()
-                        androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, request, false)
-                    } else {
-                        val finalUrl = resolveVariantUrl(url, streamKeysStr)
-                        muxToMp4(finalUrl, title)
-                    }
+                    // CRITICAL FIX: We are already inside exportFromDownloadId, meaning DownloadManager finished.
+                    // DO NOT call sendAddDownload() here, it causes an infinite recursion bug where Download completes,
+                    // Export fails, and it asks to Download again using a cached URI.
+                    // Instead, fallback directly to FFmpeg muxToMp4 using the original URI from the request.
+                    val finalUrl = resolveVariantUrl(url, streamKeysStr)
+                    muxToMp4(finalUrl, title)
                 }
             }
         } else {
             val url = download.request.uri.toString()
             val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
-            if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
-                withContext(Dispatchers.Main) { android.widget.Toast.makeText(applicationContext, "Starting background download...", android.widget.Toast.LENGTH_SHORT).show() }
-                val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(title, android.net.Uri.parse(url)).build()
-                androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, request, false)
-            } else {
-                val finalUrl = resolveVariantUrl(url, streamKeysStr)
-                muxToMp4(finalUrl, title)
-            }
+            // CRITICAL FIX: Same as above. Do not call sendAddDownload if the download failed or was interrupted.
+            // Just fallback to FFmpeg network download.
+            val finalUrl = resolveVariantUrl(url, streamKeysStr)
+            muxToMp4(finalUrl, title)
         }
     }
 
@@ -458,124 +440,16 @@ class HlsExportService : Service() {
                 cacheOnlyFactory.close()
             }
 
-            if (masterText.isEmpty()) {
-                throw Exception("Failed to fetch manifest")
+            if (masterText.isEmpty() || !masterText.contains("#EXTM3U")) {
+                throw Exception("Failed to fetch or parse master playlist")
             }
+            val masterLines = masterText.lines()
 
-            val isDash = masterText.contains("<MPD")
-            val isHls = masterText.contains("#EXTM3U")
+            // Parse the master playlist using Media3's official parser to guarantee track group index alignment
+            var videoVariantUrl = masterUrl
+            var audioVariantUrl: String? = null
 
-            if (!isDash && !isHls) {
-                throw Exception("Unrecognized manifest format")
-            }
-
-            val ffmpegArgs = mutableListOf<String>()
-
-            if (isDash) {
-                writeExportLog("Parsing DASH manifest...")
-                val streamKeys = streamKeyStrings?.mapNotNull {
-                    val parts = it.split(",")
-                    if (parts.size >= 2) androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt(), parts.getOrNull(2)?.toInt() ?: 0) else null
-                } ?: emptyList()
-
-                val parser = DashManifestParser()
-                val masterInputStream = masterText.byteInputStream(Charsets.UTF_8)
-                val dashManifest = parser.parse(android.net.Uri.parse(masterUrl), masterInputStream)
-                val filteredManifest = dashManifest.copy(streamKeys)
-
-                val videoSegments = mutableListOf<File>()
-                val audioSegments = mutableListOf<File>()
-
-                for (periodIndex in 0 until filteredManifest.getPeriodCount()) {
-                    val period = filteredManifest.getPeriod(periodIndex)
-                    for (adaptationSet in period.adaptationSets) {
-                        val isVideo = adaptationSet.type == androidx.media3.common.C.TRACK_TYPE_VIDEO
-                        for (representation in adaptationSet.representations) {
-                            val repId = representation.format.id ?: "unknown"
-                            val index = representation.index
-                            if (index == null) continue
-
-                            val repBaseUrl = representation.baseUrls.firstOrNull()?.url ?: masterUrl
-                            val localFile = File(tmpDir, "dash_${if (isVideo) "v" else "a"}_${repId}.mp4")
-                            val fos = java.io.FileOutputStream(localFile)
-
-                            suspend fun writeRangedUri(rangedUri: androidx.media3.exoplayer.dash.manifest.RangedUri?) {
-                                if (rangedUri == null) return
-                                val segmentUrl = rangedUri.resolveUri(repBaseUrl).toString()
-                                val dataSpecBuilder = androidx.media3.datasource.DataSpec.Builder()
-                                    .setUri(android.net.Uri.parse(segmentUrl))
-
-                                if (rangedUri.length != androidx.media3.common.C.LENGTH_UNSET.toLong()) {
-                                    dataSpecBuilder.setPosition(rangedUri.start)
-                                    dataSpecBuilder.setLength(rangedUri.length)
-                                }
-
-                                val baseSpec = dataSpecBuilder.build()
-                                val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(baseSpec)
-                                val segmentSpec = baseSpec.buildUpon().setKey(cacheKey).build()
-
-                                try {
-                                    cacheOnlyFactory.open(segmentSpec)
-                                    val buffer = ByteArray(1024 * 64)
-                                    var bytesRead: Int
-                                    while (cacheOnlyFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
-                                        fos.write(buffer, 0, bytesRead)
-                                    }
-                                } catch (e: Exception) {
-                                    try {
-                                        networkFactory.open(segmentSpec)
-                                        val buffer = ByteArray(1024 * 64)
-                                        var bytesRead: Int
-                                        while (networkFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
-                                            fos.write(buffer, 0, bytesRead)
-                                        }
-                                    } finally {
-                                        try { networkFactory.close() } catch(e: Exception) {}
-                                    }
-                                } finally {
-                                    try { cacheOnlyFactory.close() } catch(e: Exception) {}
-                                }
-                            }
-
-                            writeRangedUri(representation.initializationUri)
-                            val segmentCount = index.getSegmentCount(androidx.media3.common.C.TIME_UNSET)
-                            for (i in 0 until segmentCount) {
-                                val segmentNum = index.getFirstSegmentNum() + i
-                                writeRangedUri(index.getSegmentUrl(segmentNum))
-                            }
-
-                            fos.close()
-                            if (isVideo) videoSegments.add(localFile) else audioSegments.add(localFile)
-                        }
-                    }
-                }
-
-                if (videoSegments.isEmpty() && audioSegments.isEmpty()) {
-                    throw Exception("No DASH segments found to export")
-                }
-
-                val videoFile = videoSegments.firstOrNull()
-                val audioFile = audioSegments.firstOrNull()
-
-                if (videoFile != null) {
-                    ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", videoFile.absolutePath))
-                }
-                if (audioFile != null) {
-                    ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", audioFile.absolutePath))
-                    if (videoFile != null) {
-                        ffmpegArgs.addAll(listOf("-map", "0:v:0", "-map", "1:a:0"))
-                    } else {
-                        ffmpegArgs.addAll(listOf("-map", "0:a:0"))
-                    }
-                } else if (videoFile != null) {
-                    ffmpegArgs.addAll(listOf("-map", "0:v:0", "-map", "0:a?"))
-                }
-            } else {
-                val masterLines = masterText.lines()
-                var videoVariantUrl = masterUrl
-                var audioVariantUrl: String? = null
-
-                if (masterText.contains(".m3u8", true) && !streamKeyStrings.isNullOrEmpty()) {
+            if (masterText.contains(".m3u8", true) && !streamKeyStrings.isNullOrEmpty()) {
                 try {
                     val streamKeys = streamKeyStrings.mapNotNull {
                         val parts = it.split(",")
@@ -937,14 +811,12 @@ class HlsExportService : Service() {
 
             writeExportLog("Successfully exported cached segments to tmp dir. Muxing to MP4 using FFmpeg.")
 
-                ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", videoPlaylistFile.absolutePath))
-                if (audioPlaylistFile != null) {
-                    ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", audioPlaylistFile.absolutePath, "-map", "0:v:0", "-map", "1:a:0"))
-                } else {
-                    ffmpegArgs.addAll(listOf("-map", "0:v:0", "-map", "0:a?"))
-                }
-            } // End of HLS else branch
-
+            val ffmpegArgs = mutableListOf("-allowed_extensions", "ALL", "-i", videoPlaylistFile.absolutePath)
+            if (audioPlaylistFile != null) {
+                ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", audioPlaylistFile.absolutePath, "-map", "0:v:0", "-map", "1:a:0"))
+            } else {
+                ffmpegArgs.addAll(listOf("-map", "0:v:0", "-map", "0:a?"))
+            }
             ffmpegArgs.addAll(listOf("-c", "copy", "-bsf:a", "aac_adtstoasc", "-movflags", "+faststart", out.absolutePath))
 
             val session = FFmpegKit.executeWithArguments(ffmpegArgs.toTypedArray())

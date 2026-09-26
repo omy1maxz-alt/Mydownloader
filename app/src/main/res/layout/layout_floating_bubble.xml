@@ -35,7 +35,7 @@
         <!-- Expanded view -->
         <LinearLayout
             android:id="@+id/expanded_details"
-            android:layout_width="320dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:visibility="gone"
@@ -44,68 +44,38 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="File(s) detected!"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:id="@+id/txt_empty_info"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Information!\nNo file to download\n1) If the Video player provides multiple video source and video is not captured, please select different video source in the player\n2) You can change video resolution in video player (if available) for high/low quality video\n3) Use Preview or Stream menu option if the size is shown as unknown\nNote: File size prefixed by ~ represents guessed file size and will differ with actual size (sometimes by a large margin)"
+                android:text="MEDIA DETECTOR"
                 android:textColor="#AAAAAA"
                 android:textSize="12sp"
-                android:lineSpacingExtra="2dp"
-                android:visibility="visible"
-                android:layout_marginBottom="8dp"/>
+                android:textStyle="bold" />
 
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:fillViewport="true">
-                <LinearLayout
-                    android:id="@+id/list_media_items"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
-            </ScrollView>
+            <TextView
+                android:id="@+id/txt_detector_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="● NO MEDIA"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
 
-            <!-- Bottom controls -->
-            <LinearLayout
+            <TextView
+                android:id="@+id/txt_detector_details"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="Candidates: 0
+Verified: 0"
+                android:textColor="#DDDDDD"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+
+            <Button
+                android:id="@+id/btn_open_player"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginTop="8dp"
-                android:weightSum="3">
-                <Button
-                    android:id="@+id/btn_clear_all"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="CLEAR ALL"
-                    android:background="@android:color/transparent"
-                    android:textColor="#BA68C8"/>
-                <Button
-                    android:id="@+id/btn_sort"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="SORT"
-                    android:background="@android:color/transparent"
-                    android:textColor="#BA68C8"/>
-                <Button
-                    android:id="@+id/btn_close_expanded"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="CLOSE"
-                    android:background="@android:color/transparent"
-                    android:textColor="#BA68C8"/>
-            </LinearLayout>
-
+                android:text="Open in Custom Player"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"/>
         </LinearLayout>
     </LinearLayout>
 
