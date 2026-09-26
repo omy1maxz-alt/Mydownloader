@@ -86,43 +86,73 @@ class FloatingBubbleService : Service() {
         if (!isDetectorMode || bubbleView == null) return
 
         val txtBadge = bubbleView?.findViewById<TextView>(R.id.txt_bubble_badge)
-        val txtStatus = bubbleView?.findViewById<TextView>(R.id.txt_detector_status)
-        val txtDetails = bubbleView?.findViewById<TextView>(R.id.txt_detector_details)
-        val btnOpenPlayer = bubbleView?.findViewById<Button>(R.id.btn_open_player)
+        val txtEmptyInfo = bubbleView?.findViewById<TextView>(R.id.txt_empty_info)
+        val listMediaItems = bubbleView?.findViewById<LinearLayout>(R.id.list_media_items)
 
         val engine = MediaDetectionEngine.instance ?: return
 
-        val candidates = engine.getUniquePresentations()
-        val verifiedPlayable = candidates.find { it.isActivePlayer && it.durationSec >= 60 }
-        val bestCand = engine.getBestCandidate()
+        // Filter out candidates that are explicitly ads or strongly appear to be unwanted short previews
+        // We do NOT modify the engine's internal list, we just filter what we show here.
+        val candidates = engine.getUniquePresentations().filter {
+            !it.isExplicitAd && !(it.durationSec in 1..59 && !it.isActivePlayer)
+        }
 
         txtBadge?.text = "[ ${candidates.size} ]"
 
-        if (verifiedPlayable != null || bestCand != null) {
-            val mainCand = verifiedPlayable ?: bestCand!!
-            txtStatus?.text = "● PLAYBACK VERIFIED"
-            txtStatus?.setTextColor(android.graphics.Color.GREEN)
+        if (candidates.isEmpty()) {
+            txtEmptyInfo?.visibility = View.VISIBLE
+            listMediaItems?.removeAllViews()
+            return
+        } else {
+            txtEmptyInfo?.visibility = View.GONE
+        }
 
-            val typeStr = if (mainCand.isManifest) "HLS/DASH" else "Progressive"
-            val durStr = if (mainCand.durationSec > 0) "${mainCand.durationSec}s" else "Unknown"
-            val scoreStr = mainCand.finalScore
+        // Rebuild list
+        listMediaItems?.removeAllViews()
+        val inflater = LayoutInflater.from(this)
 
-            txtDetails?.text = "$typeStr \nDur: $durStr \nScore: $scoreStr \nConf: ${mainCand.confidence}\nStreams: ${candidates.size}"
+        for (candidate in candidates.sortedByDescending { it.finalScore }) {
+            val itemView = inflater.inflate(R.layout.item_floating_media, listMediaItems, false)
 
-            btnOpenPlayer?.visibility = View.VISIBLE
-            btnOpenPlayer?.setOnClickListener {
+            val txtUrl = itemView.findViewById<TextView>(R.id.txt_url)
+            val txtSize = itemView.findViewById<TextView>(R.id.txt_size)
+            val txtParts = itemView.findViewById<TextView>(R.id.txt_parts)
+            val txtResolution = itemView.findViewById<TextView>(R.id.txt_resolution)
+            val txtDuration = itemView.findViewById<TextView>(R.id.txt_duration)
+            val btnAction = itemView.findViewById<Button>(R.id.btn_action)
+
+            txtUrl.text = candidate.url
+
+            val sizeStr = candidate.estimatedSize?.let {
+                val mb = it / (1024.0 * 1024.0)
+                "~%.1fMB".format(mb)
+            } ?: "Unknown"
+            txtSize.text = "Size: $sizeStr"
+
+            val partsStr = candidate.segmentCount?.let { "$it parts" } ?: if (candidate.isManifest) "Multiple parts" else "1 part"
+            txtParts.text = "Parts: $partsStr"
+
+            val resStr = candidate.resolution ?: "Unknown"
+            txtResolution.text = "Resolution: $resStr"
+
+            val durStr = if (candidate.durationSec > 0) {
+                val hours = candidate.durationSec / 3600
+                val mins = (candidate.durationSec % 3600) / 60
+                val secs = candidate.durationSec % 60
+                if (hours > 0) "${hours}h${mins}m${secs}s" else "${mins}m${secs}s"
+            } else "Unknown"
+            txtDuration.text = "Duration: $durStr"
+
+            btnAction.setOnClickListener {
                 val launchIntent = Intent(this@FloatingBubbleService, CustomPlayerActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mainCand.url)
+                    putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, candidate.url)
                     putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, "Detected Media")
                 }
                 startActivity(launchIntent)
             }
-        } else {
-            txtStatus?.text = "● NO VERIFIED MEDIA"
-            txtStatus?.setTextColor(android.graphics.Color.YELLOW)
-            txtDetails?.text = "Streams: ${candidates.size}"
-            btnOpenPlayer?.visibility = View.GONE
+
+            listMediaItems?.addView(itemView)
         }
     }
 
@@ -161,6 +191,19 @@ class FloatingBubbleService : Service() {
 
             closeButton.setOnClickListener {
                 stopSelf()
+            }
+
+            val btnClearAll = bubbleView!!.findViewById<Button>(R.id.btn_clear_all)
+            val btnCloseExpanded = bubbleView!!.findViewById<Button>(R.id.btn_close_expanded)
+
+            btnClearAll?.setOnClickListener {
+                MediaDetectionEngine.instance?.clearCandidates()
+                updateDetectorState()
+            }
+
+            btnCloseExpanded?.setOnClickListener {
+                isExpanded = false
+                expandedDetails.visibility = View.GONE
             }
 
             bubbleContainer.setOnTouchListener(object : View.OnTouchListener {
