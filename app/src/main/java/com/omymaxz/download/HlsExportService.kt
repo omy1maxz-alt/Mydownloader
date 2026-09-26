@@ -187,7 +187,15 @@ class HlsExportService : Service() {
                 Log.e(TAG, "Export failed", t)
                 withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export failed: ${t.message}", Toast.LENGTH_LONG).show() }
             } finally {
-                if (activeExports.decrementAndGet() == 0) stopSelf()
+                if (activeExports.decrementAndGet() == 0) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        stopForeground(true)
+                    }
+                    stopSelf()
+                }
             }
         }
         return START_NOT_STICKY
