@@ -2,6 +2,9 @@ package com.omymaxz.download
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import android.webkit.CookieManager
 import java.net.URL
 
@@ -202,6 +205,7 @@ class MediaDetectionEngine(private val context: Context) {
         }
 
         Log.d(TAG, "New Candidate Tracking: $url | type=$type | manifest=$isManifest")
+        parseMetadataAsync(candidate)
         return candidate
     }
 
@@ -308,6 +312,7 @@ class MediaDetectionEngine(private val context: Context) {
                     isProgressiveFinal = true
                 )
                 candidates[url] = candidate
+                parseMetadataAsync(candidate)
             }
         }
 
@@ -462,6 +467,11 @@ class MediaDetectionEngine(private val context: Context) {
 
     fun getCandidate(url: String): MediaCandidate? = candidates[url]
 
+    fun clearCandidates() {
+        candidates.clear()
+        Log.d(TAG, "All media candidates cleared manually.")
+    }
+
     fun logCandidatesState() {
         Log.d(TAG, "[MEDIA_SELECTION] === Current Candidates ===")
         var i = 1
@@ -486,7 +496,7 @@ class MediaDetectionEngine(private val context: Context) {
             "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver",
             "scorecardresearch", "criteo", "outbrain", "taboola", "moatads", "advertising",
             "tiktokcdn", "ad-site", "/heat-preview/", "heatmap", "preview_v", "/trailer/",
-            "/teaser/", "short_preview", "/preview/"
+            "/teaser/", "short_preview", "/preview/", "growcdnssedge.com", "fhcdnmedia.online", "mgstage.com"
         )
 
         return adKeywords.any { lowerUrl.contains(it) }
@@ -495,7 +505,85 @@ class MediaDetectionEngine(private val context: Context) {
     private fun applyAdPenalty(candidate: MediaCandidate) {
         if (isAdUrl(candidate.url)) {
             candidate.adScore += 50
+            candidate.isExplicitAd = true
         }
+    }
+
+    // --- Background Metadata Parsing ---
+
+    fun parseMetadataAsync(candidate: MediaCandidate) {
+        if (candidate.isMetadataParsed) return
+        if (candidate.isExplicitAd) return
+
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                if (candidate.isManifest || candidate.url.lowercase().contains(".m3u8")) {
+                    parseHlsMetadata(candidate)
+                } else if (candidate.type == "video/mp4" || candidate.isProgressiveFinal) {
+                    parseProgressiveMetadata(candidate)
+                }
+                candidate.isMetadataParsed = true
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to parse metadata for ${candidate.url}: ${e.message}")
+            }
+        }
+    }
+
+    private fun parseHlsMetadata(candidate: MediaCandidate) {
+        val connection = java.net.URL(candidate.url).openConnection() as java.net.HttpURLConnection
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+        candidate.userAgent?.let { connection.setRequestProperty("User-Agent", it) }
+        candidate.referer?.let { connection.setRequestProperty("Referer", it) }
+        candidate.cookie?.let { connection.setRequestProperty("Cookie", it) }
+
+        if (connection.responseCode in 200..299) {
+            val content = connection.inputStream.bufferedReader().use { it.readText() }
+
+            // Check if master playlist
+            if (content.contains("#EXT-X-STREAM-INF")) {
+                val resolutionMatch = Regex("RESOLUTION=(\\d+x\\d+)").find(content)
+                if (resolutionMatch != null) candidate.resolution = resolutionMatch.groupValues[1]
+
+                val bandwidthMatch = Regex("BANDWIDTH=(\\d+)").find(content)
+                if (bandwidthMatch != null) candidate.bandwidth = bandwidthMatch.groupValues[1].toLong()
+            }
+
+            // Check if media playlist
+            if (content.contains("#EXTINF")) {
+                val segments = Regex("#EXTINF:([\\d.]+),").findAll(content)
+                val duration = segments.sumOf { it.groupValues[1].toDouble() }
+                candidate.segmentCount = segments.count()
+                if (duration > 0 && candidate.durationSec == 0) {
+                    candidate.durationSec = duration.toInt()
+                }
+            }
+
+            // Estimate Size
+            if (candidate.bandwidth != null && candidate.durationSec > 0) {
+                // Bandwidth is usually bits per second. Divide by 8 for bytes.
+                candidate.estimatedSize = (candidate.bandwidth!! * candidate.durationSec) / 8
+            }
+        }
+        connection.disconnect()
+    }
+
+    private fun parseProgressiveMetadata(candidate: MediaCandidate) {
+        val connection = java.net.URL(candidate.url).openConnection() as java.net.HttpURLConnection
+        connection.requestMethod = "HEAD"
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+        candidate.userAgent?.let { connection.setRequestProperty("User-Agent", it) }
+        candidate.referer?.let { connection.setRequestProperty("Referer", it) }
+        candidate.cookie?.let { connection.setRequestProperty("Cookie", it) }
+
+        if (connection.responseCode in 200..299) {
+            val contentLength = connection.getHeaderField("Content-Length")
+            if (!contentLength.isNullOrEmpty()) {
+                candidate.estimatedSize = contentLength.toLongOrNull()
+            }
+        }
+        connection.disconnect()
     }
 
 }
