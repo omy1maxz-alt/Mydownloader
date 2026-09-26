@@ -457,7 +457,11 @@ class MediaDetectionEngine(private val context: Context) {
         }
 
         // Ultimate fallback: return the highest scored safe playable (which might be an inactive manifest or decent progressive)
-        return safePlayables.maxByOrNull { it.finalScore }
+        val bestFallback = safePlayables.maxByOrNull { it.finalScore }
+        if (bestFallback != null) {
+            Log.d(TAG, "[MEDIA_SELECTION] main presentation candidate=${bestFallback.url} (score: ${bestFallback.finalScore})")
+        }
+        return bestFallback
     }
 
     fun getCandidate(url: String): MediaCandidate? = candidates[url]
