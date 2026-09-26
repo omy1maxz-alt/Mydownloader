@@ -1418,8 +1418,13 @@ private fun checkBatteryOptimization() {
                         android.util.Log.i("iQIYI_Diagnostic", "Method=${request?.method}, Referer=$reqReferer")
                     }
 
+                    val settingsPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                    val isDetectionEnabled = settingsPrefs.getBoolean("MEDIA_DETECTION_ENABLED", true)
+
                     // Safely process through MediaDetectionEngine on background thread
-                    mediaEngine.processRequest(url, reqReferer, userAgent)
+                    if (isDetectionEnabled) {
+                        mediaEngine.processRequest(url, reqReferer, userAgent)
+                    }
 
                     if (isUrlWhitelisted(url)) {
                         return super.shouldInterceptRequest(view, request)
@@ -1427,7 +1432,7 @@ private fun checkBatteryOptimization() {
                     if (isAdDomain(url) || url.contains("/pagead/") || url.contains("/api/stats/ads")) {
                         return createEmptyResponse()
                     }
-                    if (isMediaUrl(url)) {
+                    if (isDetectionEnabled && isMediaUrl(url)) {
                         if (isAdUrl(url)) {
                             android.util.Log.d("WebViewClient", "Ignoring AD request: $url")
                             return super.shouldInterceptRequest(view, request)
@@ -3675,6 +3680,38 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }, { mediaFile ->
             // Long press to "Open With" (do not dismiss to keep scroll position)
             openMediaWith(mediaFile)
+        }, { mediaFile, position ->
+            val cand = mediaEngine.getCandidate(mediaFile.url)
+            if (cand != null) {
+                mediaEngine.parseMetadataAsync(cand, isManual = true) { updatedCand ->
+                    // Update MediaFile info from Candidate
+                    if (updatedCand.durationSec > 0) {
+                        val hours = updatedCand.durationSec / 3600
+                        val mins = (updatedCand.durationSec % 3600) / 60
+                        val secs = updatedCand.durationSec % 60
+                        val durStr = if (hours > 0) "${hours}h${mins}m${secs}s" else "${mins}m${secs}s"
+
+                        // We append this explicitly so it shows up via MediaFile's standard title binding logic
+                        if (!mediaFile.title.contains("Duration:")) {
+                            mediaFile.title += "\nDuration: $durStr"
+                        }
+                    }
+                    if (updatedCand.resolution != null && !mediaFile.title.contains("Resolution:")) {
+                        mediaFile.title += " | Resolution: ${updatedCand.resolution}"
+                    }
+                    if (updatedCand.estimatedSize != null) {
+                        val mb = updatedCand.estimatedSize!! / (1024.0 * 1024.0)
+                        mediaFile.fileSize = "~%.1fMB".format(mb)
+                    } else {
+                        mediaFile.fileSize = "Unknown"
+                    }
+
+                    currentMediaListAdapter?.notifyItemChanged(position)
+                }
+            } else {
+                Toast.makeText(this, "Could not find underlying candidate to analyze", Toast.LENGTH_SHORT).show()
+                currentMediaListAdapter?.notifyItemChanged(position)
+            }
         })
         dialog.setOnDismissListener {
             currentMediaListAdapter = null
@@ -5060,7 +5097,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .show()
     }
     private fun showMasterSettingsDialog() {
-        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache", "Popup & Redirect Blocker", "Confirm Navigation", "View Export Logs")
+        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache", "Popup & Redirect Blocker", "Confirm Navigation", "View Export Logs", "Media Detection Settings", "Floating Detector Settings")
         createThemedDialogBuilder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
@@ -5082,8 +5119,82 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     8 -> showPopupBlockerSettingsDialog()
                     9 -> showConfirmNavigationSettingsDialog()
                     10 -> showExportLogsDialog()
+                    11 -> showMediaDetectionSettingsDialog()
+                    12 -> showFloatingDetectorSettingsDialog()
                 }
             }
+            .show()
+    }
+
+    private fun showMediaDetectionSettingsDialog() {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val isDetectionEnabled = prefs.getBoolean("MEDIA_DETECTION_ENABLED", true)
+        val isAutoAnalyzeEnabled = prefs.getBoolean("AUTO_ANALYZE_MEDIA", false) // Default false as requested
+
+        val items = arrayOf(
+            "Media Detection: ${if (isDetectionEnabled) "ON" else "OFF"}",
+            "Automatic Metadata Analysis: ${if (isAutoAnalyzeEnabled) "ON" else "OFF"}"
+        )
+
+        createThemedDialogBuilder(this)
+            .setTitle("Media Detection Settings")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> {
+                        prefs.edit().putBoolean("MEDIA_DETECTION_ENABLED", !isDetectionEnabled).apply()
+                        showMediaDetectionSettingsDialog() // Refresh
+                    }
+                    1 -> {
+                        prefs.edit().putBoolean("AUTO_ANALYZE_MEDIA", !isAutoAnalyzeEnabled).apply()
+                        showMediaDetectionSettingsDialog() // Refresh
+                    }
+                }
+            }
+            .setPositiveButton("Close", null)
+            .show()
+    }
+
+    private fun showFloatingDetectorSettingsDialog() {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val isFloatingEnabled = prefs.getBoolean("FLOATING_DETECTOR_ENABLED", true)
+        val minDuration = prefs.getInt("FLOATING_MIN_DURATION", 60)
+
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 20, 40, 20)
+        }
+
+        val toggleBtn = Button(this).apply {
+            text = "Floating Detector: ${if (isFloatingEnabled) "ON" else "OFF"}"
+            setOnClickListener {
+                val newState = !prefs.getBoolean("FLOATING_DETECTOR_ENABLED", true)
+                prefs.edit().putBoolean("FLOATING_DETECTOR_ENABLED", newState).apply()
+                text = "Floating Detector: ${if (newState) "ON" else "OFF"}"
+            }
+        }
+        layout.addView(toggleBtn)
+
+        val durationLabel = TextView(this).apply {
+            text = "Minimum Duration (seconds):"
+            setPadding(0, 30, 0, 10)
+        }
+        layout.addView(durationLabel)
+
+        val durationInput = EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(minDuration.toString())
+        }
+        layout.addView(durationInput)
+
+        createThemedDialogBuilder(this)
+            .setTitle("Floating Detector Settings")
+            .setView(layout)
+            .setPositiveButton("Save") { _, _ ->
+                val newDur = durationInput.text.toString().toIntOrNull() ?: 60
+                prefs.edit().putInt("FLOATING_MIN_DURATION", newDur).apply()
+                Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 

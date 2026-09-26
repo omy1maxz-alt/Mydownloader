@@ -91,10 +91,13 @@ class FloatingBubbleService : Service() {
 
         val engine = MediaDetectionEngine.instance ?: return
 
+        val prefs = getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
+        val minDuration = prefs.getInt("FLOATING_MIN_DURATION", 60)
+
         // Filter out candidates that are explicitly ads or strongly appear to be unwanted short previews
         // We do NOT modify the engine's internal list, we just filter what we show here.
         val candidates = engine.getUniquePresentations().filter {
-            !it.isExplicitAd && !(it.durationSec in 1..59 && !it.isActivePlayer)
+            !it.isExplicitAd && !(it.durationSec > 0 && it.durationSec < minDuration && !it.isActivePlayer)
         }
 
         txtBadge?.text = "[ ${candidates.size} ]"

@@ -511,8 +511,11 @@ class MediaDetectionEngine(private val context: Context) {
 
     // --- Background Metadata Parsing ---
 
-    fun parseMetadataAsync(candidate: MediaCandidate) {
-        if (candidate.isMetadataParsed) return
+    fun parseMetadataAsync(candidate: MediaCandidate, isManual: Boolean = false, onComplete: ((MediaCandidate) -> Unit)? = null) {
+        val isAutoAnalyzeEnabled = context.getSharedPreferences("Settings", Context.MODE_PRIVATE).getBoolean("AUTO_ANALYZE_MEDIA", false)
+        if (!isManual && !isAutoAnalyzeEnabled) return
+
+        if (candidate.isMetadataParsed && !isManual) return
         if (candidate.isExplicitAd) return
 
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
@@ -525,6 +528,12 @@ class MediaDetectionEngine(private val context: Context) {
                 candidate.isMetadataParsed = true
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to parse metadata for ${candidate.url}: ${e.message}")
+            } finally {
+                if (isManual) {
+                    kotlinx.coroutines.withContext(Dispatchers.Main) {
+                        onComplete?.invoke(candidate)
+                    }
+                }
             }
         }
     }
