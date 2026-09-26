@@ -48,15 +48,7 @@ data class MediaCandidate(
     var isProgressiveFinal: Boolean = false,
     var isSegmentGroup: Boolean = false,
     val segmentUrls: MutableSet<String> = mutableSetOf(),
-    var pathBase: String? = null,
-
-    // Detailed Metadata for UI
-    var resolution: String? = null,
-    var bandwidth: Long? = null,
-    var estimatedSize: Long? = null,
-    var segmentCount: Int? = null,
-    var isMetadataParsed: Boolean = false,
-    var isExplicitAd: Boolean = false
+    var pathBase: String? = null
 ) {
     val finalScore: Int
         get() {

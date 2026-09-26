@@ -38,15 +38,8 @@ class LogcatViewerActivity : AppCompatActivity() {
         btnClear.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
                 Runtime.getRuntime().exec("logcat -c")
-                try {
-                    val exportLogFile = java.io.File(filesDir, "export_logs.txt")
-                    if (exportLogFile.exists()) {
-                        exportLogFile.delete()
-                    }
-                } catch(e: Exception) { }
                 withContext(Dispatchers.Main) {
                     tvLogs.text = ""
-                    Toast.makeText(this@LogcatViewerActivity, "Logs cleared", Toast.LENGTH_SHORT).show()
                 }
             }
         }
