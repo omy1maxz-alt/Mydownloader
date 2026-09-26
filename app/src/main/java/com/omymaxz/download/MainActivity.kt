@@ -1496,6 +1496,11 @@ private fun checkBatteryOptimization() {
                 private fun createEmptyResponse(): WebResourceResponse {
                     return WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
                 }
+
+                override fun onReceivedSslError(view: WebView?, handler: android.webkit.SslErrorHandler?, error: android.net.http.SslError?) {
+                    // Ignore SSL certificate errors to allow certain proxy or expired-cert websites to load
+                    handler?.proceed()
+                }
             }
             webChromeClient = object : WebChromeClient() {
                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
