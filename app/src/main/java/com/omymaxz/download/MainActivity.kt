@@ -116,7 +116,9 @@ class MainActivity : AppCompatActivity() {
         "outbrain.com", "taboola.com", "popads.net", "adnxs.com",
         "adsymptotic.com", "advertising.com", "adsystem.com",
         "profitableratecpm.com", "popunder.net", "pop-ads.com", "adcash.com",
-        "propellerads.com", "revcontent.com", "mgid.com"
+        "propellerads.com", "revcontent.com", "mgid.com",
+        "youtube.com/api/stats/ads", "youtube.com/pagead/", "youtube.com/ptracking",
+        "google.com/pagead/", "s.youtube.com/api/stats/ads"
     )
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private val fileChooserLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -1422,7 +1424,7 @@ private fun checkBatteryOptimization() {
                     if (isUrlWhitelisted(url)) {
                         return super.shouldInterceptRequest(view, request)
                     }
-                    if (isAdDomain(url)) {
+                    if (isAdDomain(url) || url.contains("/pagead/") || url.contains("/api/stats/ads")) {
                         return createEmptyResponse()
                     }
                     if (isMediaUrl(url)) {
@@ -2066,10 +2068,49 @@ private fun checkBatteryOptimization() {
     }
 
     private fun injectAntiHijackingScripts(view: WebView?) {
+        val url = view?.url ?: ""
+        if (url.contains("youtube.com") || url.contains("youtu.be")) {
+            val ytAdblockJs = """
+            javascript:(function() {
+                // CSS to hide ad containers
+                var style = document.createElement('style');
+                style.innerHTML = `
+                    ytd-promoted-sparkles-web-renderer,
+                    ytd-display-ad-renderer,
+                    ytd-in-feed-ad-layout-renderer,
+                    .ytd-video-masthead-ad-v3-renderer,
+                    .ytd-promoted-sparkles-text-search-renderer,
+                    .ytd-compact-promoted-video-renderer,
+                    .ytp-ad-overlay-container,
+                    .ytp-ad-message-container,
+                    .ytp-ad-action-interstitial,
+                    .ytp-ad-module,
+                    #masthead-ad,
+                    #player-ads {
+                        display: none !important;
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // Auto-skip pre-roll ads if they appear in the player
+                setInterval(function() {
+                    var skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button');
+                    if (skipBtn) {
+                        skipBtn.click();
+                    }
+                    var adOverlay = document.querySelector('.ytp-ad-overlay-close-button');
+                    if (adOverlay) {
+                        adOverlay.click();
+                    }
+                }, 1000);
+            })();
+            """.trimIndent()
+            view?.evaluateJavascript(ytAdblockJs, null)
+        }
+
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         if (!prefs.getBoolean("block_popups_redirects", true)) return
 
-        val url = view?.url ?: ""
         val host = android.net.Uri.parse(url).host?.lowercase() ?: ""
         // Do not inject anti-hijacking script on whitelisted domains
         if (isUrlWhitelisted(url)) {
