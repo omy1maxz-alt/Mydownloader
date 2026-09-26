@@ -24,6 +24,9 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.exoplayer.dash.manifest.DashManifestParser
+import androidx.media3.exoplayer.dash.manifest.DashManifest
+import androidx.media3.exoplayer.dash.DashSegmentIndex
 import com.arthenica.ffmpegkit.FFmpegKit
 import kotlinx.coroutines.*
 import java.io.File
@@ -447,16 +450,124 @@ class HlsExportService : Service() {
                 cacheOnlyFactory.close()
             }
 
-            if (masterText.isEmpty() || !masterText.contains("#EXTM3U")) {
-                throw Exception("Failed to fetch or parse master playlist")
+            if (masterText.isEmpty()) {
+                throw Exception("Failed to fetch manifest")
             }
-            val masterLines = masterText.lines()
 
-            // Parse the master playlist using Media3's official parser to guarantee track group index alignment
-            var videoVariantUrl = masterUrl
-            var audioVariantUrl: String? = null
+            val isDash = masterText.contains("<MPD")
+            val isHls = masterText.contains("#EXTM3U")
 
-            if (masterText.contains(".m3u8", true) && !streamKeyStrings.isNullOrEmpty()) {
+            if (!isDash && !isHls) {
+                throw Exception("Unrecognized manifest format")
+            }
+
+            val ffmpegArgs = mutableListOf<String>()
+
+            if (isDash) {
+                writeExportLog("Parsing DASH manifest...")
+                val streamKeys = streamKeyStrings?.mapNotNull {
+                    val parts = it.split(",")
+                    if (parts.size >= 2) androidx.media3.common.StreamKey(parts[0].toInt(), parts[1].toInt(), parts.getOrNull(2)?.toInt() ?: 0) else null
+                } ?: emptyList()
+
+                val parser = DashManifestParser()
+                val masterInputStream = masterText.byteInputStream(Charsets.UTF_8)
+                val dashManifest = parser.parse(android.net.Uri.parse(masterUrl), masterInputStream)
+                val filteredManifest = dashManifest.copy(streamKeys)
+
+                val videoSegments = mutableListOf<File>()
+                val audioSegments = mutableListOf<File>()
+
+                for (periodIndex in 0 until filteredManifest.getPeriodCount()) {
+                    val period = filteredManifest.getPeriod(periodIndex)
+                    for (adaptationSet in period.adaptationSets) {
+                        val isVideo = adaptationSet.type == androidx.media3.common.C.TRACK_TYPE_VIDEO
+                        for (representation in adaptationSet.representations) {
+                            val repId = representation.format.id ?: "unknown"
+                            val index = representation.index
+                            if (index == null) continue
+
+                            val repBaseUrl = representation.baseUrls.firstOrNull()?.url ?: masterUrl
+                            val localFile = File(tmpDir, "dash_${if (isVideo) "v" else "a"}_${repId}.mp4")
+                            val fos = java.io.FileOutputStream(localFile)
+
+                            suspend fun writeRangedUri(rangedUri: androidx.media3.exoplayer.dash.manifest.RangedUri?) {
+                                if (rangedUri == null) return
+                                val segmentUrl = rangedUri.resolveUri(repBaseUrl).toString()
+                                val dataSpecBuilder = androidx.media3.datasource.DataSpec.Builder()
+                                    .setUri(android.net.Uri.parse(segmentUrl))
+
+                                if (rangedUri.length != androidx.media3.common.C.LENGTH_UNSET.toLong()) {
+                                    dataSpecBuilder.setPosition(rangedUri.start)
+                                    dataSpecBuilder.setLength(rangedUri.length)
+                                }
+
+                                val baseSpec = dataSpecBuilder.build()
+                                val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(baseSpec)
+                                val segmentSpec = baseSpec.buildUpon().setKey(cacheKey).build()
+
+                                try {
+                                    cacheOnlyFactory.open(segmentSpec)
+                                    val buffer = ByteArray(1024 * 64)
+                                    var bytesRead: Int
+                                    while (cacheOnlyFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                                        fos.write(buffer, 0, bytesRead)
+                                    }
+                                } catch (e: Exception) {
+                                    try {
+                                        networkFactory.open(segmentSpec)
+                                        val buffer = ByteArray(1024 * 64)
+                                        var bytesRead: Int
+                                        while (networkFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                                            fos.write(buffer, 0, bytesRead)
+                                        }
+                                    } finally {
+                                        try { networkFactory.close() } catch(e: Exception) {}
+                                    }
+                                } finally {
+                                    try { cacheOnlyFactory.close() } catch(e: Exception) {}
+                                }
+                            }
+
+                            writeRangedUri(representation.initializationUri)
+                            val segmentCount = index.getSegmentCount(androidx.media3.common.C.TIME_UNSET)
+                            for (i in 0 until segmentCount) {
+                                val segmentNum = index.getFirstSegmentNum() + i
+                                writeRangedUri(index.getSegmentUrl(segmentNum))
+                            }
+
+                            fos.close()
+                            if (isVideo) videoSegments.add(localFile) else audioSegments.add(localFile)
+                        }
+                    }
+                }
+
+                if (videoSegments.isEmpty() && audioSegments.isEmpty()) {
+                    throw Exception("No DASH segments found to export")
+                }
+
+                val videoFile = videoSegments.firstOrNull()
+                val audioFile = audioSegments.firstOrNull()
+
+                if (videoFile != null) {
+                    ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", videoFile.absolutePath))
+                }
+                if (audioFile != null) {
+                    ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", audioFile.absolutePath))
+                    if (videoFile != null) {
+                        ffmpegArgs.addAll(listOf("-map", "0:v:0", "-map", "1:a:0"))
+                    } else {
+                        ffmpegArgs.addAll(listOf("-map", "0:a:0"))
+                    }
+                } else if (videoFile != null) {
+                    ffmpegArgs.addAll(listOf("-map", "0:v:0", "-map", "0:a?"))
+                }
+            } else {
+                val masterLines = masterText.lines()
+                var videoVariantUrl = masterUrl
+                var audioVariantUrl: String? = null
+
+                if (masterText.contains(".m3u8", true) && !streamKeyStrings.isNullOrEmpty()) {
                 try {
                     val streamKeys = streamKeyStrings.mapNotNull {
                         val parts = it.split(",")
@@ -818,12 +929,14 @@ class HlsExportService : Service() {
 
             writeExportLog("Successfully exported cached segments to tmp dir. Muxing to MP4 using FFmpeg.")
 
-            val ffmpegArgs = mutableListOf("-allowed_extensions", "ALL", "-i", videoPlaylistFile.absolutePath)
-            if (audioPlaylistFile != null) {
-                ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", audioPlaylistFile.absolutePath, "-map", "0:v:0", "-map", "1:a:0"))
-            } else {
-                ffmpegArgs.addAll(listOf("-map", "0:v:0", "-map", "0:a?"))
-            }
+                ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", videoPlaylistFile.absolutePath))
+                if (audioPlaylistFile != null) {
+                    ffmpegArgs.addAll(listOf("-allowed_extensions", "ALL", "-i", audioPlaylistFile.absolutePath, "-map", "0:v:0", "-map", "1:a:0"))
+                } else {
+                    ffmpegArgs.addAll(listOf("-map", "0:v:0", "-map", "0:a?"))
+                }
+            } // End of HLS else branch
+
             ffmpegArgs.addAll(listOf("-c", "copy", "-bsf:a", "aac_adtstoasc", "-movflags", "+faststart", out.absolutePath))
 
             val session = FFmpegKit.executeWithArguments(ffmpegArgs.toTypedArray())
