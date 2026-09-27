@@ -50,7 +50,7 @@ data class MediaCandidate(
     val segmentUrls: MutableSet<String> = mutableSetOf(),
     var pathBase: String? = null,
     var resolution: String? = null,
-    var bandwidth: Long? = null,
+    var bandwidth: Long = 0L,
     var estimatedSize: Long? = null,
     var segmentCount: Int = 0,
     var isMetadataParsed: Boolean = false,
