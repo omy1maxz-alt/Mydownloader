@@ -68,4 +68,15 @@
         android:checkable="true"
         app:showAsAction="never" />
 
+
+    <item
+        android:id="@+id/menu_media_detection_settings"
+        android:title="Media Detection Settings"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_floating_detector_settings"
+        android:title="Floating Detector Settings"
+        app:showAsAction="never" />
+
 </menu>
