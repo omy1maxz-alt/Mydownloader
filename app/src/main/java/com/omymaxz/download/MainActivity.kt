@@ -3424,6 +3424,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         // when passed as a main stream URL. YouTube is handled entirely by YoutubeExtractorHelper via onPageStarted.
         if (lower.contains("googlevideo.com/videoplayback")) return false
 
+        val ext = cleanUrl.substringAfterLast('.', "")
+        val nonMediaExtensions = setOf("css", "js", "gif", "jpg", "jpeg", "png", "svg", "webp", "woff", "woff2", "ttf", "ico", "html", "htm")
+        if (nonMediaExtensions.contains(ext)) return false
+
         return cleanUrl.endsWith(".mp4") || cleanUrl.endsWith(".mkv") || cleanUrl.endsWith(".webm") || cleanUrl.endsWith(".vtt") || cleanUrl.endsWith(".srt") || lower.contains("videoplayback")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
