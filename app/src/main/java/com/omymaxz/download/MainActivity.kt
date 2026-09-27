@@ -3648,38 +3648,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }, { mediaFile ->
             // Long press to "Open With" (do not dismiss to keep scroll position)
             openMediaWith(mediaFile)
-        }, { mediaFile, position ->
-            val cand = mediaEngine.getCandidate(mediaFile.url)
-            if (cand != null) {
-                mediaEngine.parseMetadataAsync(cand, isManual = true) { updatedCand ->
-                    // Update MediaFile info from Candidate
-                    if (updatedCand.durationSec > 0) {
-                        val hours = updatedCand.durationSec / 3600
-                        val mins = (updatedCand.durationSec % 3600) / 60
-                        val secs = updatedCand.durationSec % 60
-                        val durStr = if (hours > 0) "${hours}h${mins}m${secs}s" else "${mins}m${secs}s"
-
-                        // We append this explicitly so it shows up via MediaFile's standard title binding logic
-                        if (!mediaFile.title.contains("Duration:")) {
-                            mediaFile.title += "\nDuration: $durStr"
-                        }
-                    }
-                    if (updatedCand.resolution != null && !mediaFile.title.contains("Resolution:")) {
-                        mediaFile.title += " | Resolution: ${updatedCand.resolution}"
-                    }
-                    if (updatedCand.estimatedSize != null) {
-                        val mb = updatedCand.estimatedSize!! / (1024.0 * 1024.0)
-                        mediaFile.fileSize = "~%.1fMB".format(mb)
-                    } else {
-                        mediaFile.fileSize = "Unknown"
-                    }
-
-                    currentMediaListAdapter?.notifyItemChanged(position)
-                }
-            } else {
-                Toast.makeText(this, "Could not find underlying candidate to analyze", Toast.LENGTH_SHORT).show()
-                currentMediaListAdapter?.notifyItemChanged(position)
-            }
         })
         dialog.setOnDismissListener {
             currentMediaListAdapter = null
@@ -4334,7 +4302,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val menuItems = listOf(
             MenuItemCustom(R.id.menu_history, "History"),
             MenuItemCustom(R.id.menu_add_bookmark, "Add Bookmark"),
-            MenuItemCustom(R.id.menu_add_link, "Add Link"),
             MenuItemCustom(R.id.menu_user_scripts, "User Scripts"),
             MenuItemCustom(R.id.menu_open_external, "Open in External Browser"),
             MenuItemCustom(R.id.menu_proxy_settings, getString(R.string.proxy_settings)),
@@ -4382,7 +4349,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             when (menuItems[position].id) {
                 R.id.menu_history -> showHistory()
                 R.id.menu_add_bookmark -> addCurrentPageToBookmarks()
-                R.id.menu_add_link -> showManualAddLinkDialog()
                 R.id.menu_user_scripts -> startActivity(Intent(this, UserScriptManagerActivity::class.java))
                 R.id.menu_open_external -> openCurrentPageInExternalBrowser()
                 R.id.menu_proxy_settings -> showProxySettingsDialog()
@@ -5050,69 +5016,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 Toast.makeText(this, "Source copied to clipboard", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Close", null)
-            .show()
-    }
-
-    private fun showManualAddLinkDialog() {
-        val layout = android.widget.LinearLayout(this).apply {
-            orientation = android.widget.LinearLayout.VERTICAL
-            setPadding(50, 40, 50, 10)
-        }
-
-        val urlInput = android.widget.EditText(this).apply {
-            hint = "https://example.com/video.mp4"
-            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
-        }
-        layout.addView(urlInput)
-
-        val titleInput = android.widget.EditText(this).apply {
-            hint = "Optional Filename / Title"
-            inputType = android.text.InputType.TYPE_CLASS_TEXT
-            layoutParams = android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = 20 }
-        }
-        layout.addView(titleInput)
-
-        createThemedDialogBuilder(this)
-            .setTitle("Add Link")
-            .setView(layout)
-            .setPositiveButton("Add / Download") { _, _ ->
-                val rawUrl = urlInput.text.toString().trim()
-                if (!rawUrl.startsWith("http://") && !rawUrl.startsWith("https://")) {
-                    Toast.makeText(this, "Invalid URL scheme. Must be http/https", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
-                val title = titleInput.text.toString().trim().takeIf { it.isNotEmpty() }
-                    ?: rawUrl.substringAfterLast("/").substringBefore("?")
-                    .takeIf { it.isNotEmpty() } ?: "Manual_Download_${System.currentTimeMillis()}"
-
-                val category = MediaCategory.fromUrl(rawUrl)
-                val isManifest = rawUrl.lowercase().contains(".m3u8") || rawUrl.lowercase().contains(".mpd")
-
-                val manualFile = MediaFile(
-                    url = rawUrl,
-                    title = title,
-                    mimeType = if (isManifest) "application/x-mpegurl" else "video/mp4",
-                    quality = "Auto",
-                    category = if (category == MediaCategory.UNKNOWN && isManifest) MediaCategory.VIDEO else category,
-                    fileSize = "Unknown",
-                    language = null,
-                    isMainContent = true
-                )
-
-                // Add to our standard detected list so it shows in the UI and can be downloaded normally
-                if (!detectedMediaFiles.any { it.url == manualFile.url }) {
-                    detectedMediaFiles.add(0, manualFile)
-                    updateFabVisibility()
-                }
-
-                // Immediately trigger the download prompt
-                showRenameDialog(manualFile)
-            }
-            .setNegativeButton("Cancel", null)
             .show()
     }
 
