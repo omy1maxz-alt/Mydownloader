@@ -46,6 +46,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import androidx.lifecycle.lifecycleScope
 import java.util.concurrent.Executor
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -1124,6 +1126,114 @@ private fun checkBatteryOptimization() {
             addJavascriptInterface(gmApi, "GMApi")
             addJavascriptInterface(YouTubeInterface(this@MainActivity), "YouTubeInterface")
 
+            // Inject Universal Document Start Sniffer if supported
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                val universalSniffer = """
+                    (function() {
+                        'use strict';
+
+                        if (window._universalSnifferInjected) return;
+                        window._universalSnifferInjected = true;
+
+                        function notifyAndroid(url, type) {
+                            if (!url || typeof url !== 'string') return;
+                            if (url.startsWith('blob:') || url.startsWith('data:')) return;
+
+                            const lower = url.toLowerCase();
+                            if (lower.includes('.jpg') || lower.includes('.png') ||
+                                lower.includes('.css') || lower.includes('.svg') ||
+                                lower.includes('.js') || lower.includes('.gif') ||
+                                lower.includes('.webp') || lower.includes('.woff')) {
+                                return;
+                            }
+
+                            if (lower.includes('.m3u8') || lower.includes('/hls/') ||
+                                lower.includes('format=m3u8') || lower.includes('.mp4') ||
+                                lower.includes('.mkv') || lower.includes('.webm') ||
+                                lower.includes('.vtt') || lower.includes('.srt')) {
+                                if (window.AndroidMediaState && typeof window.AndroidMediaState.onMediaDetected === 'function') {
+                                    window.AndroidMediaState.onMediaDetected(url, type || 'video');
+                                }
+                            }
+                        }
+
+                        // Intercept Fetch
+                        const originalFetch = window.fetch;
+                        window.fetch = async function(...args) {
+                            try {
+                                const url = args[0] instanceof Request ? args[0].url : args[0];
+                                notifyAndroid(url, "fetch");
+                            } catch(e) {}
+                            return originalFetch.apply(this, args);
+                        };
+
+                        // Intercept XHR
+                        const originalOpen = XMLHttpRequest.prototype.open;
+                        XMLHttpRequest.prototype.open = function(method, url) {
+                            try {
+                                notifyAndroid(url, "xhr");
+                            } catch(e) {}
+                            return originalOpen.apply(this, arguments);
+                        };
+
+                        // Observe DOM for video/source
+                        const observer = new MutationObserver((mutations) => {
+                            for (const mutation of mutations) {
+                                for (const node of mutation.addedNodes) {
+                                    if (node.tagName === 'VIDEO' || node.tagName === 'SOURCE') {
+                                        if (node.src) notifyAndroid(node.src, 'video');
+                                    }
+                                }
+                            }
+                        });
+
+                        if (document.documentElement || document.body) {
+                            observer.observe(document.documentElement || document, { childList: true, subtree: true });
+                        } else {
+                            document.addEventListener('DOMContentLoaded', () => {
+                                observer.observe(document.documentElement || document, { childList: true, subtree: true });
+                            });
+                        }
+
+                        // Intercept JW Player if present
+                        let jwInstance = window.jwplayer;
+                        Object.defineProperty(window, 'jwplayer', {
+                            configurable: true,
+                            enumerable: true,
+                            get: function() { return jwInstance; },
+                            set: function(val) {
+                                jwInstance = function(...args) {
+                                    const player = val.apply(this, args);
+                                    if (player && typeof player.on === 'function') {
+                                        player.on('ready', function() {
+                                            try {
+                                                const playlist = player.getPlaylist();
+                                                if (Array.isArray(playlist)) {
+                                                    playlist.forEach(item => {
+                                                        if (item.file) notifyAndroid(item.file, 'video');
+                                                        if (Array.isArray(item.sources)) {
+                                                            item.sources.forEach(source => {
+                                                                if (source.file) notifyAndroid(source.file, 'video');
+                                                            });
+                                                        }
+                                                    });
+                                                }
+                                            } catch (e) {}
+                                        });
+                                    }
+                                    return player;
+                                };
+                            }
+                        });
+                    })();
+                """.trimIndent()
+                try {
+                    WebViewCompat.addDocumentStartJavaScript(this, universalSniffer, setOf("*"))
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Failed to add document start javascript: ${e.message}")
+                }
+            }
+
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
                 if (hitTestResult.type == WebView.HitTestResult.SRC_ANCHOR_TYPE ||
@@ -1319,6 +1429,27 @@ private fun checkBatteryOptimization() {
                     }
                     checkForYouTube(url)
                 }
+
+                @Deprecated("Deprecated in Java")
+                override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                    super.onReceivedError(view, errorCode, description, failingUrl)
+                    if (errorCode == -100 || errorCode == -101 || errorCode < -10) {
+                        android.util.Log.e("WebViewNetworkError", "Legacy Network Error: code=$errorCode, desc=$description, url=$failingUrl")
+                    }
+                }
+
+                override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                    super.onReceivedError(view, request, error)
+                    error?.let {
+                        val code = it.errorCode
+                        if (code == -100 || code == -101 || code < -10) {
+                            val url = request?.url?.toString()
+                            val isMainFrame = request?.isForMainFrame
+                            android.util.Log.e("WebViewNetworkError", "Network Error: code=$code, desc=${it.description}, mainFrame=$isMainFrame, url=$url")
+                        }
+                    }
+                }
+
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
                     val isMainFrame = request?.isForMainFrame ?: false
@@ -1793,6 +1924,26 @@ private fun checkBatteryOptimization() {
                     popupCloseBtn.colorFilter = iconColorFilter
 
                     newWebView.webViewClient = object : WebViewClient() {
+                        @Deprecated("Deprecated in Java")
+                        override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                            super.onReceivedError(view, errorCode, description, failingUrl)
+                            if (errorCode == -100 || errorCode == -101 || errorCode < -10) {
+                                android.util.Log.e("WebViewNetworkError", "Legacy Popup Network Error: code=$errorCode, desc=$description, url=$failingUrl")
+                            }
+                        }
+
+                        override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                            super.onReceivedError(view, request, error)
+                            error?.let {
+                                val code = it.errorCode
+                                if (code == -100 || code == -101 || code < -10) {
+                                    val url = request?.url?.toString()
+                                    val isMainFrame = request?.isForMainFrame
+                                    android.util.Log.e("WebViewNetworkError", "Popup Network Error: code=$code, desc=${it.description}, mainFrame=$isMainFrame, url=$url")
+                                }
+                            }
+                        }
+
                         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                             val url = request.url.toString()
                             runOnUiThread {
@@ -4388,6 +4539,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 R.id.menu_proxy_settings -> showProxySettingsDialog()
                 R.id.menu_nuke_traps -> nukeAdsAndTraps()
                 R.id.menu_settings -> showMasterSettingsDialog()
+                R.id.menu_media_detection_settings -> showMediaDetectionSettingsDialog()
+                R.id.menu_floating_detector_settings -> showFloatingDetectorSettingsDialog()
                 R.id.menu_theme_color -> showThemeColorPickerDialog()
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
                 R.id.menu_api_sniffer -> launchApiSniffer()
@@ -4596,6 +4749,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
     private fun injectStandardMediaDetector() {
         injectTelemetryScript()
+
         val script = """
             (function() {
                 const media = [];
