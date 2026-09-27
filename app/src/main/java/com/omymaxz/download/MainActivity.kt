@@ -1383,7 +1383,13 @@ private fun checkBatteryOptimization() {
                     val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
                     val detectionEnabled = prefs.getBoolean("MEDIA_DETECTION_ENABLED", true)
                     if (detectionEnabled) {
-                        mediaEngine.processRequest(url, reqReferer, userAgent)
+                        val cand = mediaEngine.processRequest(url, reqReferer, userAgent)
+                        if (cand != null && prefs.getBoolean("AUTO_ANALYZE_MEDIA", false)) {
+                            // Only probe periodically or for strong candidates to save background requests
+                            if (cand.requestCount == 1) {
+                                mediaEngine.parseMetadataAsync(cand)
+                            }
+                        }
                     }
 
                     if (isUrlWhitelisted(url)) {
@@ -3413,6 +3419,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
             "ad.", "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver"
         )
+        // Ensure "ad-site" isn't accidentally caught by something like "/ad/" (which it isn't), but just be safe
         return adKeywords.any { lowerUrl.contains(it) }
     }
 
@@ -3619,8 +3626,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             infoText.append("Final Score: ${candidate.finalScore}\n")
             infoText.append("Confidence: ${candidate.confidence}\n")
             if (candidate.telemetry != null) {
-                infoText.append("Resolution: ${candidate.telemetry!!.width}x${candidate.telemetry!!.height}\n")
+                infoText.append("Telemetry Res: ${candidate.telemetry!!.width}x${candidate.telemetry!!.height}\n")
             }
+            if (candidate.resolution != null) infoText.append("Parsed Res: ${candidate.resolution}\n")
+            if (candidate.estimatedSize > 0) infoText.append("Estimated Size: ${candidate.estimatedSize} bytes\n")
+            if (candidate.segmentCount > 0) infoText.append("Segment Count: ${candidate.segmentCount}\n")
+            if (candidate.variantsCount > 0) infoText.append("Variants Count: ${candidate.variantsCount}\n")
         } else {
             infoText.append("No active engine tracking for this URL.\n")
         }
@@ -4354,6 +4365,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 R.id.menu_proxy_settings -> showProxySettingsDialog()
                 R.id.menu_nuke_traps -> nukeAdsAndTraps()
                 R.id.menu_settings -> showMasterSettingsDialog()
+                R.id.menu_media_detection_settings -> showMediaDetectionSettingsDialog()
+                R.id.menu_floating_detector_settings -> showFloatingDetectorSettingsDialog()
                 R.id.menu_theme_color -> showThemeColorPickerDialog()
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
                 R.id.menu_api_sniffer -> launchApiSniffer()
@@ -4561,6 +4574,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
 
     private fun injectStandardMediaDetector() {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("MEDIA_DETECTION_ENABLED", true)) return
         injectTelemetryScript()
         val script = """
             (function() {

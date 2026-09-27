@@ -48,13 +48,26 @@ data class MediaCandidate(
     var isProgressiveFinal: Boolean = false,
     var isSegmentGroup: Boolean = false,
     val segmentUrls: MutableSet<String> = mutableSetOf(),
-    var pathBase: String? = null
+    var pathBase: String? = null,
+    var estimatedSize: Long = 0L,
+    var resolution: String? = null,
+    var segmentCount: Int = 0,
+    var variantsCount: Int = 0
 ) {
     val finalScore: Int
         get() {
             var score = 0
             if (isManifest || mediaKind == MediaKind.HLS_MANIFEST || mediaKind == MediaKind.DASH_MANIFEST) score += 20
             if (mediaKind == MediaKind.PROGRESSIVE) score += 15
+
+            // Probed Metadata boosts
+            if (variantsCount > 0) score += 20
+            if (segmentCount > 0) score += 10
+            if (estimatedSize > 5_000_000) score += 10 // > 5MB
+            if (resolution != null) {
+                if (resolution!!.contains("1080") || resolution!!.contains("720")) score += 15
+                else score += 10
+            }
 
             score += playbackScore
             score -= adScore
