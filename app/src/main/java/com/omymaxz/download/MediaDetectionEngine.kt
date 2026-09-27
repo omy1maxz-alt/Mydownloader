@@ -32,7 +32,17 @@ class MediaDetectionEngine(private val context: Context) {
         val isDash = lowerUrl.contains(".mpd") || lowerUrl.contains("format=dash") || lowerUrl.contains("type=dash") || mime == "application/dash+xml"
         val isVideoMime = mime.startsWith("video/")
         val isProgressive = lowerUrl.matches(Regex(".*\\.(mp4|webm|mkv|mov|avi)(\\?.*)?$")) || isVideoMime
-        val isSegment = lowerUrl.matches(Regex(".*\\.(ts|m4s|cmfv|cmfa|aac|mp4)(\\?.*)?$")) && !isProgressive
+        val cleanUrl = lowerUrl.substringBefore('?')
+        val ext = cleanUrl.substringAfterLast('.', "").lowercase()
+        val nonMediaExtensions = setOf("css", "js", "gif", "jpg", "jpeg", "png", "svg", "webp", "woff", "woff2", "ttf", "ico", "html", "htm")
+        if (nonMediaExtensions.contains(ext)) return MediaKind.UNKNOWN
+
+        val isSegmentRegex = cleanUrl.endsWith(".ts", ignoreCase = true) ||
+                             cleanUrl.endsWith(".m4s", ignoreCase = true) ||
+                             cleanUrl.endsWith(".mp4", ignoreCase = true) ||
+                             cleanUrl.matches(Regex(".*/(seg|segment|chunk|fragment)[-_]?\\d+(\\.[a-z0-9]+)?$"))
+
+        val isSegment = isSegmentRegex && !isProgressive && !lowerUrl.contains("/tracking/") && !lowerUrl.contains("/analytics/")
 
         return when {
             isHls -> MediaKind.HLS_MANIFEST
@@ -101,7 +111,7 @@ class MediaDetectionEngine(private val context: Context) {
 
             val hasEvidencePath = lowerUrl.contains("/video") || lowerUrl.contains("/stream") || lowerUrl.contains("/play") ||
                                   lowerUrl.contains("/vod") || lowerUrl.contains("/media") || lowerUrl.contains("/movie") ||
-                                  lowerUrl.contains("/hls") || lowerUrl.contains("/dash") || lowerUrl.contains("/segment") ||
+                                  lowerUrl.contains("/hls") || lowerUrl.contains("/dash") || (lowerUrl.contains("/segment") && !lowerUrl.contains("/tracking/")) ||
                                   lowerUrl.contains("?sub=") || lowerUrl.contains("/subtitle") || lowerUrl.contains("/caption")
             if (!hasEvidencePath && contentType == null && !url.contains("videoplayback")) {
                 return null
@@ -474,6 +484,15 @@ class MediaDetectionEngine(private val context: Context) {
 
     fun isAdUrl(url: String): Boolean {
         val lowerUrl = url.lowercase()
+
+        if (lowerUrl.contains("/tracking/") || lowerUrl.contains("/analytics/") || lowerUrl.contains("/pixel") ||
+            lowerUrl.contains("/beacon") || lowerUrl.contains("/event?") || lowerUrl.contains("/count?") ||
+            lowerUrl.contains("google-analytics") || lowerUrl.contains("doubleclick") ||
+            lowerUrl.contains("newshinyd.com") || lowerUrl.contains("yetansd.com") ||
+            lowerUrl.contains("playhubconnect.com") || lowerUrl.contains("bkcdn.net") ||
+            lowerUrl.contains("5fll5qac.xyz") || lowerUrl.contains("trailerhg.xyz")) {
+            return true
+        }
 
         val isImage = lowerUrl.endsWith(".image") || lowerUrl.endsWith(".jpg") ||
                       lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") ||

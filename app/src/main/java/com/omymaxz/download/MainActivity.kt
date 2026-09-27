@@ -70,6 +70,15 @@ class MainActivity : AppCompatActivity() {
     private val detectorHideRunnable = Runnable { findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = android.view.View.GONE }
 
 
+
+    private var floatingDetectorStartX = 0f
+    private var floatingDetectorStartY = 0f
+    private var floatingDetectorInitialTouchX = 0f
+    private var floatingDetectorInitialTouchY = 0f
+    private var isFloatingDetectorMoved = false
+    private var savedDetectorX: Float? = null
+    private var savedDetectorY: Float? = null
+
     val mediaEngine = MediaDetectionEngine(this)
     @Volatile private var approvedNavigationUrl: String? = null
 
@@ -1371,7 +1380,11 @@ private fun checkBatteryOptimization() {
                     }
 
                     // Safely process through MediaDetectionEngine on background thread
-                    mediaEngine.processRequest(url, reqReferer, userAgent)
+                    val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                    val detectionEnabled = prefs.getBoolean("MEDIA_DETECTION_ENABLED", true)
+                    if (detectionEnabled) {
+                        mediaEngine.processRequest(url, reqReferer, userAgent)
+                    }
 
                     if (isUrlWhitelisted(url)) {
                         return super.shouldInterceptRequest(view, request)
@@ -1394,7 +1407,9 @@ private fun checkBatteryOptimization() {
                                 if (candidate != null && (candidate.adScore > 0 || candidate.finalScore < 0)) {
                                     // Skip adding to UI if engine strongly thinks it's an ad
                                 } else {
-                                    webView.evaluateJavascript("if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) { window.AndroidMediaState.onMediaDetected('$url', 'video'); }", null)
+                                    if (detectionEnabled) {
+                                        webView.evaluateJavascript("if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) { window.AndroidMediaState.onMediaDetected('$url', 'video'); }", null)
+                                    }
                                 }
                             }
                         }
@@ -1435,7 +1450,10 @@ private fun checkBatteryOptimization() {
                                 }
                                 runOnUiThread { updateFabVisibility() }
                                 if (category == MediaCategory.SUBTITLE) {
-                                    fetchSubtitleSnippet(mediaFile)
+                                    val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                                    if (prefs.getBoolean("AUTO_ANALYZE_MEDIA", false)) {
+                                        fetchSubtitleSnippet(mediaFile)
+                                    }
                                 }
                             }
                         } catch (e: Exception) {
@@ -2793,7 +2811,10 @@ private fun injectMediaStateDetector() {
                                         }
                                         updateFabVisibility()
                                         if (category == MediaCategory.SUBTITLE) {
-                                            fetchSubtitleSnippet(mediaFile)
+                                            val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                                    if (prefs.getBoolean("AUTO_ANALYZE_MEDIA", false)) {
+                                        fetchSubtitleSnippet(mediaFile)
+                                    }
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -3403,6 +3424,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         // when passed as a main stream URL. YouTube is handled entirely by YoutubeExtractorHelper via onPageStarted.
         if (lower.contains("googlevideo.com/videoplayback")) return false
 
+        val ext = cleanUrl.substringAfterLast('.', "")
+        val nonMediaExtensions = setOf("css", "js", "gif", "jpg", "jpeg", "png", "svg", "webp", "woff", "woff2", "ttf", "ico", "html", "htm")
+        if (nonMediaExtensions.contains(ext)) return false
+
         return cleanUrl.endsWith(".mp4") || cleanUrl.endsWith(".mkv") || cleanUrl.endsWith(".webm") || cleanUrl.endsWith(".vtt") || cleanUrl.endsWith(".srt") || lower.contains("videoplayback")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
@@ -3565,6 +3590,46 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
         ContextCompat.startForegroundService(this, intent)
         Toast.makeText(this, "Starting download...", Toast.LENGTH_SHORT).show()
+    }
+
+
+    fun showMediaInfoDialog(mediaFile: MediaFile) {
+        val candidate = mediaEngine.getCandidate(mediaFile.url)
+
+        val infoText = StringBuilder()
+        infoText.append("Title: ${mediaFile.title}\n")
+        infoText.append("URL: ${mediaFile.url}\n\n")
+        infoText.append("Category: ${mediaFile.category}\n")
+        infoText.append("MIME: ${mediaFile.mimeType ?: "Unknown"}\n")
+        infoText.append("Quality: ${mediaFile.quality}\n")
+        infoText.append("Language: ${mediaFile.language ?: "N/A"}\n")
+        infoText.append("Size: ${mediaFile.fileSize}\n")
+        infoText.append("Is Main Content: ${mediaFile.isMainContent}\n\n")
+
+        if (candidate != null) {
+            infoText.append("--- Native Engine Candidate ---\n")
+            infoText.append("Type: ${candidate.type}\n")
+            infoText.append("Manifest: ${candidate.isManifest}\n")
+            infoText.append("Duration: ${candidate.durationSec}s\n")
+            infoText.append("Request Count: ${candidate.requestCount}\n")
+            infoText.append("Active Player: ${candidate.isActivePlayer}\n")
+            infoText.append("MSE Activity: ${candidate.hasMSEActivity}\n")
+            infoText.append("Ad Score: ${candidate.adScore}\n")
+            infoText.append("Playback Score: ${candidate.playbackScore}\n")
+            infoText.append("Final Score: ${candidate.finalScore}\n")
+            infoText.append("Confidence: ${candidate.confidence}\n")
+            if (candidate.telemetry != null) {
+                infoText.append("Resolution: ${candidate.telemetry!!.width}x${candidate.telemetry!!.height}\n")
+            }
+        } else {
+            infoText.append("No active engine tracking for this URL.\n")
+        }
+
+        createThemedDialogBuilder(this)
+            .setTitle("Media Info")
+            .setMessage(infoText.toString())
+            .setPositiveButton("Close", null)
+            .show()
     }
 
     private fun showMediaListDialog() {
@@ -4149,6 +4214,63 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }
     }
 
+
+    private fun showMediaDetectionSettingsDialog() {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val isEnabled = prefs.getBoolean("MEDIA_DETECTION_ENABLED", true)
+        val isAutoAnalyze = prefs.getBoolean("AUTO_ANALYZE_MEDIA", false)
+
+        val view = layoutInflater.inflate(R.layout.dialog_media_detection_settings, null)
+        val switchDetection = view.findViewById<android.widget.Switch>(R.id.switch_media_detection)
+        val switchAutoAnalyze = view.findViewById<android.widget.Switch>(R.id.switch_auto_analyze)
+
+        switchDetection.isChecked = isEnabled
+        switchAutoAnalyze.isChecked = isAutoAnalyze
+
+        createThemedDialogBuilder(this)
+            .setTitle("Media Detection Settings")
+            .setView(view)
+            .setPositiveButton("Save") { _, _ ->
+                prefs.edit().apply {
+                    putBoolean("MEDIA_DETECTION_ENABLED", switchDetection.isChecked)
+                    putBoolean("AUTO_ANALYZE_MEDIA", switchAutoAnalyze.isChecked)
+                    apply()
+                }
+                Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showFloatingDetectorSettingsDialog() {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val isEnabled = prefs.getBoolean("FLOATING_DETECTOR_ENABLED", true)
+        val minDuration = prefs.getInt("FLOATING_DETECTOR_MIN_DURATION", 0)
+
+        val view = layoutInflater.inflate(R.layout.dialog_floating_detector_settings, null)
+        val switchEnabled = view.findViewById<android.widget.Switch>(R.id.switch_floating_detector)
+        val editMinDuration = view.findViewById<android.widget.EditText>(R.id.edit_min_duration)
+
+        switchEnabled.isChecked = isEnabled
+        editMinDuration.setText(minDuration.toString())
+
+        createThemedDialogBuilder(this)
+            .setTitle("Floating Detector Settings")
+            .setView(view)
+            .setPositiveButton("Save") { _, _ ->
+                val duration = editMinDuration.text.toString().toIntOrNull() ?: 0
+                prefs.edit().apply {
+                    putBoolean("FLOATING_DETECTOR_ENABLED", switchEnabled.isChecked)
+                    putInt("FLOATING_DETECTOR_MIN_DURATION", duration)
+                    apply()
+                }
+                Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show()
+                updateFabVisibility() // Apply changes immediately
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun showCustomOverflowMenu(anchor: View) {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val hexColor = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
@@ -4185,6 +4307,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             MenuItemCustom(R.id.menu_proxy_settings, getString(R.string.proxy_settings)),
             MenuItemCustom(R.id.menu_nuke_traps, "Nuke Ads/Traps"),
             MenuItemCustom(R.id.menu_settings, "Settings"),
+            MenuItemCustom(R.id.menu_media_detection_settings, "Media Detection Settings"),
+            MenuItemCustom(R.id.menu_floating_detector_settings, "Floating Detector Settings"),
             MenuItemCustom(R.id.menu_theme_color, "Theme Color"),
             MenuItemCustom(R.id.menu_debug_site, "Debug Site"),
             MenuItemCustom(R.id.menu_api_sniffer, "API Network Sniffer"),
@@ -4718,7 +4842,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                                 // Trigger http fetch if needed
                                 if (it.category == MediaCategory.SUBTITLE) {
                                     if (!it.url.startsWith("blob:")) {
-                                        fetchSubtitleSnippet(it)
+                                        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                                        if (prefs.getBoolean("AUTO_ANALYZE_MEDIA", false)) {
+                                            fetchSubtitleSnippet(it)
+                                        }
                                     } else {
                                         // For blobs found via Manual Scan, we need to re-inject the fetcher
                                         // because the previous loop only injected it for *newly constructed* objects
@@ -5821,6 +5948,57 @@ if (isDesktopMode) {
         runOnUiThread {
             val bestPlayable = mediaEngine.getBestCandidate()
             val floatingDetector = findViewById<android.widget.LinearLayout>(R.id.floatingDetectorUI)
+            val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+            val isFloatingEnabled = prefs.getBoolean("FLOATING_DETECTOR_ENABLED", true)
+            val minDuration = prefs.getInt("FLOATING_DETECTOR_MIN_DURATION", 0)
+
+            if (!isFloatingEnabled || (bestPlayable != null && bestPlayable.durationSec > 0 && bestPlayable.durationSec < minDuration)) {
+                floatingDetector?.visibility = android.view.View.GONE
+                return@runOnUiThread
+            }
+
+            // Apply saved translation
+            if (savedDetectorX != null && savedDetectorY != null) {
+                floatingDetector?.translationX = savedDetectorX!!
+                floatingDetector?.translationY = savedDetectorY!!
+            }
+
+            floatingDetector?.setOnTouchListener { view, event ->
+                when (event.actionMasked) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        floatingDetectorStartX = view.translationX
+                        floatingDetectorStartY = view.translationY
+                        floatingDetectorInitialTouchX = event.rawX
+                        floatingDetectorInitialTouchY = event.rawY
+                        isFloatingDetectorMoved = false
+                        true
+                    }
+                    android.view.MotionEvent.ACTION_MOVE -> {
+                        val dx = event.rawX - floatingDetectorInitialTouchX
+                        val dy = event.rawY - floatingDetectorInitialTouchY
+                        if (kotlin.math.abs(dx) > 10 || kotlin.math.abs(dy) > 10) {
+                            isFloatingDetectorMoved = true
+                            view.translationX = floatingDetectorStartX + dx
+                            view.translationY = floatingDetectorStartY + dy
+                            savedDetectorX = view.translationX
+                            savedDetectorY = view.translationY
+                        }
+                        true
+                    }
+                    android.view.MotionEvent.ACTION_UP -> {
+                        if (!isFloatingDetectorMoved) {
+                            view.performClick()
+                        }
+                        true
+                    }
+                    else -> false
+                }
+            }
+
+            floatingDetector?.setOnClickListener {
+                showMediaListDialog()
+            }
+
             val txtState = findViewById<android.widget.TextView>(R.id.txtDetectorState)
             val txtTitle = findViewById<android.widget.TextView>(R.id.txtDetectorTitle)
 
@@ -5835,9 +6013,7 @@ if (isDesktopMode) {
                 txtState?.text = "$typeStr • $qualityStr"
 
                 val btnDownload = findViewById<android.widget.ImageView>(R.id.btnDetectorDownload)
-                btnDownload?.setOnClickListener {
-                    showMediaListDialog()
-                }
+                // Removed btnDownload click listener to prevent stealing touch from floatingDetector
 
                 val btnClose = findViewById<android.widget.ImageButton>(R.id.btnDetectorClose)
                 btnClose?.setOnClickListener {
@@ -5846,8 +6022,7 @@ if (isDesktopMode) {
                 }
 
                 // Auto hide after 10 seconds
-                detectorHideHandler.removeCallbacks(detectorHideRunnable)
-                detectorHideHandler.postDelayed(detectorHideRunnable, 10000)
+
 
             } else {
                 floatingDetector?.visibility = android.view.View.GONE
