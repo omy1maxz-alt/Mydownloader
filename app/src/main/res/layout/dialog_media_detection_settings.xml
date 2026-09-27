@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <Switch
+        android:id="@+id/switch_media_detection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Enable Media Detection"
+        android:textSize="16sp"
+        android:paddingBottom="16dp" />
+
+    <Switch
+        android:id="@+id/switch_auto_analyze"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Automatic Metadata Analysis"
+        android:textSize="16sp" />
+
+</LinearLayout>

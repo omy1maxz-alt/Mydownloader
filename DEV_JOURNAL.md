@@ -143,3 +143,4 @@
 2026-09-25 Fix Sextb media detection tracking, restore Floating Detector UI and logic, add Media Info dialog button
 2026-09-25 Fix PATH_A_CACHE logic to correctly extract progressive MP4s directly from cache instead of triggering a network redownload.
 2026-09-25 Fix PATH_A_CACHE progressive MP4 exports to correctly fallback from caching and safely copy bytes
+- Restored missing UI settings surgically: Added Floating Detector persistent drag behaviors natively into MainActivity without 10-second auto-hide. Restored Media Detection Settings (ON/OFF and Auto Analyze flags) into overflow menu. Restored Floating Detector minimum duration visibility settings. Added Media Info dialog securely pulling exact engine data directly from the candidate dictionary via button per-list-item. Preserved strict candidate rules, download architectures, and userscript engines untouched.

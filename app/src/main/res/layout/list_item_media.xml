@@ -57,4 +57,14 @@
             android:layout_marginTop="4dp"
             android:visibility="gone"/>
     </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/btn_media_info"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@android:drawable/ic_dialog_info"
+        android:background="?attr/selectableItemBackground"
+        android:contentDescription="Media Info"
+        android:layout_marginStart="8dp"/>
+
 </LinearLayout>

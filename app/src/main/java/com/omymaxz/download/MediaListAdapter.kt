@@ -63,6 +63,10 @@ class MediaListAdapter(
         private val btnAnalyzeMedia: android.widget.Button? = itemView.findViewById(R.id.btn_analyze_media)
 
         fun bind(mediaFile: MediaFile) {
+            val btnInfo = itemView.findViewById<android.widget.ImageButton>(R.id.btn_media_info)
+            btnInfo.setOnClickListener {
+                (itemView.context as? MainActivity)?.showMediaInfoDialog(mediaFile)
+            }
             val categoryIndicator = when (mediaFile.category) {
                 MediaCategory.VIDEO -> if (mediaFile.isMainContent) "🎥 MAIN VIDEO" else "🎬 Video Clip"
                 MediaCategory.AUDIO -> "🔊 Audio"
