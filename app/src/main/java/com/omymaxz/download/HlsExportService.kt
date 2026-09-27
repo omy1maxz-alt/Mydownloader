@@ -135,16 +135,6 @@ class HlsExportService : Service() {
                     }
                     bundledMediaItem != null -> {
                         writeExportLog("source=PATH_A_CACHE\ndownload_id=null\nhas_media_item_bundle=true\nhas_video_url=${videoUrl != null}\ninput_uri=$videoUrl\nmimeType=$mimeType\nexport_method=muxToMp4FromCache\ncache_export=true")
-                        // Ensure direct progressive URLs that bypass cache aren't sent to the manual cache-assembly script
-                        if (mimeType == androidx.media3.common.MimeTypes.VIDEO_MP4 || mimeType == androidx.media3.common.MimeTypes.VIDEO_WEBM || mimeType == androidx.media3.common.MimeTypes.VIDEO_MATROSKA) {
-                             if (videoUrl != null) {
-                                 withContext(kotlinx.coroutines.Dispatchers.Main) { android.widget.Toast.makeText(applicationContext, "Starting background download...", android.widget.Toast.LENGTH_SHORT).show() }
-                                 val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(title, android.net.Uri.parse(videoUrl)).build()
-                                 androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, request, false)
-                             }
-                             if (activeExports.decrementAndGet() == 0) stopSelf(startId)
-                             return@launch
-                        }
 
                         // Use the new muxToMp4FromCache method which reads the exact cached segments based on the exact quality the user chose in the player.
                         try {
@@ -345,20 +335,52 @@ class HlsExportService : Service() {
         val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
 
         val spans = cache.getCachedSpans(cacheKey).sortedBy { it.position }
+        val metadata = cache.getContentMetadata(cacheKey)
+        val expectedLength = androidx.media3.datasource.cache.ContentMetadata.getContentLength(metadata)
+
+        writeExportLog("CACHE_MP4_CHECK\nurl=$url\ncache_key=$cacheKey\nspan_count=${spans.size}\nspan_0_position=${spans.firstOrNull()?.position}\nspan_0_length=${spans.firstOrNull()?.length}\ntotal_cached_bytes=${spans.sumOf { it.length }}\nfirst_position=${spans.firstOrNull()?.position}\nlast_end=${spans.lastOrNull()?.let { it.position + it.length }}\ncontent_length=$expectedLength\ncomplete=calculating")
+
         if (spans.isEmpty()) {
-            writeExportLog("No cache spans found for key: $cacheKey")
-            throw Exception("No cache spans found for MP4")
+            writeExportLog("CACHE_MP4_INCOMPLETE: No cache spans found for key: $cacheKey")
+            throw Exception("CACHE_MP4_INCOMPLETE")
         }
+
+        if (expectedLength <= 0) {
+            writeExportLog("CACHE_MP4_INCOMPLETE: Unknown content length for key: $cacheKey")
+            throw Exception("CACHE_MP4_INCOMPLETE")
+        }
+
+        var currentPosition = 0L
+        for (span in spans) {
+            if (span.position != currentPosition) {
+                writeExportLog("CACHE_MP4_INCOMPLETE: Gap found at position $currentPosition (next span at ${span.position})")
+                throw Exception("CACHE_MP4_INCOMPLETE")
+            }
+            currentPosition += span.length
+        }
+
+        if (currentPosition < expectedLength) {
+            writeExportLog("CACHE_MP4_INCOMPLETE: Truncated cache. Found $currentPosition bytes, expected $expectedLength")
+            throw Exception("CACHE_MP4_INCOMPLETE")
+        }
+
+        writeExportLog("CACHE_MP4_CHECK complete=true")
 
         try {
             writeExportLog("Copying MP4 from cache via direct spans (${spans.size} found) for key: $cacheKey")
             out.outputStream().use { fos ->
+                var expectedPos = 0L
                 for (span in spans) {
+                    if (span.position != expectedPos) throw Exception("CACHE_GAP: Unexpected span position")
                     if (span.file != null && span.file!!.exists()) {
                         span.file!!.inputStream().use { fis ->
-                            fis.copyTo(fos)
+                            val bytesCopied = fis.copyTo(fos)
+                            if (bytesCopied != span.length) throw Exception("CACHE_GAP: Copied length mismatch")
                         }
+                    } else {
+                        throw Exception("CACHE_GAP: Missing physical span file")
                     }
+                    expectedPos += span.length
                 }
             }
 
