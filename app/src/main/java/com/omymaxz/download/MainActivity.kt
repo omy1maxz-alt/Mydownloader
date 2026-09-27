@@ -3989,33 +3989,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             }
         }
 
-        // Add Check Media Info button
-        builder.setPositiveButton("Download") { _, _ ->
-            val newName = input.text.toString().trim()
-            val finalName = if (newName.isNotEmpty()) "$newName.${mediaFile.title.substringAfterLast('.')}" else mediaFile.title
-            downloadMediaFile(mediaFile.copy(title = finalName))
-        }
-
-        builder.setNeutralButton("Media Info") { _, _ ->
-            val candidate = mediaEngine.candidates[mediaFile.url]
-            val info = StringBuilder()
-            info.append("Title: ").append(mediaFile.title).append("\n\n")
-            info.append("URL: ").append(mediaFile.url).append("\n\n")
-            info.append("MIME Type: ").append(mediaFile.mimeType ?: "Unknown").append("\n")
-            info.append("Size: ").append(mediaFile.fileSize).append("\n")
-            if (candidate != null) {
-                info.append("Duration: ").append(if (candidate.durationSec > 0) "${candidate.durationSec}s" else "Unknown").append("\n")
-                info.append("Resolution: ").append(if (candidate.telemetry != null) "${candidate.telemetry?.width}x${candidate.telemetry?.height}" else "Unknown").append("\n")
-                info.append("Active Player: ").append(candidate.isActivePlayer).append("\n")
-                info.append("Confidence Score: ").append(candidate.finalScore).append("\n")
-            }
-            createThemedDialogBuilder(this)
-                .setTitle("Media Info")
-                .setMessage(info.toString())
-                .setPositiveButton("Close", null)
-                .show()
-        }
-
         builder.show()
     }
 
@@ -4204,10 +4177,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
         val popupNoticeTitle = if (showNotice) "Popup Notice: ON" else "Popup Notice: OFF"
 
-        val appPrefs = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        val isDetectorOn = appPrefs.getBoolean("use_floating_detector", false)
-        val floatingDetectorTitle = if (isDetectorOn) "Floating Detector: ON" else "Floating Detector: OFF"
-
         val menuItems = listOf(
             MenuItemCustom(R.id.menu_history, "History"),
             MenuItemCustom(R.id.menu_add_bookmark, "Add Bookmark"),
@@ -4219,7 +4188,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             MenuItemCustom(R.id.menu_theme_color, "Theme Color"),
             MenuItemCustom(R.id.menu_debug_site, "Debug Site"),
             MenuItemCustom(R.id.menu_api_sniffer, "API Network Sniffer"),
-            MenuItemCustom(R.id.menu_detect_active_media, floatingDetectorTitle),
             MenuItemCustom(R.id.menu_debug_page, "Debug Page"),
             MenuItemCustom(R.id.menu_toggle_popup_notice, popupNoticeTitle)
         )
@@ -4265,21 +4233,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 R.id.menu_theme_color -> showThemeColorPickerDialog()
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
                 R.id.menu_api_sniffer -> launchApiSniffer()
-                R.id.menu_detect_active_media -> {
-                    val appPrefs = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-                    val current = appPrefs.getBoolean("use_floating_detector", false)
-                    appPrefs.edit().putBoolean("use_floating_detector", !current).apply()
-                    Toast.makeText(this@MainActivity, "Floating Detector " + if (!current) "enabled" else "disabled", Toast.LENGTH_SHORT).show()
-
-                    val floatingDetector = findViewById<android.widget.LinearLayout>(R.id.floatingDetectorUI)
-                    if (!current) {
-                        android.util.Log.d("FLOATING_DETECTOR", "[FLOATING_DETECTOR] started")
-                        floatingDetector?.visibility = android.view.View.VISIBLE
-                        updateFabVisibility()
-                    } else {
-                        floatingDetector?.visibility = android.view.View.GONE
-                    }
-                }
                 R.id.menu_debug_page -> showPageSource()
                 R.id.menu_toggle_popup_notice -> {
                     val currentSetting = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
@@ -5842,12 +5795,6 @@ if (isDesktopMode) {
             }
         }
     }
-    private var detectorInitialX = 0f
-    private var detectorInitialY = 0f
-    private var detectorInitialTouchX = 0f
-    private var detectorInitialTouchY = 0f
-    private var isDetectorDragging = false
-
     private fun updateFabVisibility() {
         val hasFiles = detectedMediaFiles.isNotEmpty()
 
@@ -5877,21 +5824,15 @@ if (isDesktopMode) {
             val txtState = findViewById<android.widget.TextView>(R.id.txtDetectorState)
             val txtTitle = findViewById<android.widget.TextView>(R.id.txtDetectorTitle)
 
-            // Show overlay based on Floating Detector settings, remaining open regardless of current candidates.
-            val prefs = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-            val useFloating = prefs.getBoolean("use_floating_detector", false)
+            // Show overlay whenever mediaEngine has a non-null best playable candidate.
+            if (bestPlayable != null) {
+                floatingDetector?.visibility = android.view.View.VISIBLE
 
-            if (useFloating && floatingDetector != null && floatingDetector.visibility == android.view.View.VISIBLE) {
-                if (bestPlayable != null) {
-                    val count = detectedMediaFiles.size
-                    android.util.Log.d("FLOATING_DETECTOR", "[FLOATING_DETECTOR] monitoring candidates=$count")
-                    txtTitle?.text = "$count Media Detected"
-                    val typeStr = if (bestPlayable.isManifest) "HLS" else "MP4"
-                    txtState?.text = "$typeStr • ${if (bestPlayable.isActivePlayer) "PLAYBACK VERIFIED" else "EVIDENCE ACCUMULATING"}"
-                } else {
-                    txtTitle?.text = "0 Media"
-                    txtState?.text = "SEARCHING"
-                }
+                txtTitle?.text = "Media Detected"
+
+                val typeStr = if (bestPlayable.isManifest) "HLS" else "MP4"
+                val qualityStr = "Auto"
+                txtState?.text = "$typeStr • $qualityStr"
 
                 val btnDownload = findViewById<android.widget.ImageView>(R.id.btnDetectorDownload)
                 btnDownload?.setOnClickListener {
@@ -5900,56 +5841,16 @@ if (isDesktopMode) {
 
                 val btnClose = findViewById<android.widget.ImageButton>(R.id.btnDetectorClose)
                 btnClose?.setOnClickListener {
-                    floatingDetector.visibility = android.view.View.GONE
+                    floatingDetector?.visibility = android.view.View.GONE
                     detectorHideHandler.removeCallbacks(detectorHideRunnable)
-                    android.util.Log.d("FLOATING_DETECTOR", "[FLOATING_DETECTOR] stopped by user")
-                    prefs.edit().putBoolean("use_floating_detector", false).apply()
                 }
 
-                // FLOATING DETECTOR PERSISTENCE:
-                // Do not auto-hide the detector. Allow the user to keep it open while browsing.
+                // Auto hide after 10 seconds
                 detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                detectorHideHandler.postDelayed(detectorHideRunnable, 10000)
 
-                // Draggable logic
-                floatingDetector.setOnTouchListener { view, event ->
-                    when (event.action) {
-                        MotionEvent.ACTION_DOWN -> {
-                            isDetectorDragging = false
-                            detectorInitialX = view.translationX
-                            detectorInitialY = view.translationY
-                            detectorInitialTouchX = event.rawX
-                            detectorInitialTouchY = event.rawY
-                            true
-                        }
-                        MotionEvent.ACTION_MOVE -> {
-                            val dx = event.rawX - detectorInitialTouchX
-                            val dy = event.rawY - detectorInitialTouchY
-                            if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-                                isDetectorDragging = true
-                            }
-                            if (isDetectorDragging) {
-                                view.translationX = detectorInitialX + dx
-                                view.translationY = detectorInitialY + dy
-                            }
-                            true
-                        }
-                        MotionEvent.ACTION_UP -> {
-                            if (!isDetectorDragging) {
-                                view.performClick()
-                            }
-                            true
-                        }
-                        else -> false
-                    }
-                }
-
-                floatingDetector.setOnClickListener {
-                    showMediaListDialog()
-                }
-
-            } else if (floatingDetector?.visibility != android.view.View.VISIBLE) {
-                // If it's not visible, do not aggressively hide it just because candidates are currently empty.
-                // Wait for the user to explicitly toggle it via the menu.
+            } else {
+                floatingDetector?.visibility = android.view.View.GONE
             }
         }
     }
