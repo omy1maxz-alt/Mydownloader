@@ -4,9 +4,6 @@ import android.content.Context
 import android.util.Log
 import android.webkit.CookieManager
 import java.net.URL
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 
 class MediaDetectionEngine(private val context: Context) {
     companion object {
@@ -423,25 +420,14 @@ class MediaDetectionEngine(private val context: Context) {
         val hasDRMPlayables = playables.any { it.isDRMProtected }
         if (hasDRMPlayables) {
             val drmFiltered = playables.filter { it.isDRMProtected || it.requestCount > 10 }
-            val safePlayables = drmFiltered.filter {
-                val durationOk = it.durationSec == 0 || it.durationSec >= 60
-                val adOk = it.adScore == 0 || it.finalScore > 0
-                val isStrongManifest = it.isManifest && it.adScore == 0
-                (durationOk && adOk) || isStrongManifest
-            }
+            val safePlayables = drmFiltered.filter { (it.durationSec == 0 || it.durationSec >= 60) && (it.adScore == 0 || it.finalScore > 0) }
             if (safePlayables.isNotEmpty()) return safePlayables.maxByOrNull { it.finalScore }
         }
 
         // Group into presentations logically before scoring them against each other.
         // We do not want an isolated MP4 ad url to beat an underlying HLS manifest just because of raw score.
         // We filter out high-probability ads AND explicitly reject known videos under 60 seconds (MIN_ACCEPTED_VIDEO_DURATION_SECONDS).
-        // Explicitly allow strong manifests (like HLS) even if duration is 0 (due to MSE Blob mismatch), provided they have no ad penalty.
-        val safePlayables = playables.filter {
-            val durationOk = it.durationSec == 0 || it.durationSec >= 60
-            val adOk = it.adScore == 0 || it.finalScore > 0
-            val isStrongManifest = it.isManifest && it.adScore == 0
-            (durationOk && adOk) || isStrongManifest
-        }
+        val safePlayables = playables.filter { (it.durationSec == 0 || it.durationSec >= 60) && (it.adScore == 0 || it.finalScore > 0) }
 
         if (safePlayables.isEmpty()) return candidates.values.maxByOrNull { it.finalScore }
 
@@ -490,7 +476,7 @@ class MediaDetectionEngine(private val context: Context) {
         Log.d(TAG, "[MEDIA_SELECTION] === Current Candidates ===")
         var i = 1
         candidates.values.sortedByDescending { it.finalScore }.forEach {
-            Log.d(TAG, "[MEDIA_SELECTION] $i.\nurl=${it.url}\ntype=${it.type}\nmanifest=${it.isManifest}\nduration=${it.durationSec}s\nrequestCount=${it.requestCount}\nactivePlayer=${it.isActivePlayer}\nmse=${it.hasMSEActivity}\nadScore=${it.adScore}\nplaybackScore=${it.playbackScore}\nfinalScore=${it.finalScore}\nconfidence=${it.confidence}\nres=${it.resolution}\nparts=${it.segmentCount}\nsize=${it.estimatedSize}\n")
+            Log.d(TAG, "[MEDIA_SELECTION] $i.\nurl=${it.url}\ntype=${it.type}\nmanifest=${it.isManifest}\nduration=${it.durationSec}s\nrequestCount=${it.requestCount}\nactivePlayer=${it.isActivePlayer}\nafterPlayback=${it.startedAfterPlayback}\nmse=${it.hasMSEActivity}\nadScore=${it.adScore}\nplaybackScore=${it.playbackScore}\nfinalScore=${it.finalScore}\nconfidence=${it.confidence}\n")
             i++
         }
         Log.d(TAG, "[MEDIA_SELECTION] ==========================")
@@ -522,8 +508,6 @@ class MediaDetectionEngine(private val context: Context) {
             "/teaser/", "short_preview", "/preview/"
         )
 
-        // Ensure we don't accidentally match "ad-site" if we don't have it explicitly.
-        // "/ad/" does not match "ad-site", it matches "/ad/".
         return adKeywords.any { lowerUrl.contains(it) }
     }
 
@@ -533,96 +517,4 @@ class MediaDetectionEngine(private val context: Context) {
         }
     }
 
-
-    fun parseMetadataAsync(candidate: MediaCandidate) {
-        if (candidate.isManifest) {
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch(kotlinx.coroutines.Dispatchers.IO) {
-                try {
-                    val urlObj = java.net.URL(candidate.url)
-                    val conn = urlObj.openConnection() as java.net.HttpURLConnection
-                    conn.connectTimeout = 5000
-                    conn.readTimeout = 5000
-                    candidate.referer?.let { conn.setRequestProperty("Referer", it) }
-                    candidate.cookie?.let { conn.setRequestProperty("Cookie", it) }
-                    candidate.userAgent?.let { conn.setRequestProperty("User-Agent", it) }
-
-
-                    // Stream processing line by line to prevent OOM
-                    val reader = conn.inputStream.bufferedReader()
-                    var isMaster = false
-                    var isMedia = false
-                    var totalDuration = 0.0
-                    var partCount = 0
-                    var maxBandwidth = 0
-                    var maxRes: String? = null
-                    var variantCount = 0
-                    var linesRead = 0
-
-                    reader.useLines { lines ->
-                        for (line in lines) {
-                            linesRead++
-                            if (linesRead > 50000) break // Failsafe
-
-                            if (linesRead == 1 && !line.contains("#EXTM3U")) break
-
-                            if (line.startsWith("#EXT-X-STREAM-INF")) {
-                                isMaster = true
-                                variantCount++
-                                val bwMatch = Regex("BANDWIDTH=(\\d+)").find(line)
-                                val resMatch = Regex("RESOLUTION=(\\d+x\\d+)").find(line)
-                                val bw = bwMatch?.groupValues?.get(1)?.toIntOrNull() ?: 0
-                                if (bw > maxBandwidth || (bw == maxBandwidth && maxRes == null)) {
-                                    maxBandwidth = bw
-                                    if (resMatch != null) maxRes = resMatch.groupValues[1]
-                                }
-                            } else if (line.startsWith("#EXTINF:")) {
-                                isMedia = true
-                                partCount++
-                                val dur = line.substringAfter(":").substringBefore(",").toDoubleOrNull() ?: 0.0
-                                totalDuration += dur
-                            }
-                        }
-                    }
-
-                    if (isMaster) {
-                        candidate.variantsCount = variantCount
-                        if (maxRes != null) candidate.resolution = maxRes
-                        if (candidate.estimatedSize == 0L && maxBandwidth > 0 && candidate.durationSec > 0) {
-                            candidate.estimatedSize = (maxBandwidth / 8L) * candidate.durationSec
-                        }
-                    } else if (isMedia) {
-                        candidate.segmentCount = partCount
-                        if (candidate.durationSec == 0 && totalDuration > 0) {
-                            candidate.durationSec = totalDuration.toInt()
-                        }
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("MediaDetectionEngine", "Error probing metadata: ${e.message}")
-                }
-            }
-        } else if (candidate.isProgressiveFinal) {
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch(kotlinx.coroutines.Dispatchers.IO) {
-                try {
-                    val urlObj = java.net.URL(candidate.url)
-                    val conn = urlObj.openConnection() as java.net.HttpURLConnection
-                    conn.requestMethod = "HEAD"
-                    conn.connectTimeout = 5000
-                    conn.readTimeout = 5000
-                    candidate.referer?.let { conn.setRequestProperty("Referer", it) }
-                    candidate.cookie?.let { conn.setRequestProperty("Cookie", it) }
-                    candidate.userAgent?.let { conn.setRequestProperty("User-Agent", it) }
-
-                    if (conn.responseCode in 200..299) {
-                        val len = conn.contentLength
-                        if (len > 0) {
-                            candidate.estimatedSize = len.toLong()
-                        }
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("MediaDetectionEngine", "Error probing progressive metadata: ${e.message}")
-                }
-            }
-        }
-        return Unit
-    }
 }
