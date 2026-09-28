@@ -489,8 +489,7 @@ class MediaDetectionEngine(private val context: Context) {
             lowerUrl.contains("/beacon") || lowerUrl.contains("/event?") || lowerUrl.contains("/count?") ||
             lowerUrl.contains("google-analytics") || lowerUrl.contains("doubleclick") ||
             lowerUrl.contains("newshinyd.com") || lowerUrl.contains("yetansd.com") ||
-            lowerUrl.contains("playhubconnect.com") || lowerUrl.contains("bkcdn.net") ||
-            lowerUrl.contains("5fll5qac.xyz") || lowerUrl.contains("trailerhg.xyz")) {
+            lowerUrl.contains("playhubconnect.com") || lowerUrl.contains("bkcdn.net")) {
             return true
         }
 
@@ -499,7 +498,8 @@ class MediaDetectionEngine(private val context: Context) {
                       lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".webp")
         if (isImage) return true
 
-        val adKeywords = listOf(
+        // These are strong ad signals that are almost never legitimate media
+        val strictAdKeywords = listOf(
             "vast", "preroll", "midroll", "postroll", "doubleclick", "googlesyndication",
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
             "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver",
@@ -508,7 +508,17 @@ class MediaDetectionEngine(private val context: Context) {
             "/teaser/", "short_preview", "/preview/"
         )
 
-        return adKeywords.any { lowerUrl.contains(it) }
+        if (strictAdKeywords.any { lowerUrl.contains(it) }) return true
+
+        return false
+    }
+
+    // A separate check for "suspicious" domains that could be legitimate players but often host ads.
+    // We will penalize these *unless* there's strong evidence they are a real media stream.
+    fun isSuspiciousUrl(url: String): Boolean {
+        val lowerUrl = url.lowercase()
+        val suspiciousKeywords = listOf("tiktokcdn", "ad-site", "trailerhg.xyz", "5fll5qac.xyz", "/trailer/")
+        return suspiciousKeywords.any { lowerUrl.contains(it) }
     }
 
     private fun applyAdPenalty(candidate: MediaCandidate) {
