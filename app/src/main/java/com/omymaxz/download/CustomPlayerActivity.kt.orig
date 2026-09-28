@@ -137,6 +137,10 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
         hideSystemUI()
 
+        // Removed aggressive background caching using DownloadManager on startup.
+        // It was causing double-quota usage by automatically downloading the 1080p master playlist
+        // while the user might be actively streaming 480p via the CacheDataSource.
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val filter = IntentFilter().apply {
                 addAction(ACTION_BACKGROUND_PLAY)
@@ -592,9 +596,6 @@ class CustomPlayerActivity : AppCompatActivity() {
                     if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO) videoTracks += group.length
                     if (group.type == androidx.media3.common.C.TRACK_TYPE_AUDIO) audioTracks += group.length
                 }
-                if (videoUrl != null && !videoUrl!!.startsWith("file://") && !videoUrl!!.startsWith("content://")) {
-                    startBackgroundCacheMatchingTrack(tracks)
-                }
                 android.util.Log.d("KISKH_HLS_TRACE", "[KISKH_HLS_TRACE]\nfinalUrl=$videoUrl\ntrackGroups=$trackGroups\nvideoTracks=$videoTracks\naudioTracks=$audioTracks")
             }
 
@@ -854,40 +855,6 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
 
         if (isFinishing) { activePlayer?.release(); activePlayer = null }
-    }
-
-    private fun startBackgroundCacheMatchingTrack(tracks: androidx.media3.common.Tracks) {
-        val videoUrl = this.videoUrl ?: return
-
-        // 1. Determine explicitly selected stream keys based on current track selection
-        val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
-        tracks.groups.forEachIndexed { groupIndex, group ->
-            for (i in 0 until group.length) {
-                if (group.isTrackSelected(i)) {
-                    streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
-                }
-            }
-        }
-
-        // 2. Prepare the DownloadRequest to resume/start caching *only* the selected tracks
-        val downloadId = "cache_${videoUrl.hashCode()}"
-        val req = DownloadRequest.Builder(downloadId, Uri.parse(videoUrl))
-            .setStreamKeys(streamKeys)
-            .setCustomCacheKey(HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec(Uri.parse(videoUrl))))
-            .build()
-
-        android.util.Log.d("VOD_CACHE", "Starting background cache for $downloadId with tracks: $streamKeys")
-
-        try {
-            DownloadService.sendAddDownload(
-                this,
-                HlsDownloadService::class.java,
-                req,
-                false
-            )
-        } catch (e: Exception) {
-            android.util.Log.e("VOD_CACHE", "Failed to start background cache service", e)
-        }
     }
 
     private fun saveVideoOffline() {
