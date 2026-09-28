@@ -1310,6 +1310,24 @@ private fun checkBatteryOptimization() {
                         injectJulesLongPress(view)
                     }
                     injectPendingUserscripts()
+                    // Provide an extremely narrow fallback only for known SPAs like Hdporn92 / KissKH
+                    // where our ad-blocker explicitly broke the site's own loading-overlay removal script.
+                    // We only target the specific high z-index `.loading-overlay` blocking the center of the screen,
+                    // and we ONLY do this if we can verify the video is actually ready/playing to avoid hiding legitimate
+                    // site-loading states.
+                    view?.evaluateJavascript("(function() { " +
+                            "const checkStuckLoader = () => {" +
+                            "  const video = document.querySelector('video');" +
+                            "  if (video && video.readyState >= 3) {" +
+                            "      document.querySelectorAll('.loading-overlay, .jw-display-icon-container').forEach(el => {" +
+                            "          if (window.getComputedStyle(el).display !== 'none') {" +
+                            "              el.style.setProperty('display', 'none', 'important');" +
+                            "          }" +
+                            "      });" +
+                            "  }" +
+                            "};" +
+                            "setInterval(checkStuckLoader, 1000);" +
+                            "})();", null)
                     url?.let {
                         addToHistory(it)
                         if (currentTabIndex in tabs.indices) {
