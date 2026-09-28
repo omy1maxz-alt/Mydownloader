@@ -1310,6 +1310,24 @@ private fun checkBatteryOptimization() {
                         injectJulesLongPress(view)
                     }
                     injectPendingUserscripts()
+                    // Provide an extremely narrow fallback only for known SPAs like Hdporn92 / KissKH
+                    // where our ad-blocker explicitly broke the site's own loading-overlay removal script.
+                    // We only target the specific high z-index `.loading-overlay` blocking the center of the screen,
+                    // and we ONLY do this if we can verify the video is actually ready/playing to avoid hiding legitimate
+                    // site-loading states.
+                    view?.evaluateJavascript("(function() { " +
+                            "const checkStuckLoader = () => {" +
+                            "  const video = document.querySelector('video');" +
+                            "  if (video && video.readyState >= 3) {" +
+                            "      document.querySelectorAll('.loading-overlay, .jw-display-icon-container').forEach(el => {" +
+                            "          if (window.getComputedStyle(el).display !== 'none') {" +
+                            "              el.style.setProperty('display', 'none', 'important');" +
+                            "          }" +
+                            "      });" +
+                            "  }" +
+                            "};" +
+                            "setInterval(checkStuckLoader, 1000);" +
+                            "})();", null)
                     url?.let {
                         addToHistory(it)
                         if (currentTabIndex in tabs.indices) {
@@ -1485,12 +1503,22 @@ private fun checkBatteryOptimization() {
                 }
 
                 private fun createEmptyResponse(): WebResourceResponse {
-                    // CRITICAL FIX: Return 404 Not Found instead of a 200 OK with empty content.
-                    // This ensures that website scripts using <script src="..."> trigger their `onerror`
-                    // fallback handlers instead of `onload`, preventing infinite loading spinners that
-                    // wait indefinitely for a variable that an empty script failed to define.
-                    val response = WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
-                    response.setStatusCodeAndReasonPhrase(404, "Not Found")
+                    // HYPOTHESIS B:
+                    // Returning a 404 for ad/tracker scripts does not fix the infinite loading spinner on KissKH/Hdporn92.
+                    // Returning an empty 200 OK (the original behavior) caused 'onload' to fire but variables were undefined.
+                    // Instead of failing the network request with 404 or an empty text response, we provide a valid NO-OP JavaScript response.
+                    // This allows `<script src="...">` tags to load successfully and execute harmlessly,
+                    // satisfying the browser's script loading state machine without crashing the site's logic.
+
+                    val noOpScript = "/* Ad/Tracker Blocked by Mydownloader */"
+                    val response = WebResourceResponse("application/javascript", "utf-8", noOpScript.byteInputStream())
+                    response.setStatusCodeAndReasonPhrase(200, "OK")
+
+                    val headers = mutableMapOf<String, String>()
+                    headers["Access-Control-Allow-Origin"] = "*"
+                    headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+                    response.responseHeaders = headers
+
                     return response
                 }
             }
