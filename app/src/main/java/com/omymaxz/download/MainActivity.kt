@@ -1319,27 +1319,6 @@ private fun checkBatteryOptimization() {
                     }
                     checkForYouTube(url)
                 }
-
-                @Deprecated("Deprecated in Java")
-                override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
-                    super.onReceivedError(view, errorCode, description, failingUrl)
-                    if (errorCode == -100 || errorCode == -101 || errorCode < -10) {
-                        android.util.Log.e("WebViewNetworkError", "Legacy Network Error: code=$errorCode, desc=$description, url=$failingUrl")
-                    }
-                }
-
-                override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                    super.onReceivedError(view, request, error)
-                    error?.let {
-                        val code = it.errorCode
-                        if (code == -100 || code == -101 || code < -10) {
-                            val url = request?.url?.toString()
-                            val isMainFrame = request?.isForMainFrame
-                            android.util.Log.e("WebViewNetworkError", "Network Error: code=$code, desc=${it.description}, mainFrame=$isMainFrame, url=$url")
-                        }
-                    }
-                }
-
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
                     val isMainFrame = request?.isForMainFrame ?: false
@@ -1632,23 +1611,6 @@ private fun checkBatteryOptimization() {
                     customViewCallback = null
                 }
                 override fun onCreateWindow(view: WebView, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message): Boolean {
-                    val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-                    val currentUrl = view.url
-                    val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
-                    val blockPopups = settingsPrefs.getBoolean("BLOCK_ALL_POPUPS", true)
-
-                    // Gate the entire blocking logic behind the master toggle
-                    if (prefs.getBoolean("block_popups_redirects", true)) {
-                        // Allow popups if user gesture is present OR if the URL is whitelisted
-                        if (!isUserGesture && (currentUrl == null || !isUrlWhitelisted(currentUrl))) {
-                            val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
-                            if (showNotice) {
-                                Toast.makeText(applicationContext, "Malicious Pop-up blocked", Toast.LENGTH_SHORT).show()
-                            }
-                            return false // Aggressively kill the popup
-                        }
-                    }
-
                     val newWebView = WebView(this@MainActivity).apply {
                         settings.javaScriptEnabled = true
                         settings.setSupportMultipleWindows(true)
@@ -1814,26 +1776,6 @@ private fun checkBatteryOptimization() {
                     popupCloseBtn.colorFilter = iconColorFilter
 
                     newWebView.webViewClient = object : WebViewClient() {
-                        @Deprecated("Deprecated in Java")
-                        override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
-                            super.onReceivedError(view, errorCode, description, failingUrl)
-                            if (errorCode == -100 || errorCode == -101 || errorCode < -10) {
-                                android.util.Log.e("WebViewNetworkError", "Legacy Popup Network Error: code=$errorCode, desc=$description, url=$failingUrl")
-                            }
-                        }
-
-                        override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                            super.onReceivedError(view, request, error)
-                            error?.let {
-                                val code = it.errorCode
-                                if (code == -100 || code == -101 || code < -10) {
-                                    val url = request?.url?.toString()
-                                    val isMainFrame = request?.isForMainFrame
-                                    android.util.Log.e("WebViewNetworkError", "Popup Network Error: code=$code, desc=${it.description}, mainFrame=$isMainFrame, url=$url")
-                                }
-                            }
-                        }
-
                         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                             val url = request.url.toString()
                             runOnUiThread {
@@ -3689,6 +3631,38 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         }, { mediaFile ->
             // Long press to "Open With" (do not dismiss to keep scroll position)
             openMediaWith(mediaFile)
+        }, { mediaFile, position ->
+            val cand = mediaEngine.getCandidate(mediaFile.url)
+            if (cand != null) {
+                mediaEngine.parseMetadataAsync(cand, isManual = true) { updatedCand ->
+                    // Update MediaFile info from Candidate
+                    if (updatedCand.durationSec > 0) {
+                        val hours = updatedCand.durationSec / 3600
+                        val mins = (updatedCand.durationSec % 3600) / 60
+                        val secs = updatedCand.durationSec % 60
+                        val durStr = if (hours > 0) "${hours}h${mins}m${secs}s" else "${mins}m${secs}s"
+
+                        // We append this explicitly so it shows up via MediaFile's standard title binding logic
+                        if (!mediaFile.title.contains("Duration:")) {
+                            mediaFile.title += "\nDuration: $durStr"
+                        }
+                    }
+                    if (updatedCand.resolution != null && !mediaFile.title.contains("Resolution:")) {
+                        mediaFile.title += " | Resolution: ${updatedCand.resolution}"
+                    }
+                    if (updatedCand.estimatedSize != null) {
+                        val mb = updatedCand.estimatedSize!! / (1024.0 * 1024.0)
+                        mediaFile.fileSize = "~%.1fMB".format(mb)
+                    } else {
+                        mediaFile.fileSize = "Unknown"
+                    }
+
+                    currentMediaListAdapter?.notifyItemChanged(position)
+                }
+            } else {
+                Toast.makeText(this, "Could not find underlying candidate to analyze", Toast.LENGTH_SHORT).show()
+                currentMediaListAdapter?.notifyItemChanged(position)
+            }
         })
         dialog.setOnDismissListener {
             currentMediaListAdapter = null
@@ -3901,12 +3875,11 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             // Determine explicit MIME type from candidate metadata
             var mimeType: String? = null
             val ctLower = candidate.contentType?.lowercase()
-            val cleanUrlLower = candidate.url.substringBefore('?').lowercase()
-            if (ctLower?.contains("mpegurl") == true || ctLower?.contains("x-mpegurl") == true || cleanUrlLower.endsWith(".m3u8")) {
+            if (ctLower?.contains("mpegurl") == true || ctLower?.contains("x-mpegurl") == true || candidate.url.endsWith(".m3u8")) {
                 mimeType = androidx.media3.common.MimeTypes.APPLICATION_M3U8
-            } else if (ctLower?.contains("dash+xml") == true || cleanUrlLower.endsWith(".mpd")) {
+            } else if (ctLower?.contains("dash+xml") == true || candidate.url.endsWith(".mpd")) {
                 mimeType = androidx.media3.common.MimeTypes.APPLICATION_MPD
-            } else if (candidate.isProgressiveFinal || ctLower?.startsWith("video/") == true || cleanUrlLower.contains(".mp4")) {
+            } else if (candidate.isProgressiveFinal || ctLower?.startsWith("video/") == true || candidate.url.contains(".mp4", ignoreCase=true)) {
                 mimeType = androidx.media3.common.MimeTypes.VIDEO_MP4 // Fallback progressive, EXO will try to sniff it though
             }
 
@@ -4344,6 +4317,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val menuItems = listOf(
             MenuItemCustom(R.id.menu_history, "History"),
             MenuItemCustom(R.id.menu_add_bookmark, "Add Bookmark"),
+            MenuItemCustom(R.id.menu_add_link, "Add Link"),
             MenuItemCustom(R.id.menu_user_scripts, "User Scripts"),
             MenuItemCustom(R.id.menu_open_external, "Open in External Browser"),
             MenuItemCustom(R.id.menu_proxy_settings, getString(R.string.proxy_settings)),
@@ -4391,13 +4365,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             when (menuItems[position].id) {
                 R.id.menu_history -> showHistory()
                 R.id.menu_add_bookmark -> addCurrentPageToBookmarks()
+                R.id.menu_add_link -> showManualAddLinkDialog()
                 R.id.menu_user_scripts -> startActivity(Intent(this, UserScriptManagerActivity::class.java))
                 R.id.menu_open_external -> openCurrentPageInExternalBrowser()
                 R.id.menu_proxy_settings -> showProxySettingsDialog()
                 R.id.menu_nuke_traps -> nukeAdsAndTraps()
                 R.id.menu_settings -> showMasterSettingsDialog()
-                R.id.menu_media_detection_settings -> showMediaDetectionSettingsDialog()
-                R.id.menu_floating_detector_settings -> showFloatingDetectorSettingsDialog()
                 R.id.menu_theme_color -> showThemeColorPickerDialog()
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
                 R.id.menu_api_sniffer -> launchApiSniffer()
@@ -4606,114 +4579,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
     private fun injectStandardMediaDetector() {
         injectTelemetryScript()
-
-        // Cross-frame Document Start Sniffer using modern WebView feature if available
-        if (androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.DOCUMENT_START_SCRIPT)) {
-            val universalSniffer = """
-                (function() {
-                    // Prevent duplicate injections
-                    if (window.__universal_sniffer_active) return;
-                    window.__universal_sniffer_active = true;
-
-                    function notifyAndroid(url, type) {
-                        if (!url) return;
-                        if (url.startsWith('blob:') || url.startsWith('data:')) return;
-
-                        const lower = url.toLowerCase();
-                        // Filter out noise
-                        if (lower.includes('.jpg') || lower.includes('.png') || lower.includes('.svg') ||
-                            lower.includes('.js') || lower.includes('.gif') ||
-                            lower.includes('.webp') || lower.includes('.woff')) {
-                            return;
-                        }
-
-                        if (lower.includes('.m3u8') || lower.includes('/hls/') ||
-                            lower.includes('format=m3u8') || lower.includes('.mp4') ||
-                            lower.includes('.mkv') || lower.includes('.webm') ||
-                            lower.includes('.vtt') || lower.includes('.srt')) {
-                            if (window.AndroidMediaState && typeof window.AndroidMediaState.onMediaDetected === 'function') {
-                                window.AndroidMediaState.onMediaDetected(url, type || 'video');
-                            }
-                        }
-                    }
-
-                    // Intercept Fetch
-                    const originalFetch = window.fetch;
-                    window.fetch = async function(...args) {
-                        try {
-                            const url = args[0] instanceof Request ? args[0].url : args[0];
-                            notifyAndroid(url, "fetch");
-                        } catch(e) {}
-                        return originalFetch.apply(this, args);
-                    };
-
-                    // Intercept XHR
-                    const originalOpen = XMLHttpRequest.prototype.open;
-                    XMLHttpRequest.prototype.open = function(method, url) {
-                        try {
-                            notifyAndroid(url, "xhr");
-                        } catch(e) {}
-                        return originalOpen.apply(this, arguments);
-                    };
-
-                    // Observe DOM for video/source
-                    const observer = new MutationObserver((mutations) => {
-                        for (const mutation of mutations) {
-                            for (const node of mutation.addedNodes) {
-                                if (node.tagName === 'VIDEO' || node.tagName === 'SOURCE') {
-                                    if (node.src) notifyAndroid(node.src, 'video');
-                                }
-                            }
-                        }
-                    });
-
-                    if (document.documentElement || document.body) {
-                        observer.observe(document.documentElement || document, { childList: true, subtree: true });
-                    } else {
-                        document.addEventListener('DOMContentLoaded', () => {
-                            observer.observe(document.documentElement || document, { childList: true, subtree: true });
-                        });
-                    }
-
-                    // Intercept JW Player if present
-                    let jwInstance = window.jwplayer;
-                    Object.defineProperty(window, 'jwplayer', {
-                        configurable: true,
-                        enumerable: true,
-                        get: function() { return jwInstance; },
-                        set: function(val) {
-                            jwInstance = function(...args) {
-                                const player = val.apply(this, args);
-                                if (player && typeof player.on === 'function') {
-                                    player.on('ready', function() {
-                                        try {
-                                            const playlist = player.getPlaylist();
-                                            if (Array.isArray(playlist)) {
-                                                playlist.forEach(item => {
-                                                    if (item.file) notifyAndroid(item.file, 'video');
-                                                    if (Array.isArray(item.sources)) {
-                                                        item.sources.forEach(source => {
-                                                            if (source.file) notifyAndroid(source.file, 'video');
-                                                        });
-                                                    }
-                                                });
-                                            }
-                                        } catch (e) {}
-                                    });
-                                }
-                                return player;
-                            };
-                        }
-                    });
-                })();
-            """.trimIndent()
-            try {
-                androidx.webkit.WebViewCompat.addDocumentStartJavaScript(webView, universalSniffer, setOf("*"))
-            } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Failed to add document start javascript: ${e.message}")
-            }
-        }
-
         val script = """
             (function() {
                 const media = [];
@@ -5168,6 +5033,69 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 Toast.makeText(this, "Source copied to clipboard", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Close", null)
+            .show()
+    }
+
+    private fun showManualAddLinkDialog() {
+        val layout = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 10)
+        }
+
+        val urlInput = android.widget.EditText(this).apply {
+            hint = "https://example.com/video.mp4"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+        }
+        layout.addView(urlInput)
+
+        val titleInput = android.widget.EditText(this).apply {
+            hint = "Optional Filename / Title"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = 20 }
+        }
+        layout.addView(titleInput)
+
+        createThemedDialogBuilder(this)
+            .setTitle("Add Link")
+            .setView(layout)
+            .setPositiveButton("Add / Download") { _, _ ->
+                val rawUrl = urlInput.text.toString().trim()
+                if (!rawUrl.startsWith("http://") && !rawUrl.startsWith("https://")) {
+                    Toast.makeText(this, "Invalid URL scheme. Must be http/https", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                val title = titleInput.text.toString().trim().takeIf { it.isNotEmpty() }
+                    ?: rawUrl.substringAfterLast("/").substringBefore("?")
+                    .takeIf { it.isNotEmpty() } ?: "Manual_Download_${System.currentTimeMillis()}"
+
+                val category = MediaCategory.fromUrl(rawUrl)
+                val isManifest = rawUrl.lowercase().contains(".m3u8") || rawUrl.lowercase().contains(".mpd")
+
+                val manualFile = MediaFile(
+                    url = rawUrl,
+                    title = title,
+                    mimeType = if (isManifest) "application/x-mpegurl" else "video/mp4",
+                    quality = "Auto",
+                    category = if (category == MediaCategory.UNKNOWN && isManifest) MediaCategory.VIDEO else category,
+                    fileSize = "Unknown",
+                    language = null,
+                    isMainContent = true
+                )
+
+                // Add to our standard detected list so it shows in the UI and can be downloaded normally
+                if (!detectedMediaFiles.any { it.url == manualFile.url }) {
+                    detectedMediaFiles.add(0, manualFile)
+                    updateFabVisibility()
+                }
+
+                // Immediately trigger the download prompt
+                showRenameDialog(manualFile)
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
