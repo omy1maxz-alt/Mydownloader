@@ -1503,23 +1503,6 @@ private fun checkBatteryOptimization() {
                 }
 
                 private fun createEmptyResponse(): WebResourceResponse {
-                    // HYPOTHESIS B:
-                    // Returning a 404 for ad/tracker scripts does not fix the infinite loading spinner on KissKH/Hdporn92.
-                    // Returning an empty 200 OK (the original behavior) caused 'onload' to fire but variables were undefined.
-                    // Instead of failing the network request with 404 or an empty text response, we provide a valid NO-OP JavaScript response.
-                    // This allows `<script src="...">` tags to load successfully and execute harmlessly,
-                    // satisfying the browser's script loading state machine without crashing the site's logic.
-
-                    val noOpScript = "/* Ad/Tracker Blocked by Mydownloader */"
-                    val response = WebResourceResponse("application/javascript", "utf-8", noOpScript.byteInputStream())
-                    response.setStatusCodeAndReasonPhrase(200, "OK")
-
-                    val headers = mutableMapOf<String, String>()
-                    headers["Access-Control-Allow-Origin"] = "*"
-                    headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-                    response.responseHeaders = headers
-
-                    return response
                 }
             }
             webChromeClient = object : WebChromeClient() {

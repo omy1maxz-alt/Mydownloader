@@ -540,13 +540,15 @@ class CustomPlayerActivity : AppCompatActivity() {
             subtitleConfigs.add(cfg)
         }
 
-        val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
-            .setMimeType(MimeTypes.TEXT_VTT)
-            .setLanguage("none")
-            .setLabel("None")
-            .setSelectionFlags(0)
-            .build()
-        subtitleConfigs.add(emptySubtitleConfig)
+        if (subtitleConfigs.isEmpty()) {
+            val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
+                .setMimeType(MimeTypes.TEXT_VTT)
+                .setLanguage("none")
+                .setLabel("None")
+                .setSelectionFlags(0)
+                .build()
+            subtitleConfigs.add(emptySubtitleConfig)
+        }
 
 
         val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
@@ -621,7 +623,6 @@ class CustomPlayerActivity : AppCompatActivity() {
                     if (group.type == androidx.media3.common.C.TRACK_TYPE_AUDIO) audioTracks += group.length
                 }
                 if (videoUrl != null && !videoUrl!!.startsWith("file://") && !videoUrl!!.startsWith("content://")) {
-                    startBackgroundCacheMatchingTrack(tracks)
                 }
                 android.util.Log.d("KISKH_HLS_TRACE", "[KISKH_HLS_TRACE]\nfinalUrl=$videoUrl\ntrackGroups=$trackGroups\nvideoTracks=$videoTracks\naudioTracks=$audioTracks")
             }
@@ -767,13 +768,6 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
 
         if (subtitleConfigs.isNotEmpty()) {
-            val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
-                .setMimeType(MimeTypes.TEXT_VTT)
-                .setLanguage("none")
-                .setLabel("None")
-                .setSelectionFlags(0)
-                .build()
-            subtitleConfigs.add(emptySubtitleConfig)
 
             val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
             val actualMimeType = when {
