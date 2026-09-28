@@ -519,7 +519,12 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
     private fun parseHlsMetadata(candidate: MediaCandidate) {
-        val connection = setupConnection(candidate.url, candidate)
+        val connection = URL(candidate.url).openConnection() as java.net.HttpURLConnection
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+        candidate.userAgent?.let { connection.setRequestProperty("User-Agent", it) }
+        candidate.referer?.let { connection.setRequestProperty("Referer", it) }
+        candidate.cookie?.let { connection.setRequestProperty("Cookie", it) }
 
         if (connection.responseCode in 200..299) {
             val content = connection.inputStream.bufferedReader().use { it.readText() }
@@ -553,7 +558,13 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
     private fun parseProgressiveMetadata(candidate: MediaCandidate) {
-        val connection = setupConnection(candidate.url, candidate, "HEAD")
+        val connection = URL(candidate.url).openConnection() as java.net.HttpURLConnection
+        connection.requestMethod = "HEAD"
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+        candidate.userAgent?.let { connection.setRequestProperty("User-Agent", it) }
+        candidate.referer?.let { connection.setRequestProperty("Referer", it) }
+        candidate.cookie?.let { connection.setRequestProperty("Cookie", it) }
 
         if (connection.responseCode in 200..299) {
             val contentLength = connection.getHeaderField("Content-Length")
@@ -581,8 +592,7 @@ class MediaDetectionEngine(private val context: Context) {
             lowerUrl.contains("/beacon") || lowerUrl.contains("/event?") || lowerUrl.contains("/count?") ||
             lowerUrl.contains("google-analytics") || lowerUrl.contains("doubleclick") ||
             lowerUrl.contains("newshinyd.com") || lowerUrl.contains("yetansd.com") ||
-            lowerUrl.contains("playhubconnect.com") || lowerUrl.contains("bkcdn.net") ||
-            lowerUrl.contains("5fll5qac.xyz") || lowerUrl.contains("trailerhg.xyz")) {
+            lowerUrl.contains("playhubconnect.com") || lowerUrl.contains("bkcdn.net")) {
             return true
         }
 
@@ -591,34 +601,39 @@ class MediaDetectionEngine(private val context: Context) {
                       lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".webp")
         if (isImage) return true
 
-        val adKeywords = listOf(
+        // These are strong ad signals that are almost never legitimate media
+        val strictAdKeywords = listOf(
             "vast", "preroll", "midroll", "postroll", "doubleclick", "googlesyndication",
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
             "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver",
             "scorecardresearch", "criteo", "outbrain", "taboola", "moatads", "advertising",
-            "tiktokcdn", "ad-site", "/heat-preview/", "heatmap", "preview_v", "/trailer/",
-            "/teaser/", "short_preview", "/preview/"
+            "/heat-preview/", "heatmap", "preview_v", "/teaser/", "short_preview", "/preview/"
         )
 
-        return adKeywords.any { lowerUrl.contains(it) }
+        if (strictAdKeywords.any { lowerUrl.contains(it) }) return true
+
+        return false
+    }
+
+    // A separate check for "suspicious" domains that could be legitimate players but often host ads.
+    // We will penalize these *unless* there's strong evidence they are a real media stream.
+    fun isSuspiciousUrl(url: String): Boolean {
+        val lowerUrl = url.lowercase()
+        val suspiciousKeywords = listOf("tiktokcdn", "ad-site", "trailerhg.xyz", "5fll5qac.xyz", "/trailer/")
+        return suspiciousKeywords.any { lowerUrl.contains(it) }
     }
 
     private fun applyAdPenalty(candidate: MediaCandidate) {
         if (isAdUrl(candidate.url)) {
             candidate.adScore += 50
             candidate.isExplicitAd = true
+        } else if (isSuspiciousUrl(candidate.url)) {
+            // Apply a smaller penalty to suspicious domains, which can be overcome by strong media signals
+            // (e.g., if it's a .m3u8 manifest with active playback, the score will outweigh this 15-point penalty)
+            if (!candidate.isManifest && !candidate.isActivePlayer && !candidate.hasMSEActivity) {
+                candidate.adScore += 15
+            }
         }
     }
 
-
-    private fun setupConnection(urlStr: String, candidate: MediaCandidate, method: String = "GET"): java.net.HttpURLConnection {
-        val connection = java.net.URL(urlStr).openConnection() as java.net.HttpURLConnection
-        if (method != "GET") connection.requestMethod = method
-        connection.connectTimeout = 5000
-        connection.readTimeout = 5000
-        candidate.userAgent?.let { connection.setRequestProperty("User-Agent", it) }
-        candidate.referer?.let { connection.setRequestProperty("Referer", it) }
-        candidate.cookie?.let { connection.setRequestProperty("Cookie", it) }
-        return connection
-    }
 }
