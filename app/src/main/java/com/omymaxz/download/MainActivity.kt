@@ -46,8 +46,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
-import androidx.webkit.WebViewCompat
-import androidx.webkit.WebViewFeature
 import androidx.lifecycle.lifecycleScope
 import java.util.concurrent.Executor
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -1125,114 +1123,6 @@ private fun checkBatteryOptimization() {
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
             addJavascriptInterface(gmApi, "GMApi")
             addJavascriptInterface(YouTubeInterface(this@MainActivity), "YouTubeInterface")
-
-            // Inject Universal Document Start Sniffer if supported
-            if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-                val universalSniffer = """
-                    (function() {
-                        'use strict';
-
-                        if (window._universalSnifferInjected) return;
-                        window._universalSnifferInjected = true;
-
-                        function notifyAndroid(url, type) {
-                            if (!url || typeof url !== 'string') return;
-                            if (url.startsWith('blob:') || url.startsWith('data:')) return;
-
-                            const lower = url.toLowerCase();
-                            if (lower.includes('.jpg') || lower.includes('.png') ||
-                                lower.includes('.css') || lower.includes('.svg') ||
-                                lower.includes('.js') || lower.includes('.gif') ||
-                                lower.includes('.webp') || lower.includes('.woff')) {
-                                return;
-                            }
-
-                            if (lower.includes('.m3u8') || lower.includes('/hls/') ||
-                                lower.includes('format=m3u8') || lower.includes('.mp4') ||
-                                lower.includes('.mkv') || lower.includes('.webm') ||
-                                lower.includes('.vtt') || lower.includes('.srt')) {
-                                if (window.AndroidMediaState && typeof window.AndroidMediaState.onMediaDetected === 'function') {
-                                    window.AndroidMediaState.onMediaDetected(url, type || 'video');
-                                }
-                            }
-                        }
-
-                        // Intercept Fetch
-                        const originalFetch = window.fetch;
-                        window.fetch = async function(...args) {
-                            try {
-                                const url = args[0] instanceof Request ? args[0].url : args[0];
-                                notifyAndroid(url, "fetch");
-                            } catch(e) {}
-                            return originalFetch.apply(this, args);
-                        };
-
-                        // Intercept XHR
-                        const originalOpen = XMLHttpRequest.prototype.open;
-                        XMLHttpRequest.prototype.open = function(method, url) {
-                            try {
-                                notifyAndroid(url, "xhr");
-                            } catch(e) {}
-                            return originalOpen.apply(this, arguments);
-                        };
-
-                        // Observe DOM for video/source
-                        const observer = new MutationObserver((mutations) => {
-                            for (const mutation of mutations) {
-                                for (const node of mutation.addedNodes) {
-                                    if (node.tagName === 'VIDEO' || node.tagName === 'SOURCE') {
-                                        if (node.src) notifyAndroid(node.src, 'video');
-                                    }
-                                }
-                            }
-                        });
-
-                        if (document.documentElement || document.body) {
-                            observer.observe(document.documentElement || document, { childList: true, subtree: true });
-                        } else {
-                            document.addEventListener('DOMContentLoaded', () => {
-                                observer.observe(document.documentElement || document, { childList: true, subtree: true });
-                            });
-                        }
-
-                        // Intercept JW Player if present
-                        let jwInstance = window.jwplayer;
-                        Object.defineProperty(window, 'jwplayer', {
-                            configurable: true,
-                            enumerable: true,
-                            get: function() { return jwInstance; },
-                            set: function(val) {
-                                jwInstance = function(...args) {
-                                    const player = val.apply(this, args);
-                                    if (player && typeof player.on === 'function') {
-                                        player.on('ready', function() {
-                                            try {
-                                                const playlist = player.getPlaylist();
-                                                if (Array.isArray(playlist)) {
-                                                    playlist.forEach(item => {
-                                                        if (item.file) notifyAndroid(item.file, 'video');
-                                                        if (Array.isArray(item.sources)) {
-                                                            item.sources.forEach(source => {
-                                                                if (source.file) notifyAndroid(source.file, 'video');
-                                                            });
-                                                        }
-                                                    });
-                                                }
-                                            } catch (e) {}
-                                        });
-                                    }
-                                    return player;
-                                };
-                            }
-                        });
-                    })();
-                """.trimIndent()
-                try {
-                    WebViewCompat.addDocumentStartJavaScript(this, universalSniffer, setOf("*"))
-                } catch (e: Exception) {
-                    android.util.Log.e("MainActivity", "Failed to add document start javascript: ${e.message}")
-                }
-            }
 
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -4043,11 +3933,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             // Determine explicit MIME type from candidate metadata
             var mimeType: String? = null
             val ctLower = candidate.contentType?.lowercase()
-            if (ctLower?.contains("mpegurl") == true || ctLower?.contains("x-mpegurl") == true || candidate.url.endsWith(".m3u8")) {
+            val cleanUrlLower = candidate.url.substringBefore('?').lowercase()
+            if (ctLower?.contains("mpegurl") == true || ctLower?.contains("x-mpegurl") == true || cleanUrlLower.endsWith(".m3u8")) {
                 mimeType = androidx.media3.common.MimeTypes.APPLICATION_M3U8
-            } else if (ctLower?.contains("dash+xml") == true || candidate.url.endsWith(".mpd")) {
+            } else if (ctLower?.contains("dash+xml") == true || cleanUrlLower.endsWith(".mpd")) {
                 mimeType = androidx.media3.common.MimeTypes.APPLICATION_MPD
-            } else if (candidate.isProgressiveFinal || ctLower?.startsWith("video/") == true || candidate.url.contains(".mp4", ignoreCase=true)) {
+            } else if (candidate.isProgressiveFinal || ctLower?.startsWith("video/") == true || cleanUrlLower.contains(".mp4")) {
                 mimeType = androidx.media3.common.MimeTypes.VIDEO_MP4 // Fallback progressive, EXO will try to sniff it though
             }
 
@@ -4749,6 +4640,113 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
     private fun injectStandardMediaDetector() {
         injectTelemetryScript()
+
+        // Cross-frame Document Start Sniffer using modern WebView feature if available
+        if (androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            val universalSniffer = """
+                (function() {
+                    // Prevent duplicate injections
+                    if (window.__universal_sniffer_active) return;
+                    window.__universal_sniffer_active = true;
+
+                    function notifyAndroid(url, type) {
+                        if (!url) return;
+                        if (url.startsWith('blob:') || url.startsWith('data:')) return;
+
+                        const lower = url.toLowerCase();
+                        // Filter out noise
+                        if (lower.includes('.jpg') || lower.includes('.png') || lower.includes('.svg') ||
+                            lower.includes('.js') || lower.includes('.gif') ||
+                            lower.includes('.webp') || lower.includes('.woff')) {
+                            return;
+                        }
+
+                        if (lower.includes('.m3u8') || lower.includes('/hls/') ||
+                            lower.includes('format=m3u8') || lower.includes('.mp4') ||
+                            lower.includes('.mkv') || lower.includes('.webm') ||
+                            lower.includes('.vtt') || lower.includes('.srt')) {
+                            if (window.AndroidMediaState && typeof window.AndroidMediaState.onMediaDetected === 'function') {
+                                window.AndroidMediaState.onMediaDetected(url, type || 'video');
+                            }
+                        }
+                    }
+
+                    // Intercept Fetch
+                    const originalFetch = window.fetch;
+                    window.fetch = async function(...args) {
+                        try {
+                            const url = args[0] instanceof Request ? args[0].url : args[0];
+                            notifyAndroid(url, "fetch");
+                        } catch(e) {}
+                        return originalFetch.apply(this, args);
+                    };
+
+                    // Intercept XHR
+                    const originalOpen = XMLHttpRequest.prototype.open;
+                    XMLHttpRequest.prototype.open = function(method, url) {
+                        try {
+                            notifyAndroid(url, "xhr");
+                        } catch(e) {}
+                        return originalOpen.apply(this, arguments);
+                    };
+
+                    // Observe DOM for video/source
+                    const observer = new MutationObserver((mutations) => {
+                        for (const mutation of mutations) {
+                            for (const node of mutation.addedNodes) {
+                                if (node.tagName === 'VIDEO' || node.tagName === 'SOURCE') {
+                                    if (node.src) notifyAndroid(node.src, 'video');
+                                }
+                            }
+                        }
+                    });
+
+                    if (document.documentElement || document.body) {
+                        observer.observe(document.documentElement || document, { childList: true, subtree: true });
+                    } else {
+                        document.addEventListener('DOMContentLoaded', () => {
+                            observer.observe(document.documentElement || document, { childList: true, subtree: true });
+                        });
+                    }
+
+                    // Intercept JW Player if present
+                    let jwInstance = window.jwplayer;
+                    Object.defineProperty(window, 'jwplayer', {
+                        configurable: true,
+                        enumerable: true,
+                        get: function() { return jwInstance; },
+                        set: function(val) {
+                            jwInstance = function(...args) {
+                                const player = val.apply(this, args);
+                                if (player && typeof player.on === 'function') {
+                                    player.on('ready', function() {
+                                        try {
+                                            const playlist = player.getPlaylist();
+                                            if (Array.isArray(playlist)) {
+                                                playlist.forEach(item => {
+                                                    if (item.file) notifyAndroid(item.file, 'video');
+                                                    if (Array.isArray(item.sources)) {
+                                                        item.sources.forEach(source => {
+                                                            if (source.file) notifyAndroid(source.file, 'video');
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                        } catch (e) {}
+                                    });
+                                }
+                                return player;
+                            };
+                        }
+                    });
+                })();
+            """.trimIndent()
+            try {
+                androidx.webkit.WebViewCompat.addDocumentStartJavaScript(webView, universalSniffer, setOf("*"))
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to add document start javascript: ${e.message}")
+            }
+        }
 
         val script = """
             (function() {

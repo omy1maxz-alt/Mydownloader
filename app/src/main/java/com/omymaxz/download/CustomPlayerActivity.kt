@@ -16,6 +16,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.hls.HlsMediaSource
+import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory
+import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
@@ -474,6 +476,12 @@ class CustomPlayerActivity : AppCompatActivity() {
             cacheFactory
         }
 
+        val hlsExtractorFactory = DefaultHlsExtractorFactory(
+            DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES or
+            DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS,
+            true
+        )
+
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory).setLoadErrorHandlingPolicy(CustomRetryPolicy()))
             .setLoadControl(loadControl)
@@ -557,7 +565,14 @@ class CustomPlayerActivity : AppCompatActivity() {
             val mergedSource = MergingMediaSource(videoSource, audioSource)
             player?.setMediaSource(mergedSource)
         } else {
-            player?.setMediaItem(newBaseItem)
+            if (isHlsOrDash && actualMimeType == androidx.media3.common.MimeTypes.APPLICATION_M3U8) {
+                val hlsMediaSource = HlsMediaSource.Factory(dataSourceFactory)
+                    .setExtractorFactory(hlsExtractorFactory)
+                    .createMediaSource(newBaseItem)
+                player?.setMediaSource(hlsMediaSource)
+            } else {
+                player?.setMediaItem(newBaseItem)
+            }
         }
 
         // Set English as the default preferred subtitle language and explicitly enable text rendering
@@ -751,7 +766,15 @@ class CustomPlayerActivity : AppCompatActivity() {
             val playWhenReady = p.playWhenReady
 
             // Hot swap using setMediaItem so DefaultMediaSourceFactory naturally handles HLS merging
-            p.setMediaItem(newBaseItem)
+            val hlsExtractorFactory = DefaultHlsExtractorFactory(DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES or DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS, true)
+            if (isHls && actualMimeType == androidx.media3.common.MimeTypes.APPLICATION_M3U8) {
+                val hlsMediaSource = HlsMediaSource.Factory(cacheFactory)
+                    .setExtractorFactory(hlsExtractorFactory)
+                    .createMediaSource(newBaseItem)
+                p.setMediaSource(hlsMediaSource)
+            } else {
+                p.setMediaItem(newBaseItem)
+            }
             p.prepare()
             p.seekTo(currentPos)
             p.playWhenReady = playWhenReady
