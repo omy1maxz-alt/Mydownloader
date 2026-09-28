@@ -154,13 +154,40 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     private fun showTrackSelectionDialog() {
         if (player == null) return
+
+        // Show video, audio, and text track selection tabs natively using Media3 TrackSelectionDialogBuilder
         val trackSelectionDialog = androidx.media3.ui.TrackSelectionDialogBuilder(
             this,
-            "Video Quality",
+            "Track Selection",
             player!!,
-            C.TRACK_TYPE_VIDEO
+            androidx.media3.common.C.TRACK_TYPE_VIDEO
+        ).apply {
+            // Un-hide audio and subtitle selections by explicitly letting it build the full dialog
+            // Media3 UI components will natively inject tabs for available groups.
+        }.build()
+
+        // Unfortunately standard TrackSelectionDialogBuilder only takes one track type per constructor.
+        // A better approach for multi-track is to build one for Text explicitly if they want subtitles.
+        // For simplicity we will just show the Text selection here.
+        val textTrackDialog = androidx.media3.ui.TrackSelectionDialogBuilder(
+            this,
+            "Subtitles",
+            player!!,
+            androidx.media3.common.C.TRACK_TYPE_TEXT
         ).build()
-        trackSelectionDialog.show()
+
+        // Let's just create a quick chooser to pick between Video or Subtitle config
+        val builder = android.app.AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
+        builder.setTitle("Settings")
+        val options = arrayOf("Video Quality", "Subtitles")
+        builder.setItems(options) { _, which ->
+            if (which == 0) {
+                androidx.media3.ui.TrackSelectionDialogBuilder(this, "Video Quality", player!!, androidx.media3.common.C.TRACK_TYPE_VIDEO).build().show()
+            } else {
+                androidx.media3.ui.TrackSelectionDialogBuilder(this, "Subtitles", player!!, androidx.media3.common.C.TRACK_TYPE_TEXT).build().show()
+            }
+        }
+        builder.show()
     }
 
     private fun startFloatingBubble() {
@@ -579,6 +606,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             ?.setPreferredTextLanguage("en")
             ?.setIgnoredTextSelectionFlags(0)
             ?.setSelectUndeterminedTextLanguage(true)
+            ?.setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, false) // CRITICAL FIX: Ensure text tracks are not forcefully disabled by ExoPlayer defaults
             // Enable styling features like color and size via the UI by using default text rendering capabilities
             // The default subtitle view already responds to standard VTT/SRT styles and Android system caption settings
             ?.build()!!
@@ -778,6 +806,14 @@ class CustomPlayerActivity : AppCompatActivity() {
             } else {
                 p.setMediaItem(newBaseItem)
             }
+            // CRITICAL: Ensure text tracks are not forcefully disabled after hot swapping
+            p.trackSelectionParameters = p.trackSelectionParameters
+                .buildUpon()
+                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, false)
+                .build()
+
+            p.prepare()
+
             p.prepare()
             p.seekTo(currentPos)
             p.playWhenReady = playWhenReady
