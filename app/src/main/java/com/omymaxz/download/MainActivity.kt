@@ -1484,11 +1484,9 @@ private fun checkBatteryOptimization() {
                     return super.shouldInterceptRequest(view, request)
                 }
 
-                private fun createEmptyResponse(): WebResourceResponse {
-                    return WebResourceResponse("text/plain", "utf-8", 204, "No Content", null, null)
-                }
-            }
-            webChromeClient = object : WebChromeClient() {
+private fun createEmptyResponse(): WebResourceResponse {
+    return WebResourceResponse("text/plain", "utf-8", 204, "No Content", null, null)
+}            webChromeClient = object : WebChromeClient() {
                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
                     super.onProgressChanged(view, newProgress)
                     binding.progressBar.progress = newProgress
