@@ -1485,7 +1485,13 @@ private fun checkBatteryOptimization() {
                 }
 
                 private fun createEmptyResponse(): WebResourceResponse {
-                    return WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
+                    // CRITICAL FIX: Return 404 Not Found instead of a 200 OK with empty content.
+                    // This ensures that website scripts using <script src="..."> trigger their `onerror`
+                    // fallback handlers instead of `onload`, preventing infinite loading spinners that
+                    // wait indefinitely for a variable that an empty script failed to define.
+                    val response = WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
+                    response.setStatusCodeAndReasonPhrase(404, "Not Found")
+                    return response
                 }
             }
             webChromeClient = object : WebChromeClient() {
