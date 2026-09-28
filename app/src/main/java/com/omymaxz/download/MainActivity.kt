@@ -1485,7 +1485,7 @@ private fun checkBatteryOptimization() {
                 }
 
                 private fun createEmptyResponse(): WebResourceResponse {
-                    return WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
+                    return WebResourceResponse("text/plain", "utf-8", 204, "No Content", null, null)
                 }
             }
             webChromeClient = object : WebChromeClient() {

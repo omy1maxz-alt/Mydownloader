@@ -513,13 +513,15 @@ class CustomPlayerActivity : AppCompatActivity() {
             subtitleConfigs.add(cfg)
         }
 
-        val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
-            .setMimeType(MimeTypes.TEXT_VTT)
-            .setLanguage("none")
-            .setLabel("None")
-            .setSelectionFlags(0)
-            .build()
-        subtitleConfigs.add(emptySubtitleConfig)
+        if (subtitleConfigs.isEmpty()) {
+            val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
+                .setMimeType(MimeTypes.TEXT_VTT)
+                .setLanguage("none")
+                .setLabel("None")
+                .setSelectionFlags(0)
+                .build()
+            subtitleConfigs.add(emptySubtitleConfig)
+        }
 
 
         val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
@@ -593,7 +595,6 @@ class CustomPlayerActivity : AppCompatActivity() {
                     if (group.type == androidx.media3.common.C.TRACK_TYPE_AUDIO) audioTracks += group.length
                 }
                 if (videoUrl != null && !videoUrl!!.startsWith("file://") && !videoUrl!!.startsWith("content://")) {
-                    startBackgroundCacheMatchingTrack(tracks)
                 }
                 android.util.Log.d("KISKH_HLS_TRACE", "[KISKH_HLS_TRACE]\nfinalUrl=$videoUrl\ntrackGroups=$trackGroups\nvideoTracks=$videoTracks\naudioTracks=$audioTracks")
             }
@@ -739,13 +740,6 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
 
         if (subtitleConfigs.isNotEmpty()) {
-            val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
-                .setMimeType(MimeTypes.TEXT_VTT)
-                .setLanguage("none")
-                .setLabel("None")
-                .setSelectionFlags(0)
-                .build()
-            subtitleConfigs.add(emptySubtitleConfig)
 
             val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
             val actualMimeType = when {
@@ -856,39 +850,6 @@ class CustomPlayerActivity : AppCompatActivity() {
         if (isFinishing) { activePlayer?.release(); activePlayer = null }
     }
 
-    private fun startBackgroundCacheMatchingTrack(tracks: androidx.media3.common.Tracks) {
-        val videoUrl = this.videoUrl ?: return
-
-        // 1. Determine explicitly selected stream keys based on current track selection
-        val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
-        tracks.groups.forEachIndexed { groupIndex, group ->
-            for (i in 0 until group.length) {
-                if (group.isTrackSelected(i)) {
-                    streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
-                }
-            }
-        }
-
-        // 2. Prepare the DownloadRequest to resume/start caching *only* the selected tracks
-        val downloadId = "cache_${videoUrl.hashCode()}"
-        val req = DownloadRequest.Builder(downloadId, Uri.parse(videoUrl))
-            .setStreamKeys(streamKeys)
-            .setCustomCacheKey(HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec(Uri.parse(videoUrl))))
-            .build()
-
-        android.util.Log.d("VOD_CACHE", "Starting background cache for $downloadId with tracks: $streamKeys")
-
-        try {
-            DownloadService.sendAddDownload(
-                this,
-                HlsDownloadService::class.java,
-                req,
-                false
-            )
-        } catch (e: Exception) {
-            android.util.Log.e("VOD_CACHE", "Failed to start background cache service", e)
-        }
-    }
 
     private fun saveVideoOffline() {
         val input = android.widget.EditText(this)

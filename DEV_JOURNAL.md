@@ -144,3 +144,7 @@
 2026-09-25 Fix PATH_A_CACHE logic to correctly extract progressive MP4s directly from cache instead of triggering a network redownload.
 2026-09-25 Fix PATH_A_CACHE progressive MP4 exports to correctly fallback from caching and safely copy bytes
 - Restored missing UI settings surgically: Added Floating Detector persistent drag behaviors natively into MainActivity without 10-second auto-hide. Restored Media Detection Settings (ON/OFF and Auto Analyze flags) into overflow menu. Restored Floating Detector minimum duration visibility settings. Added Media Info dialog securely pulling exact engine data directly from the candidate dictionary via button per-list-item. Preserved strict candidate rules, download architectures, and userscript engines untouched.
+- Fixed unwanted automatic highest-quality HLS downloads triggered during video playback in CustomPlayerActivity.
+- Fixed subtitle display bugs by preventing empty fallback tracks from overriding actual subtitle configurations.
+- Resolved KissKH opaque white box rendering artifacts by returning HTTP 204 (No Content) for intercepted ad payloads instead of empty strings.
+- Fixed Floating Bubble UI background rendering as a solid square instead of a rounded shape.
