@@ -861,20 +861,30 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         // 1. Determine explicitly selected stream keys based on current track selection
         val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
-        tracks.groups.forEachIndexed { groupIndex, group ->
-            for (i in 0 until group.length) {
-                if (group.isTrackSelected(i)) {
-                    streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
+        var videoAudioGroupCount = 0
+        tracks.groups.forEach { group ->
+            if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO || group.type == androidx.media3.common.C.TRACK_TYPE_AUDIO) {
+                for (i in 0 until group.length) {
+                    if (group.isTrackSelected(i)) {
+                        streamKeys.add(androidx.media3.common.StreamKey(videoAudioGroupCount, i))
+                    }
                 }
+                videoAudioGroupCount++
             }
         }
 
         // 2. Prepare the DownloadRequest to resume/start caching *only* the selected tracks
         val downloadId = "cache_${videoUrl.hashCode()}"
-        val req = DownloadRequest.Builder(downloadId, Uri.parse(videoUrl))
+        val reqBuilder = DownloadRequest.Builder(downloadId, Uri.parse(videoUrl))
             .setStreamKeys(streamKeys)
-            .setCustomCacheKey(HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec(Uri.parse(videoUrl))))
-            .build()
+
+        val lowerUrl = videoUrl.lowercase()
+        // Type 2 (HLS) and Type 1 (DASH) explicitly enforce customCacheKey == null
+        if (!lowerUrl.contains(".m3u8") && !lowerUrl.contains("format=m3u8") && !lowerUrl.contains(".mpd") && !lowerUrl.contains("googlevideo.com/videoplayback")) {
+            reqBuilder.setCustomCacheKey(HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec(Uri.parse(videoUrl))))
+        }
+
+        val req = reqBuilder.build()
 
         android.util.Log.d("VOD_CACHE", "Starting background cache for $downloadId with tracks: $streamKeys")
 
@@ -915,12 +925,16 @@ class CustomPlayerActivity : AppCompatActivity() {
                     val tracks = player!!.currentTracks
                     // We need to pass the raw stream keys to Transformer. The groupIndex in tracks.groups
                     // corresponds directly to the track group index in the master playlist for HLS.
-                    tracks.groups.forEachIndexed { groupIndex, group ->
-                        for (i in 0 until group.length) {
-                            if (group.isTrackSelected(i)) {
-                                streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
-                                streamKeyStrings.add("$groupIndex,$i")
+                    var videoAudioGroupCount = 0
+                    tracks.groups.forEach { group ->
+                        if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO || group.type == androidx.media3.common.C.TRACK_TYPE_AUDIO) {
+                            for (i in 0 until group.length) {
+                                if (group.isTrackSelected(i)) {
+                                    streamKeys.add(androidx.media3.common.StreamKey(videoAudioGroupCount, i))
+                                    streamKeyStrings.add("$videoAudioGroupCount,$i")
+                                }
                             }
+                            videoAudioGroupCount++
                         }
                     }
                 }
