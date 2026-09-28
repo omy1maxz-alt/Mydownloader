@@ -47,32 +47,14 @@ object HlsDownloadHelper {
 
         // Preserve crucial authentication tokens to prevent cache collisions
         // while stripping dynamic session IDs
-        val importantKeys = setOf("auth-token", "token", "sig", "mac")
-        val newQuery = StringBuilder()
-
-        try {
-            uri.queryParameterNames?.forEach { key ->
-                if (importantKeys.contains(key.lowercase())) {
-                    val value = uri.getQueryParameter(key)
-                    if (value != null) {
-                        if (newQuery.isNotEmpty()) newQuery.append("&")
-                        newQuery.append("$key=$value")
-                    }
-                }
-            }
-
-            val builder = uri.buildUpon().fragment("")
-            if (newQuery.isEmpty()) {
-                builder.clearQuery()
-            } else {
-                builder.encodedQuery(newQuery.toString())
-            }
-
-            builder.build().toString()
-        } catch (e: UnsupportedOperationException) {
-            // Fallback for unexpected non-hierarchical URIs escaping the check
-            uri.toString()
-        }
+        // The previous implementation stripped almost all query parameters to save cache space.
+        // However, many HLS CDNs use query parameters to differentiate segments (e.g., ?seg=1 vs ?seg=2)
+        // or to differentiate image sprites/subtitles from video segments.
+        // Stripping these causes CacheKey collisions where a PNG sprite (requested via the same base path)
+        // overwrites or is returned instead of the actual TS segment.
+        // Fix: We must NOT strip query parameters from the cache key for HLS/DASH.
+        // A safe generic cache key is simply the full URI string (excluding fragment).
+        return@CacheKeyFactory uri.buildUpon().fragment("").build().toString()
     }
 
     // ---- Unified cache instance ----
