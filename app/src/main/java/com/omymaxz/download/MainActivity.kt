@@ -65,7 +65,11 @@ import java.util.regex.Pattern
 import android.widget.LinearLayout
 
 class MainActivity : AppCompatActivity() {
-
+private fun createEmptyResponse(): WebResourceResponse {
+    val response = WebResourceResponse("text/html", "utf-8", "".byteInputStream())
+    response.setStatusCodeAndReasonPhrase(404, "Not Found")
+    return response
+}
     private val detectorHideHandler = Handler(Looper.getMainLooper())
     private val detectorHideRunnable = Runnable { findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = android.view.View.GONE }
 
@@ -1310,6 +1314,24 @@ private fun checkBatteryOptimization() {
                         injectJulesLongPress(view)
                     }
                     injectPendingUserscripts()
+                    // Provide an extremely narrow fallback only for known SPAs like Hdporn92 / KissKH
+                    // where our ad-blocker explicitly broke the site's own loading-overlay removal script.
+                    // We only target the specific high z-index `.loading-overlay` blocking the center of the screen,
+                    // and we ONLY do this if we can verify the video is actually ready/playing to avoid hiding legitimate
+                    // site-loading states.
+                    view?.evaluateJavascript("(function() { " +
+                            "const checkStuckLoader = () => {" +
+                            "  const video = document.querySelector('video');" +
+                            "  if (video && video.readyState >= 3) {" +
+                            "      document.querySelectorAll('.loading-overlay, .jw-display-icon-container').forEach(el => {" +
+                            "          if (window.getComputedStyle(el).display !== 'none') {" +
+                            "              el.style.setProperty('display', 'none', 'important');" +
+                            "          }" +
+                            "      });" +
+                            "  }" +
+                            "};" +
+                            "setInterval(checkStuckLoader, 1000);" +
+                            "})();", null)
                     url?.let {
                         addToHistory(it)
                         if (currentTabIndex in tabs.indices) {
@@ -1319,6 +1341,27 @@ private fun checkBatteryOptimization() {
                     }
                     checkForYouTube(url)
                 }
+
+                @Deprecated("Deprecated in Java")
+                override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                    super.onReceivedError(view, errorCode, description, failingUrl)
+                    if (errorCode == -100 || errorCode == -101 || errorCode < -10) {
+                        android.util.Log.e("WebViewNetworkError", "Legacy Network Error: code=$errorCode, desc=$description, url=$failingUrl")
+                    }
+                }
+
+                override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                    super.onReceivedError(view, request, error)
+                    error?.let {
+                        val code = it.errorCode
+                        if (code == -100 || code == -101 || code < -10) {
+                            val url = request?.url?.toString()
+                            val isMainFrame = request?.isForMainFrame
+                            android.util.Log.e("WebViewNetworkError", "Network Error: code=$code, desc=${it.description}, mainFrame=$isMainFrame, url=$url")
+                        }
+                    }
+                }
+
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
                     val isMainFrame = request?.isForMainFrame ?: false
@@ -1397,7 +1440,7 @@ private fun checkBatteryOptimization() {
                             android.util.Log.d("WebViewClient", "Ignoring AD request: $url")
                             return super.shouldInterceptRequest(view, request)
                         }
-                        // Hook for detecting upstream network requests bypassing JS blobs.
+// Hook for detecting upstream network requests bypassing JS blobs.
                         // We register this internally so `CustomPlayerActivity` can use it when playing active streams.
                         if (url.contains(".m3u8", ignoreCase = true) || url.endsWith(".mp4") || url.contains("videoplayback")) {
                             currentVideoUrl = url
@@ -1408,22 +1451,34 @@ private fun checkBatteryOptimization() {
                                     // Skip adding to UI if engine strongly thinks it's an ad
                                 } else {
                                     if (detectionEnabled) {
-                                        webView.evaluateJavascript("if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) { window.AndroidMediaState.onMediaDetected('$url', 'video'); }", null)
+                                        webView.evaluateJavascript(
+                                            "if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) { window.AndroidMediaState.onMediaDetected('$url', 'video'); }",
+                                            null
+                                        )
                                     }
                                 }
                             }
                         }
+
                         try {
                             val category = MediaCategory.fromUrl(url)
                             val isMainContent = isMainVideoContent(url)
+
                             if (category == MediaCategory.VIDEO && isMainContent) {
                                 currentVideoUrl = url
                             }
+
                             val detectedFormat = detectVideoFormat(url)
                             val quality = extractQualityFromUrl(url)
-                            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
+                            val enhancedTitle = generateSmartFileName(
+                                url,
+                                detectedFormat.extension,
+                                quality,
+                                category
+                            )
                             val fileSize = estimateFileSize(url, category)
                             val language = extractLanguageFromUrl(url)
+
                             val mediaFile = MediaFile(
                                 url = url,
                                 title = enhancedTitle,
@@ -1434,64 +1489,107 @@ private fun checkBatteryOptimization() {
                                 language = language,
                                 isMainContent = isMainContent
                             )
+
                             val candidate = mediaEngine.getCandidate(url)
-                            if (candidate != null && (candidate.adScore > 0 || candidate.finalScore < 0)) {
+
+                            if (candidate != null &&
+                                (candidate.adScore > 0 || candidate.finalScore < 0)
+                            ) {
                                 return super.shouldInterceptRequest(view, request)
                             }
 
                             val existsAlready = synchronized(detectedMediaFiles) {
-                                detectedMediaFiles.any { it.url == url || (candidate != null && mediaEngine.getCandidate(it.url) == candidate) }
+                                detectedMediaFiles.any {
+                                    it.url == url ||
+                                        (candidate != null && mediaEngine.getCandidate(it.url) == candidate)
+                                }
                             }
+
                             // 60-Second Hard Eligibility Check
-                            val isEligible = candidate == null || (candidate.durationSec == 0 || candidate.durationSec >= 60)
+                            val isEligible = candidate == null ||
+                                candidate.durationSec == 0 ||
+                                candidate.durationSec >= 60
+
                             if (!existsAlready && isEligible) {
                                 synchronized(detectedMediaFiles) {
                                     detectedMediaFiles.add(mediaFile)
                                 }
-                                runOnUiThread { updateFabVisibility() }
+
+                                runOnUiThread {
+                                    updateFabVisibility()
+                                }
+
                                 if (category == MediaCategory.SUBTITLE) {
-                                    val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                                    val prefs = getSharedPreferences(
+                                        "Settings",
+                                        Context.MODE_PRIVATE
+                                    )
+
                                     if (prefs.getBoolean("AUTO_ANALYZE_MEDIA", false)) {
                                         fetchSubtitleSnippet(mediaFile)
                                     }
                                 }
                             }
                         } catch (e: Exception) {
-                            android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
+                            android.util.Log.e(
+                                "MainActivity",
+                                "Error processing media URL: ${e.message}"
+                            )
                         }
                     }
+
                     return super.shouldInterceptRequest(view, request)
                 }
-
-                private fun createEmptyResponse(): WebResourceResponse {
-                    return WebResourceResponse("text/plain", "utf-8", "".byteInputStream())
-                }
             }
+
             webChromeClient = object : WebChromeClient() {
-                override fun onProgressChanged(view: WebView?, newProgress: Int) {
+
+                override fun onProgressChanged(
+                    view: WebView?,
+                    newProgress: Int
+                ) {
                     super.onProgressChanged(view, newProgress)
+
                     binding.progressBar.progress = newProgress
+
                     if (newProgress == 100) {
                         binding.progressBar.visibility = View.GONE
                     } else {
                         binding.progressBar.visibility = View.VISIBLE
                     }
+
                     if (newProgress >= 10 && isPageLoading) {
-                         injectEarlyUserscripts(view?.url)
+                        injectEarlyUserscripts(view?.url)
                     }
-                    if (newProgress > 80 && view?.url?.contains("jules.google.com", ignoreCase = true) == true) {
+
+                    if (
+                        newProgress > 80 &&
+                        view?.url?.contains(
+                            "jules.google.com",
+                            ignoreCase = true
+                        ) == true
+                    ) {
                         injectJulesLongPress(view)
                     }
                 }
-                override fun onReceivedTitle(view: WebView?, title: String?) {
+
+                override fun onReceivedTitle(
+                    view: WebView?,
+                    title: String?
+                ) {
                     super.onReceivedTitle(view, title)
+
                     if (currentTabIndex in tabs.indices && !title.isNullOrBlank()) {
                         tabs[currentTabIndex].title = title
                     }
                 }
-                override fun onPermissionRequest(request: PermissionRequest?) {
+
+                override fun onPermissionRequest(
+                    request: PermissionRequest?
+                ) {
                     request?.grant(request.resources)
                 }
+
                 override fun onShowFileChooser(
                     webView: WebView?,
                     filePathCallback: ValueCallback<Array<Uri>>?,
@@ -1499,24 +1597,40 @@ private fun checkBatteryOptimization() {
                 ): Boolean {
                     this@MainActivity.filePathCallback?.onReceiveValue(null)
                     this@MainActivity.filePathCallback = filePathCallback
+
                     val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                         addCategory(Intent.CATEGORY_OPENABLE)
                         type = "*/*"
                     }
+
                     try {
                         fileChooserLauncher.launch(intent)
                     } catch (e: ActivityNotFoundException) {
-                        Toast.makeText(this@MainActivity, "Cannot open file chooser", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Cannot open file chooser",
+                            Toast.LENGTH_LONG
+                        ).show()
                         return false
                     }
+
                     return true
                 }
-                override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
-                    android.util.Log.d("WEB_FULLSCREEN_TRACE", "[WEB_FULLSCREEN_TRACE] event=onShowCustomView state=entering")
+
+                override fun onShowCustomView(
+                    view: View?,
+                    callback: CustomViewCallback?
+                ) {
+                    android.util.Log.d(
+                        "WEB_FULLSCREEN_TRACE",
+                        "[WEB_FULLSCREEN_TRACE] event=onShowCustomView state=entering"
+                    )
+
                     if (fullscreenView != null) {
                         callback?.onCustomViewHidden()
                         return
                     }
+
                     fullscreenView = view
                     customViewCallback = callback
 
@@ -1793,6 +1907,26 @@ private fun checkBatteryOptimization() {
                     popupCloseBtn.colorFilter = iconColorFilter
 
                     newWebView.webViewClient = object : WebViewClient() {
+                        @Deprecated("Deprecated in Java")
+                        override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                            super.onReceivedError(view, errorCode, description, failingUrl)
+                            if (errorCode == -100 || errorCode == -101 || errorCode < -10) {
+                                android.util.Log.e("WebViewNetworkError", "Legacy Popup Network Error: code=$errorCode, desc=$description, url=$failingUrl")
+                            }
+                        }
+
+                        override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                            super.onReceivedError(view, request, error)
+                            error?.let {
+                                val code = it.errorCode
+                                if (code == -100 || code == -101 || code < -10) {
+                                    val url = request?.url?.toString()
+                                    val isMainFrame = request?.isForMainFrame
+                                    android.util.Log.e("WebViewNetworkError", "Popup Network Error: code=$code, desc=${it.description}, mainFrame=$isMainFrame, url=$url")
+                                }
+                            }
+                        }
+
                         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                             val url = request.url.toString()
                             runOnUiThread {
@@ -3892,11 +4026,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             // Determine explicit MIME type from candidate metadata
             var mimeType: String? = null
             val ctLower = candidate.contentType?.lowercase()
-            if (ctLower?.contains("mpegurl") == true || ctLower?.contains("x-mpegurl") == true || candidate.url.endsWith(".m3u8")) {
+            val cleanUrlLower = candidate.url.substringBefore('?').lowercase()
+            if (ctLower?.contains("mpegurl") == true || ctLower?.contains("x-mpegurl") == true || cleanUrlLower.endsWith(".m3u8")) {
                 mimeType = androidx.media3.common.MimeTypes.APPLICATION_M3U8
-            } else if (ctLower?.contains("dash+xml") == true || candidate.url.endsWith(".mpd")) {
+            } else if (ctLower?.contains("dash+xml") == true || cleanUrlLower.endsWith(".mpd")) {
                 mimeType = androidx.media3.common.MimeTypes.APPLICATION_MPD
-            } else if (candidate.isProgressiveFinal || ctLower?.startsWith("video/") == true || candidate.url.contains(".mp4", ignoreCase=true)) {
+            } else if (candidate.isProgressiveFinal || ctLower?.startsWith("video/") == true || cleanUrlLower.contains(".mp4")) {
                 mimeType = androidx.media3.common.MimeTypes.VIDEO_MP4 // Fallback progressive, EXO will try to sniff it though
             }
 
@@ -4388,6 +4523,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 R.id.menu_proxy_settings -> showProxySettingsDialog()
                 R.id.menu_nuke_traps -> nukeAdsAndTraps()
                 R.id.menu_settings -> showMasterSettingsDialog()
+                R.id.menu_media_detection_settings -> showMediaDetectionSettingsDialog()
+                R.id.menu_floating_detector_settings -> showFloatingDetectorSettingsDialog()
                 R.id.menu_theme_color -> showThemeColorPickerDialog()
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
                 R.id.menu_api_sniffer -> launchApiSniffer()
@@ -4596,6 +4733,114 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
     private fun injectStandardMediaDetector() {
         injectTelemetryScript()
+
+        // Cross-frame Document Start Sniffer using modern WebView feature if available
+        if (androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            val universalSniffer = """
+                (function() {
+                    // Prevent duplicate injections
+                    if (window.__universal_sniffer_active) return;
+                    window.__universal_sniffer_active = true;
+
+                    function notifyAndroid(url, type) {
+                        if (!url) return;
+                        if (url.startsWith('blob:') || url.startsWith('data:')) return;
+
+                        const lower = url.toLowerCase();
+                        // Filter out noise
+                        if (lower.includes('.jpg') || lower.includes('.png') || lower.includes('.svg') ||
+                            lower.includes('.js') || lower.includes('.gif') ||
+                            lower.includes('.webp') || lower.includes('.woff')) {
+                            return;
+                        }
+
+                        if (lower.includes('.m3u8') || lower.includes('/hls/') ||
+                            lower.includes('format=m3u8') || lower.includes('.mp4') ||
+                            lower.includes('.mkv') || lower.includes('.webm') ||
+                            lower.includes('.vtt') || lower.includes('.srt')) {
+                            if (window.AndroidMediaState && typeof window.AndroidMediaState.onMediaDetected === 'function') {
+                                window.AndroidMediaState.onMediaDetected(url, type || 'video');
+                            }
+                        }
+                    }
+
+                    // Intercept Fetch
+                    const originalFetch = window.fetch;
+                    window.fetch = async function(...args) {
+                        try {
+                            const url = args[0] instanceof Request ? args[0].url : args[0];
+                            notifyAndroid(url, "fetch");
+                        } catch(e) {}
+                        return originalFetch.apply(this, args);
+                    };
+
+                    // Intercept XHR
+                    const originalOpen = XMLHttpRequest.prototype.open;
+                    XMLHttpRequest.prototype.open = function(method, url) {
+                        try {
+                            notifyAndroid(url, "xhr");
+                        } catch(e) {}
+                        return originalOpen.apply(this, arguments);
+                    };
+
+                    // Observe DOM for video/source
+                    const observer = new MutationObserver((mutations) => {
+                        for (const mutation of mutations) {
+                            for (const node of mutation.addedNodes) {
+                                if (node.tagName === 'VIDEO' || node.tagName === 'SOURCE') {
+                                    if (node.src) notifyAndroid(node.src, 'video');
+                                }
+                            }
+                        }
+                    });
+
+                    if (document.documentElement || document.body) {
+                        observer.observe(document.documentElement || document, { childList: true, subtree: true });
+                    } else {
+                        document.addEventListener('DOMContentLoaded', () => {
+                            observer.observe(document.documentElement || document, { childList: true, subtree: true });
+                        });
+                    }
+
+                    // Intercept JW Player if present
+                    let jwInstance = window.jwplayer;
+                    Object.defineProperty(window, 'jwplayer', {
+                        configurable: true,
+                        enumerable: true,
+                        get: function() { return jwInstance; },
+                        set: function(val) {
+                            jwInstance = function(...args) {
+                                const player = val.apply(this, args);
+                                if (player && typeof player.on === 'function') {
+                                    player.on('ready', function() {
+                                        try {
+                                            const playlist = player.getPlaylist();
+                                            if (Array.isArray(playlist)) {
+                                                playlist.forEach(item => {
+                                                    if (item.file) notifyAndroid(item.file, 'video');
+                                                    if (Array.isArray(item.sources)) {
+                                                        item.sources.forEach(source => {
+                                                            if (source.file) notifyAndroid(source.file, 'video');
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                        } catch (e) {}
+                                    });
+                                }
+                                return player;
+                            };
+                        }
+                    });
+                })();
+            """.trimIndent()
+            try {
+                androidx.webkit.WebViewCompat.addDocumentStartJavaScript(webView, universalSniffer, setOf("*"))
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to add document start javascript: ${e.message}")
+            }
+        }
+
         val script = """
             (function() {
                 const media = [];
