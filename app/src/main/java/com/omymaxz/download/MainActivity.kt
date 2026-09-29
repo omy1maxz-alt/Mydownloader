@@ -65,7 +65,11 @@ import java.util.regex.Pattern
 import android.widget.LinearLayout
 
 class MainActivity : AppCompatActivity() {
-
+private fun createEmptyResponse(): WebResourceResponse {
+    val response = WebResourceResponse("text/html", "utf-8", "".byteInputStream())
+    response.setStatusCodeAndReasonPhrase(404, "Not Found")
+    return response
+}
     private val detectorHideHandler = Handler(Looper.getMainLooper())
     private val detectorHideRunnable = Runnable { findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = android.view.View.GONE }
 
@@ -1436,7 +1440,7 @@ private fun checkBatteryOptimization() {
                             android.util.Log.d("WebViewClient", "Ignoring AD request: $url")
                             return super.shouldInterceptRequest(view, request)
                         }
-                        // Hook for detecting upstream network requests bypassing JS blobs.
+// Hook for detecting upstream network requests bypassing JS blobs.
                         // We register this internally so `CustomPlayerActivity` can use it when playing active streams.
                         if (url.contains(".m3u8", ignoreCase = true) || url.endsWith(".mp4") || url.contains("videoplayback")) {
                             currentVideoUrl = url
@@ -1447,22 +1451,34 @@ private fun checkBatteryOptimization() {
                                     // Skip adding to UI if engine strongly thinks it's an ad
                                 } else {
                                     if (detectionEnabled) {
-                                        webView.evaluateJavascript("if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) { window.AndroidMediaState.onMediaDetected('$url', 'video'); }", null)
+                                        webView.evaluateJavascript(
+                                            "if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) { window.AndroidMediaState.onMediaDetected('$url', 'video'); }",
+                                            null
+                                        )
                                     }
                                 }
                             }
                         }
+
                         try {
                             val category = MediaCategory.fromUrl(url)
                             val isMainContent = isMainVideoContent(url)
+
                             if (category == MediaCategory.VIDEO && isMainContent) {
                                 currentVideoUrl = url
                             }
+
                             val detectedFormat = detectVideoFormat(url)
                             val quality = extractQualityFromUrl(url)
-                            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
+                            val enhancedTitle = generateSmartFileName(
+                                url,
+                                detectedFormat.extension,
+                                quality,
+                                category
+                            )
                             val fileSize = estimateFileSize(url, category)
                             val language = extractLanguageFromUrl(url)
+
                             val mediaFile = MediaFile(
                                 url = url,
                                 title = enhancedTitle,
@@ -1473,62 +1489,107 @@ private fun checkBatteryOptimization() {
                                 language = language,
                                 isMainContent = isMainContent
                             )
+
                             val candidate = mediaEngine.getCandidate(url)
-                            if (candidate != null && (candidate.adScore > 0 || candidate.finalScore < 0)) {
+
+                            if (candidate != null &&
+                                (candidate.adScore > 0 || candidate.finalScore < 0)
+                            ) {
                                 return super.shouldInterceptRequest(view, request)
                             }
 
                             val existsAlready = synchronized(detectedMediaFiles) {
-                                detectedMediaFiles.any { it.url == url || (candidate != null && mediaEngine.getCandidate(it.url) == candidate) }
+                                detectedMediaFiles.any {
+                                    it.url == url ||
+                                        (candidate != null && mediaEngine.getCandidate(it.url) == candidate)
+                                }
                             }
+
                             // 60-Second Hard Eligibility Check
-                            val isEligible = candidate == null || (candidate.durationSec == 0 || candidate.durationSec >= 60)
+                            val isEligible = candidate == null ||
+                                candidate.durationSec == 0 ||
+                                candidate.durationSec >= 60
+
                             if (!existsAlready && isEligible) {
                                 synchronized(detectedMediaFiles) {
                                     detectedMediaFiles.add(mediaFile)
                                 }
-                                runOnUiThread { updateFabVisibility() }
+
+                                runOnUiThread {
+                                    updateFabVisibility()
+                                }
+
                                 if (category == MediaCategory.SUBTITLE) {
-                                    val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                                    val prefs = getSharedPreferences(
+                                        "Settings",
+                                        Context.MODE_PRIVATE
+                                    )
+
                                     if (prefs.getBoolean("AUTO_ANALYZE_MEDIA", false)) {
                                         fetchSubtitleSnippet(mediaFile)
                                     }
                                 }
                             }
                         } catch (e: Exception) {
-                            android.util.Log.e("MainActivity", "Error processing media URL: ${e.message}")
+                            android.util.Log.e(
+                                "MainActivity",
+                                "Error processing media URL: ${e.message}"
+                            )
                         }
                     }
+
                     return super.shouldInterceptRequest(view, request)
                 }
+            }
 
-private fun createEmptyResponse(): WebResourceResponse {
-    return WebResourceResponse("text/plain", "utf-8", 204, "No Content", null, null)
-}            webChromeClient = object : WebChromeClient() {
-                override fun onProgressChanged(view: WebView?, newProgress: Int) {
+            webChromeClient = object : WebChromeClient() {
+
+                override fun onProgressChanged(
+                    view: WebView?,
+                    newProgress: Int
+                ) {
                     super.onProgressChanged(view, newProgress)
+
                     binding.progressBar.progress = newProgress
+
                     if (newProgress == 100) {
                         binding.progressBar.visibility = View.GONE
                     } else {
                         binding.progressBar.visibility = View.VISIBLE
                     }
+
                     if (newProgress >= 10 && isPageLoading) {
-                         injectEarlyUserscripts(view?.url)
+                        injectEarlyUserscripts(view?.url)
                     }
-                    if (newProgress > 80 && view?.url?.contains("jules.google.com", ignoreCase = true) == true) {
+
+                    if (
+                        newProgress > 80 &&
+                        view?.url?.contains(
+                            "jules.google.com",
+                            ignoreCase = true
+                        ) == true
+                    ) {
                         injectJulesLongPress(view)
                     }
                 }
-                override fun onReceivedTitle(view: WebView?, title: String?) {
+
+                override fun onReceivedTitle(
+                    view: WebView?,
+                    title: String?
+                ) {
                     super.onReceivedTitle(view, title)
+
                     if (currentTabIndex in tabs.indices && !title.isNullOrBlank()) {
                         tabs[currentTabIndex].title = title
                     }
                 }
-                override fun onPermissionRequest(request: PermissionRequest?) {
+
+                override fun onPermissionRequest(
+                    request: PermissionRequest?
+                ) {
                     request?.grant(request.resources)
                 }
+
                 override fun onShowFileChooser(
                     webView: WebView?,
                     filePathCallback: ValueCallback<Array<Uri>>?,
@@ -1536,24 +1597,40 @@ private fun createEmptyResponse(): WebResourceResponse {
                 ): Boolean {
                     this@MainActivity.filePathCallback?.onReceiveValue(null)
                     this@MainActivity.filePathCallback = filePathCallback
+
                     val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                         addCategory(Intent.CATEGORY_OPENABLE)
                         type = "*/*"
                     }
+
                     try {
                         fileChooserLauncher.launch(intent)
                     } catch (e: ActivityNotFoundException) {
-                        Toast.makeText(this@MainActivity, "Cannot open file chooser", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Cannot open file chooser",
+                            Toast.LENGTH_LONG
+                        ).show()
                         return false
                     }
+
                     return true
                 }
-                override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
-                    android.util.Log.d("WEB_FULLSCREEN_TRACE", "[WEB_FULLSCREEN_TRACE] event=onShowCustomView state=entering")
+
+                override fun onShowCustomView(
+                    view: View?,
+                    callback: CustomViewCallback?
+                ) {
+                    android.util.Log.d(
+                        "WEB_FULLSCREEN_TRACE",
+                        "[WEB_FULLSCREEN_TRACE] event=onShowCustomView state=entering"
+                    )
+
                     if (fullscreenView != null) {
                         callback?.onCustomViewHidden()
                         return
                     }
+
                     fullscreenView = view
                     customViewCallback = callback
 
