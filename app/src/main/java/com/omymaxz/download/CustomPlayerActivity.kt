@@ -504,7 +504,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 .setMimeType(mime)
                 .setLanguage(lang)
                 .setLabel(lang.uppercase())
-                .setSelectionFlags(1)
+                .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED)
                 .build()
             subtitleConfigs.add(cfg)
         }
@@ -717,7 +717,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 .setMimeType(mime)
                 .setLanguage(lang)
                 .setLabel(lang.uppercase())
-                .setSelectionFlags(1)
+                .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED)
                 .build()
             subtitleConfigs.add(cfg)
         }
