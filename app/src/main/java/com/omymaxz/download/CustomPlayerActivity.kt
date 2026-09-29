@@ -177,14 +177,31 @@ class CustomPlayerActivity : AppCompatActivity() {
         ).build()
 
         // Let's just create a quick chooser to pick between Video or Subtitle config
-        val builder = android.app.AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
+        val builder = createThemedDialogBuilder()
         builder.setTitle("Settings")
         val options = arrayOf("Video Quality", "Subtitles")
         builder.setItems(options) { _, which ->
+
+            val prefs = getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
+            val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
+            val parsedColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
+            val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
+                setColor(parsedColor)
+                cornerRadius = 24f * resources.displayMetrics.density
+            }
+
             if (which == 0) {
-                androidx.media3.ui.TrackSelectionDialogBuilder(this, "Video Quality", player!!, androidx.media3.common.C.TRACK_TYPE_VIDEO).build().show()
+                val dialog = androidx.media3.ui.TrackSelectionDialogBuilder(this, "Video Quality", player!!, androidx.media3.common.C.TRACK_TYPE_VIDEO)
+                    .setTheme(R.style.CustomAlertDialogTheme)
+                    .build()
+                dialog.window?.setBackgroundDrawable(shapeDrawable)
+                dialog.show()
             } else {
-                androidx.media3.ui.TrackSelectionDialogBuilder(this, "Subtitles", player!!, androidx.media3.common.C.TRACK_TYPE_TEXT).build().show()
+                val dialog = androidx.media3.ui.TrackSelectionDialogBuilder(this, "Subtitles", player!!, androidx.media3.common.C.TRACK_TYPE_TEXT)
+                    .setTheme(R.style.CustomAlertDialogTheme)
+                    .build()
+                dialog.window?.setBackgroundDrawable(shapeDrawable)
+                dialog.show()
             }
         }
         builder.show()
@@ -997,4 +1014,43 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
+
+
+    private fun createThemedDialogBuilder(): android.app.AlertDialog.Builder {
+        val prefs = getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
+        val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
+        val parsedColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
+
+        val luminance = (0.299 * android.graphics.Color.red(parsedColor) + 0.587 * android.graphics.Color.green(parsedColor) + 0.114 * android.graphics.Color.blue(parsedColor)) / 255
+        val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+
+        return object : android.app.AlertDialog.Builder(this, R.style.CustomAlertDialogTheme) {
+            override fun show(): android.app.AlertDialog {
+                val dialog = super.show()
+                val window = dialog.window
+                if (window != null) {
+                    val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
+                        setColor(parsedColor)
+                        cornerRadius = 24f * context.resources.displayMetrics.density
+                    }
+                    window.setBackgroundDrawable(shapeDrawable)
+
+                    window.decorView.post {
+                        val titleId = context.resources.getIdentifier("alertTitle", "id", "android")
+                        if (titleId > 0) {
+                            window.findViewById<android.widget.TextView>(titleId)?.setTextColor(textColor)
+                        }
+                        window.findViewById<android.widget.TextView>(androidx.appcompat.R.id.alertTitle)?.setTextColor(textColor)
+                        window.findViewById<android.widget.TextView>(android.R.id.message)?.setTextColor(textColor)
+
+                        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(textColor)
+                        dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.setTextColor(textColor)
+                        dialog.getButton(android.app.AlertDialog.BUTTON_NEUTRAL)?.setTextColor(textColor)
+                    }
+                }
+                return dialog
+            }
+        }
+    }
+
 }
