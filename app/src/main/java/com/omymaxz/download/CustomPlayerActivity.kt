@@ -540,15 +540,31 @@ class CustomPlayerActivity : AppCompatActivity() {
             subtitleConfigs.add(cfg)
         }
 
-        if (subtitleConfigs.isEmpty()) {
-            val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
-                .setMimeType(MimeTypes.TEXT_VTT)
-                .setLanguage("none")
-                .setLabel("None")
-                .setSelectionFlags(0)
-                .build()
-            subtitleConfigs.add(emptySubtitleConfig)
+        // (b) Intent URLs
+        val initialIntentSubUrls = intent.getStringArrayListExtra(EXTRA_SUBTITLE_URLS)
+        if (initialIntentSubUrls != null) {
+            for (subUrl in initialIntentSubUrls) {
+                val mime = if (subUrl.contains(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
+                // Try to infer language from URL, fallback to English
+                val lang = if (subUrl.contains(".en.", true)) "en" else "und"
+                val cfg = MediaItem.SubtitleConfiguration.Builder(Uri.parse(subUrl))
+                    .setMimeType(mime)
+                    .setLanguage(lang)
+                    .setLabel(if (lang == "en") "ENGLISH" else "SUBTITLE")
+                    .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED)
+                    .build()
+
+                // Avoid adding duplicates (e.g. if the intent URL was already downloaded as a local file)
+                val existsLocally = subtitleConfigs.any { it.uri.toString().contains(subUrl.hashCode().toString()) || it.uri.toString().substringAfterLast("/") == Uri.parse(subUrl).lastPathSegment }
+                if (!existsLocally) {
+                    subtitleConfigs.add(cfg)
+                    android.util.Log.d("KISKH_SUBTITLE_TRACE", "Added intent subtitle to config: ${Uri.parse(subUrl).lastPathSegment}")
+                }
+            }
         }
+        android.util.Log.d("KISKH_SUBTITLE_TRACE", "Total subtitle configs: ${subtitleConfigs.size} (Intent array size: ${initialIntentSubUrls?.size ?: 0})")
+
+
 
 
         val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
@@ -591,9 +607,8 @@ class CustomPlayerActivity : AppCompatActivity() {
             player?.setMediaSource(mergedSource)
         } else {
             if (isHlsOrDash && actualMimeType == androidx.media3.common.MimeTypes.APPLICATION_M3U8) {
-                val hlsMediaSource = HlsMediaSource.Factory(dataSourceFactory)
-                    .setExtractorFactory(hlsExtractorFactory)
-                    .setAllowChunklessPreparation(false)
+                val hlsMediaSource = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this)
+                    .setDataSourceFactory(dataSourceFactory)
                     .setLoadErrorHandlingPolicy(CustomRetryPolicy())
                     .createMediaSource(newBaseItem)
                 player?.setMediaSource(hlsMediaSource)
@@ -767,7 +782,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             subtitleConfigs.add(cfg)
         }
 
-        if (subtitleConfigs.isNotEmpty()) {
+        if (true) {
 
             val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
             val actualMimeType = when {
@@ -789,11 +804,9 @@ class CustomPlayerActivity : AppCompatActivity() {
             val playWhenReady = p.playWhenReady
 
             // Hot swap using setMediaItem so DefaultMediaSourceFactory naturally handles HLS merging
-            val hlsExtractorFactory = DefaultHlsExtractorFactory(DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES or DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS, true)
             if (isHls && actualMimeType == androidx.media3.common.MimeTypes.APPLICATION_M3U8) {
-                val hlsMediaSource = HlsMediaSource.Factory(cacheFactory)
-                    .setExtractorFactory(hlsExtractorFactory)
-                    .setAllowChunklessPreparation(false)
+                val hlsMediaSource = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this)
+                    .setDataSourceFactory(cacheFactory)
                     .setLoadErrorHandlingPolicy(CustomRetryPolicy())
                     .createMediaSource(newBaseItem)
                 p.setMediaSource(hlsMediaSource)
@@ -812,7 +825,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             p.seekTo(currentPos)
             p.playWhenReady = playWhenReady
 
-            Toast.makeText(this, "Subtitles loaded: ${subtitleConfigs.size - 1} tracks", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Subtitles loaded: ${subtitleConfigs.size} tracks", Toast.LENGTH_LONG).show()
         }
     }
 
