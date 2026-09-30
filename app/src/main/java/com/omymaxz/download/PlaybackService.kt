@@ -63,8 +63,33 @@ override fun onCreate() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
+private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Background Audio Playback",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Controls for background audio playback"
+            }
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val title = intent?.getStringExtra("video_title") ?: "Background Audio"
+
+        // Prevent ForegroundServiceDidNotStartInTimeException by calling startForeground immediately
+        createNotificationChannel()
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Playing Audio")
+            .setContentText(title)
+            .setSmallIcon(R.drawable.ic_headset)
+            .setOngoing(true)
+            .build()
+        startForeground(NOTIFICATION_ID, notification)
+
         val action = intent?.action
 
         if (action == "com.omymaxz.download.START_BACKGROUND_AUDIO") {
