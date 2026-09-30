@@ -29,7 +29,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     @OptIn(UnstableApi::class)
-    override fun onCreate() {
+override fun onCreate() {
         super.onCreate()
 
         val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this)
@@ -46,41 +46,27 @@ class PlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .build()
 
+        val sessionActivityPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            Intent(this, CustomPlayerActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         mediaSession = MediaSession.Builder(this, player!!)
             .setId("PlaybackServiceSession")
+            .setSessionActivity(sessionActivityPendingIntent)
             .build()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Background Audio Playback",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Controls for background audio playback"
-            }
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-    }
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        createNotificationChannel()
         val title = intent?.getStringExtra("video_title") ?: "Background Audio"
-
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Playing Audio")
-            .setContentText(title)
-            .setSmallIcon(R.drawable.ic_headset)
-            .setOngoing(true)
-            .build()
-
-        startForeground(NOTIFICATION_ID, notification)
-
         val action = intent?.action
+
         if (action == "com.omymaxz.download.START_BACKGROUND_AUDIO") {
             val url = intent.getStringExtra("video_url")
             val position = intent.getLongExtra("current_position", 0L)

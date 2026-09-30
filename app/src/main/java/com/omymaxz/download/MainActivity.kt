@@ -3658,8 +3658,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         val mins = (updatedCand.durationSec % 3600) / 60
                         val secs = updatedCand.durationSec % 60
                         val durStr = if (hours > 0) "${hours}h${mins}m${secs}s" else "${mins}m${secs}s"
-
-                        // We append this explicitly so it shows up via MediaFile's standard title binding logic
                         if (!mediaFile.title.contains("Duration:")) {
                             mediaFile.title += "\nDuration: $durStr"
                         }
@@ -3673,13 +3671,23 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                     } else {
                         mediaFile.fileSize = "Unknown"
                     }
-
                     currentMediaListAdapter?.notifyItemChanged(position)
                 }
             } else {
                 Toast.makeText(this, "Could not find underlying candidate to analyze", Toast.LENGTH_SHORT).show()
                 currentMediaListAdapter?.notifyItemChanged(position)
             }
+        }, { mediaFile ->
+            val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
+                putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
+                val title = if (mediaFile.title.contains("\n")) mediaFile.title.substringBefore("\n") else mediaFile.title
+                putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
+                if (mediaFile.mimeType != null) {
+                    putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
+                }
+                addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+            startActivity(intent)
         })
         dialog.setOnDismissListener {
             currentMediaListAdapter = null

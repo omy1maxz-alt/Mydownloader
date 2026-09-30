@@ -15,7 +15,8 @@ class MediaListAdapter(
     var mediaFiles: MutableList<MediaFile>,
     private val onItemClicked: (MediaFile) -> Unit,
     private val onItemLongClicked: (MediaFile) -> Unit,
-    private val onAnalyzeClicked: ((MediaFile, Int) -> Unit)? = null
+    private val onAnalyzeClicked: ((MediaFile, Int) -> Unit)? = null,
+    private val onPlayClicked: ((MediaFile) -> Unit)? = null
 ) : RecyclerView.Adapter<MediaListAdapter.MediaViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MediaViewHolder {
