@@ -23,7 +23,7 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.AspectRatioFrameLayout
-import android.widget.ImageButton
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -117,13 +117,13 @@ class CustomPlayerActivity : AppCompatActivity() {
             Toast.makeText(this, "No video URL provided", Toast.LENGTH_SHORT).show(); finish(); return
         }
 
-        findViewById<ImageButton>(R.id.fab_save_offline).setOnClickListener { saveVideoOffline() }
-        findViewById<ImageButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
-        findViewById<ImageButton>(R.id.fab_settings).setOnClickListener { showTrackSelectionDialog() }
-        findViewById<ImageButton>(R.id.fab_bubble).setOnClickListener { startFloatingBubble() }
+        findViewById<android.widget.ImageButton>(R.id.fab_save_offline).setOnClickListener { saveVideoOffline() }
+        findViewById<android.widget.ImageButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
+        findViewById<android.widget.ImageButton>(R.id.fab_settings).setOnClickListener { showTrackSelectionDialog() }
+        findViewById<android.widget.ImageButton>(R.id.fab_bubble).setOnClickListener { startFloatingBubble() }
 
         var currentResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-        findViewById<ImageButton>(R.id.fab_resize).setOnClickListener {
+        findViewById<android.widget.ImageButton>(R.id.fab_resize).setOnClickListener {
             currentResizeMode = when (currentResizeMode) {
                 AspectRatioFrameLayout.RESIZE_MODE_FIT -> { Toast.makeText(this, "Resize Mode: Stretch", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_FILL }
                 AspectRatioFrameLayout.RESIZE_MODE_FILL -> { Toast.makeText(this, "Resize Mode: Zoom (Crop)", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_ZOOM }
@@ -154,6 +154,7 @@ class CustomPlayerActivity : AppCompatActivity() {
     }
 
 
+
     private fun showTrackSelectionDialog() {
         if (player == null) return
         val trackSelectionDialog = androidx.media3.ui.TrackSelectionDialogBuilder(
@@ -163,19 +164,49 @@ class CustomPlayerActivity : AppCompatActivity() {
             C.TRACK_TYPE_VIDEO
         ).build()
 
-        // Let's just create a quick chooser to pick between Video or Subtitle config
-        val builder = createThemedDialogBuilder(this)
-        builder.setTitle("Settings")
-        val options = arrayOf("Video Quality", "Subtitles")
-        builder.setItems(options) { _, which ->
-            if (which == 0) {
-                androidx.media3.ui.TrackSelectionDialogBuilder(this, "Video Quality", player!!, androidx.media3.common.C.TRACK_TYPE_VIDEO).build().show()
-            } else {
-                androidx.media3.ui.TrackSelectionDialogBuilder(this, "Subtitles", player!!, androidx.media3.common.C.TRACK_TYPE_TEXT).build().show()
-            }
+        trackSelectionDialog.show()
+
+        val themeColor = getSafeGlossyThemeColor(this)
+        val drawable = android.graphics.drawable.GradientDrawable().apply {
+            setColor(themeColor)
+            cornerRadius = 32f
         }
-        builder.show()
+        trackSelectionDialog.window?.setBackgroundDrawable(drawable)
     }
+
+    private fun getSafeGlossyThemeColor(context: android.content.Context): Int {
+        val prefs = context.getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
+        val defaultColor = android.graphics.Color.parseColor("#A0000000")
+
+        return try {
+            val colorStr = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
+            android.graphics.Color.parseColor(colorStr)
+        } catch (e: java.lang.ClassCastException) {
+            try {
+                // If it crashes because it's an Int, fallback to reading as Int
+                prefs.getInt("glossy_theme_color", defaultColor)
+            } catch (e2: Exception) {
+                defaultColor
+            }
+        } catch (e: Exception) {
+            defaultColor
+        }
+    }
+
+    private fun applyGlossyThemeToDialog(dialog: android.app.Dialog, context: android.content.Context) {
+        val themeColor = getSafeGlossyThemeColor(context)
+        val drawable = android.graphics.drawable.GradientDrawable().apply {
+            setColor(themeColor)
+            cornerRadius = 32f
+        }
+        dialog.window?.setBackgroundDrawable(drawable)
+    }
+
+    private fun createThemedDialogBuilder(context: android.content.Context): androidx.appcompat.app.AlertDialog.Builder {
+        val builder = androidx.appcompat.app.AlertDialog.Builder(context)
+        return builder
+    }
+
 
     private fun startFloatingBubble() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !android.provider.Settings.canDrawOverlays(this)) {
@@ -518,31 +549,13 @@ class CustomPlayerActivity : AppCompatActivity() {
             subtitleConfigs.add(cfg)
         }
 
-        // (b) Intent URLs
-        val initialIntentSubUrls = intent.getStringArrayListExtra(EXTRA_SUBTITLE_URLS)
-        if (initialIntentSubUrls != null) {
-            for (subUrl in initialIntentSubUrls) {
-                val mime = if (subUrl.contains(".srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
-                // Try to infer language from URL, fallback to English
-                val lang = if (subUrl.contains(".en.", true)) "en" else "und"
-                val cfg = MediaItem.SubtitleConfiguration.Builder(Uri.parse(subUrl))
-                    .setMimeType(mime)
-                    .setLanguage(lang)
-                    .setLabel(if (lang == "en") "ENGLISH" else "SUBTITLE")
-                    .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED)
-                    .build()
-
-                // Avoid adding duplicates (e.g. if the intent URL was already downloaded as a local file)
-                val existsLocally = subtitleConfigs.any { it.uri.toString().contains(subUrl.hashCode().toString()) || it.uri.toString().substringAfterLast("/") == Uri.parse(subUrl).lastPathSegment }
-                if (!existsLocally) {
-                    subtitleConfigs.add(cfg)
-                    android.util.Log.d("KISKH_SUBTITLE_TRACE", "Added intent subtitle to config: ${Uri.parse(subUrl).lastPathSegment}")
-                }
-            }
-        }
-        android.util.Log.d("KISKH_SUBTITLE_TRACE", "Total subtitle configs: ${subtitleConfigs.size} (Intent array size: ${initialIntentSubUrls?.size ?: 0})")
-
-
+        val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
+            .setMimeType(MimeTypes.TEXT_VTT)
+            .setLanguage("none")
+            .setLabel("None")
+            .setSelectionFlags(0)
+            .build()
+        subtitleConfigs.add(emptySubtitleConfig)
 
 
         val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
@@ -584,15 +597,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             val mergedSource = MergingMediaSource(videoSource, audioSource)
             player?.setMediaSource(mergedSource)
         } else {
-            if (isHlsOrDash && actualMimeType == androidx.media3.common.MimeTypes.APPLICATION_M3U8) {
-                val hlsMediaSource = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this)
-                    .setDataSourceFactory(dataSourceFactory)
-                    .setLoadErrorHandlingPolicy(CustomRetryPolicy())
-                    .createMediaSource(newBaseItem)
-                player?.setMediaSource(hlsMediaSource)
-            } else {
-                player?.setMediaItem(newBaseItem)
-            }
+            player?.setMediaItem(newBaseItem)
         }
 
         // Set English as the default preferred subtitle language and explicitly enable text rendering
@@ -786,28 +791,12 @@ class CustomPlayerActivity : AppCompatActivity() {
             val playWhenReady = p.playWhenReady
 
             // Hot swap using setMediaItem so DefaultMediaSourceFactory naturally handles HLS merging
-            if (isHls && actualMimeType == androidx.media3.common.MimeTypes.APPLICATION_M3U8) {
-                val hlsMediaSource = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this)
-                    .setDataSourceFactory(cacheFactory)
-                    .setLoadErrorHandlingPolicy(CustomRetryPolicy())
-                    .createMediaSource(newBaseItem)
-                p.setMediaSource(hlsMediaSource)
-            } else {
-                p.setMediaItem(newBaseItem)
-            }
-            // CRITICAL: Ensure text tracks are not forcefully disabled after hot swapping
-            p.trackSelectionParameters = p.trackSelectionParameters
-                .buildUpon()
-                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, false)
-                .build()
-
-            p.prepare()
-
+            p.setMediaItem(newBaseItem)
             p.prepare()
             p.seekTo(currentPos)
             p.playWhenReady = playWhenReady
 
-            Toast.makeText(this, "Subtitles loaded: ${subtitleConfigs.size} tracks", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Subtitles loaded: ${subtitleConfigs.size - 1} tracks", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -824,9 +813,9 @@ class CustomPlayerActivity : AppCompatActivity() {
                 // which leaves missing chunks in the middle of the cache.
                 if (!hasNotifiedCacheComplete && buffered >= duration - 1500 && bufferedPercentage >= 99) {
                     hasNotifiedCacheComplete = true
-                    val fab = findViewById<android.widget.ImageButton>(R.id.fab_save_offline)
+                    val fab = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab_save_offline)
                     // Tint FAB green to indicate it's safe to save
-                    fab.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
+                    fab.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
                     Toast.makeText(this@CustomPlayerActivity, "Video fully cached! Safe to Save Offline.", Toast.LENGTH_LONG).show()
                 }
             }
@@ -837,6 +826,11 @@ class CustomPlayerActivity : AppCompatActivity() {
     private fun attachPlayerView() {
         val pv = findViewById<PlayerView>(R.id.player_view)
         pv.player = player
+        pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !isInPictureInPictureMode) {
+            } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            }
+        })
 
         hasNotifiedCacheComplete = false
         cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
@@ -935,26 +929,5 @@ class CustomPlayerActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancel", null)
             .show()
-    }
-
-    private fun createThemedDialogBuilder(context: android.content.Context): android.app.AlertDialog.Builder {
-        val prefs = context.getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
-        val isDynamic = prefs.getBoolean("THEME_DYNAMIC", true)
-        val defaultGlossy = android.graphics.Color.parseColor("#1A1A24")
-        val baseColor = if (isDynamic) prefs.getInt("glossy_theme_color", defaultGlossy) else defaultGlossy
-
-        val dialogBg = android.graphics.drawable.GradientDrawable().apply {
-            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-            cornerRadius = 32f
-            colors = intArrayOf(baseColor, baseColor)
-        }
-
-        return object : android.app.AlertDialog.Builder(context, R.style.CustomAlertDialogTheme) {
-            override fun create(): android.app.AlertDialog {
-                val dialog = super.create()
-                dialog.window?.setBackgroundDrawable(dialogBg)
-                return dialog
-            }
-        }
     }
 }
