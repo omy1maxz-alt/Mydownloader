@@ -4347,14 +4347,14 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
         val menuItems = listOf(
             MenuItemCustom(R.id.menu_history, "History", android.R.drawable.ic_menu_recent_history),
-            MenuItemCustom(R.id.menu_add_bookmark, "Add Bookmark", android.R.drawable.ic_input_add),
+            MenuItemCustom(R.id.menu_add_bookmark, "Add Bookmark", android.R.drawable.ic_menu_save),
             MenuItemCustom(R.id.menu_add_link, "Add Link", android.R.drawable.ic_menu_add),
             MenuItemCustom(R.id.menu_user_scripts, "User Scripts", android.R.drawable.ic_menu_edit),
-            MenuItemCustom(R.id.menu_open_external, "Open in External Browser", android.R.drawable.ic_menu_set_as),
+            MenuItemCustom(R.id.menu_open_external, "Open in External Browser", android.R.drawable.ic_menu_share),
             MenuItemCustom(R.id.menu_proxy_settings, getString(R.string.proxy_settings), android.R.drawable.ic_menu_mapmode),
             MenuItemCustom(R.id.menu_nuke_traps, "Nuke Ads/Traps", android.R.drawable.ic_menu_close_clear_cancel),
-            MenuItemCustom(R.id.menu_settings, "Settings", android.R.drawable.ic_menu_preferences),
-            MenuItemCustom(R.id.menu_media_detection_settings, "Media Detection Settings", android.R.drawable.ic_menu_manage),
+            MenuItemCustom(R.id.menu_settings, "Settings", android.R.drawable.ic_menu_manage),
+            MenuItemCustom(R.id.menu_media_detection_settings, "Media Detection Settings", android.R.drawable.ic_menu_compass),
             MenuItemCustom(R.id.menu_floating_detector_settings, "Floating Detector Settings", android.R.drawable.ic_dialog_dialer),
             MenuItemCustom(R.id.menu_theme_color, "Theme Color", android.R.drawable.ic_menu_gallery),
             MenuItemCustom(R.id.menu_debug_site, "Debug Site", android.R.drawable.ic_menu_info_details),
@@ -4369,8 +4369,14 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val itemView = convertView ?: layoutInflater.inflate(R.layout.bottom_sheet_menu_item, parent, false)
                 val textView = itemView.findViewById<android.widget.TextView>(R.id.menu_item_text)
-                textView.text = getItem(position)?.title
+                val iconView = itemView.findViewById<android.widget.ImageView>(R.id.menu_item_icon)
+                val item = getItem(position)
+                textView.text = item?.title
                 textView.setTextColor(textColor)
+                if (item != null) {
+                    iconView?.setImageResource(item.iconRes)
+                    iconView?.setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                }
                 return itemView
             }
         }
