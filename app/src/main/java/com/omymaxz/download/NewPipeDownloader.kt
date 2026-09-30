@@ -7,6 +7,7 @@ import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import android.webkit.CookieManager
 
 class NewPipeDownloader : Downloader() {
     companion object {
@@ -39,6 +40,13 @@ class NewPipeDownloader : Downloader() {
             if (connection.getRequestProperty("User-Agent") == null) {
                 connection.setRequestProperty("User-Agent", USER_AGENT)
             }
+
+            try {
+                val cookie = CookieManager.getInstance().getCookie(url)
+                if (!cookie.isNullOrEmpty()) {
+                    connection.setRequestProperty("Cookie", cookie)
+                }
+            } catch (e: Exception) {}
 
             // Body
             if (dataToSend != null && (httpMethod == "POST" || httpMethod == "PUT")) {

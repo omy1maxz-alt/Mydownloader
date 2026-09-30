@@ -151,3 +151,4 @@
 - Fixed transparent Tab List UI by assigning `?android:attr/windowBackground` to the root layout in `dialog_tabs.xml`.
 - Fixed missing subtitles in CustomPlayerActivity by explicitly enabling text tracks via `setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)` and expanding the TrackSelection UI to allow subtitle toggles.
 - **Media Playback Fix:** Fixed CustomPlayerActivity failing to render subtitles at initialization. Resolved by extracting `EXTRA_SUBTITLE_URLS` natively into `MediaItem.SubtitleConfiguration` during setup rather than relying on delayed background hot-swapping.
+Moved Custom Player floating action buttons directly into the native ExoPlayer UI controller.
