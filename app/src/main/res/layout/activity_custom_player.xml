@@ -13,60 +13,9 @@
         app:show_timeout="5000"
         app:use_controller="true"
         app:surface_type="texture_view"
-        app:show_subtitle_button="true" />
+        app:show_subtitle_button="true"
+        app:controller_layout_id="@layout/custom_exo_playback_control_view" />
 
-    <LinearLayout
-        android:id="@+id/fab_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_margin="16dp"
-        android:orientation="horizontal">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_resize"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:src="@android:drawable/ic_menu_crop"
-            android:contentDescription="Resize Video"
-            app:tint="@android:color/white" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_settings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:src="@android:drawable/ic_menu_preferences"
-            android:contentDescription="Track Selection Settings"
-            app:tint="@android:color/white" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_bubble"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:src="@android:drawable/ic_dialog_dialer"
-            android:contentDescription="Floating Bubble Shortcut"
-            app:tint="@android:color/white" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_pip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:src="@android:drawable/ic_menu_revert"
-            android:contentDescription="Minimize to Picture in Picture"
-            app:tint="@android:color/white" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_save_offline"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_menu_save"
-            android:contentDescription="Save Offline"
-            app:tint="@android:color/white" />
-
-    </LinearLayout>
 
 </FrameLayout>

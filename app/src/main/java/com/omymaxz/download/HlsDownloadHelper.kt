@@ -234,7 +234,7 @@ object HlsDownloadHelper {
             // DO NOT STRIP QUERY FROM CACHE KEY if it's the primary content identifier, or at least
             // ensure the query is not mistakenly stripped from the URI itself by some Exoplayer bug.
             .setCacheKeyFactory(customCacheKeyFactory)
-            .setFlags(if (readOnly) androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR else androidx.media3.datasource.cache.CacheDataSource.FLAG_BLOCK_ON_CACHE)
+            .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         if (readOnly) f.setCacheWriteDataSinkFactory(null)
         return f
     }
