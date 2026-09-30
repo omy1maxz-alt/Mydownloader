@@ -16,8 +16,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.hls.HlsMediaSource
-import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory
-import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
@@ -137,6 +135,10 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
         hideSystemUI()
 
+        // Removed aggressive background caching using DownloadManager on startup.
+        // It was causing double-quota usage by automatically downloading the 1080p master playlist
+        // while the user might be actively streaming 480p via the CacheDataSource.
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val filter = IntentFilter().apply {
                 addAction(ACTION_BACKGROUND_PLAY)
@@ -154,26 +156,11 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     private fun showTrackSelectionDialog() {
         if (player == null) return
-
-        // Show video, audio, and text track selection tabs natively using Media3 TrackSelectionDialogBuilder
         val trackSelectionDialog = androidx.media3.ui.TrackSelectionDialogBuilder(
             this,
-            "Track Selection",
+            "Video Quality",
             player!!,
-            androidx.media3.common.C.TRACK_TYPE_VIDEO
-        ).apply {
-            // Un-hide audio and subtitle selections by explicitly letting it build the full dialog
-            // Media3 UI components will natively inject tabs for available groups.
-        }.build()
-
-        // Unfortunately standard TrackSelectionDialogBuilder only takes one track type per constructor.
-        // A better approach for multi-track is to build one for Text explicitly if they want subtitles.
-        // For simplicity we will just show the Text selection here.
-        val textTrackDialog = androidx.media3.ui.TrackSelectionDialogBuilder(
-            this,
-            "Subtitles",
-            player!!,
-            androidx.media3.common.C.TRACK_TYPE_TEXT
+            C.TRACK_TYPE_VIDEO
         ).build()
 
         // Let's just create a quick chooser to pick between Video or Subtitle config
@@ -496,12 +483,6 @@ class CustomPlayerActivity : AppCompatActivity() {
             cacheFactory
         }
 
-        val hlsExtractorFactory = DefaultHlsExtractorFactory(
-            DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES or
-            DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS,
-            true
-        )
-
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory).setLoadErrorHandlingPolicy(CustomRetryPolicy()))
             .setLoadControl(loadControl)
@@ -620,7 +601,6 @@ class CustomPlayerActivity : AppCompatActivity() {
             ?.setPreferredTextLanguage("en")
             ?.setIgnoredTextSelectionFlags(0)
             ?.setSelectUndeterminedTextLanguage(true)
-            ?.setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, false) // CRITICAL FIX: Ensure text tracks are not forcefully disabled by ExoPlayer defaults
             // Enable styling features like color and size via the UI by using default text rendering capabilities
             // The default subtitle view already responds to standard VTT/SRT styles and Android system caption settings
             ?.build()!!
@@ -633,8 +613,6 @@ class CustomPlayerActivity : AppCompatActivity() {
                 for (group in tracks.groups) {
                     if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO) videoTracks += group.length
                     if (group.type == androidx.media3.common.C.TRACK_TYPE_AUDIO) audioTracks += group.length
-                }
-                if (videoUrl != null && !videoUrl!!.startsWith("file://") && !videoUrl!!.startsWith("content://")) {
                 }
                 android.util.Log.d("KISKH_HLS_TRACE", "[KISKH_HLS_TRACE]\nfinalUrl=$videoUrl\ntrackGroups=$trackGroups\nvideoTracks=$videoTracks\naudioTracks=$audioTracks")
             }
@@ -780,6 +758,13 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
 
         if (subtitleConfigs.isNotEmpty()) {
+            val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
+                .setMimeType(MimeTypes.TEXT_VTT)
+                .setLanguage("none")
+                .setLabel("None")
+                .setSelectionFlags(0)
+                .build()
+            subtitleConfigs.add(emptySubtitleConfig)
 
             val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
             val actualMimeType = when {
@@ -888,50 +873,6 @@ class CustomPlayerActivity : AppCompatActivity() {
         if (isFinishing) { activePlayer?.release(); activePlayer = null }
     }
 
-    private fun startBackgroundCacheMatchingTrack(tracks: androidx.media3.common.Tracks) {
-        val videoUrl = this.videoUrl ?: return
-
-        // 1. Determine explicitly selected stream keys based on current track selection
-        val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
-        var videoAudioGroupCount = 0
-        tracks.groups.forEach { group ->
-            if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO || group.type == androidx.media3.common.C.TRACK_TYPE_AUDIO) {
-                for (i in 0 until group.length) {
-                    if (group.isTrackSelected(i)) {
-                        streamKeys.add(androidx.media3.common.StreamKey(videoAudioGroupCount, i))
-                    }
-                }
-                videoAudioGroupCount++
-            }
-        }
-
-        // 2. Prepare the DownloadRequest to resume/start caching *only* the selected tracks
-        val downloadId = "cache_${videoUrl.hashCode()}"
-        val reqBuilder = DownloadRequest.Builder(downloadId, Uri.parse(videoUrl))
-            .setStreamKeys(streamKeys)
-
-        val lowerUrl = videoUrl.lowercase()
-        // Type 2 (HLS) and Type 1 (DASH) explicitly enforce customCacheKey == null
-        if (!lowerUrl.contains(".m3u8") && !lowerUrl.contains("format=m3u8") && !lowerUrl.contains(".mpd") && !lowerUrl.contains("googlevideo.com/videoplayback")) {
-            reqBuilder.setCustomCacheKey(HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec(Uri.parse(videoUrl))))
-        }
-
-        val req = reqBuilder.build()
-
-        android.util.Log.d("VOD_CACHE", "Starting background cache for $downloadId with tracks: $streamKeys")
-
-        try {
-            DownloadService.sendAddDownload(
-                this,
-                HlsDownloadService::class.java,
-                req,
-                false
-            )
-        } catch (e: Exception) {
-            android.util.Log.e("VOD_CACHE", "Failed to start background cache service", e)
-        }
-    }
-
     private fun saveVideoOffline() {
         val input = android.widget.EditText(this)
         input.setText(videoTitle)
@@ -957,16 +898,12 @@ class CustomPlayerActivity : AppCompatActivity() {
                     val tracks = player!!.currentTracks
                     // We need to pass the raw stream keys to Transformer. The groupIndex in tracks.groups
                     // corresponds directly to the track group index in the master playlist for HLS.
-                    var videoAudioGroupCount = 0
-                    tracks.groups.forEach { group ->
-                        if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO || group.type == androidx.media3.common.C.TRACK_TYPE_AUDIO) {
-                            for (i in 0 until group.length) {
-                                if (group.isTrackSelected(i)) {
-                                    streamKeys.add(androidx.media3.common.StreamKey(videoAudioGroupCount, i))
-                                    streamKeyStrings.add("$videoAudioGroupCount,$i")
-                                }
+                    tracks.groups.forEachIndexed { groupIndex, group ->
+                        for (i in 0 until group.length) {
+                            if (group.isTrackSelected(i)) {
+                                streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
+                                streamKeyStrings.add("$groupIndex,$i")
                             }
-                            videoAudioGroupCount++
                         }
                     }
                 }

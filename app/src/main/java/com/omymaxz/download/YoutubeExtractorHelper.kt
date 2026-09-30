@@ -61,6 +61,17 @@ object YoutubeExtractorHelper {
             val dashManifestUrl = extractor.dashMpdUrl
             val hlsManifestUrl = extractor.hlsUrl
 
+            val subtitleList = mutableListOf<String>()
+            try {
+                if (extractor.subtitlesDefault.isNotEmpty()) {
+                    extractor.subtitlesDefault.forEach { sub ->
+                        if (!sub.content.isNullOrEmpty()) {
+                            subtitleList.add(sub.content)
+                        }
+                    }
+                }
+            } catch(e: Exception) {}
+
             if (!dashManifestUrl.isNullOrEmpty()) {
                 Log.d(TAG, "Successfully extracted YouTube DASH manifest: $dashManifestUrl")
                 return@withContext MediaFile(
@@ -71,7 +82,8 @@ object YoutubeExtractorHelper {
                     category = MediaCategory.VIDEO,
                     fileSize = "Unknown",
                     language = null,
-                    isMainContent = true
+                    isMainContent = true,
+                    subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null
                 )
             }
 
@@ -85,7 +97,8 @@ object YoutubeExtractorHelper {
                     category = MediaCategory.VIDEO,
                     fileSize = "Unknown",
                     language = null,
-                    isMainContent = true
+                    isMainContent = true,
+                    subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null
                 )
             }
 
@@ -103,7 +116,8 @@ object YoutubeExtractorHelper {
                     category = MediaCategory.VIDEO,
                     fileSize = "Unknown",
                     language = null,
-                    isMainContent = true
+                    isMainContent = true,
+                    subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null
                 )
             }
 
@@ -123,7 +137,8 @@ object YoutubeExtractorHelper {
                         fileSize = "Unknown",
                         language = null,
                         isMainContent = true,
-                        audioUrl = bestAudio.content
+                        audioUrl = bestAudio.content,
+                        subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null
                     )
                 }
             }
