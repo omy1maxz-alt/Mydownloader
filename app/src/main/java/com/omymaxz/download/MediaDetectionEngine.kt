@@ -592,7 +592,8 @@ class MediaDetectionEngine(private val context: Context) {
             lowerUrl.contains("/beacon") || lowerUrl.contains("/event?") || lowerUrl.contains("/count?") ||
             lowerUrl.contains("google-analytics") || lowerUrl.contains("doubleclick") ||
             lowerUrl.contains("newshinyd.com") || lowerUrl.contains("yetansd.com") ||
-            lowerUrl.contains("playhubconnect.com") || lowerUrl.contains("bkcdn.net")) {
+            lowerUrl.contains("playhubconnect.com") || lowerUrl.contains("bkcdn.net") ||
+            lowerUrl.contains("5fll5qac.xyz") || lowerUrl.contains("trailerhg.xyz")) {
             return true
         }
 
@@ -601,38 +602,22 @@ class MediaDetectionEngine(private val context: Context) {
                       lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".webp")
         if (isImage) return true
 
-        // These are strong ad signals that are almost never legitimate media
-        val strictAdKeywords = listOf(
+        val adKeywords = listOf(
             "vast", "preroll", "midroll", "postroll", "doubleclick", "googlesyndication",
             "adnxs", "adservice", "promo", "banner", "tracker", "analytics", "beacon",
             "/ads/", "/ad/", "commercial", "sponsor", "pubmatic", "rubicon", "smartadserver",
             "scorecardresearch", "criteo", "outbrain", "taboola", "moatads", "advertising",
-            "/heat-preview/", "heatmap", "preview_v", "/teaser/", "short_preview", "/preview/"
+            "tiktokcdn", "ad-site", "/heat-preview/", "heatmap", "preview_v", "/trailer/",
+            "/teaser/", "short_preview", "/preview/"
         )
 
-        if (strictAdKeywords.any { lowerUrl.contains(it) }) return true
-
-        return false
-    }
-
-    // A separate check for "suspicious" domains that could be legitimate players but often host ads.
-    // We will penalize these *unless* there's strong evidence they are a real media stream.
-    fun isSuspiciousUrl(url: String): Boolean {
-        val lowerUrl = url.lowercase()
-        val suspiciousKeywords = listOf("tiktokcdn", "ad-site", "trailerhg.xyz", "5fll5qac.xyz", "/trailer/")
-        return suspiciousKeywords.any { lowerUrl.contains(it) }
+        return adKeywords.any { lowerUrl.contains(it) }
     }
 
     private fun applyAdPenalty(candidate: MediaCandidate) {
         if (isAdUrl(candidate.url)) {
             candidate.adScore += 50
             candidate.isExplicitAd = true
-        } else if (isSuspiciousUrl(candidate.url)) {
-            // Apply a smaller penalty to suspicious domains, which can be overcome by strong media signals
-            // (e.g., if it's a .m3u8 manifest with active playback, the score will outweigh this 15-point penalty)
-            if (!candidate.isManifest && !candidate.isActivePlayer && !candidate.hasMSEActivity) {
-                candidate.adScore += 15
-            }
         }
     }
 

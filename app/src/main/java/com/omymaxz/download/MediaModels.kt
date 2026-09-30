@@ -10,7 +10,8 @@ data class MediaFile(
     val language: String?,
     var isMainContent: Boolean,
     var referer: String? = null,
-    var audioUrl: String? = null
+    var audioUrl: String? = null,
+    var subtitleUrls: List<String>? = null
 )
 
 enum class MediaCategory(val displayName: String, val priority: Int) {
