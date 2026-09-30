@@ -17,4 +17,5 @@
         app:controller_layout_id="@layout/custom_exo_player_control_view" />
 
 
+
 </FrameLayout>
