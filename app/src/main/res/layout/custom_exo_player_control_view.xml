@@ -75,9 +75,9 @@
 
       <ImageButton
           android:id="@+id/fab_resize"
-          android:layout_width="40dp"
-          android:layout_height="40dp"
-          android:padding="8dp"
+          android:layout_width="32dp"
+          android:layout_height="32dp"
+          android:padding="4dp"
           android:scaleType="fitCenter"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@android:drawable/ic_menu_crop"
@@ -85,9 +85,9 @@
 
       <ImageButton
           android:id="@+id/fab_settings"
-          android:layout_width="40dp"
-          android:layout_height="40dp"
-          android:padding="8dp"
+          android:layout_width="32dp"
+          android:layout_height="32dp"
+          android:padding="4dp"
           android:scaleType="fitCenter"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@android:drawable/ic_menu_preferences"
@@ -95,9 +95,9 @@
 
       <ImageButton
           android:id="@+id/fab_bubble"
-          android:layout_width="40dp"
-          android:layout_height="40dp"
-          android:padding="8dp"
+          android:layout_width="32dp"
+          android:layout_height="32dp"
+          android:padding="4dp"
           android:scaleType="fitCenter"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@android:drawable/ic_dialog_dialer"
@@ -105,9 +105,9 @@
 
       <ImageButton
           android:id="@+id/fab_pip"
-          android:layout_width="40dp"
-          android:layout_height="40dp"
-          android:padding="8dp"
+          android:layout_width="32dp"
+          android:layout_height="32dp"
+          android:padding="4dp"
           android:scaleType="fitCenter"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@android:drawable/ic_menu_revert"
@@ -115,9 +115,9 @@
 
       <ImageButton
           android:id="@+id/fab_save_offline"
-          android:layout_width="40dp"
-          android:layout_height="40dp"
-          android:padding="8dp"
+          android:layout_width="32dp"
+          android:layout_height="32dp"
+          android:padding="4dp"
           android:scaleType="fitCenter"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@android:drawable/ic_menu_save"
