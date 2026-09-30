@@ -117,23 +117,41 @@ class CustomPlayerActivity : AppCompatActivity() {
             Toast.makeText(this, "No video URL provided", Toast.LENGTH_SHORT).show(); finish(); return
         }
 
-        findViewById<android.widget.ImageButton>(R.id.fab_save_offline).setOnClickListener { saveVideoOffline() }
-        findViewById<android.widget.ImageButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
-        findViewById<android.widget.ImageButton>(R.id.fab_settings).setOnClickListener { showTrackSelectionDialog() }
         val exoSubtitleBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_subtitle)
         exoSubtitleBtn?.setOnClickListener { showSubtitleSelectionDialog() }
-        findViewById<android.widget.ImageButton>(R.id.fab_bubble).setOnClickListener { startFloatingBubble() }
 
-        var currentResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-        findViewById<android.widget.ImageButton>(R.id.fab_resize).setOnClickListener {
-            currentResizeMode = when (currentResizeMode) {
-                AspectRatioFrameLayout.RESIZE_MODE_FIT -> { Toast.makeText(this, "Resize Mode: Stretch", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_FILL }
-                AspectRatioFrameLayout.RESIZE_MODE_FILL -> { Toast.makeText(this, "Resize Mode: Zoom (Crop)", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_ZOOM }
-                AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> { Toast.makeText(this, "Resize Mode: Fixed Width", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH }
-                AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH -> { Toast.makeText(this, "Resize Mode: Fixed Height", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT }
-                else -> { Toast.makeText(this, "Resize Mode: Fit (Original)", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_FIT }
+        var currentResizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+        findViewById<android.widget.ImageButton>(R.id.fab_more_options)?.setOnClickListener {
+            val options = arrayOf("Resize Video", "Track Selection Settings", "Floating Bubble Shortcut", "Minimize to Picture in Picture", "Save Offline")
+            val builder = androidx.appcompat.app.AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
+            builder.setTitle("Advanced Options")
+            builder.setItems(options) { _, which ->
+                when (which) {
+                    0 -> {
+                        currentResizeMode = when (currentResizeMode) {
+                            androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT -> { Toast.makeText(this, "Resize Mode: Stretch", Toast.LENGTH_SHORT).show(); androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL }
+                            androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL -> { Toast.makeText(this, "Resize Mode: Zoom (Crop)", Toast.LENGTH_SHORT).show(); androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM }
+                            androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> { Toast.makeText(this, "Resize Mode: Fixed Width", Toast.LENGTH_SHORT).show(); androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH }
+                            androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH -> { Toast.makeText(this, "Resize Mode: Fixed Height", Toast.LENGTH_SHORT).show(); androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT }
+                            else -> { Toast.makeText(this, "Resize Mode: Fit", Toast.LENGTH_SHORT).show(); androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT }
+                        }
+                        findViewById<androidx.media3.ui.PlayerView>(R.id.player_view).resizeMode = currentResizeMode
+                    }
+                    1 -> showTrackSelectionDialog()
+                    2 -> startFloatingBubble()
+                    3 -> enterPipMode()
+                    4 -> saveVideoOffline()
+                }
             }
-            findViewById<PlayerView>(R.id.player_view).resizeMode = currentResizeMode
+            val dialog = builder.create()
+            dialog.show()
+
+            val themeColor = getSafeGlossyThemeColor(this)
+            val drawable = android.graphics.drawable.GradientDrawable().apply {
+                setColor(themeColor)
+                cornerRadius = 32f
+            }
+            dialog.window?.setBackgroundDrawable(drawable)
         }
         hideSystemUI()
 
@@ -838,9 +856,9 @@ class CustomPlayerActivity : AppCompatActivity() {
                 // which leaves missing chunks in the middle of the cache.
                 if (!hasNotifiedCacheComplete && buffered >= duration - 1500 && bufferedPercentage >= 99) {
                     hasNotifiedCacheComplete = true
-                    val fab = findViewById<android.widget.ImageButton>(R.id.fab_save_offline)
-                    // Tint FAB green to indicate it's safe to save
-                    fab.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
+                    val fab = findViewById<android.widget.ImageButton>(R.id.fab_more_options)
+                    // Tint the more_options icon green to indicate it's safe to save
+                    fab?.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
                     Toast.makeText(this@CustomPlayerActivity, "Video fully cached! Safe to Save Offline.", Toast.LENGTH_LONG).show()
                 }
             }
