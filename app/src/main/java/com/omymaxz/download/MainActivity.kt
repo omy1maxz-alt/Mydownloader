@@ -823,7 +823,7 @@ private fun checkBatteryOptimization() {
             showTabsDialog()
         }
 
-        tabsDialog = createThemedDialogBuilder(this)
+        tabsDialog = createThemedDialogBuilder(this, isOpaque = true)
             .setView(dialogView)
             .create()
         tabsDialog?.show()
@@ -1766,7 +1766,13 @@ private fun checkBatteryOptimization() {
 
                     // Try to apply theme colors to this popup
                     val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-                    val parsedColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
+                    val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
+        val parsedColor = if (isOpaque) {
+            // Strip alpha to make it 100% opaque
+            android.graphics.Color.rgb(android.graphics.Color.red(baseColor), android.graphics.Color.green(baseColor), android.graphics.Color.blue(baseColor))
+        } else {
+            baseColor
+        }
 
                     // Helper to get text color based on luminance
                     val luminance = (0.299 * android.graphics.Color.red(parsedColor) + 0.587 * android.graphics.Color.green(parsedColor) + 0.114 * android.graphics.Color.blue(parsedColor)) / 255
@@ -3641,7 +3647,7 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             detectedMediaFiles.toMutableList()
         }
         val dialogBinding = DialogMediaListBinding.inflate(layoutInflater)
-        val dialog = createThemedDialogBuilder(this).setView(dialogBinding.root).create()
+        val dialog = createThemedDialogBuilder(this, isOpaque = true).setView(dialogBinding.root).create()
         currentMediaListAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
             // Tap to download (do not dismiss to keep scroll position)
             showRenameDialog(mediaFile)
@@ -4334,27 +4340,27 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
         bottomSheet?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
-        data class MenuItemCustom(val id: Int, val title: String)
+        data class MenuItemCustom(val id: Int, val title: String, val iconRes: Int)
         val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
         val popupNoticeTitle = if (showNotice) "Popup Notice: ON" else "Popup Notice: OFF"
 
         val menuItems = listOf(
-            MenuItemCustom(R.id.menu_history, "History"),
-            MenuItemCustom(R.id.menu_add_bookmark, "Add Bookmark"),
-            MenuItemCustom(R.id.menu_add_link, "Add Link"),
-            MenuItemCustom(R.id.menu_user_scripts, "User Scripts"),
-            MenuItemCustom(R.id.menu_open_external, "Open in External Browser"),
-            MenuItemCustom(R.id.menu_proxy_settings, getString(R.string.proxy_settings)),
-            MenuItemCustom(R.id.menu_nuke_traps, "Nuke Ads/Traps"),
-            MenuItemCustom(R.id.menu_settings, "Settings"),
-            MenuItemCustom(R.id.menu_media_detection_settings, "Media Detection Settings"),
-            MenuItemCustom(R.id.menu_floating_detector_settings, "Floating Detector Settings"),
-            MenuItemCustom(R.id.menu_theme_color, "Theme Color"),
-            MenuItemCustom(R.id.menu_debug_site, "Debug Site"),
-            MenuItemCustom(R.id.menu_api_sniffer, "API Network Sniffer"),
-            MenuItemCustom(R.id.menu_debug_page, "Debug Page"),
-            MenuItemCustom(R.id.menu_toggle_popup_notice, popupNoticeTitle)
+            MenuItemCustom(R.id.menu_history, "History", android.R.drawable.ic_menu_recent_history),
+            MenuItemCustom(R.id.menu_add_bookmark, "Add Bookmark", android.R.drawable.ic_input_add),
+            MenuItemCustom(R.id.menu_add_link, "Add Link", android.R.drawable.ic_menu_add),
+            MenuItemCustom(R.id.menu_user_scripts, "User Scripts", android.R.drawable.ic_menu_edit),
+            MenuItemCustom(R.id.menu_open_external, "Open in External Browser", android.R.drawable.ic_menu_set_as),
+            MenuItemCustom(R.id.menu_proxy_settings, getString(R.string.proxy_settings), android.R.drawable.ic_menu_mapmode),
+            MenuItemCustom(R.id.menu_nuke_traps, "Nuke Ads/Traps", android.R.drawable.ic_menu_close_clear_cancel),
+            MenuItemCustom(R.id.menu_settings, "Settings", android.R.drawable.ic_menu_preferences),
+            MenuItemCustom(R.id.menu_media_detection_settings, "Media Detection Settings", android.R.drawable.ic_menu_manage),
+            MenuItemCustom(R.id.menu_floating_detector_settings, "Floating Detector Settings", android.R.drawable.ic_dialog_dialer),
+            MenuItemCustom(R.id.menu_theme_color, "Theme Color", android.R.drawable.ic_menu_gallery),
+            MenuItemCustom(R.id.menu_debug_site, "Debug Site", android.R.drawable.ic_menu_info_details),
+            MenuItemCustom(R.id.menu_api_sniffer, "API Network Sniffer", android.R.drawable.ic_menu_view),
+            MenuItemCustom(R.id.menu_debug_page, "Debug Page", android.R.drawable.ic_menu_search),
+            MenuItemCustom(R.id.menu_toggle_popup_notice, popupNoticeTitle, android.R.drawable.ic_dialog_alert)
         )
 
         val listView = view.findViewById<android.widget.ListView>(R.id.bottom_sheet_list)
@@ -5970,10 +5976,16 @@ if (isDesktopMode) {
             .show()
     }
 
-    private fun createThemedDialogBuilder(context: Context): AlertDialog.Builder {
+    private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = false): AlertDialog.Builder {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-        val parsedColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
+        val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
+        val parsedColor = if (isOpaque) {
+            // Strip alpha to make it 100% opaque
+            android.graphics.Color.rgb(android.graphics.Color.red(baseColor), android.graphics.Color.green(baseColor), android.graphics.Color.blue(baseColor))
+        } else {
+            baseColor
+        }
 
         val luminance = (0.299 * android.graphics.Color.red(parsedColor) + 0.587 * android.graphics.Color.green(parsedColor) + 0.114 * android.graphics.Color.blue(parsedColor)) / 255
         val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
