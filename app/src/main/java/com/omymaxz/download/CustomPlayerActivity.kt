@@ -375,6 +375,10 @@ class CustomPlayerActivity : AppCompatActivity() {
         if (intent != null) {
             setIntent(intent)
         }
+
+        // Stop the playback service if we are returning to the UI
+        stopService(android.content.Intent(this, PlaybackService::class.java))
+
         val newUrl = intent?.getStringExtra(EXTRA_VIDEO_URL)
         val newTitle = intent?.getStringExtra(EXTRA_VIDEO_TITLE)
 
@@ -863,9 +867,31 @@ class CustomPlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         mediaSession?.release()
         mediaSession = null
+
+        // If the activity is destroyed (e.g. PiP closed via 'X' button or swiped away) but the player is still playing,
+        // we must explicitly hand off to the PlaybackService so the notification stays alive and controls work.
+        if (player?.playWhenReady == true && player?.playbackState != androidx.media3.common.Player.STATE_ENDED) {
+            val serviceIntent = android.content.Intent(this, PlaybackService::class.java).apply {
+                action = "com.omymaxz.download.START_BACKGROUND_AUDIO"
+                putExtra("video_url", videoUrl)
+                putExtra("video_title", videoTitle)
+                putExtra("current_position", player?.currentPosition ?: 0L)
+            }
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
+        } else {
+            // Only release if we actually intend to stop playback completely
+            player?.release()
+            player = null
+        }
+
         super.onDestroy()
         try {
             unregisterReceiver(pipReceiver)
+
         } catch (e: Exception) {
             // Ignored
         }
