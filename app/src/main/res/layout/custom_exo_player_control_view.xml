@@ -72,7 +72,6 @@
       <ImageButton android:id="@id/exo_subtitle"
           style="@style/ExoStyledControls.Button.Bottom.CC"/>
 
-
       <ImageButton
           android:id="@+id/fab_resize"
           style="@style/ExoStyledControls.Button.Bottom"

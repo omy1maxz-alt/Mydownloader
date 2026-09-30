@@ -174,6 +174,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         trackSelectionDialog.window?.setBackgroundDrawable(drawable)
     }
 
+
     private fun getSafeGlossyThemeColor(context: android.content.Context): Int {
         val prefs = context.getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
         val defaultColor = android.graphics.Color.parseColor("#A0000000")
@@ -192,6 +193,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             defaultColor
         }
     }
+
 
     private fun applyGlossyThemeToDialog(dialog: android.app.Dialog, context: android.content.Context) {
         val themeColor = getSafeGlossyThemeColor(context)
