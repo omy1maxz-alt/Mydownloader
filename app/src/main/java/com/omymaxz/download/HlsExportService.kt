@@ -682,7 +682,9 @@ class HlsExportService : Service() {
 
                                         var targetedRecoveryNeeded = false
                                         // BULLETPROOF FIX: Read directly from SimpleCache spans, bypassing CacheDataSource entirely.
-                                        val spans = cache.getCachedSpans(matchedKey).filter { it.length > 0 }.sortedBy { it.position }
+                                        val spans = cache.getCachedSpans(matchedKey)
+                                            .filter { it.isCached && it.file != null && it.file!!.exists() }
+                                            .sortedBy { it.position }
 
                                         if (spans.isNotEmpty()) {
                                             java.io.FileOutputStream(localSegment).use { output ->
