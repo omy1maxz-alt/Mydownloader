@@ -25,7 +25,7 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.AspectRatioFrameLayout
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.widget.ImageButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -119,13 +119,13 @@ class CustomPlayerActivity : AppCompatActivity() {
             Toast.makeText(this, "No video URL provided", Toast.LENGTH_SHORT).show(); finish(); return
         }
 
-        findViewById<FloatingActionButton>(R.id.fab_save_offline).setOnClickListener { saveVideoOffline() }
-        findViewById<FloatingActionButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
-        findViewById<FloatingActionButton>(R.id.fab_settings).setOnClickListener { showTrackSelectionDialog() }
-        findViewById<FloatingActionButton>(R.id.fab_bubble).setOnClickListener { startFloatingBubble() }
+        findViewById<ImageButton>(R.id.fab_save_offline).setOnClickListener { saveVideoOffline() }
+        findViewById<ImageButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
+        findViewById<ImageButton>(R.id.fab_settings).setOnClickListener { showTrackSelectionDialog() }
+        findViewById<ImageButton>(R.id.fab_bubble).setOnClickListener { startFloatingBubble() }
 
         var currentResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-        findViewById<FloatingActionButton>(R.id.fab_resize).setOnClickListener {
+        findViewById<ImageButton>(R.id.fab_resize).setOnClickListener {
             currentResizeMode = when (currentResizeMode) {
                 AspectRatioFrameLayout.RESIZE_MODE_FIT -> { Toast.makeText(this, "Resize Mode: Stretch", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_FILL }
                 AspectRatioFrameLayout.RESIZE_MODE_FILL -> { Toast.makeText(this, "Resize Mode: Zoom (Crop)", Toast.LENGTH_SHORT).show(); AspectRatioFrameLayout.RESIZE_MODE_ZOOM }
@@ -177,7 +177,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         ).build()
 
         // Let's just create a quick chooser to pick between Video or Subtitle config
-        val builder = android.app.AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
+        val builder = createThemedDialogBuilder(this)
         builder.setTitle("Settings")
         val options = arrayOf("Video Quality", "Subtitles")
         builder.setItems(options) { _, which ->
@@ -278,14 +278,11 @@ class CustomPlayerActivity : AppCompatActivity() {
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         val pv = findViewById<PlayerView>(R.id.player_view)
-        val fabContainer = findViewById<LinearLayout>(R.id.fab_container)
 
         if (isInPictureInPictureMode) {
             pv.useController = false
-            fabContainer.visibility = View.GONE
         } else {
             pv.useController = true
-            fabContainer.visibility = View.VISIBLE
             hideSystemUI()
         }
     }
@@ -782,7 +779,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             subtitleConfigs.add(cfg)
         }
 
-        if (true) {
+        if (subtitleConfigs.isNotEmpty()) {
 
             val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
             val actualMimeType = when {
@@ -842,9 +839,9 @@ class CustomPlayerActivity : AppCompatActivity() {
                 // which leaves missing chunks in the middle of the cache.
                 if (!hasNotifiedCacheComplete && buffered >= duration - 1500 && bufferedPercentage >= 99) {
                     hasNotifiedCacheComplete = true
-                    val fab = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab_save_offline)
+                    val fab = findViewById<android.widget.ImageButton>(R.id.fab_save_offline)
                     // Tint FAB green to indicate it's safe to save
-                    fab.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
+                    fab.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
                     Toast.makeText(this@CustomPlayerActivity, "Video fully cached! Safe to Save Offline.", Toast.LENGTH_LONG).show()
                 }
             }
@@ -855,14 +852,6 @@ class CustomPlayerActivity : AppCompatActivity() {
     private fun attachPlayerView() {
         val pv = findViewById<PlayerView>(R.id.player_view)
         pv.player = player
-        val fabContainer = findViewById<LinearLayout>(R.id.fab_container)
-        pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !isInPictureInPictureMode) {
-                fabContainer.visibility = v
-            } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                fabContainer.visibility = v
-            }
-        })
 
         hasNotifiedCacheComplete = false
         cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
@@ -1009,5 +998,26 @@ class CustomPlayerActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun createThemedDialogBuilder(context: android.content.Context): android.app.AlertDialog.Builder {
+        val prefs = context.getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
+        val isDynamic = prefs.getBoolean("THEME_DYNAMIC", true)
+        val defaultGlossy = android.graphics.Color.parseColor("#1A1A24")
+        val baseColor = if (isDynamic) prefs.getInt("glossy_theme_color", defaultGlossy) else defaultGlossy
+
+        val dialogBg = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            cornerRadius = 32f
+            colors = intArrayOf(baseColor, baseColor)
+        }
+
+        return object : android.app.AlertDialog.Builder(context, R.style.CustomAlertDialogTheme) {
+            override fun create(): android.app.AlertDialog {
+                val dialog = super.create()
+                dialog.window?.setBackgroundDrawable(dialogBg)
+                return dialog
+            }
+        }
     }
 }
