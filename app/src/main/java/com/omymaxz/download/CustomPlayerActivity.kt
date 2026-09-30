@@ -120,6 +120,8 @@ class CustomPlayerActivity : AppCompatActivity() {
         findViewById<android.widget.ImageButton>(R.id.fab_save_offline).setOnClickListener { saveVideoOffline() }
         findViewById<android.widget.ImageButton>(R.id.fab_pip).setOnClickListener { enterPipMode() }
         findViewById<android.widget.ImageButton>(R.id.fab_settings).setOnClickListener { showTrackSelectionDialog() }
+        val exoSubtitleBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_subtitle)
+        exoSubtitleBtn?.setOnClickListener { showSubtitleSelectionDialog() }
         findViewById<android.widget.ImageButton>(R.id.fab_bubble).setOnClickListener { startFloatingBubble() }
 
         var currentResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
@@ -154,6 +156,25 @@ class CustomPlayerActivity : AppCompatActivity() {
     }
 
 
+
+    private fun showSubtitleSelectionDialog() {
+        if (player == null) return
+        val trackSelectionDialog = androidx.media3.ui.TrackSelectionDialogBuilder(
+            this,
+            "Select Subtitle",
+            player!!,
+            C.TRACK_TYPE_TEXT
+        ).build()
+
+        trackSelectionDialog.show()
+
+        val themeColor = getSafeGlossyThemeColor(this)
+        val drawable = android.graphics.drawable.GradientDrawable().apply {
+            setColor(themeColor)
+            cornerRadius = 32f
+        }
+        trackSelectionDialog.window?.setBackgroundDrawable(drawable)
+    }
 
     private fun showTrackSelectionDialog() {
         if (player == null) return
@@ -813,7 +834,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 // which leaves missing chunks in the middle of the cache.
                 if (!hasNotifiedCacheComplete && buffered >= duration - 1500 && bufferedPercentage >= 99) {
                     hasNotifiedCacheComplete = true
-                    val fab = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab_save_offline)
+                    val fab = findViewById<android.widget.ImageButton>(R.id.fab_save_offline)
                     // Tint FAB green to indicate it's safe to save
                     fab.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
                     Toast.makeText(this@CustomPlayerActivity, "Video fully cached! Safe to Save Offline.", Toast.LENGTH_LONG).show()

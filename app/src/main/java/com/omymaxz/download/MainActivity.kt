@@ -4388,6 +4388,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 R.id.menu_proxy_settings -> showProxySettingsDialog()
                 R.id.menu_nuke_traps -> nukeAdsAndTraps()
                 R.id.menu_settings -> showMasterSettingsDialog()
+                R.id.menu_media_detection_settings -> showMediaDetectionSettingsDialog()
+                R.id.menu_floating_detector_settings -> showFloatingDetectorSettingsDialog()
                 R.id.menu_theme_color -> showThemeColorPickerDialog()
                 R.id.menu_debug_site -> showSiteDebuggingOptions()
                 R.id.menu_api_sniffer -> launchApiSniffer()
