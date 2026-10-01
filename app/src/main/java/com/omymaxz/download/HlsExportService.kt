@@ -636,6 +636,7 @@ class HlsExportService : Service() {
                         var segmentSpec = baseSpec.buildUpon().setKey(cacheKey).build()
 
                         var success = false
+                        var localSegmentWritten = false
                         try {
                             cacheOnlyFactory.open(segmentSpec)
                             val fos = java.io.FileOutputStream(localSegment)
@@ -645,7 +646,7 @@ class HlsExportService : Service() {
                                 fos.write(buffer, 0, bytesRead)
                             }
                             fos.close()
-                            success = true
+                            localSegmentWritten = true
                         } catch (e: Exception) {
                             val msg = e.message ?: e.toString()
                             if (msg.contains("ENOSPC") || msg.contains("No space left")) {
@@ -680,8 +681,6 @@ class HlsExportService : Service() {
                                     if (matchedKey != null) {
                                         writeExportLog("Domain mismatch detected. Found segment in cache using path fallback: $matchedKey")
 
-                                        var targetedRecoveryNeeded = false
-                                        // BULLETPROOF FIX: Read directly from SimpleCache spans, bypassing CacheDataSource entirely.
                                         val spans = cache.getCachedSpans(matchedKey)
                                             .filter { it.isCached && it.file != null && it.file!!.exists() }
                                             .sortedBy { it.position }
@@ -720,49 +719,7 @@ class HlsExportService : Service() {
                                                 }
                                                 output.flush()
                                             }
-                                            // --- DEFENSIVE SIGNATURE CHECK ---
-                                            var isValidSignature = true
-                                            try {
-                                                java.io.FileInputStream(localSegment).use { sigInput ->
-                                                    val header = ByteArray(12)
-                                                    val bytesRead = sigInput.read(header)
-                                                    if (bytesRead >= 8) {
-                                                        // Check for PNG: 89 50 4E 47 0D 0A 1A 0A
-                                                        if (header[0] == 0x89.toByte() && header[1] == 0x50.toByte() && header[2] == 0x4E.toByte() && header[3] == 0x47.toByte()) {
-                                                            isValidSignature = false
-                                                            writeExportLog("SIGNATURE REJECTION: File contains PNG image data instead of media. Key: $matchedKey")
-                                                        }
-                                                        // Check for JPEG: FF D8 FF
-                                                        else if (header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte() && header[2] == 0xFF.toByte()) {
-                                                            isValidSignature = false
-                                                            writeExportLog("SIGNATURE REJECTION: File contains JPEG image data instead of media. Key: $matchedKey")
-                                                        }
-                                                        // Check for GIF: GIF8
-                                                        else if (header[0] == 'G'.code.toByte() && header[1] == 'I'.code.toByte() && header[2] == 'F'.code.toByte() && header[3] == '8'.code.toByte()) {
-                                                            isValidSignature = false
-                                                            writeExportLog("SIGNATURE REJECTION: File contains GIF image data instead of media. Key: $matchedKey")
-                                                        }
-                                                        // Additional heuristic container checking
-                                                        else if (!isFmp4 && header[0] != 0x47.toByte() && header[0] != 'I'.code.toByte() && header[0] != 'R'.code.toByte()) {
-                                                            // 0x47 is MPEG-TS sync byte. ID3 tags often start with 'ID3'. RIFF (wav/avi) with 'RIFF'.
-                                                            // For TS, if it's not starting with 0x47 or an ID3 tag, it might be heavily corrupted or encrypted.
-                                                            // We will not strictly block it here unless it's a known bad image type,
-                                                            // but we log a warning.
-                                                            writeExportLog("WARNING: MPEG-TS segment does not start with 0x47 sync byte or ID3 tag. Header: ${header.take(4).joinToString("") { String.format("%02X", it) }}")
-                                                        }
-                                                    }
-                                                }
-                                            } catch (e: Exception) {
-                                                writeExportLog("WARNING: Failed to read signature for $localSegment: ${e.message}")
-                                            }
-
-                                            if (isValidSignature) {
-                                                success = true
-                                                writeExportLog("DIRECT CACHE HIT: Copied segment via SimpleCache spans for $matchedKey")
-                                            } else {
-                                                localSegment.delete()
-                                                success = false // Let network fallback take over or fail gracefully
-                                            }
+                                            localSegmentWritten = true
                                         } else {
                                             writeExportLog("DIRECT CACHE MISS: No spans found for $matchedKey")
                                         }
@@ -773,39 +730,103 @@ class HlsExportService : Service() {
                                 if (fallbackMsg.contains("TERMINAL_ENOSPC") || fallbackMsg.contains("ENOSPC") || fallbackMsg.contains("No space left")) {
                                     throw java.io.IOException("TERMINAL_ENOSPC")
                                 }
-                                if (fallbackMsg.contains("CACHE_GAP") || fallbackMsg.contains("CACHE_INCOMPLETE") || fallbackMsg.contains("SIGNATURE REJECTION")) {
-                                    // Missing data, trigger targeted recovery
-                                    try {
-                                        writeExportLog("Attempting targeted network recovery for missing segment: $segmentUrl")
-                                        networkFactory.open(segmentSpec)
-                                        val fos = java.io.FileOutputStream(localSegment)
-                                        val buffer = ByteArray(1024 * 64)
-                                        var bytesRead: Int
-                                        while (networkFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
-                                            fos.write(buffer, 0, bytesRead)
-                                        }
-                                        fos.close()
-                                        success = true
-                                        writeExportLog("Successfully recovered segment from network: $segmentUrl")
-                                    } catch (recEx: Exception) {
-                                        val recMsg = recEx.message ?: recEx.toString()
-                                        if (recMsg.contains("ENOSPC") || recMsg.contains("No space left")) {
-                                            throw java.io.IOException("TERMINAL_ENOSPC")
-                                        }
-                                        writeExportLog("Targeted network recovery failed: $recMsg")
-                                        success = false
-                                    } finally {
-                                        try { networkFactory.close() } catch (e: Exception) {}
-                                    }
-                                } else {
-                                    writeExportLog("Fallback cache lookup failed: $fallbackMsg")
-                                }
+                                throw java.io.IOException("CACHE_GAP_OR_MISS")
                             }
                         } finally {
                             try { cacheOnlyFactory.close() } catch (ex: Exception) {}
                         }
 
+                        // --- DEFENSIVE SIGNATURE CHECK on the completed local file ---
+                        if (localSegmentWritten) {
+                            var isValidSignature = true
+                            try {
+                                java.io.FileInputStream(localSegment).use { sigInput ->
+                                    val header = ByteArray(12)
+                                    val bytesRead = sigInput.read(header)
+                                    if (bytesRead >= 8) {
+                                        // Check for PNG: 89 50 4E 47 0D 0A 1A 0A
+                                        if (header[0] == 0x89.toByte() && header[1] == 0x50.toByte() && header[2] == 0x4E.toByte() && header[3] == 0x47.toByte()) {
+                                            isValidSignature = false
+                                            writeExportLog("SIGNATURE REJECTION: File contains PNG image data instead of media. URL: $segmentUrl")
+                                        }
+                                        // Check for JPEG: FF D8 FF
+                                        else if (header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte() && header[2] == 0xFF.toByte()) {
+                                            isValidSignature = false
+                                            writeExportLog("SIGNATURE REJECTION: File contains JPEG image data instead of media. URL: $segmentUrl")
+                                        }
+                                        // Check for GIF: GIF8
+                                        else if (header[0] == 'G'.code.toByte() && header[1] == 'I'.code.toByte() && header[2] == 'F'.code.toByte() && header[3] == '8'.code.toByte()) {
+                                            isValidSignature = false
+                                            writeExportLog("SIGNATURE REJECTION: File contains GIF image data instead of media. URL: $segmentUrl")
+                                        }
+                                        // Additional heuristic container checking
+                                        else if (!isFmp4 && header[0] != 0x47.toByte() && header[0] != 'I'.code.toByte() && header[0] != 'R'.code.toByte()) {
+                                            // 0x47 is MPEG-TS sync byte. ID3 tags often start with 'ID3'. RIFF (wav/avi) with 'RIFF'.
+                                            writeExportLog("WARNING: MPEG-TS segment does not start with 0x47 sync byte or ID3 tag. Header: ${header.take(4).joinToString("") { String.format("%02X", it) }}")
+                                        }
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                writeExportLog("WARNING: Failed to read signature for $localSegment: ${e.message}")
+                            }
+
+                            if (isValidSignature) {
+                                success = true
+                            } else {
+                                localSegment.delete()
+                                localSegmentWritten = false
+                            }
+                        }
+
+                        // Targetted network recovery if cache miss or signature rejected
                         if (!success) {
+                            try {
+                                writeExportLog("Attempting targeted network recovery for missing or rejected segment: $segmentUrl")
+                                networkFactory.open(segmentSpec)
+                                val fos = java.io.FileOutputStream(localSegment)
+                                val buffer = ByteArray(1024 * 64)
+                                var bytesRead: Int
+                                while (networkFactory.read(buffer, 0, buffer.size).also { bytesRead = it } != -1) {
+                                    fos.write(buffer, 0, bytesRead)
+                                }
+                                fos.close()
+
+                                // One final sanity check on the downloaded network file to prevent embedding bad ads!
+                                var isNetworkValid = true
+                                try {
+                                    java.io.FileInputStream(localSegment).use { sigInput ->
+                                        val header = ByteArray(8)
+                                        if (sigInput.read(header) >= 8) {
+                                            if ((header[0] == 0x89.toByte() && header[1] == 0x50.toByte()) ||
+                                                (header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte()) ||
+                                                (header[0] == 'G'.code.toByte() && header[1] == 'I'.code.toByte())) {
+                                                isNetworkValid = false
+                                                writeExportLog("NETWORK REJECTION: Network fallback returned an image/ad file. Skipping. URL: $segmentUrl")
+                                            }
+                                        }
+                                    }
+                                } catch (e: Exception) {}
+
+                                if (isNetworkValid) {
+                                    success = true
+                                    writeExportLog("Successfully recovered segment from network: $segmentUrl")
+                                } else {
+                                    localSegment.delete()
+                                    success = false
+                                }
+
+                            } catch (recEx: Exception) {
+                                val recMsg = recEx.message ?: recEx.toString()
+                                if (recMsg.contains("ENOSPC") || recMsg.contains("No space left")) {
+                                    throw java.io.IOException("TERMINAL_ENOSPC")
+                                }
+                                writeExportLog("Targeted network recovery failed: $recMsg")
+                                success = false
+                            } finally {
+                                try { networkFactory.close() } catch (e: Exception) {}
+                            }
+                        }
+if (!success) {
                             writeExportLog("Failed to read segment from cache: $segmentUrl")
                             throw Exception("Incomplete cache for segment: $segmentUrl")
                         }

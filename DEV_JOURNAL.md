@@ -158,3 +158,5 @@
 
 2026-10-01 Implemented UI minimalist fixes for MainActivity, CustomPlayer Activity, and Dialog menus. Ensured CustomPlayer fab_more_options indicator turns green ONLY when SimpleCache exact metadata matches, preventing false positive save indicators. Prevented duplicate CustomPlayer instances from MediaListAdapter list view. Removed hardcoded system backgrounds from list items in favor of inherited transparent background styling.
 2026-10-01 Restored explicitly requested Custom Player buttons (PiP, Resize, Bubble, Save) to the main control bar and overflow layout correctly without crashing constraints. Verified transparent glossy UI settings apply cleanly to Tab and Media dialogs.
+2026-10-01 Implemented explicit file signature validation inside HlsExportService for all sources (cache hit, cache fallback, network recovery) to correctly identify and block corrupted image fragments (.png, .jpeg, .gif) masquerading as .ts segments within playlists.
+2026-10-01 Verified that fixing cache span extraction fixed the caching UI toggle logic bug as well.
