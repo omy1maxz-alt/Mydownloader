@@ -6037,7 +6037,7 @@ if (isDesktopMode) {
             .show()
     }
 
-    private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = false): AlertDialog.Builder {
+private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = false): AlertDialog.Builder {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
         val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
@@ -6051,48 +6051,42 @@ if (isDesktopMode) {
         val luminance = (0.299 * android.graphics.Color.red(parsedColor) + 0.587 * android.graphics.Color.green(parsedColor) + 0.114 * android.graphics.Color.blue(parsedColor)) / 255
         val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
 
-        // We use CustomAlertDialogTheme for rounded corners, but we need to set the background dynamically
-        val builder = AlertDialog.Builder(context, R.style.CustomAlertDialogTheme)
-
-        // Unfortunately, AlertDialog.Builder doesn't have a built in way to change the background drawable dynamically before show().
-        // We will intercept it on show.
         return object : AlertDialog.Builder(context, R.style.CustomAlertDialogTheme) {
-            override fun show(): AlertDialog {
-                val dialog = super.show()
-                val window = dialog.window
-                if (window != null) {
-                    val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
-                        setColor(parsedColor)
-                        cornerRadius = 24f * context.resources.displayMetrics.density
-                    }
-                    window.setBackgroundDrawable(shapeDrawable)
+            override fun create(): AlertDialog {
+                val dialog = super.create()
 
-                    // Delaying the text color application to ensure views are measured/added
-                    window.decorView.post {
-                        val titleView = window.findViewById<android.widget.TextView>(androidx.appcompat.R.id.alertTitle)
-                        titleView?.setTextColor(textColor)
+                dialog.setOnShowListener {
+                    val window = dialog.window
+                    if (window != null) {
+                        val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
+                            setColor(parsedColor)
+                            cornerRadius = 24f * context.resources.displayMetrics.density
+                        }
+                        window.setBackgroundDrawable(shapeDrawable)
 
-                        val msgView = window.findViewById<android.widget.TextView>(android.R.id.message)
-                        msgView?.setTextColor(textColor)
+                        window.decorView.post {
+                            val titleView = window.findViewById<android.widget.TextView>(androidx.appcompat.R.id.alertTitle)
+                            titleView?.setTextColor(textColor)
 
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(textColor)
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(textColor)
-                        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(textColor)
+                            val msgView = window.findViewById<android.widget.TextView>(android.R.id.message)
+                            msgView?.setTextColor(textColor)
 
-                        // For list items (like Settings menu)
-                        val listView = dialog.listView
-                        if (listView != null) {
-                            for (i in 0 until listView.childCount) {
-                                val child = listView.getChildAt(i)
-                                if (child is android.widget.TextView) {
-                                    child.setTextColor(textColor)
-                                } else if (child is android.view.ViewGroup) {
-                                     for (j in 0 until child.childCount) {
-                                         val inner = child.getChildAt(j)
-                                         if (inner is android.widget.TextView) {
-                                             inner.setTextColor(textColor)
-                                         }
-                                     }
+                            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(textColor)
+                            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(textColor)
+                            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(textColor)
+
+                            val listView = dialog.listView
+                            if (listView != null) {
+                                for (i in 0 until listView.childCount) {
+                                    val child = listView.getChildAt(i)
+                                    if (child is android.widget.TextView) {
+                                        child.setTextColor(textColor)
+                                    } else if (child is android.view.ViewGroup) {
+                                        for (j in 0 until child.childCount) {
+                                            val innerChild = child.getChildAt(j)
+                                            if (innerChild is android.widget.TextView) innerChild.setTextColor(textColor)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -6100,8 +6094,16 @@ if (isDesktopMode) {
                 }
                 return dialog
             }
+
+            // Still override show just in case to delegate to create().show()
+            override fun show(): AlertDialog {
+                val dialog = create()
+                dialog.show()
+                return dialog
+            }
         }
     }
+
     private fun updateFabVisibility() {
         val hasFiles = detectedMediaFiles.isNotEmpty()
 
