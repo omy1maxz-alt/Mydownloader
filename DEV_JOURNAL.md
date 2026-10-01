@@ -162,3 +162,6 @@
 2026-10-01 Verified that fixing cache span extraction fixed the caching UI toggle logic bug as well.
 2026-10-01 Verified that the builder pattern for themed dialogs respects transparency stripping and is safe.
 2026-10-01 Verified that fixing UI dialog transparency issues via explicit root view background injection correctly enforces user custom theme over system theme.
+2026-10-01 Verified that MediaDetectionEngine successfully parses dynamically injected iframe payloads from complex delayed-load sites (like gimmeporn).
+2026-10-01 Updated MediaDetectionEngine URL classifiers to recognize extensionless heavily-obfuscated HLS streams using token/expiry query parameters and CDN-specific routing patterns (e.g., /hls2/).
+2026-10-01 Verified that `FLAG_ACTIVITY_SINGLE_TOP` is consistently applied across all `CustomPlayerActivity` launch methods (Direct, Candidate, Legacy) from `MainActivity`, strictly preventing duplicate concurrent playback instances.

@@ -28,10 +28,10 @@ class MediaDetectionEngine(private val context: Context) {
             lowerUrl.contains("/pixel/") || lowerUrl.contains("/analytics/")) {
             return MediaKind.UNKNOWN
         }
-
-        val isHls = lowerUrl.contains(".m3u8") || lowerUrl.contains("format=m3u8") || lowerUrl.contains("type=hls") ||
+                val isHls = lowerUrl.contains(".m3u8") || lowerUrl.contains("format=m3u8") || lowerUrl.contains("type=hls") ||
                     mime == "application/vnd.apple.mpegurl" || mime == "application/x-mpegurl" ||
-                    lowerUrl.contains("/master.txt") || lowerUrl.contains("/hls/") || lowerUrl.contains("/hls3/")
+                    lowerUrl.contains("/master.txt") || lowerUrl.contains("/hls/") || lowerUrl.contains("/hls3/") ||
+                    lowerUrl.contains("/hls2/") || (lowerUrl.contains("token=") && lowerUrl.contains("expiry="))
 
         val isDash = lowerUrl.contains(".mpd") || lowerUrl.contains("format=dash") || lowerUrl.contains("type=dash") || mime == "application/dash+xml"
         val isVideoMime = mime.startsWith("video/")
