@@ -1,0 +1,2 @@
+with open('DEV_JOURNAL.md', 'a') as f:
+    f.write("\n2026-10-01 Implemented UI minimalist fixes for MainActivity, CustomPlayer Activity, and Dialog menus. Ensured CustomPlayer fab_more_options indicator turns green ONLY when SimpleCache exact metadata matches, preventing false positive save indicators. Prevented duplicate CustomPlayer instances from MediaListAdapter list view. Removed hardcoded system backgrounds from list items in favor of inherited transparent background styling.")
