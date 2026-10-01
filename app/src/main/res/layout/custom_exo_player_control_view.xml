@@ -70,19 +70,27 @@
       <ImageButton android:id="@id/exo_repeat_toggle"
           style="@style/ExoStyledControls.Button.Bottom.RepeatToggle"/>
 
-            <ImageButton android:id="@id/exo_subtitle"
+                  <ImageButton android:id="@id/exo_subtitle"
           style="@style/ExoStyledControls.Button.Bottom.CC"/>
 
       <ImageButton android:id="@id/exo_settings"
           style="@style/ExoStyledControls.Button.Bottom.Settings"/>
 
       <ImageButton
-          android:id="@+id/fab_more_options"
+          android:id="@+id/fab_pip"
           style="@style/ExoStyledControls.Button.Bottom"
-          android:src="@android:drawable/ic_menu_more"
+          android:src="@drawable/ic_public"
           android:padding="8dp"
           android:scaleType="centerInside"
-          android:contentDescription="More Options" />
+          android:contentDescription="Picture in Picture" />
+
+      <ImageButton
+          android:id="@+id/fab_save"
+          style="@style/ExoStyledControls.Button.Bottom"
+          android:src="@drawable/ic_download"
+          android:padding="8dp"
+          android:scaleType="centerInside"
+          android:contentDescription="Save Offline" />
 
       <ImageButton android:id="@id/exo_fullscreen"
           style="@style/ExoStyledControls.Button.Bottom.FullScreen"/>
@@ -103,8 +111,24 @@
           android:layout_height="wrap_content"
           android:layoutDirection="ltr">
 
-        <ImageButton android:id="@id/exo_overflow_hide"
+                <ImageButton android:id="@id/exo_overflow_hide"
             style="@style/ExoStyledControls.Button.Bottom.OverflowHide"/>
+
+        <ImageButton
+            android:id="@+id/fab_resize"
+            style="@style/ExoStyledControls.Button.Bottom"
+            android:src="@android:drawable/ic_menu_crop"
+            android:padding="8dp"
+            android:scaleType="centerInside"
+            android:contentDescription="Resize Video" />
+
+        <ImageButton
+            android:id="@+id/fab_bubble"
+            style="@style/ExoStyledControls.Button.Bottom"
+            android:src="@drawable/ic_play_arrow"
+            android:padding="8dp"
+            android:scaleType="centerInside"
+            android:contentDescription="Floating Bubble" />
 
       </LinearLayout>
 
