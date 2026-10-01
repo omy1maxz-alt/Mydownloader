@@ -68,6 +68,17 @@ class MediaListAdapter(
             btnInfo.setOnClickListener {
                 (itemView.context as? MainActivity)?.showMediaInfoDialog(mediaFile)
             }
+
+            val btnPlay = itemView.findViewById<android.widget.ImageButton>(R.id.btn_play_media)
+            if (mediaFile.category == MediaCategory.VIDEO || mediaFile.category == MediaCategory.AUDIO) {
+                btnPlay.visibility = android.view.View.VISIBLE
+                btnPlay.setOnClickListener {
+                    (itemView.context as? MainActivity)?.launchCustomPlayer(mediaFile)
+                }
+            } else {
+                btnPlay.visibility = android.view.View.GONE
+            }
+
             val categoryIndicator = when (mediaFile.category) {
                 MediaCategory.VIDEO -> if (mediaFile.isMainContent) "🎥 MAIN VIDEO" else "🎬 Video Clip"
                 MediaCategory.AUDIO -> "🔊 Audio"

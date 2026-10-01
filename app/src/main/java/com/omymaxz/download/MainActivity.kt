@@ -3988,7 +3988,55 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         startActivity(intent)
     }
 
-    private fun showRenameDialog(mediaFile: MediaFile) {
+
+    fun launchCustomPlayer(mediaFile: MediaFile) {
+        val finalName = mediaFile.title
+        if (mediaFile.url.contains("googlevideo.com") && (mediaFile.mimeType == "application/dash+xml" || mediaFile.mimeType == "application/x-mpegURL")) {
+            val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                if (mediaFile.mimeType != null) {
+                    putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
+                }
+                putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
+                putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
+                putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
+                val refererToUse = mediaFile.referer ?: webView.url
+                putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
+                val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
+                if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+            }
+            startActivity(intent)
+            return
+        }
+
+        if (mediaFile.url.contains("youtube.com") || mediaFile.url.contains("youtu.be") || mediaFile.url.contains("googlevideo.com") || mediaFile.url.contains("manifest/dash") || mediaFile.mimeType == "application/dash+xml") {
+            val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                if (mediaFile.mimeType != null) {
+                    putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
+                }
+                putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
+                putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, finalName)
+                putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, webView.settings.userAgentString)
+                val refererToUse = mediaFile.referer ?: webView.url
+                putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
+                val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
+                if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+            }
+            startActivity(intent)
+            return
+        }
+
+        val exactCandidate = mediaEngine.candidates[mediaFile.url]
+        if (exactCandidate != null) {
+            // Need to fix launchPlayerWithCandidate inside MainActivity to also append SINGLE_TOP
+            launchPlayerWithCandidate(exactCandidate, finalName, mediaFile.referer)
+        } else {
+            launchLegacyPlayer(mediaFile.url, finalName, mediaFile.referer, mediaFile.mimeType)
+        }
+    }
+
+private fun showRenameDialog(mediaFile: MediaFile) {
         val input = EditText(this).apply {
             setText(mediaFile.title.substringBeforeLast('.'))
             selectAll()
@@ -4345,22 +4393,29 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
         val popupNoticeTitle = if (showNotice) "Popup Notice: ON" else "Popup Notice: OFF"
 
-        val menuItems = listOf(
-            MenuItemCustom(R.id.menu_history, "History", android.R.drawable.ic_menu_recent_history),
-            MenuItemCustom(R.id.menu_add_bookmark, "Add Bookmark", android.R.drawable.ic_menu_save),
-            MenuItemCustom(R.id.menu_add_link, "Add Link", android.R.drawable.ic_menu_add),
-            MenuItemCustom(R.id.menu_user_scripts, "User Scripts", android.R.drawable.ic_menu_edit),
-            MenuItemCustom(R.id.menu_open_external, "Open in External Browser", android.R.drawable.ic_menu_share),
-            MenuItemCustom(R.id.menu_proxy_settings, getString(R.string.proxy_settings), android.R.drawable.ic_menu_mapmode),
-            MenuItemCustom(R.id.menu_nuke_traps, "Nuke Ads/Traps", android.R.drawable.ic_menu_close_clear_cancel),
+                val menuItems = listOf(
+            // Primary Browsing Group
+            MenuItemCustom(R.id.menu_history, "History", R.drawable.ic_public),
+            MenuItemCustom(R.id.menu_add_bookmark, "Add Bookmark", R.drawable.ic_add),
+            MenuItemCustom(R.id.menu_add_link, "Add Link", R.drawable.ic_download),
+            MenuItemCustom(R.id.menu_open_external, "Open in External Browser", R.drawable.ic_public),
+
+            // Tools & Settings Group
+            MenuItemCustom(R.id.menu_user_scripts, "User Scripts", R.drawable.ic_translate),
+            MenuItemCustom(R.id.menu_proxy_settings, getString(R.string.proxy_settings), R.drawable.ic_public),
+            MenuItemCustom(R.id.menu_nuke_traps, "Nuke Ads/Traps", R.drawable.ic_close),
+
+            // App Settings Group
             MenuItemCustom(R.id.menu_settings, "Settings", android.R.drawable.ic_menu_manage),
-            MenuItemCustom(R.id.menu_media_detection_settings, "Media Detection Settings", android.R.drawable.ic_menu_compass),
-            MenuItemCustom(R.id.menu_floating_detector_settings, "Floating Detector Settings", android.R.drawable.ic_dialog_dialer),
+            MenuItemCustom(R.id.menu_media_detection_settings, "Media Detection Settings", R.drawable.ic_play_arrow),
+            MenuItemCustom(R.id.menu_floating_detector_settings, "Floating Detector Settings", R.drawable.ic_play_arrow),
             MenuItemCustom(R.id.menu_theme_color, "Theme Color", android.R.drawable.ic_menu_gallery),
+            MenuItemCustom(R.id.menu_toggle_popup_notice, popupNoticeTitle, android.R.drawable.ic_dialog_alert),
+
+            // Developer Tools
+            MenuItemCustom(R.id.menu_api_sniffer, "API Network Sniffer", R.drawable.ic_public),
             MenuItemCustom(R.id.menu_debug_site, "Debug Site", android.R.drawable.ic_menu_info_details),
-            MenuItemCustom(R.id.menu_api_sniffer, "API Network Sniffer", android.R.drawable.ic_menu_view),
-            MenuItemCustom(R.id.menu_debug_page, "Debug Page", android.R.drawable.ic_menu_search),
-            MenuItemCustom(R.id.menu_toggle_popup_notice, popupNoticeTitle, android.R.drawable.ic_dialog_alert)
+            MenuItemCustom(R.id.menu_debug_page, "Debug Page", android.R.drawable.ic_menu_search)
         )
 
         val listView = view.findViewById<android.widget.ListView>(R.id.bottom_sheet_list)

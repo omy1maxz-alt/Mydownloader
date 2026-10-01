@@ -1,27 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/rootContainer"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:fitsSystemWindows="true">
+import re
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+with open('app/src/main/res/layout/activity_main.xml', 'r') as f:
+    content = f.read()
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="?attr/colorPrimary"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:contentInsetStart="0dp">
-
-            <androidx.constraintlayout.widget.ConstraintLayout
+# Replace the inner LinearLayout of the toolbar with a ConstraintLayout
+replacement = """<androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/toolbarConstraintLayout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -172,112 +155,18 @@
                     </LinearLayout>
                 </HorizontalScrollView>
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>"""
 
-        </androidx.appcompat.widget.Toolbar>
+start_str = '<LinearLayout\n                android:id="@+id/toolbarLinearLayout"'
+end_str = '        </androidx.appcompat.widget.Toolbar>'
 
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:progressTint="?attr/colorAccent"
-            android:visibility="gone"
-            tools:visibility="visible" />
+start_idx = content.find(start_str)
+end_idx = content.find(end_str, start_idx)
 
-    </LinearLayout>
-
-    <FrameLayout
-        android:id="@+id/mainContent"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <WebView
-            android:id="@+id/webView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/bookmarkRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="visible"
-            android:paddingTop="0dp"
-            android:clipToPadding="false" />
-
-
-        <LinearLayout
-            android:id="@+id/floatingDetectorUI"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="80dp"
-            android:background="@drawable/rounded_background"
-            android:backgroundTint="#D9000000"
-            android:elevation="6dp"
-            android:orientation="horizontal"
-            android:padding="12dp"
-            android:visibility="gone"
-            android:gravity="center_vertical"
-            tools:visibility="visible">
-
-            <ImageView
-                android:id="@+id/btnDetectorDownload"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_download"
-                android:contentDescription="Download"
-                app:tint="#4CAF50"
-                android:layout_marginEnd="8dp" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginEnd="16dp">
-
-                <TextView
-                    android:id="@+id/txtDetectorTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Media Found"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:ellipsize="end"
-                    android:maxWidth="200dp"
-                    android:maxLines="1" />
-
-                <TextView
-                    android:id="@+id/txtDetectorState"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Type: Unknown"
-                    android:textColor="#CCCCCC"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <ImageButton
-                android:id="@+id/btnDetectorClose"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
-                android:contentDescription="Close"
-                app:tint="#FFFFFF"
-                android:scaleType="centerInside" />
-
-        </LinearLayout>
-
-    </FrameLayout>
-
-    <FrameLayout
-        android:id="@+id/fullscreenContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/black"
-        android:visibility="gone" />
-
-</LinearLayout>
+if start_idx != -1 and end_idx != -1:
+    new_content = content[:start_idx] + replacement + '\n\n' + content[end_idx:]
+    with open('app/src/main/res/layout/activity_main.xml', 'w') as f:
+        f.write(new_content)
+    print("Replaced toolbar layout.")
+else:
+    print("Could not find boundaries.")
