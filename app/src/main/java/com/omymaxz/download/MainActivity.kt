@@ -722,13 +722,24 @@ private fun checkBatteryOptimization() {
 
     private fun showTabsDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_tabs, null)
-        val tabsRecyclerView = dialogView.findViewById<RecyclerView>(R.id.tabsRecyclerView)
-        val newTabButton = dialogView.findViewById<Button>(R.id.newTabButton)
-        val selectTabButton = dialogView.findViewById<Button>(R.id.selectTabButton)
-        val cancelSelectionButton = dialogView.findViewById<Button>(R.id.cancelSelectionButton)
-        val deleteSelectedButton = dialogView.findViewById<Button>(R.id.deleteSelectedButton)
+        val tabsRecyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.tabsRecyclerView)
+        val newTabButton = dialogView.findViewById<android.widget.Button>(R.id.newTabButton)
+        val selectTabButton = dialogView.findViewById<android.widget.Button>(R.id.selectTabButton)
+        val cancelSelectionButton = dialogView.findViewById<android.widget.Button>(R.id.cancelSelectionButton)
+        val deleteSelectedButton = dialogView.findViewById<android.widget.Button>(R.id.deleteSelectedButton)
 
-        val layoutManager = LinearLayoutManager(this)
+        // Force opaque theme directly on the view to guarantee no transparency
+        val prefs = getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
+        val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
+        val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
+        val opaqueColor = android.graphics.Color.rgb(android.graphics.Color.red(baseColor), android.graphics.Color.green(baseColor), android.graphics.Color.blue(baseColor))
+        val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
+            setColor(opaqueColor)
+            cornerRadius = 24f * resources.displayMetrics.density
+        }
+        dialogView.background = shapeDrawable
+
+        val layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
         tabsRecyclerView.layoutManager = layoutManager
 
         fun updateDeleteButton(count: Int) {
@@ -3638,16 +3649,27 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
             .show()
     }
 
-    private fun showMediaListDialog() {
+private fun showMediaListDialog() {
         if (detectedMediaFiles.isEmpty()) {
-            Toast.makeText(this, "No media files detected.", Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(this, "No media files detected.", android.widget.Toast.LENGTH_SHORT).show()
             return
         }
         val mediaFilesCopy = synchronized(detectedMediaFiles) {
             detectedMediaFiles.toMutableList()
         }
-        val dialogBinding = DialogMediaListBinding.inflate(layoutInflater)
-        val dialog = createThemedDialogBuilder(this, isOpaque = true).setView(dialogBinding.root).create()
+        val dialogBinding = com.omymaxz.download.databinding.DialogMediaListBinding.inflate(layoutInflater)
+
+        // Force opaque theme directly on the view to guarantee no transparency
+        val prefs = getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
+        val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
+        val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
+        val opaqueColor = android.graphics.Color.rgb(android.graphics.Color.red(baseColor), android.graphics.Color.green(baseColor), android.graphics.Color.blue(baseColor))
+        val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
+            setColor(opaqueColor)
+            cornerRadius = 24f * resources.displayMetrics.density
+        }
+        dialogBinding.root.background = shapeDrawable
+                val dialog = createThemedDialogBuilder(this, isOpaque = true).setView(dialogBinding.root).create()
         currentMediaListAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
             // Tap to download (do not dismiss to keep scroll position)
             showRenameDialog(mediaFile)

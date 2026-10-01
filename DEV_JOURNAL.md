@@ -161,3 +161,4 @@
 2026-10-01 Implemented explicit file signature validation inside HlsExportService for all sources (cache hit, cache fallback, network recovery) to correctly identify and block corrupted image fragments (.png, .jpeg, .gif) masquerading as .ts segments within playlists.
 2026-10-01 Verified that fixing cache span extraction fixed the caching UI toggle logic bug as well.
 2026-10-01 Verified that the builder pattern for themed dialogs respects transparency stripping and is safe.
+2026-10-01 Verified that fixing UI dialog transparency issues via explicit root view background injection correctly enforces user custom theme over system theme.
