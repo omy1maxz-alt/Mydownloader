@@ -165,3 +165,4 @@
 2026-10-01 Verified that MediaDetectionEngine successfully parses dynamically injected iframe payloads from complex delayed-load sites (like gimmeporn).
 2026-10-01 Updated MediaDetectionEngine URL classifiers to recognize extensionless heavily-obfuscated HLS streams using token/expiry query parameters and CDN-specific routing patterns (e.g., /hls2/).
 2026-10-01 Verified that `FLAG_ACTIVITY_SINGLE_TOP` is consistently applied across all `CustomPlayerActivity` launch methods (Direct, Candidate, Legacy) from `MainActivity`, strictly preventing duplicate concurrent playback instances.
+2026-10-01 Ensured `@id/exo_settings` natively wired and visible in CustomPlayerActivity to surface manual TrackSelectionDialog builder independent of ExoPlayer dynamic visibility states.
