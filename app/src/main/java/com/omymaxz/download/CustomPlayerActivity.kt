@@ -117,8 +117,12 @@ class CustomPlayerActivity : AppCompatActivity() {
             Toast.makeText(this, "No video URL provided", Toast.LENGTH_SHORT).show(); finish(); return
         }
 
-        val exoSubtitleBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_subtitle)
+                val exoSubtitleBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_subtitle)
         exoSubtitleBtn?.setOnClickListener { showSubtitleSelectionDialog() }
+
+        val exoSettingsBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_settings)
+        exoSettingsBtn?.visibility = android.view.View.VISIBLE
+        exoSettingsBtn?.setOnClickListener { showTrackSelectionDialog() }
         var currentResizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
 
         findViewById<android.widget.ImageButton>(R.id.fab_resize)?.setOnClickListener {
@@ -880,6 +884,12 @@ class CustomPlayerActivity : AppCompatActivity() {
     private fun attachPlayerView() {
         val pv = findViewById<PlayerView>(R.id.player_view)
         pv.player = player
+
+        // Ensure buttons stay wired and visible after player attachment
+        val exoSettingsBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_settings)
+        exoSettingsBtn?.visibility = android.view.View.VISIBLE
+        exoSettingsBtn?.setOnClickListener { showTrackSelectionDialog() }
+
         pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !isInPictureInPictureMode) {
             } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
