@@ -122,7 +122,7 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         val exoSettingsBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_settings)
         exoSettingsBtn?.visibility = android.view.View.VISIBLE
-        exoSettingsBtn?.setOnClickListener { showTrackSelectionDialog() }
+        // Custom override removed to allow native ExoPlayer settings menu
         var currentResizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
 
         findViewById<android.widget.ImageButton>(R.id.fab_resize)?.setOnClickListener {
@@ -180,24 +180,6 @@ class CustomPlayerActivity : AppCompatActivity() {
         trackSelectionDialog.window?.setBackgroundDrawable(drawable)
     }
 
-    private fun showTrackSelectionDialog() {
-        if (player == null) return
-        val trackSelectionDialog = androidx.media3.ui.TrackSelectionDialogBuilder(
-            this,
-            "Video Quality",
-            player!!,
-            C.TRACK_TYPE_VIDEO
-        ).build()
-
-        trackSelectionDialog.show()
-
-        val themeColor = getSafeGlossyThemeColor(this)
-        val drawable = android.graphics.drawable.GradientDrawable().apply {
-            setColor(themeColor)
-            cornerRadius = 32f
-        }
-        trackSelectionDialog.window?.setBackgroundDrawable(drawable)
-    }
 
     private fun getSafeGlossyThemeColor(context: android.content.Context): Int {
         val prefs = context.getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
@@ -217,7 +199,6 @@ class CustomPlayerActivity : AppCompatActivity() {
             defaultColor
         }
     }
-
     private fun applyGlossyThemeToDialog(dialog: android.app.Dialog, context: android.content.Context) {
         val themeColor = getSafeGlossyThemeColor(context)
         val drawable = android.graphics.drawable.GradientDrawable().apply {
@@ -876,7 +857,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         // Ensure buttons stay wired and visible after player attachment
         val exoSettingsBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_settings)
         exoSettingsBtn?.visibility = android.view.View.VISIBLE
-        exoSettingsBtn?.setOnClickListener { showTrackSelectionDialog() }
+        // Custom override removed to allow native ExoPlayer settings menu
 
         pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !isInPictureInPictureMode) {
