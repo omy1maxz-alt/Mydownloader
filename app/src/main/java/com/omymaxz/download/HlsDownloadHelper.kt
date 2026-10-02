@@ -474,6 +474,16 @@ object HlsDownloadHelper {
                             audioVariantUrl = filteredPlaylist.audios.firstOrNull()?.url?.toString()
                         }
                     } catch (e: Exception) {}
+                } else {
+                    // Try to pick the first variant if it's a master playlist
+                    try {
+                        val parser = androidx.media3.exoplayer.hls.playlist.HlsPlaylistParser()
+                        val parsedPlaylist = parser.parse(mainUri, masterText.byteInputStream(Charsets.UTF_8))
+                        if (parsedPlaylist is androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist) {
+                            videoVariantUrl = parsedPlaylist.variants.firstOrNull()?.url?.toString() ?: mainUri.toString()
+                            audioVariantUrl = parsedPlaylist.audios.firstOrNull()?.url?.toString()
+                        }
+                    } catch (e: Exception) {}
                 }
 
                 suspend fun isPlaylistFullyCached(playlistUrl: String): Boolean {

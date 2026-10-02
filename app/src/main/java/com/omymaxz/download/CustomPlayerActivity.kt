@@ -524,7 +524,11 @@ class CustomPlayerActivity : AppCompatActivity() {
             cacheFactory
         }
 
+        val trackSelector = androidx.media3.exoplayer.trackselection.DefaultTrackSelector(this)
+        trackSelector.setParameters(trackSelector.buildUponParameters()) // Set some default if we want, or just leave it
+
         player = ExoPlayer.Builder(this)
+            .setTrackSelector(trackSelector)
             .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory).setLoadErrorHandlingPolicy(CustomRetryPolicy()))
             .setLoadControl(loadControl)
             .build()
@@ -833,7 +837,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                         val isFullyCached = if (mimeType == androidx.media3.common.MimeTypes.APPLICATION_MPD) {
                             val duration = p.duration
                             val buffered = p.bufferedPosition
-                            duration > 0 && buffered >= duration - 1500 && p.bufferedPercentage >= 99
+                            duration > 0 && buffered > 0 && buffered >= duration - 1500 && p.bufferedPercentage >= 99
                         } else {
                             HlsDownloadHelper.checkIsFullyCached(this@CustomPlayerActivity, uri, mimeType, streamKeys)
                         }
