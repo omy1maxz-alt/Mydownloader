@@ -1199,6 +1199,7 @@ private fun checkBatteryOptimization() {
                         detectedMediaFiles.clear()
                     }
                     (webView.tag as? MediaStateInterface)?.clearState()
+                    mediaEngine.clear()
                     currentMediaListAdapter?.notifyDataSetChanged()
                     runOnUiThread {
                         updateFabVisibility()
@@ -1266,6 +1267,7 @@ private fun checkBatteryOptimization() {
                         detectedMediaFiles.clear()
                     }
                     (webView.tag as? MediaStateInterface)?.clearState()
+                    mediaEngine.clear()
                     currentMediaListAdapter?.notifyDataSetChanged()
                     runOnUiThread { updateFabVisibility() }
                     if (url?.contains("perchance.org") == true) {
@@ -3655,7 +3657,7 @@ private fun showMediaListDialog() {
             return
         }
         val mediaFilesCopy = synchronized(detectedMediaFiles) {
-            detectedMediaFiles.toMutableList()
+            detectedMediaFiles.distinct().toMutableList()
         }
         val dialogBinding = com.omymaxz.download.databinding.DialogMediaListBinding.inflate(layoutInflater)
 
@@ -3957,7 +3959,7 @@ private fun showMediaListDialog() {
                     .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
                     .filter { it.referer == candidate.referer || it.referer == webView.url?.toString() || candidate.referer == null }
                     .map { it.url }
-                    .toMutableList()
+                    .distinct().toMutableList()
             }
             if (allSubtitleUrls.isNotEmpty()) {
                 putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
@@ -4003,7 +4005,7 @@ private fun showMediaListDialog() {
                     .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
                     .filter { it.referer == fallbackReferer || it.referer == webView.url?.toString() || fallbackReferer == null }
                     .map { it.url }
-                    .toMutableList()
+                    .distinct().toMutableList()
             }
             if (allSubtitleUrls.isNotEmpty()) {
                 putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
@@ -4307,7 +4309,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         // Truncate history before saving to prevent SharedPreferences bloat over time
         for (tab in tabs) {
             if (tab.historyStack.size > 20) {
-                tab.historyStack = tab.historyStack.takeLast(20).toMutableList()
+                tab.historyStack = tab.historyStack.takeLast(20).distinct().toMutableList()
             }
         }
 
