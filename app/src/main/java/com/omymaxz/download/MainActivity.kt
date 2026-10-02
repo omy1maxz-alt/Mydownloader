@@ -3952,9 +3952,10 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
             }
 
-            val allSubtitleUrls = synchronized(detectedMediaFiles) {
+                        val allSubtitleUrls = synchronized(detectedMediaFiles) {
                 detectedMediaFiles
-                    .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
+                    .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
+                    .filter { it.referer == candidate.referer || it.referer == webView.url?.toString() || candidate.referer == null }
                     .map { it.url }
                     .toMutableList()
             }
@@ -3997,9 +3998,10 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
             }
 
-            val allSubtitleUrls = synchronized(detectedMediaFiles) {
+                        val allSubtitleUrls = synchronized(detectedMediaFiles) {
                 detectedMediaFiles
-                    .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
+                    .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
+                    .filter { it.referer == fallbackReferer || it.referer == webView.url?.toString() || fallbackReferer == null }
                     .map { it.url }
                     .toMutableList()
             }

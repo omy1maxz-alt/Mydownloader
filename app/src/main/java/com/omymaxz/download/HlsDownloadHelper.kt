@@ -424,4 +424,191 @@ object HlsDownloadHelper {
         return try { c.inputStream.use { it.readBytes() } } catch (t: Throwable) { null }
         finally { c.disconnect() }
     }
+    suspend fun checkIsFullyCached(context: Context, mainUri: Uri, mimeType: String, streamKeys: List<androidx.media3.common.StreamKey>): Boolean = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val cache = getUnifiedCache(context)
+
+        try {
+            // For progressive MP4 / WebM
+            if (mimeType == androidx.media3.common.MimeTypes.VIDEO_MP4 || mimeType == androidx.media3.common.MimeTypes.VIDEO_WEBM) {
+                val cacheKey = customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec.Builder().setUri(mainUri).build())
+                val spans = cache.getCachedSpans(cacheKey).sortedBy { it.position }
+                val metadata = cache.getContentMetadata(cacheKey)
+                val expectedLength = androidx.media3.datasource.cache.ContentMetadata.getContentLength(metadata)
+
+                if (expectedLength <= 0) return@withContext false
+                if (spans.isEmpty()) return@withContext false
+
+                var currentPosition = 0L
+                for (span in spans) {
+                    if (span.position != currentPosition) return@withContext false
+                    if (!span.isCached || span.file == null || !span.file!!.exists()) return@withContext false
+                    currentPosition += span.length
+                }
+                return@withContext currentPosition >= expectedLength
+            }
+
+            // For HLS
+            if (mimeType == androidx.media3.common.MimeTypes.APPLICATION_M3U8) {
+                // 1. Fetch Master Playlist from Cache
+                val masterSpec = androidx.media3.datasource.DataSpec.Builder().setUri(mainUri).build()
+                val masterCacheKey = customCacheKeyFactory.buildCacheKey(masterSpec)
+
+                val masterSpans = cache.getCachedSpans(masterCacheKey).sortedBy { it.position }
+                if (masterSpans.isEmpty() || !masterSpans[0].isCached || masterSpans[0].file == null || !masterSpans[0].file!!.exists()) {
+                    return@withContext false
+                }
+
+                val masterText = masterSpans[0].file!!.readText()
+                if (!masterText.contains("#EXTM3U")) return@withContext false
+
+                var videoVariantUrl = mainUri.toString()
+                var audioVariantUrl: String? = null
+
+                if (streamKeys.isNotEmpty()) {
+                    try {
+                        val parser = androidx.media3.exoplayer.hls.playlist.HlsPlaylistParser()
+                        val parsedPlaylist = parser.parse(mainUri, masterText.byteInputStream(Charsets.UTF_8))
+                        if (parsedPlaylist is androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist) {
+                            val filteredPlaylist = parsedPlaylist.copy(streamKeys) as androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist
+                            videoVariantUrl = filteredPlaylist.variants.firstOrNull()?.url?.toString() ?: mainUri.toString()
+                            audioVariantUrl = filteredPlaylist.audios.firstOrNull()?.url?.toString()
+                        }
+                    } catch (e: Exception) {}
+                }
+
+                suspend fun isPlaylistFullyCached(playlistUrl: String): Boolean {
+                    val pSpec = androidx.media3.datasource.DataSpec.Builder().setUri(android.net.Uri.parse(playlistUrl)).build()
+                    val pKey = customCacheKeyFactory.buildCacheKey(pSpec)
+                    val pSpans = cache.getCachedSpans(pKey).sortedBy { it.position }
+
+                    if (pSpans.isEmpty() || !pSpans[0].isCached || pSpans[0].file == null || !pSpans[0].file!!.exists()) {
+                        return false
+                    }
+
+                    val pText = pSpans[0].file!!.readText()
+                    if (!pText.contains("#EXTM3U")) return false
+
+                    val lines = pText.lines()
+                    var requiredSegmentsCount = 0
+                    var cachedSegmentsCount = 0
+
+                    for (line in lines) {
+                        if (line.isBlank()) continue
+
+                        var segmentUrl: String? = null
+                        if (line.startsWith("#EXT-X-MAP:URI=")) {
+                            val uriMatch = Regex("URI=\"([^\"]+)\"").find(line)
+                            if (uriMatch != null) {
+                                segmentUrl = uriMatch.groupValues[1]
+                            }
+                        } else if (!line.startsWith("#")) {
+                            segmentUrl = line
+                        }
+
+                        if (segmentUrl != null) {
+                            val fullUrl = if (segmentUrl.startsWith("http")) segmentUrl else java.net.URI(playlistUrl).resolve(segmentUrl).toString()
+                            requiredSegmentsCount++
+
+                            val segSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(fullUrl))
+                            val segKey = customCacheKeyFactory.buildCacheKey(segSpec)
+
+                            val segSpans = cache.getCachedSpans(segKey)
+                                .filter { it.isCached && it.file != null && it.file!!.exists() }
+                                .sortedBy { it.position }
+
+                            var isSegCached = false
+                            if (segSpans.isNotEmpty()) {
+                                // For segments, we must check if there is no gap.
+                                var expectedPos = 0L
+                                var hasGap = false
+                                for (span in segSpans) {
+                                    if (span.position != expectedPos) { hasGap = true; break }
+                                    expectedPos += span.length
+                                }
+
+                                if (!hasGap) {
+                                    // Verify Signature
+                                    var isValidSignature = true
+                                    try {
+                                        java.io.FileInputStream(segSpans[0].file).use { sigInput ->
+                                            val header = ByteArray(8)
+                                            if (sigInput.read(header) >= 8) {
+                                                if ((header[0] == 0x89.toByte() && header[1] == 0x50.toByte()) ||
+                                                    (header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte()) ||
+                                                    (header[0] == 'G'.code.toByte() && header[1] == 'I'.code.toByte())) {
+                                                    isValidSignature = false
+                                                }
+                                            }
+                                        }
+                                    } catch (e: Exception) {}
+                                    if (isValidSignature) isSegCached = true
+                                }
+                            }
+
+                            if (!isSegCached) {
+                                // Check cross-domain fallback
+                                val segUri = android.net.Uri.parse(fullUrl)
+                                val uriPath = segUri.path
+                                if (uriPath != null) {
+                                    val strippedUriPath = uriPath.substringBefore("?")
+                                    val pathMatches = cache.keys.filter { key ->
+                                        runCatching { android.net.Uri.parse(key).path?.substringBefore("?") == strippedUriPath }.getOrDefault(false)
+                                    }
+
+                                    var matchedKey: String? = null
+                                    if (pathMatches.isNotEmpty()) {
+                                        matchedKey = pathMatches.firstOrNull { runCatching { android.net.Uri.parse(it).host == segUri.host }.getOrDefault(false) }
+                                        if (matchedKey == null && pathMatches.size == 1) {
+                                            matchedKey = pathMatches.first()
+                                        }
+                                    }
+
+                                    if (matchedKey != null) {
+                                        val fbSpans = cache.getCachedSpans(matchedKey)
+                                            .filter { it.isCached && it.file != null && it.file!!.exists() }
+                                            .sortedBy { it.position }
+
+                                        if (fbSpans.isNotEmpty()) {
+                                            var expectedPos = 0L
+                                            var hasGap = false
+                                            for (span in fbSpans) {
+                                                if (span.position != expectedPos) { hasGap = true; break }
+                                                expectedPos += span.length
+                                            }
+                                            if (!hasGap) isSegCached = true
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (isSegCached) cachedSegmentsCount++
+                        }
+                    }
+
+                    android.util.Log.d("CACHE_COMPLETE_CHECK", "URL=$playlistUrl | TYPE=HLS | REQUIRED=$requiredSegmentsCount | CACHED=$cachedSegmentsCount")
+                    return requiredSegmentsCount > 0 && requiredSegmentsCount == cachedSegmentsCount
+                }
+
+                val videoCached = isPlaylistFullyCached(videoVariantUrl)
+                if (!videoCached) return@withContext false
+
+                if (audioVariantUrl != null) {
+                    val audioCached = isPlaylistFullyCached(audioVariantUrl)
+                    if (!audioCached) return@withContext false
+                }
+
+                return@withContext true
+            }
+
+            // For DASH
+            if (mimeType == androidx.media3.common.MimeTypes.APPLICATION_MPD) {
+                // DASH implementation would go here, for now fallback to exoplayer state
+                return@withContext false
+            }
+
+        } catch (e: Exception) {
+            android.util.Log.e("CACHE_COMPLETE_CHECK", "Error checking cache: ${e.message}")
+        }
+        return@withContext false
+    }
 }
