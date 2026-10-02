@@ -828,59 +828,47 @@ class CustomPlayerActivity : AppCompatActivity() {
             Toast.makeText(this, "Subtitles loaded: ${subtitleConfigs.size - 1} tracks", Toast.LENGTH_LONG).show()
         }
     }
-
     private val cacheProgressRunnable = object : Runnable {
         override fun run() {
             val p = player ?: return
             val currentMediaItem = p.currentMediaItem
 
             if (currentMediaItem != null && !hasNotifiedCacheComplete) {
-                // Using exact exact cache-complete evaluation mirroring HlsExportService
                 val uri = currentMediaItem.localConfiguration?.uri
-                if (uri != null) {
-                    try {
-                        val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(
-                            androidx.media3.datasource.DataSpec.Builder().setUri(uri).build()
-                        )
-                        val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
-                        val spans = cache.getCachedSpans(cacheKey).sortedBy { it.position }
-                        val metadata = cache.getContentMetadata(cacheKey)
-                        val expectedLength = androidx.media3.datasource.cache.ContentMetadata.getContentLength(metadata)
+                val mimeType = currentMediaItem.localConfiguration?.mimeType ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
 
-                        var totalCachedBytes = 0L
-                        for (span in spans) {
-                            if (span.isCached && span.file != null && span.file!!.exists()) {
-                                totalCachedBytes += span.length
+                if (uri != null) {
+                    val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
+                    val tracks = p.currentTracks
+                    tracks.groups.forEachIndexed { groupIndex, group ->
+                        for (i in 0 until group.length) {
+                            if (group.isTrackSelected(i)) {
+                                streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
                             }
                         }
+                    }
 
-                        // We use duration fallback only if length is unknown, but standard HLS/MPD
-                        // might not report length properly in ContentMetadata immediately.
-                        val isFullyCached = if (expectedLength > 0) {
-                            totalCachedBytes >= expectedLength
-                        } else {
-                            // If expectedLength is missing, fall back to Exoplayer's buffer if it's 100%
-                            // and the stream has reached the end, which is the old fallback behavior.
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                        val isFullyCached = if (mimeType == androidx.media3.common.MimeTypes.APPLICATION_MPD) {
                             val duration = p.duration
                             val buffered = p.bufferedPosition
                             duration > 0 && buffered >= duration - 1500 && p.bufferedPercentage >= 99
+                        } else {
+                            HlsDownloadHelper.checkIsFullyCached(this@CustomPlayerActivity, uri, mimeType, streamKeys)
                         }
 
-                        if (isFullyCached) {
+                        if (isFullyCached && !hasNotifiedCacheComplete) {
                             hasNotifiedCacheComplete = true
                             val fab = findViewById<android.widget.ImageButton>(R.id.fab_save)
-                            fab?.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
+                            fab?.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
                             Toast.makeText(this@CustomPlayerActivity, "Video fully cached! Safe to Save Offline.", Toast.LENGTH_LONG).show()
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
                     }
                 }
             }
             cacheProgressHandler.postDelayed(this, 1000)
         }
     }
-
     private fun attachPlayerView() {
         val pv = findViewById<PlayerView>(R.id.player_view)
         pv.player = player
