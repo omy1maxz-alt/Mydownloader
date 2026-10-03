@@ -825,21 +825,47 @@ class CustomPlayerActivity : AppCompatActivity() {
                 if (uri != null) {
                     val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
                     val tracks = p.currentTracks
+
+                    var selectedVideoTracksLog = ""
+                    var selectedAudioTracksLog = ""
+
                     tracks.groups.forEachIndexed { groupIndex, group ->
                         for (i in 0 until group.length) {
                             if (group.isTrackSelected(i)) {
                                 streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
+                                val format = group.getTrackFormat(i)
+                                if (format.sampleMimeType?.startsWith("video/") == true) {
+                                    selectedVideoTracksLog += "[Video ${format.width}x${format.height} ${format.bitrate}bps]"
+                                } else if (format.sampleMimeType?.startsWith("audio/") == true) {
+                                    selectedAudioTracksLog += "[Audio ${format.sampleMimeType} ${format.bitrate}bps]"
+                                }
                             }
                         }
                     }
 
+                    val duration = p.duration
+                    val currentPos = p.currentPosition
+                    val buffered = p.bufferedPosition
+                    val bufferedPercent = p.bufferedPercentage
+
                     kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                        var cacheCheckMethod = ""
+                        var reason = ""
+
                         val isFullyCached = if (mimeType == androidx.media3.common.MimeTypes.APPLICATION_MPD) {
-                            val duration = p.duration
-                            val buffered = p.bufferedPosition
-                            duration > 0 && buffered > 0 && buffered >= duration - 1500 && p.bufferedPercentage >= 99
+                            cacheCheckMethod = "ExoPlayer_Buffer_MPD"
+                            val cached = duration > 0 && buffered > 0 && buffered >= duration - 1500 && bufferedPercent >= 99
+                            reason = if (cached) "Buffered reached duration" else "Buffer incomplete"
+                            cached
                         } else {
-                            HlsDownloadHelper.checkIsFullyCached(this@CustomPlayerActivity, uri, mimeType, streamKeys)
+                            cacheCheckMethod = "HlsDownloadHelper.checkIsFullyCached"
+                            val cached = HlsDownloadHelper.checkIsFullyCached(this@CustomPlayerActivity, uri, mimeType, streamKeys)
+                            reason = if (cached) "Logical cache spans complete" else "Missing logical spans or playlist"
+                            cached
+                        }
+
+                        if (isFullyCached) {
+                            android.util.Log.i("CACHE_DIAGNOSTIC", "CACHE COMPLETE = true | Method: $cacheCheckMethod | Reason: $reason | URI: $uri | MIME: $mimeType | Duration: $duration | Pos: $currentPos | Buf: $buffered | BufPct: $bufferedPercent | Video: $selectedVideoTracksLog | Audio: $selectedAudioTracksLog | StreamKeys: $streamKeys")
                         }
 
                         if (isFullyCached && !hasNotifiedCacheComplete) {
