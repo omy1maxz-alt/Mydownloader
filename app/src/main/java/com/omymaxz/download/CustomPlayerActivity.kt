@@ -199,6 +199,83 @@ class CustomPlayerActivity : AppCompatActivity() {
             defaultColor
         }
     }
+
+    private fun showVideoQualityDialog() {
+        val p = player ?: return
+        val tracks = p.currentTracks
+
+        var videoGroupCount = 0
+        var videoTrackCount = 0
+        val qualityList = mutableListOf<Pair<String, androidx.media3.common.TrackSelectionOverride?>>()
+
+        // Add Auto option (clears override)
+        qualityList.add(Pair("Auto", null))
+
+        // We only want to select from video tracks
+        tracks.groups.forEachIndexed { groupIndex, group ->
+            if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO) {
+                videoGroupCount++
+                for (i in 0 until group.length) {
+                    videoTrackCount++
+                    val format = group.getTrackFormat(i)
+                    val label = if (format.height > 0) {
+                        "${format.height}p"
+                    } else if (format.bitrate > 0) {
+                        "${format.bitrate / 1000} kbps"
+                    } else {
+                        "Quality ${videoTrackCount}"
+                    }
+
+                    val override = androidx.media3.common.TrackSelectionOverride(group.mediaTrackGroup, i)
+                    qualityList.add(Pair(label, override))
+                }
+            }
+        }
+
+        // Deduplicate labels
+        val uniqueQualityList = qualityList.distinctBy { it.first }
+
+        android.util.Log.d("VIDEO_QUALITY_TRACE", "videoGroups=$videoGroupCount, videoTracks=$videoTrackCount, uniqueQualities=${uniqueQualityList.size}")
+
+        if (videoTrackCount <= 1) {
+            Toast.makeText(this, "No alternative video qualities available", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val builder = createThemedDialogBuilder(this)
+        builder.setTitle("Video Quality")
+
+        val items = uniqueQualityList.map { it.first }.toTypedArray()
+        builder.setItems(items) { dialog, which ->
+            val selection = uniqueQualityList[which]
+            val override = selection.second
+
+            p.trackSelectionParameters = p.trackSelectionParameters
+                .buildUpon()
+                .apply {
+                    if (override == null) {
+                        clearOverridesOfType(androidx.media3.common.C.TRACK_TYPE_VIDEO)
+                    } else {
+                        setOverrideForType(override)
+                    }
+                }
+                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_VIDEO, false)
+                .build()
+
+            // RESET CACHE STATE WHEN QUALITY CHANGES
+            hasNotifiedCacheComplete = false
+            cacheVerificationInProgress = false
+            updateCacheCompleteUi(false)
+
+            Toast.makeText(this, "Quality set to ${selection.first}", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+
+        val dialog = builder.create()
+        dialog.show()
+        applyGlossyThemeToDialog(dialog, this)
+    }
+
     private fun applyGlossyThemeToDialog(dialog: android.app.Dialog, context: android.content.Context) {
         val themeColor = getSafeGlossyThemeColor(context)
         val drawable = android.graphics.drawable.GradientDrawable().apply {
@@ -582,6 +659,10 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         android.util.Log.d("PLAYER_DEBUG", "[PLAYER_DEBUG]\nvideoUrl=$videoUrl\nmimeType=$actualMimeType\nsourceType=$intentMimeType")
 
+        // Reset cache verification state on new media
+        hasNotifiedCacheComplete = false
+        cacheVerificationInProgress = false
+        updateCacheCompleteUi(false)
         val newBaseItem = MediaItem.Builder()
             .setUri(Uri.parse(videoUrl!!))
             .setMimeType(actualMimeType)
@@ -794,7 +875,11 @@ class CustomPlayerActivity : AppCompatActivity() {
             }
             android.util.Log.d("PLAYER_DEBUG", "[PLAYER_DEBUG]\nvideoUrl=$videoUrl\nmimeType=$actualMimeType\nsourceType=$intentMimeType")
 
-            val newBaseItem = MediaItem.Builder()
+            // Reset cache verification state on new media
+        hasNotifiedCacheComplete = false
+        cacheVerificationInProgress = false
+        updateCacheCompleteUi(false)
+        val newBaseItem = MediaItem.Builder()
                 .setUri(Uri.parse(videoUrl!!))
                 .setMimeType(actualMimeType)
                 .setSubtitleConfigurations(subtitleConfigs)
@@ -813,12 +898,44 @@ class CustomPlayerActivity : AppCompatActivity() {
             Toast.makeText(this, "Subtitles loaded: ${subtitleConfigs.size - 1} tracks", Toast.LENGTH_LONG).show()
         }
     }
+
+    private var cacheVerificationInProgress = false
+
+    private fun updateCacheCompleteUi(isComplete: Boolean) {
+        val fab = findViewById<android.widget.ImageButton>(R.id.fab_save)
+        if (isComplete) {
+            fab?.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
+        } else {
+            fab?.clearColorFilter()
+        }
+    }
+
     private val cacheProgressRunnable = object : Runnable {
         override fun run() {
-            val p = player ?: return
+            val p = player
+            if (p == null || hasNotifiedCacheComplete || cacheVerificationInProgress) {
+                cacheProgressHandler.postDelayed(this, 1000)
+                return
+            }
             val currentMediaItem = p.currentMediaItem
+            if (currentMediaItem != null) {
+                val duration = p.duration
+                val buffered = p.bufferedPosition
 
-            if (currentMediaItem != null && !hasNotifiedCacheComplete) {
+                // 2. If duration is unknown/unavailable, DO NOT declare cache complete.
+                if (duration <= 0 || duration == androidx.media3.common.C.TIME_UNSET) {
+                    cacheProgressHandler.postDelayed(this, 1000)
+                    return
+                }
+
+                // 3. If bufferedPosition has NOT reached the end, DO NOT call expensive cache verification
+                if (buffered < duration - 1000) {
+                    cacheProgressHandler.postDelayed(this, 1000)
+                    return
+                }
+
+                // 4. Buffer reached end. Verify physical cache.
+                cacheVerificationInProgress = true
                 val uri = currentMediaItem.localConfiguration?.uri
                 val mimeType = currentMediaItem.localConfiguration?.mimeType ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
 
@@ -843,11 +960,6 @@ class CustomPlayerActivity : AppCompatActivity() {
                         }
                     }
 
-                    val duration = p.duration
-                    val currentPos = p.currentPosition
-                    val buffered = p.bufferedPosition
-                    val bufferedPercent = p.bufferedPercentage
-
                     kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
                         var cacheCheckMethod = ""
                         var reason = ""
@@ -864,17 +976,17 @@ class CustomPlayerActivity : AppCompatActivity() {
                             cached
                         }
 
-                        if (isFullyCached) {
-                            android.util.Log.i("CACHE_DIAGNOSTIC", "CACHE COMPLETE = true | Method: $cacheCheckMethod | Reason: $reason | URI: $uri | MIME: $mimeType | Duration: $duration | Pos: $currentPos | Buf: $buffered | BufPct: $bufferedPercent | Video: $selectedVideoTracksLog | Audio: $selectedAudioTracksLog | StreamKeys: $streamKeys")
-                        }
+                        android.util.Log.i("CACHE_DIAGNOSTIC", "CACHE VERIFICATION | Method: $cacheCheckMethod | Reason: $reason | URI: $uri | MIME: $mimeType | Duration: $duration | Buf: $buffered | Video: $selectedVideoTracksLog | Audio: $selectedAudioTracksLog | StreamKeys: $streamKeys | Result: $isFullyCached")
 
                         if (isFullyCached && !hasNotifiedCacheComplete) {
                             hasNotifiedCacheComplete = true
-                            val fab = findViewById<android.widget.ImageButton>(R.id.fab_save)
-                            fab?.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
+                            updateCacheCompleteUi(true)
                             Toast.makeText(this@CustomPlayerActivity, "Video fully cached! Safe to Save Offline.", Toast.LENGTH_LONG).show()
                         }
+                        cacheVerificationInProgress = false
                     }
+                } else {
+                    cacheVerificationInProgress = false
                 }
             }
             cacheProgressHandler.postDelayed(this, 1000)
@@ -887,6 +999,11 @@ class CustomPlayerActivity : AppCompatActivity() {
         // Ensure buttons stay wired and visible after player attachment
         val exoSettingsBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_settings)
         exoSettingsBtn?.visibility = android.view.View.VISIBLE
+
+        val fabQuality = findViewById<android.widget.ImageButton>(R.id.fab_quality)
+        fabQuality?.setOnClickListener {
+            showVideoQualityDialog()
+        }
         // Custom override removed to allow native ExoPlayer settings menu
 
         pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v ->
