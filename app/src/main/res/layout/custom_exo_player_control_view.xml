@@ -113,7 +113,7 @@
       <ImageButton
           android:id="@+id/fab_quality"
           style="@style/ExoStyledControls.Button.Bottom"
-          android:src="@android:drawable/ic_menu_sort_by_size"
+          android:src="@android:drawable/ic_menu_preferences"
           android:padding="8dp"
           android:scaleType="centerInside"
           android:contentDescription="Video Quality" />
