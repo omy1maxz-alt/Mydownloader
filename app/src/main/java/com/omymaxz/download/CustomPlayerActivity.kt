@@ -992,7 +992,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         val exoSettingsBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_settings)
         exoSettingsBtn?.visibility = android.view.View.VISIBLE
 
-        val fabQuality = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab_quality)
+        val fabQuality = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab_settings)
         fabQuality?.setOnClickListener {
             showVideoQualityDialog()
         }
