@@ -117,6 +117,8 @@
           android:layout_marginEnd="16dp"
           android:src="@android:drawable/ic_menu_preferences"
           android:contentDescription="Track Selection Settings"
+          app:backgroundTint="@android:color/transparent"
+          app:elevation="0dp"
           app:tint="@android:color/white" />
 
       <ImageButton android:id="@id/exo_subtitle"
