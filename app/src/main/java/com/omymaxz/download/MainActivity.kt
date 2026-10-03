@@ -1393,14 +1393,20 @@ private fun checkBatteryOptimization() {
                     val reqReferer = reqHeaders?.get("Referer") ?: reqHeaders?.get("referer")
                     val userAgent = reqHeaders?.get("User-Agent") ?: reqHeaders?.get("user-agent")
 
-                    // Check for embedded YouTube iframes
-                    if (url.contains("youtube.com/embed/") || url.contains("youtube-nocookie.com/embed/")) {
-                        // Extract video ID and normalize to watch URL
-                        val videoId = url.substringAfter("/embed/").substringBefore("?")
-                        if (videoId.isNotEmpty()) {
-                            val normalizedUrl = "https://www.youtube.com/watch?v=$videoId"
-                            checkForYouTube(normalizedUrl)
+                    // Check for standard YouTube watch links or embedded player frames
+                    if (url.contains("youtube.com/watch") ||
+                        url.contains("youtube.com/embed/") ||
+                        url.contains("youtube-nocookie.com/embed/")) {
+
+                        // Extract video ID and normalize to watch URL if it's an embed
+                        val normalizedUrl = if (url.contains("embed/")) {
+                            val videoId = url.substringAfter("/embed/").substringBefore("?")
+                            if (videoId.isNotEmpty()) "https://www.youtube.com/watch?v=$videoId" else url
+                        } else {
+                            url
                         }
+
+                        checkForYouTube(normalizedUrl)
                     }
 
                     // Targeted diagnostic logging for "stream_iq.m3u8" or related goplay.su iQIYI traffic
