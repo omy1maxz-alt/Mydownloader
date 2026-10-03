@@ -460,7 +460,8 @@ class MediaDetectionEngine(private val context: Context) {
                 val explicitMaster = activeManifests.find { (it.url.lowercase().contains("master") || it.url.lowercase().contains("index")) }
                 if (explicitMaster != null) return explicitMaster
                 // If multiple active manifests, pick the one most recently seen (current server), breaking ties by oldest firstSeen (master vs variant)
-                return activeManifests.sortedWith(compareByDescending<MediaCandidate> { it.lastSeenTime }.thenBy { it.firstSeenTime }).first()
+                // Always prefer the master playlist (oldest firstSeenTime) for the same server.
+                return activeManifests.sortedWith(compareBy<MediaCandidate> { it.firstSeenTime }.thenByDescending { it.lastSeenTime }).first()
             }
         }
 

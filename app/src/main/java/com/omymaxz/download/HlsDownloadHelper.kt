@@ -444,7 +444,7 @@ object HlsDownloadHelper {
                     if (!span.isCached || span.file == null || !span.file!!.exists()) return@withContext false
                     currentPosition += span.length
                 }
-                return@withContext currentPosition >= expectedLength
+                return@withContext currentPosition > 0 && currentPosition >= expectedLength
             }
 
             // For HLS
