@@ -854,8 +854,8 @@ class CustomPlayerActivity : AppCompatActivity() {
 
                         val isFullyCached = if (mimeType == androidx.media3.common.MimeTypes.APPLICATION_MPD) {
                             cacheCheckMethod = "ExoPlayer_Buffer_MPD"
-                            val cached = duration > 0 && buffered > 0 && buffered >= duration - 1500 && bufferedPercent >= 99
-                            reason = if (cached) "Buffered reached duration" else "Buffer incomplete"
+                            val cached = false // DASH physical span checking not yet supported, skipping false positive
+                            reason = "DASH physical span checking not yet supported, skipping false positive."
                             cached
                         } else {
                             cacheCheckMethod = "HlsDownloadHelper.checkIsFullyCached"
