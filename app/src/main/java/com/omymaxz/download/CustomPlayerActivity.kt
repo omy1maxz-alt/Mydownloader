@@ -998,18 +998,9 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
         // Custom override removed to allow native ExoPlayer settings menu
 
-        // Hide Quality button if there's only 1 video track
-        player?.addListener(object : androidx.media3.common.Player.Listener {
-            override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
-                var videoTrackCount = 0
-                tracks.groups.forEach { group ->
-                    if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO) {
-                        videoTrackCount += group.length
-                    }
-                }
-                fabSettings?.visibility = if (videoTrackCount > 1) android.view.View.VISIBLE else android.view.View.GONE
-            }
-        })
+        // We will keep the button always visible so the user knows it exists,
+        // as per their feedback. It will just show a toast if clicked and only 1 track exists.
+        fabSettings?.visibility = android.view.View.VISIBLE
 
         pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !isInPictureInPictureMode) {
