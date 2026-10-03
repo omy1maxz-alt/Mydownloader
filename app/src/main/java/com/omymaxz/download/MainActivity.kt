@@ -1191,16 +1191,20 @@ private fun checkBatteryOptimization() {
                 private var navigationCount = 0
 
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                    if (url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))) {
+                    val isYt = url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))
+                    // Auto-clear detected media on new page load to prevent stale episode links
+                    // We also skip clearing if YouTube so we don't wipe the list immediately after we add it
+                    if (!isYt) {
+                        synchronized(detectedMediaFiles) {
+                            detectedMediaFiles.clear()
+                        }
+                        (webView.tag as? MediaStateInterface)?.clearState()
+                        mediaEngine.clear()
+                        currentMediaListAdapter?.notifyDataSetChanged()
+                    }
+                    if (isYt) {
                         checkForYouTube(url)
                     }
-                    // Auto-clear detected media on new page load to prevent stale episode links
-                    synchronized(detectedMediaFiles) {
-                        detectedMediaFiles.clear()
-                    }
-                    (webView.tag as? MediaStateInterface)?.clearState()
-                    mediaEngine.clear()
-                    currentMediaListAdapter?.notifyDataSetChanged()
                     runOnUiThread {
                         updateFabVisibility()
                     }
@@ -1258,17 +1262,23 @@ private fun checkBatteryOptimization() {
                     super.onPageStarted(view, url, favicon)
                     isPageLoading = true
 
-                    if (url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))) {
-                        checkForYouTube(url)
+                    val isYt2 = url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))
+                    if (!isYt2) {
+                        synchronized(detectedMediaFiles) {
+                            detectedMediaFiles.clear()
+                        }
+                        (webView.tag as? MediaStateInterface)?.clearState()
+                        mediaEngine.clear()
+                        currentMediaListAdapter?.notifyDataSetChanged()
                     }
+
                     binding.progressBar.visibility = View.VISIBLE
                     binding.urlEditTextToolbar.setText(url)
-                    synchronized(detectedMediaFiles) {
-                        detectedMediaFiles.clear()
+
+                    if (isYt2) {
+                        checkForYouTube(url)
                     }
-                    (webView.tag as? MediaStateInterface)?.clearState()
-                    mediaEngine.clear()
-                    currentMediaListAdapter?.notifyDataSetChanged()
+
                     runOnUiThread { updateFabVisibility() }
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
@@ -1290,14 +1300,21 @@ private fun checkBatteryOptimization() {
                     if (url != null) this@MainActivity.lastUsedUrl = url
                     super.doUpdateVisitedHistory(view, url, isReload)
                     // Auto-clear detected media on SPA navigation or in-page history push
-                    synchronized(detectedMediaFiles) {
-                        detectedMediaFiles.clear()
-                    }
-                    (webView.tag as? MediaStateInterface)?.clearState()
-                    mediaEngine.clear()
-                    runOnUiThread {
-                        currentMediaListAdapter?.notifyDataSetChanged()
-                        updateFabVisibility()
+                    // EXCEPT for YouTube, because YouTube is an SPA that immediately fires this
+                    // and wipes our extracted video from the list right after finding it.
+                    val isYt = url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))
+                    if (!isYt) {
+                        synchronized(detectedMediaFiles) {
+                            detectedMediaFiles.clear()
+                        }
+                        (webView.tag as? MediaStateInterface)?.clearState()
+                        mediaEngine.clear()
+                        runOnUiThread {
+                            currentMediaListAdapter?.notifyDataSetChanged()
+                            updateFabVisibility()
+                        }
+                    } else {
+                        if (url != null) checkForYouTube(url)
                     }
                 }
 
