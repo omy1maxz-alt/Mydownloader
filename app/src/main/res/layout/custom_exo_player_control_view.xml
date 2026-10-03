@@ -85,6 +85,14 @@
           style="@style/ExoStyledControls.Button.Bottom.Settings"/>
 
       <ImageButton
+          android:id="@+id/fab_quality"
+          style="@style/ExoStyledControls.Button.Bottom"
+          android:src="@android:drawable/ic_menu_sort_by_size"
+          android:padding="8dp"
+          android:scaleType="centerInside"
+          android:contentDescription="Video Quality" />
+
+      <ImageButton
           android:id="@+id/fab_pip"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@drawable/ic_public"
