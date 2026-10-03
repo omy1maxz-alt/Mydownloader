@@ -110,13 +110,14 @@
           android:scaleType="centerInside"
           android:contentDescription="Save Offline" />
 
-      <ImageButton
+      <com.google.android.material.floatingactionbutton.FloatingActionButton
           android:id="@+id/fab_quality"
-          style="@style/ExoStyledControls.Button.Bottom"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginEnd="16dp"
           android:src="@android:drawable/ic_menu_preferences"
-          android:padding="8dp"
-          android:scaleType="centerInside"
-          android:contentDescription="Video Quality" />
+          android:contentDescription="Track Selection Settings"
+          app:tint="@android:color/white" />
 
       <ImageButton android:id="@id/exo_subtitle"
           style="@style/ExoStyledControls.Button.Bottom.CC"/>
