@@ -575,10 +575,8 @@ class CustomPlayerActivity : AppCompatActivity() {
             .setTargetBufferBytes(androidx.media3.common.C.LENGTH_UNSET) // Uncapped RAM usage
             .build()
 
-        // Bypass the shared HLS cache for direct progressive videos.
-        // Progressive MP4s with auth-tokens (e.g. KissKH) can be corrupted by over-aggressive caching
-        // if the CacheKeyFactory strips query params, leading to UnrecognizedInputFormatExceptions.
-        // Check if the URL is strongly identified as a direct progressive format that should bypass the shared HLS cache
+        // We MUST use cacheFactory for all media (including direct progressive like MP4)
+        // to actually populate the cache spans. If we don't, cache_count will be 0 when saving.
         val isDirectProgressiveUrl = videoUrl?.contains(".mp4", ignoreCase = true) == true ||
                                      videoUrl?.contains(".webm", ignoreCase = true) == true ||
                                      videoUrl?.contains(".mkv", ignoreCase = true) == true
@@ -593,13 +591,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                           videoUrl?.contains(".mpd", ignoreCase = true) == true ||
                           videoUrl?.contains("manifest", ignoreCase = true) == true
 
-        // If it looks like progressive media and we have no evidence it's HLS/DASH, bypass the HLS chunk cache.
-        val dataSourceFactory = if ((isExplicitProgressiveMime || isDirectProgressiveUrl) && !isHlsOrDash) {
-            android.util.Log.d("DIRECT_MP4_TRACE", "[DIRECT_MP4_TRACE]\nurl=${videoUrl?.replace(Regex("auth-token=[^&]+"), "auth-token=[REDACTED]")}\nmime=$tracerMimeType\nreferer=${HlsDownloadHelper.currentReferer}\nuserAgent=${HlsDownloadHelper.currentUserAgent}\ndata_source=direct_http")
-            HlsDownloadHelper.getDataSourceFactory(this)
-        } else {
-            cacheFactory
-        }
+        val dataSourceFactory = cacheFactory
 
         val trackSelector = androidx.media3.exoplayer.trackselection.DefaultTrackSelector(this)
         trackSelector.setParameters(trackSelector.buildUponParameters()) // Set some default if we want, or just leave it
@@ -1005,6 +997,19 @@ class CustomPlayerActivity : AppCompatActivity() {
             showVideoQualityDialog()
         }
         // Custom override removed to allow native ExoPlayer settings menu
+
+        // Hide Quality button if there's only 1 video track
+        player?.addListener(object : androidx.media3.common.Player.Listener {
+            override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
+                var videoTrackCount = 0
+                tracks.groups.forEach { group ->
+                    if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO) {
+                        videoTrackCount += group.length
+                    }
+                }
+                fabQuality?.visibility = if (videoTrackCount > 1) android.view.View.VISIBLE else android.view.View.GONE
+            }
+        })
 
         pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !isInPictureInPictureMode) {
