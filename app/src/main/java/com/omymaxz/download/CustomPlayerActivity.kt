@@ -992,8 +992,8 @@ class CustomPlayerActivity : AppCompatActivity() {
         val exoSettingsBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_settings)
         exoSettingsBtn?.visibility = android.view.View.VISIBLE
 
-        val fabQuality = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab_settings)
-        fabQuality?.setOnClickListener {
+        val fabSettings = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab_settings)
+        fabSettings?.setOnClickListener {
             showVideoQualityDialog()
         }
         // Custom override removed to allow native ExoPlayer settings menu
@@ -1007,7 +1007,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                         videoTrackCount += group.length
                     }
                 }
-                fabQuality?.visibility = if (videoTrackCount > 1) android.view.View.VISIBLE else android.view.View.GONE
+                fabSettings?.visibility = if (videoTrackCount > 1) android.view.View.VISIBLE else android.view.View.GONE
             }
         })
 
