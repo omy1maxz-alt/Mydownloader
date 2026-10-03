@@ -78,20 +78,6 @@
       <ImageButton android:id="@id/exo_repeat_toggle"
           style="@style/ExoStyledControls.Button.Bottom.RepeatToggle"/>
 
-                        <ImageButton android:id="@id/exo_subtitle"
-          style="@style/ExoStyledControls.Button.Bottom.CC"/>
-
-      <ImageButton android:id="@id/exo_settings"
-          style="@style/ExoStyledControls.Button.Bottom.Settings"/>
-
-      <ImageButton
-          android:id="@+id/fab_quality"
-          style="@style/ExoStyledControls.Button.Bottom"
-          android:src="@android:drawable/ic_menu_sort_by_size"
-          android:padding="8dp"
-          android:scaleType="centerInside"
-          android:contentDescription="Video Quality" />
-
       <ImageButton
           android:id="@+id/fab_pip"
           style="@style/ExoStyledControls.Button.Bottom"
@@ -101,6 +87,22 @@
           android:contentDescription="Picture in Picture" />
 
       <ImageButton
+          android:id="@+id/fab_resize"
+          style="@style/ExoStyledControls.Button.Bottom"
+          android:src="@android:drawable/ic_menu_crop"
+          android:padding="8dp"
+          android:scaleType="centerInside"
+          android:contentDescription="Resize Video" />
+
+      <ImageButton
+          android:id="@+id/fab_bubble"
+          style="@style/ExoStyledControls.Button.Bottom"
+          android:src="@drawable/ic_play_arrow"
+          android:padding="8dp"
+          android:scaleType="centerInside"
+          android:contentDescription="Floating Bubble" />
+
+      <ImageButton
           android:id="@+id/fab_save"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@drawable/ic_download"
@@ -108,21 +110,19 @@
           android:scaleType="centerInside"
           android:contentDescription="Save Offline" />
 
-        <ImageButton
-            android:id="@+id/fab_resize"
-            style="@style/ExoStyledControls.Button.Bottom"
-            android:src="@android:drawable/ic_menu_crop"
-            android:padding="8dp"
-            android:scaleType="centerInside"
-            android:contentDescription="Resize Video" />
+      <ImageButton
+          android:id="@+id/fab_quality"
+          style="@style/ExoStyledControls.Button.Bottom"
+          android:src="@android:drawable/ic_menu_sort_by_size"
+          android:padding="8dp"
+          android:scaleType="centerInside"
+          android:contentDescription="Video Quality" />
 
-        <ImageButton
-            android:id="@+id/fab_bubble"
-            style="@style/ExoStyledControls.Button.Bottom"
-            android:src="@drawable/ic_play_arrow"
-            android:padding="8dp"
-            android:scaleType="centerInside"
-            android:contentDescription="Floating Bubble" />
+      <ImageButton android:id="@id/exo_subtitle"
+          style="@style/ExoStyledControls.Button.Bottom.CC"/>
+
+      <ImageButton android:id="@id/exo_settings"
+          style="@style/ExoStyledControls.Button.Bottom.Settings"/>
 
       <ImageButton android:id="@id/exo_fullscreen"
           style="@style/ExoStyledControls.Button.Bottom.FullScreen"/>
