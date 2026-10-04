@@ -6348,6 +6348,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                         updateFabVisibility()
                         currentMediaListAdapter?.notifyDataSetChanged()
                     }
+
                     if (pendingYouTubeAutoPlay) {
                         pendingYouTubeAutoPlay = false
                         launchYouTubeInCustomPlayer(mediaFile)

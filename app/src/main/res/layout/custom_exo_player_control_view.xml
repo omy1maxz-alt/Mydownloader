@@ -69,44 +69,65 @@
           android:layout_gravity="center_vertical|end"
           android:layoutDirection="ltr">
 
-      <ImageButton android:id="@id/exo_vr"
+      <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background" android:id="@id/exo_vr"
           style="@style/ExoStyledControls.Button.Bottom.VR"/>
 
-      <ImageButton android:id="@id/exo_shuffle"
+      <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background" android:id="@id/exo_shuffle"
           style="@style/ExoStyledControls.Button.Bottom.Shuffle"/>
 
-      <ImageButton android:id="@id/exo_repeat_toggle"
+      <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background" android:id="@id/exo_repeat_toggle"
           style="@style/ExoStyledControls.Button.Bottom.RepeatToggle"/>
 
       <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background"
           android:id="@+id/fab_pip"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@drawable/ic_public"
-          android:padding="8dp"
+          android:padding="@dimen/custom_exo_button_padding"
           android:scaleType="centerInside"
           android:contentDescription="Picture in Picture" />
 
       <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background"
           android:id="@+id/fab_resize"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@android:drawable/ic_menu_crop"
-          android:padding="8dp"
+          android:padding="@dimen/custom_exo_button_padding"
           android:scaleType="centerInside"
           android:contentDescription="Resize Video" />
 
       <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background"
           android:id="@+id/fab_bubble"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@drawable/ic_play_arrow"
-          android:padding="8dp"
+          android:padding="@dimen/custom_exo_button_padding"
           android:scaleType="centerInside"
           android:contentDescription="Floating Bubble" />
 
       <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background"
           android:id="@+id/fab_save"
           style="@style/ExoStyledControls.Button.Bottom"
           android:src="@drawable/ic_download"
-          android:padding="8dp"
+          android:padding="@dimen/custom_exo_button_padding"
           android:scaleType="centerInside"
           android:contentDescription="Save Offline" />
 
@@ -122,13 +143,22 @@
           app:elevation="0dp"
           app:tint="@android:color/white" />
 
-      <ImageButton android:id="@id/exo_subtitle"
+      <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background" android:id="@id/exo_subtitle"
           style="@style/ExoStyledControls.Button.Bottom.CC"/>
 
-      <ImageButton android:id="@id/exo_settings"
+      <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background" android:id="@id/exo_settings"
           style="@style/ExoStyledControls.Button.Bottom.Settings"/>
 
-      <ImageButton android:id="@id/exo_fullscreen"
+      <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background" android:id="@id/exo_fullscreen"
           style="@style/ExoStyledControls.Button.Bottom.FullScreen"/>
 
       </LinearLayout>
@@ -151,7 +181,10 @@
       android:gravity="center_vertical"
       android:layoutDirection="ltr">
 
-    <ImageButton android:id="@id/exo_minimal_fullscreen"
+    <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background" android:id="@id/exo_minimal_fullscreen"
         style="@style/ExoStyledControls.Button.Bottom.FullScreen"/>
 
   </LinearLayout>
@@ -167,17 +200,26 @@
       android:clipToPadding="false"
       android:layoutDirection="ltr">
 
-    <ImageButton android:id="@id/exo_prev"
+    <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background" android:id="@id/exo_prev"
         style="@style/ExoStyledControls.Button.Center.Previous"/>
 
     <include layout="@layout/exo_player_control_rewind_button" />
 
-    <ImageButton android:id="@id/exo_play_pause"
+    <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background" android:id="@id/exo_play_pause"
         style="@style/ExoStyledControls.Button.Center.PlayPause"/>
 
     <include layout="@layout/exo_player_control_ffwd_button" />
 
-    <ImageButton android:id="@id/exo_next"
+    <ImageButton
+          android:layout_width="@dimen/custom_exo_button_size"
+          android:layout_height="@dimen/custom_exo_button_size"
+          android:background="@drawable/circle_button_background" android:id="@id/exo_next"
         style="@style/ExoStyledControls.Button.Center.Next"/>
 
   </LinearLayout>
