@@ -1415,6 +1415,18 @@ private fun checkBatteryOptimization() {
                         android.util.Log.i("iQIYI_Diagnostic", "Method=${request?.method}, Referer=$reqReferer")
                     }
 
+                    // IDMP VTT to M3U8 Rewrite Logic
+                    // Sites sometimes hide the video stream behind a thumbnail track.
+                    // e.g. https://domain.com/.../seek/thumbnails.vtt -> https://domain.com/.../720p/index.m3u8
+                    if (url.contains("/seek/thumbnails.vtt")) {
+                        val rewrittenUrl = url.replace("/seek/thumbnails.vtt", "/720p/index.m3u8")
+                        android.util.Log.d("IDMP_Rewrite", "Rewriting VTT to M3U8: $rewrittenUrl")
+                        // Trigger detection engine on the rewritten URL
+                        mediaEngine.processRequest(rewrittenUrl, reqReferer, userAgent)
+                        // Note: We don't override the actual request return here,
+                        // we just passively ingest the rewritten URL into the media engine so it shows up in the UI.
+                    }
+
                     // Safely process through MediaDetectionEngine on background thread
                     val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
                     val detectionEnabled = prefs.getBoolean("MEDIA_DETECTION_ENABLED", true)
