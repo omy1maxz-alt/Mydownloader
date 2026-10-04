@@ -1421,10 +1421,18 @@ private fun checkBatteryOptimization() {
                     if (url.contains("/seek/thumbnails.vtt")) {
                         val rewrittenUrl = url.replace("/seek/thumbnails.vtt", "/720p/index.m3u8")
                         android.util.Log.d("IDMP_Rewrite", "Rewriting VTT to M3U8: $rewrittenUrl")
-                        // Trigger detection engine on the rewritten URL
                         mediaEngine.processRequest(rewrittenUrl, reqReferer, userAgent)
-                        // Note: We don't override the actual request return here,
-                        // we just passively ingest the rewritten URL into the media engine so it shows up in the UI.
+                    }
+                    // Handle generic thumbnail.vtt to index-f1-v1-a1.m3u8 for alternative CDNs like player.upn.one
+                    if (url.contains("thumbnail.vtt")) {
+                        // We attempt a generic fallback to see if an index.m3u8 or tt/index-f1-v1-a1.m3u8 exists.
+                        // Using MediaEngine we can just throw the rewritten string as a candidate.
+                        val rewrittenUrl2 = url.replace("thumbnail.vtt", "tt/index-f1-v1-a1.m3u8")
+                        android.util.Log.d("IDMP_Rewrite", "Rewriting thumbnail.vtt to M3U8: $rewrittenUrl2")
+                        mediaEngine.processRequest(rewrittenUrl2, reqReferer, userAgent)
+
+                        val rewrittenUrl3 = url.replace("thumbnail.vtt", "index.m3u8")
+                        mediaEngine.processRequest(rewrittenUrl3, reqReferer, userAgent)
                     }
 
                     // Safely process through MediaDetectionEngine on background thread
