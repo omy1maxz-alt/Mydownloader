@@ -141,11 +141,15 @@ object SubtitleUtils {
             val spanishCount = words.count { it in setOf("el", "la", "de", "que", "y", "en", "un", "una", "los", "las", "por", "con", "para", "como", "su") }
             val tagalogCount = words.count { it in setOf("ang", "ng", "sa", "na", "at", "mga", "ay", "ako", "ito", "si", "mo", "ni", "niya", "kami", "kaya") }
 
-            if (englishCount >= 2 && englishCount > spanishCount && englishCount > tagalogCount) {
+            val indonesianCount = words.count { it in setOf("yang", "di", "ke", "dari", "untuk", "pada", "dengan", "adalah", "ini", "itu", "dan", "atau", "tidak") }
+
+            if (indonesianCount >= 1 && indonesianCount >= englishCount && indonesianCount >= spanishCount && indonesianCount >= tagalogCount) {
+                language = "Indonesian"
+            } else if (englishCount >= 1 && englishCount >= spanishCount && englishCount >= tagalogCount && englishCount >= indonesianCount) {
                 language = "English"
-            } else if (spanishCount >= 2 && spanishCount > englishCount && spanishCount > tagalogCount) {
+            } else if (spanishCount >= 1 && spanishCount >= englishCount && spanishCount >= tagalogCount && spanishCount >= indonesianCount) {
                 language = "Spanish"
-            } else if (tagalogCount >= 2 && tagalogCount > englishCount && tagalogCount > spanishCount) {
+            } else if (tagalogCount >= 1 && tagalogCount >= englishCount && tagalogCount >= spanishCount && tagalogCount >= indonesianCount) {
                 language = "Tagalog"
             }
         }
