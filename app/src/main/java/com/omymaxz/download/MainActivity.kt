@@ -1438,8 +1438,10 @@ private fun checkBatteryOptimization() {
                     // Safely process through MediaDetectionEngine on background thread
                     val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
                     val detectionEnabled = prefs.getBoolean("MEDIA_DETECTION_ENABLED", true)
+
+                    var engineCandidate: MediaCandidate? = null
                     if (detectionEnabled) {
-                        mediaEngine.processRequest(url, reqReferer, userAgent)
+                        engineCandidate = mediaEngine.processRequest(url, reqReferer, userAgent)
                     }
 
                     if (isUrlWhitelisted(url)) {
@@ -1448,7 +1450,13 @@ private fun checkBatteryOptimization() {
                     if (isAdDomain(url)) {
                         return createEmptyResponse()
                     }
-                    if (isMediaUrl(url)) {
+
+                    // IFRAME FIX: If MediaDetectionEngine successfully parsed an HLS/DASH manifest or valid MediaCandidate,
+                    // we must ensure it bypasses the legacy `isMediaUrl(url)` string matcher (which might fail on extensionless blob fallback URLs).
+                    // As long as it is explicitly not an ad.
+                    val isExplicitEngineMedia = engineCandidate != null && engineCandidate.isManifest
+
+                    if (isMediaUrl(url) || isExplicitEngineMedia) {
                         if (isAdUrl(url)) {
                             android.util.Log.d("WebViewClient", "Ignoring AD request: $url")
                             return super.shouldInterceptRequest(view, request)
