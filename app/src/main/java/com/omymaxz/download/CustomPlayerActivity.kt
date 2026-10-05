@@ -619,14 +619,23 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         // (a) Local subtitles
         for (f in localFiles) {
-            val lang = f.nameWithoutExtension
-                .substringAfter("_subtitle_", "und")
-                .substringBeforeLast(".")
+            val rawLang = f.nameWithoutExtension.substringAfter("_subtitle_", "und").substringBeforeLast("_HASH_").substringBeforeLast(".")
+            // Fix: the file is named Video_Title_subtitle_[eng] Label_HASH_123.srt.
+            // `substringAfter("_subtitle_")` returns `[eng] Label`
+            // If the label is not English (e.g. Indonesian), and we strip brackets, we might get just "Indonesian"
+            val displayLang = rawLang.replace(Regex("\\[.*?\\]"), "").trim().ifBlank { "Undetermined" }
+
+            val cleanSystemLang = if (rawLang.contains("[id]", true) || rawLang.contains("indones", true)) "id"
+                                  else if (rawLang.contains("[en]", true) || rawLang.contains("english", true)) "en"
+                                  else if (rawLang.contains("[es]", true) || rawLang.contains("spanish", true)) "es"
+                                  else "und"
+
+
             val mime = if (f.extension.equals("srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
             val cfg = MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(f))
                 .setMimeType(mime)
-                .setLanguage(lang)
-                .setLabel(lang.uppercase())
+                .setLanguage(cleanSystemLang)
+                .setLabel(displayLang.replace("_", " ").uppercase())
                 .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED)
                 .build()
             subtitleConfigs.add(cfg)
@@ -690,7 +699,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         // Set English as the default preferred subtitle language and explicitly enable text rendering
         player?.trackSelectionParameters = player?.trackSelectionParameters
             ?.buildUpon()
-            ?.setPreferredTextLanguage("en")
+            // ?.setPreferredTextLanguage("en") // Removed forcing English as the default language
             ?.setIgnoredTextSelectionFlags(0)
             ?.setSelectUndeterminedTextLanguage(true)
             // Enable styling features like color and size via the UI by using default text rendering capabilities
@@ -835,15 +844,23 @@ class CustomPlayerActivity : AppCompatActivity() {
 
         // (a) Local subtitles
         for (f in localFiles) {
-            val lang = f.nameWithoutExtension
-                .substringAfter("_subtitle_", "und")
-                .substringBeforeLast("_HASH_")
-                .substringBeforeLast(".")
+            val rawLang = f.nameWithoutExtension.substringAfter("_subtitle_", "und").substringBeforeLast("_HASH_").substringBeforeLast(".")
+            // Fix: the file is named Video_Title_subtitle_[eng] Label_HASH_123.srt.
+            // `substringAfter("_subtitle_")` returns `[eng] Label`
+            // If the label is not English (e.g. Indonesian), and we strip brackets, we might get just "Indonesian"
+            val displayLang = rawLang.replace(Regex("\\[.*?\\]"), "").trim().ifBlank { "Undetermined" }
+
+            val cleanSystemLang = if (rawLang.contains("[id]", true) || rawLang.contains("indones", true)) "id"
+                                  else if (rawLang.contains("[en]", true) || rawLang.contains("english", true)) "en"
+                                  else if (rawLang.contains("[es]", true) || rawLang.contains("spanish", true)) "es"
+                                  else "und"
+
+
             val mime = if (f.extension.equals("srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
             val cfg = MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(f))
                 .setMimeType(mime)
-                .setLanguage(lang)
-                .setLabel(lang.uppercase())
+                .setLanguage(cleanSystemLang)
+                .setLabel(displayLang.replace("_", " ").uppercase())
                 .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED)
                 .build()
             subtitleConfigs.add(cfg)
