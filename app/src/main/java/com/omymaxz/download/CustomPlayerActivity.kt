@@ -484,21 +484,25 @@ class CustomPlayerActivity : AppCompatActivity() {
                         }
                         if (bytes != null) {
                             val contentString = String(bytes, Charsets.UTF_8)
+
+                            // Check if a language query param was encoded in the URL during detection
+                            val urlQueryLangMatch = Regex("[?&]lang=([a-zA-Z0-9-]+)").find(subUrl)
+                            val explicitLang = urlQueryLangMatch?.groupValues?.get(1)
+
                             var detectedLang = "und"
                             val result = SubtitleUtils.extractSnippet(contentString)
+
+                            val targetLang = explicitLang ?: result.language ?: "und"
+
                             if (!result.snippet.isNullOrBlank()) {
                                 detectedLang = result.snippet.replace(Regex("[^a-zA-Z0-9 -]"), "").take(15)
-                                if (!result.language.isNullOrBlank()) {
-                                    detectedLang = "[${result.language}] $detectedLang"
+                                if (targetLang != "und") {
+                                    detectedLang = "[$targetLang] $detectedLang"
                                 }
-                            } else if (contentString.contains("thank", ignoreCase = true)) {
-                                detectedLang = "en"
-                            } else if (contentString.contains("gracias", ignoreCase = true)) {
-                                detectedLang = "es"
                             } else {
-                                // Fallback to filename segment
+                                // Fallback to filename segment if snippet fails
                                 val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
-                                detectedLang = "Track_$fileSegment"
+                                detectedLang = "[$targetLang] Track_$fileSegment"
                             }
 
                             // Append a unique hash to the filename to prevent overwriting when snippets are identical,
@@ -766,21 +770,25 @@ class CustomPlayerActivity : AppCompatActivity() {
                         }
                         if (bytes != null) {
                             val contentString = String(bytes, Charsets.UTF_8)
+
+                            // Check if a language query param was encoded in the URL during detection
+                            val urlQueryLangMatch = Regex("[?&]lang=([a-zA-Z0-9-]+)").find(subUrl)
+                            val explicitLang = urlQueryLangMatch?.groupValues?.get(1)
+
                             var detectedLang = "und"
                             val result = SubtitleUtils.extractSnippet(contentString)
+
+                            val targetLang = explicitLang ?: result.language ?: "und"
+
                             if (!result.snippet.isNullOrBlank()) {
                                 detectedLang = result.snippet.replace(Regex("[^a-zA-Z0-9 -]"), "").take(15)
-                                if (!result.language.isNullOrBlank()) {
-                                    detectedLang = "[${result.language}] $detectedLang"
+                                if (targetLang != "und") {
+                                    detectedLang = "[$targetLang] $detectedLang"
                                 }
-                            } else if (contentString.contains("thank", ignoreCase = true)) {
-                                detectedLang = "en"
-                            } else if (contentString.contains("gracias", ignoreCase = true)) {
-                                detectedLang = "es"
                             } else {
-                                // Fallback to filename segment
+                                // Fallback to filename segment if snippet fails
                                 val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
-                                detectedLang = "Track_$fileSegment"
+                                detectedLang = "[$targetLang] Track_$fileSegment"
                             }
 
                             val hash = Math.abs(subUrl.hashCode())

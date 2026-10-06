@@ -4234,12 +4234,16 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 if (CustomPlayerActivity.activePlayer != null) {
                     val activePlayerUrl = CustomPlayerActivity.activePlayer?.currentMediaItem?.localConfiguration?.uri?.toString()
                     val intent = Intent(this, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                        putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, arrayListOf(mediaFile.url))
-                        putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, mediaFile.title)
-                        if (activePlayerUrl != null) {
-                            putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, activePlayerUrl)
-                        }
+                        // Make sure we carry over the actual language if we found one
+                        val langParam = if (mediaFile.language != null) "?lang=${mediaFile.language}" else ""
+                        val joiner = if (mediaFile.url.contains("?")) "&lang=${mediaFile.language}" else langParam
+                        val finalUrl = if (mediaFile.language != null && !mediaFile.url.contains("lang=")) mediaFile.url + joiner else mediaFile.url
+
+                        putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, arrayListOf(finalUrl))
+                        // We must explicitly NOT pass EXTRA_VIDEO_URL or EXTRA_VIDEO_TITLE here,
+                        // because if we do, onNewIntent will see `newUrl != videoUrl` (because of missing query params or slight changes)
+                        // and forcefully restart the entire video.
+                        // By leaving it null, CustomPlayerActivity detects it as a pure subtitle injection and just hot-swaps it.
                     }
                     startActivity(intent)
                     Toast.makeText(this, "Subtitle sent to Custom Player", Toast.LENGTH_SHORT).show()
