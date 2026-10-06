@@ -2004,10 +2004,27 @@ private fun checkBatteryOptimization() {
                     val result = SubtitleUtils.extractSnippet(text)
                     if (!result.snippet.isNullOrBlank()) {
                         val ext = if (filename.endsWith(".srt")) ".srt" else ".vtt"
-                        val prefix = if (!result.language.isNullOrBlank()) "[${result.language}] " else ""
+
+                        // Look for an existing language in the media file list so we don't overwrite a better URL extraction
+                        var targetLang = result.language
+                        if (url != null) {
+                            synchronized(detectedMediaFiles) {
+                                val existing = detectedMediaFiles.find { it.url == url }
+                                if (existing?.language != null) {
+                                    targetLang = existing.language
+                                }
+                            }
+                        }
+
+                        val prefix = if (!targetLang.isNullOrBlank()) "[$targetLang] " else ""
                         val snippetTitle = "$prefix${result.snippet}$ext"
                         if (url != null) {
-                            updateMediaTitle(url, snippetTitle)
+                            synchronized(detectedMediaFiles) {
+                                val index = detectedMediaFiles.indexOfFirst { it.url == url }
+                                if (index != -1) {
+                                    detectedMediaFiles[index] = detectedMediaFiles[index].copy(title = snippetTitle, language = targetLang)
+                                }
+                            }
                         }
                         currentFilename = snippetTitle
                     }
@@ -3444,7 +3461,67 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     return "${categoryPrefix}${baseName}${cleanQuality}${extension}"
 }
     private fun estimateFileSize(url: String, category: MediaCategory): String { return "Unknown" }
-    private fun extractLanguageFromUrl(url: String): String? { return null }
+    private fun extractLanguageFromUrl(url: String): String? {
+        val lowerUrl = url.lowercase()
+        // Also check if `lang=` query parameter exists (e.g. from YouTube extractor wrapper)
+        val queryMatch = Regex("[?&]lang=([a-zA-Z0-9-]+)").find(lowerUrl)
+        if (queryMatch != null) {
+            val code = queryMatch.groupValues[1]
+            return when (code) {
+                "en" -> "English"
+                "es" -> "Spanish"
+                "fr" -> "French"
+                "de" -> "German"
+                "pt" -> "Portuguese"
+                "ko" -> "Korean"
+                "ja" -> "Japanese"
+                "zh" -> "Chinese"
+                "zh-cn" -> "Chinese"
+                "zh-tw" -> "Chinese"
+                "id" -> "Indonesian"
+                "ru" -> "Russian"
+                "ar" -> "Arabic"
+                "hi" -> "Hindi"
+                "it" -> "Italian"
+                "tr" -> "Turkish"
+                "nl" -> "Dutch"
+                "pl" -> "Polish"
+                "vi" -> "Vietnamese"
+                "th" -> "Thai"
+                else -> code.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString() }
+            }
+        }
+
+        // If it's a known locale format like "es", "ko", "ja", "zh-TW" inside the path
+        val matches = Regex("/(en|es|fr|de|pt|ko|ja|zh|zh-CN|zh-TW|id|ru|ar|hi|it|tr|nl|pl|v_i|th)(/|-|_)".replace("_", "")).find(lowerUrl)
+        if (matches != null) {
+            val code = matches.groupValues[1]
+            return when (code) {
+                "en" -> "English"
+                "es" -> "Spanish"
+                "fr" -> "French"
+                "de" -> "German"
+                "pt" -> "Portuguese"
+                "ko" -> "Korean"
+                "ja" -> "Japanese"
+                "zh" -> "Chinese"
+                "zh-cn" -> "Chinese"
+                "zh-tw" -> "Chinese"
+                "id" -> "Indonesian"
+                "ru" -> "Russian"
+                "ar" -> "Arabic"
+                "hi" -> "Hindi"
+                "it" -> "Italian"
+                "tr" -> "Turkish"
+                "nl" -> "Dutch"
+                "pl" -> "Polish"
+                "vi" -> "Vietnamese"
+                "th" -> "Thai"
+                else -> code
+            }
+        }
+        return null
+    }
     private fun extractYouTubeVideoId(url: String): String {
         val patterns = listOf("(?<=watch\\?v=)[^&]+", "(?<=youtu.be/)[^?]+", "(?<=embed/)[^?]+", "(?<=v/)[^?]+]")
         for (pattern in patterns) {
@@ -3547,16 +3624,38 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 }
 
                 val detectedFormat = detectVideoFormat(mediaFile.url)
+                // Prioritize explicit language from URL or Extractor if available, otherwise use inferred from text
+                val targetLang = mediaFile.language ?: result.language
+
                 if (!result.snippet.isNullOrBlank()) {
-                     val prefix = if (!result.language.isNullOrBlank()) "[${result.language}] " else ""
+                     val prefix = if (!targetLang.isNullOrBlank()) "[$targetLang] " else ""
                      val newTitle = "$prefix${result.snippet}${detectedFormat.extension}"
-                     updateMediaTitle(mediaFile.url, newTitle)
+                     synchronized(detectedMediaFiles) {
+                         val index = detectedMediaFiles.indexOfFirst { it.url == mediaFile.url }
+                         if (index != -1) {
+                             val f = detectedMediaFiles[index]
+                             detectedMediaFiles[index] = f.copy(title = newTitle, language = targetLang)
+                         }
+                     }
+                     withContext(Dispatchers.Main) {
+                         currentMediaListAdapter?.notifyDataSetChanged()
+                     }
                 } else {
                      // Fallback if extraction fails but we know it's a subtitle
                      val pageTitle = withContext(Dispatchers.Main) { webView.title }?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(30) ?: "Track"
                      val fileExtract = android.net.Uri.parse(mediaFile.url).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
-                     val fallbackTitle = "[Subtitle] $pageTitle - $fileExtract" + detectedFormat.extension
-                     updateMediaTitle(mediaFile.url, fallbackTitle)
+                     val prefix = if (!targetLang.isNullOrBlank()) "[$targetLang] " else "[Subtitle] "
+                     val fallbackTitle = "$prefix$pageTitle - $fileExtract" + detectedFormat.extension
+                     synchronized(detectedMediaFiles) {
+                         val index = detectedMediaFiles.indexOfFirst { it.url == mediaFile.url }
+                         if (index != -1) {
+                             val f = detectedMediaFiles[index]
+                             detectedMediaFiles[index] = f.copy(title = fallbackTitle, language = targetLang)
+                         }
+                     }
+                     withContext(Dispatchers.Main) {
+                         currentMediaListAdapter?.notifyDataSetChanged()
+                     }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed to fetch subtitle snippet: ${e.message}")

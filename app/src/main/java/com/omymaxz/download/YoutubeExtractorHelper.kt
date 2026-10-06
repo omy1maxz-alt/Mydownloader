@@ -66,7 +66,14 @@ object YoutubeExtractorHelper {
                 if (extractor.subtitlesDefault.isNotEmpty()) {
                     extractor.subtitlesDefault.forEach { sub ->
                         if (!sub.content.isNullOrEmpty()) {
-                            subtitleList.add(sub.content)
+                            // Preserve the language metadata from NewPipe in the URL query string format
+                            // or pass it along, but right now MainActivity extracts language directly from the url or snippet.
+                            // We can append a mock language tag to the URL so `extractLanguageFromUrl` catches it or it gets saved natively.
+                            // Actually, let's just pass the content since it's a direct SRT/VTT link, but we can append `?lang=${sub.locale}` if safe.
+                            val langCode = sub.locale?.language ?: ""
+                            val separator = if (sub.content!!.contains("?")) "&" else "?"
+                            val taggedUrl = if (langCode.isNotBlank()) "${sub.content}${separator}lang=$langCode" else sub.content!!
+                            subtitleList.add(taggedUrl)
                         }
                     }
                 }
