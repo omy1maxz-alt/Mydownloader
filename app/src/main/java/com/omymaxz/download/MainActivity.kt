@@ -1532,6 +1532,14 @@ private fun checkBatteryOptimization() {
                 }
             }
             webChromeClient = object : WebChromeClient() {
+                override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                    // Mute standard benign Chromium noise like document.domain cluster isolation
+                    if (consoleMessage?.message()?.contains("document.domain mutation is ignored") == true) {
+                        return true
+                    }
+                    return super.onConsoleMessage(consoleMessage)
+                }
+
                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
                     super.onProgressChanged(view, newProgress)
                     binding.progressBar.progress = newProgress
