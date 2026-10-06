@@ -4107,8 +4107,14 @@ private fun showMediaListDialog() {
                         val allSubtitleUrls = synchronized(detectedMediaFiles) {
                 detectedMediaFiles
                     .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
-                    .filter { it.referer == candidate.referer || it.referer == webView.url?.toString() || candidate.referer == null }
-                    .map { it.url }
+                    // Filter subtitles strictly based on the current page's URL to prevent mixing KissKH episodes
+                    .filter { it.referer == webView.url?.toString() || (it.referer == candidate.referer && candidate.referer != null) }
+                    .map {
+                        // Preserve the detected language metadata into the URL payload so it passes through the Intent properly
+                        val langParam = if (it.language != null) "?lang=${it.language}" else ""
+                        val joiner = if (it.url.contains("?")) "&lang=${it.language}" else langParam
+                        if (it.language != null && !it.url.contains("lang=")) it.url + joiner else it.url
+                    }
                     .distinct().toMutableList()
             }
             if (allSubtitleUrls.isNotEmpty()) {
@@ -4154,7 +4160,11 @@ private fun showMediaListDialog() {
                 detectedMediaFiles
                     .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
                     .filter { it.referer == fallbackReferer || it.referer == webView.url?.toString() || fallbackReferer == null }
-                    .map { it.url }
+                    .map {
+                        val langParam = if (it.language != null) "?lang=${it.language}" else ""
+                        val joiner = if (it.url.contains("?")) "&lang=${it.language}" else langParam
+                        if (it.language != null && !it.url.contains("lang=")) it.url + joiner else it.url
+                    }
                     .distinct().toMutableList()
             }
             if (allSubtitleUrls.isNotEmpty()) {
@@ -4180,6 +4190,21 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                 val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                 if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+
+                val allSubtitleUrls = synchronized(detectedMediaFiles) {
+                    detectedMediaFiles
+                        .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
+                        .filter { it.referer == mediaFile.referer || it.referer == webView.url?.toString() || mediaFile.referer == null }
+                        .map {
+                            val langParam = if (it.language != null) "?lang=${it.language}" else ""
+                            val joiner = if (it.url.contains("?")) "&lang=${it.language}" else langParam
+                            if (it.language != null && !it.url.contains("lang=")) it.url + joiner else it.url
+                        }
+                        .distinct().toMutableList()
+                }
+                if (allSubtitleUrls.isNotEmpty()) {
+                    putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+                }
             }
             startActivity(intent)
             return
@@ -6508,7 +6533,13 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                 putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
             }
             if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
-                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, java.util.ArrayList(mediaFile.subtitleUrls!!))
+                val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
+                    if (mediaFile.language != null && !url.contains("lang=")) {
+                        val joiner = if (url.contains("?")) "&lang=${mediaFile.language}" else "?lang=${mediaFile.language}"
+                        url + joiner
+                    } else url
+                }
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, java.util.ArrayList(taggedUrls))
             }
         }
         startActivity(intent)
