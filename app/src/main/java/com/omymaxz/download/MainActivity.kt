@@ -4703,8 +4703,19 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val targetLang = prefs.getString("translate_target_lang", "en") ?: "en"
 
+        // For sites like dcinside that block translate DOM injections due to CSP or isolated origins,
+        // we can force the standard Google Translate URL proxy if the DOM injection fails.
+        // However, setting the cookie and hash is the standard way to force the native translation to kick in.
+
         val translateScript = """
             (function() {
+                // DCInside and similar strict CSP domains need explicit googtrans cookies to translate on reload
+                if (window.location.host.includes("dcinside.com") && document.cookie.indexOf('googtrans=') === -1) {
+                    document.cookie = 'googtrans=/auto/${targetLang}; path=/; domain=.' + window.location.host;
+                    document.cookie = 'googtrans=/auto/${targetLang}; path=/';
+                    window.location.reload();
+                    return;
+                }
                 // Add CSS to hide the Translate UI and banner
                 var style = document.createElement('style');
                 style.type = 'text/css';
@@ -4755,6 +4766,13 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                             var event = document.createEvent('HTMLEvents');
                             event.initEvent('change', true, false);
                             select.dispatchEvent(event);
+
+                            // For highly-secure SPAs like dcinside, we must explicitly push the hash update into the URL
+                            // or invoke the native translate iframe hash hack.
+                            if (window.location.host.includes("dcinside.com")) {
+                                window.location.hash = "googtrans(auto|${targetLang})";
+                                location.reload();
+                            }
                         } else {
                             // If it doesn't exist yet, try to poll for it
                             var poller = setInterval(function() {
@@ -4763,6 +4781,11 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                                     clearInterval(poller);
                                     retrySelect.value = '${targetLang}';
                                     retrySelect.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+
+                                    if (window.location.host.includes("dcinside.com")) {
+                                        window.location.hash = "googtrans(auto|${targetLang})";
+                                        location.reload();
+                                    }
                                 }
                             }, 500);
                             // Stop polling after 5 seconds to prevent memory leaks
