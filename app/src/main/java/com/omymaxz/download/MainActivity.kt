@@ -4731,6 +4731,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 window.googleTranslateElementInit = function() {
                     new google.translate.TranslateElement({
                         pageLanguage: 'auto',
+                        includedLanguages: '${targetLang}',
                         layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
                         autoDisplay: true
                     }, 'google_translate_element');
@@ -4740,7 +4741,24 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         var select = document.querySelector('.goog-te-combo');
                         if (select) {
                             select.value = '${targetLang}';
-                            select.dispatchEvent(new Event('change'));
+                            // React-compatible event dispatching for Google Translate widget
+                            select.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+                            // Sometimes firing change isn't enough for the Google translate widget to catch it if loaded late
+                            var event = document.createEvent('HTMLEvents');
+                            event.initEvent('change', true, false);
+                            select.dispatchEvent(event);
+                        } else {
+                            // If it doesn't exist yet, try to poll for it
+                            var poller = setInterval(function() {
+                                var retrySelect = document.querySelector('.goog-te-combo');
+                                if (retrySelect) {
+                                    clearInterval(poller);
+                                    retrySelect.value = '${targetLang}';
+                                    retrySelect.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+                                }
+                            }, 500);
+                            // Stop polling after 5 seconds to prevent memory leaks
+                            setTimeout(function() { clearInterval(poller); }, 5000);
                         }
                     }, 1000);
                 };
