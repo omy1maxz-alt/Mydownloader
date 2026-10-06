@@ -171,3 +171,4 @@
 2026-10-02 Implemented IDMP VTT to M3U8 rewrite logic to capture hidden video manifests masquerading as thumbnail tracks.
 2026-10-02 Implemented advanced IDMP VTT to M3U8 rewrite logic to capture hidden video manifests masquerading as thumbnail tracks across multiple CDNs.
 2026-10-05 Adjusted custom ExoPlayer button size upwards from 32dp to 40dp and explicitly applied dynamic scaling bounds.
+2026-10-05 Fixed Subtitle language URL extraction to explicitly support and parse query string tokens e.g. '?lang=ko', preserving extraction flags directly injected by the YoutubeExtractor or webview hooks.
