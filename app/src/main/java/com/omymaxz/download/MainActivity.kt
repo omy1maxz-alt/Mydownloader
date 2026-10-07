@@ -4160,7 +4160,14 @@ private fun showMediaListDialog() {
                 detectedMediaFiles
                     .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
                     // Filter subtitles strictly based on the current page's URL to prevent mixing KissKH episodes
-                    .filter { it.referer == webView.url?.toString() || (it.referer == candidate.referer && candidate.referer != null) }
+                    .filter {
+                        val currentUrl = webView.url?.toString() ?: ""
+                        // Strip query params and hashes for stable episode path matching
+                        val currentPath = currentUrl.substringBefore("?").substringBefore("#")
+                        val subPath = it.referer?.substringBefore("?")?.substringBefore("#") ?: ""
+
+                        subPath == currentPath || (it.referer == candidate.referer && candidate.referer != null)
+                    }
                     .map {
                         // Preserve the detected language metadata into the URL payload so it passes through the Intent properly
                         val langParam = if (it.language != null) "?lang=${it.language}" else ""
@@ -4211,7 +4218,14 @@ private fun showMediaListDialog() {
                         val allSubtitleUrls = synchronized(detectedMediaFiles) {
                 detectedMediaFiles
                     .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
-                    .filter { it.referer == fallbackReferer || it.referer == webView.url?.toString() || fallbackReferer == null }
+                    // Filter subtitles strictly based on the current page's URL to prevent mixing KissKH episodes
+                    .filter {
+                        val currentUrl = webView.url?.toString() ?: ""
+                        val currentPath = currentUrl.substringBefore("?").substringBefore("#")
+                        val subPath = it.referer?.substringBefore("?")?.substringBefore("#") ?: ""
+
+                        subPath == currentPath || (it.referer == fallbackReferer && fallbackReferer != null)
+                    }
                     .map {
                         val langParam = if (it.language != null) "?lang=${it.language}" else ""
                         val joiner = if (it.url.contains("?")) "&lang=${it.language}" else langParam
@@ -4246,7 +4260,14 @@ private fun showMediaListDialog() {
                 val allSubtitleUrls = synchronized(detectedMediaFiles) {
                     detectedMediaFiles
                         .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
-                        .filter { it.referer == mediaFile.referer || it.referer == webView.url?.toString() || mediaFile.referer == null }
+                        // Filter subtitles strictly based on the current page's URL to prevent mixing KissKH episodes
+                        .filter {
+                            val currentUrl = webView.url?.toString() ?: ""
+                            val currentPath = currentUrl.substringBefore("?").substringBefore("#")
+                            val subPath = it.referer?.substringBefore("?")?.substringBefore("#") ?: ""
+
+                            subPath == currentPath || (it.referer == mediaFile.referer && mediaFile.referer != null)
+                        }
                         .map {
                             val langParam = if (it.language != null) "?lang=${it.language}" else ""
                             val joiner = if (it.url.contains("?")) "&lang=${it.language}" else langParam
