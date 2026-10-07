@@ -1478,20 +1478,39 @@ private fun checkBatteryOptimization() {
                             }
                         }
                         try {
-                            val category = MediaCategory.fromUrl(url)
+                            var category = MediaCategory.fromUrl(url)
+
+                            // Audio Mime fallback check
+                            val resMime = request?.requestHeaders?.get("Accept")?.lowercase()
+                            if (resMime?.contains("audio/") == true && category == MediaCategory.UNKNOWN) {
+                                category = MediaCategory.AUDIO
+                            }
+
                             val isMainContent = isMainVideoContent(url)
                             if (category == MediaCategory.VIDEO && isMainContent) {
                                 currentVideoUrl = url
                             }
+
+                            val ext = if (category == MediaCategory.AUDIO) {
+                                if (url.contains(".m4a", ignoreCase = true)) ".m4a"
+                                else if (url.contains(".mp3", ignoreCase = true)) ".mp3"
+                                else if (url.contains(".aac", ignoreCase = true)) ".aac"
+                                else if (url.contains(".ogg", ignoreCase = true)) ".ogg"
+                                else if (url.contains(".wav", ignoreCase = true)) ".wav"
+                                else ".m4a" // Default fallback for generic audio progressive streams
+                            } else detectVideoFormat(url).extension
+
                             val detectedFormat = detectVideoFormat(url)
+                            val finalMime = if (category == MediaCategory.AUDIO) "audio/*" else detectedFormat.mimeType
+
                             val quality = extractQualityFromUrl(url)
-                            val enhancedTitle = generateSmartFileName(url, detectedFormat.extension, quality, category)
+                            val enhancedTitle = generateSmartFileName(url, ext, quality, category)
                             val fileSize = estimateFileSize(url, category)
                             val language = extractLanguageFromUrl(url)
                             val mediaFile = MediaFile(
                                 url = url,
                                 title = enhancedTitle,
-                                mimeType = detectedFormat.mimeType,
+                                mimeType = finalMime,
                                 quality = quality,
                                 category = category,
                                 fileSize = fileSize,
@@ -2884,13 +2903,25 @@ private fun injectMediaStateDetector() {
                                     }
 
                                     val quality = activity.extractQualityFromUrl(url)
-                                    val enhancedTitle = activity.generateSmartFileName(url, detectedFormat.extension, quality, category)
+
+                                    val ext = if (category == MediaCategory.AUDIO) {
+                                        if (url.contains(".m4a", ignoreCase = true)) ".m4a"
+                                        else if (url.contains(".mp3", ignoreCase = true)) ".mp3"
+                                        else if (url.contains(".aac", ignoreCase = true)) ".aac"
+                                        else if (url.contains(".ogg", ignoreCase = true)) ".ogg"
+                                        else if (url.contains(".wav", ignoreCase = true)) ".wav"
+                                        else ".m4a"
+                                    } else detectedFormat.extension
+
+                                    val finalMime = if (category == MediaCategory.AUDIO) "audio/*" else detectedFormat.mimeType
+
+                                    val enhancedTitle = activity.generateSmartFileName(url, ext, quality, category)
                                     val fileSize = activity.estimateFileSize(url, category)
                                     val language = extractLanguageFromUrl(url)
                                     val mediaFile = MediaFile(
                                         url = url,
                                         title = enhancedTitle,
-                                        mimeType = detectedFormat.mimeType,
+                                        mimeType = finalMime,
                                         quality = quality,
                                         category = category,
                                         fileSize = fileSize,
@@ -3100,12 +3131,24 @@ private fun injectMediaStateDetector() {
 
                              val detectedFormat = activity.detectVideoFormat(url)
                              val quality = activity.extractQualityFromUrl(url)
-                             val enhancedTitle = activity.generateSmartFileName(url, detectedFormat.extension, quality, category)
+
+                             val ext = if (category == MediaCategory.AUDIO) {
+                                 if (url.contains(".m4a", ignoreCase = true)) ".m4a"
+                                 else if (url.contains(".mp3", ignoreCase = true)) ".mp3"
+                                 else if (url.contains(".aac", ignoreCase = true)) ".aac"
+                                 else if (url.contains(".ogg", ignoreCase = true)) ".ogg"
+                                 else if (url.contains(".wav", ignoreCase = true)) ".wav"
+                                 else ".m4a"
+                             } else detectedFormat.extension
+
+                             val finalMime = if (category == MediaCategory.AUDIO) "audio/*" else detectedFormat.mimeType
+
+                             val enhancedTitle = activity.generateSmartFileName(url, ext, quality, category)
 
                              val mediaFile = MediaFile(
                                 url = url,
                                 title = enhancedTitle,
-                                mimeType = detectedFormat.mimeType,
+                                mimeType = finalMime,
                                 quality = quality,
                                 category = category,
                                 fileSize = "Unknown",
@@ -3583,7 +3626,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val nonMediaExtensions = setOf("css", "js", "gif", "jpg", "jpeg", "png", "svg", "webp", "woff", "woff2", "ttf", "ico", "html", "htm")
         if (nonMediaExtensions.contains(ext)) return false
 
-        return cleanUrl.endsWith(".mp4") || cleanUrl.endsWith(".mkv") || cleanUrl.endsWith(".webm") || cleanUrl.endsWith(".vtt") || cleanUrl.endsWith(".srt") || lower.contains("videoplayback")
+        return cleanUrl.endsWith(".mp4") || cleanUrl.endsWith(".mkv") || cleanUrl.endsWith(".webm") || cleanUrl.endsWith(".vtt") || cleanUrl.endsWith(".srt") || lower.contains("videoplayback") ||
+               cleanUrl.endsWith(".mp3") || cleanUrl.endsWith(".m4a") || cleanUrl.endsWith(".aac") || cleanUrl.endsWith(".ogg") || cleanUrl.endsWith(".opus") || cleanUrl.endsWith(".wav")
     }
     private fun isAdOrTrackingUrl(url: String): Boolean {
         val adIndicators = listOf("googleads.", "doubleclick.net", "adsystem", "/ads/")

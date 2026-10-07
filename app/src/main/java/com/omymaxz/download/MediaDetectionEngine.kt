@@ -34,8 +34,8 @@ class MediaDetectionEngine(private val context: Context) {
                     lowerUrl.contains("/hls2/") || (lowerUrl.contains("token=") && lowerUrl.contains("expiry="))
 
         val isDash = lowerUrl.contains(".mpd") || lowerUrl.contains("format=dash") || lowerUrl.contains("type=dash") || mime == "application/dash+xml"
-        val isVideoMime = mime.startsWith("video/")
-        val isProgressive = lowerUrl.matches(Regex(".*\\.(mp4|webm|mkv|mov|avi)(\\?.*)?$")) || isVideoMime
+        val isVideoMime = mime.startsWith("video/") || mime.startsWith("audio/")
+        val isProgressive = lowerUrl.matches(Regex(".*\\.(mp4|webm|mkv|mov|avi|mp3|m4a|aac|ogg|opus|wav)(\\?.*)?$")) || isVideoMime
         val cleanUrl = lowerUrl.substringBefore('?')
         val ext = cleanUrl.substringAfterLast('.', "").lowercase()
         val nonMediaExtensions = setOf("css", "js", "gif", "jpg", "jpeg", "png", "svg", "webp", "woff", "woff2", "ttf", "ico", "html", "htm")
