@@ -172,3 +172,5 @@
 2026-10-02 Implemented advanced IDMP VTT to M3U8 rewrite logic to capture hidden video manifests masquerading as thumbnail tracks across multiple CDNs.
 2026-10-05 Adjusted custom ExoPlayer button size upwards from 32dp to 40dp and explicitly applied dynamic scaling bounds.
 2026-10-05 Fixed Subtitle language URL extraction to explicitly support and parse query string tokens e.g. '?lang=ko', preserving extraction flags directly injected by the YoutubeExtractor or webview hooks.
+2026-10-06 Restructured MediaDetectionEngine and MainActivity filtering logic to properly classify, intercept, and export direct audio MIME streams (audio/mp4, m4a, mp3, ogg, wav) as first-class Audio MediaCandidates.
+2026-10-06 Built a dedicated ProgressiveAudioDownloadService to handle first-class direct audio stream downloading, verifying M4A/MP4 signatures natively over HTTP headers before triggering local file saves to bypass corrupted HTML blob error responses.

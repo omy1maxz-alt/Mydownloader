@@ -4494,6 +4494,23 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             return
         }
 
+        // Explicit handling for audio URLs to validate them instead of blindly downloading HTTP errors via DownloadManager
+        if (mediaFile.category == MediaCategory.AUDIO) {
+            android.util.Log.d("AUDIO_DOWNLOAD", "Routing audio download to Progressive Audio Service: ${mediaFile.url}")
+            val userAgent = webView.settings.userAgentString
+            val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
+            val intent = Intent(this, ProgressiveAudioDownloadService::class.java).apply {
+                putExtra(ProgressiveAudioDownloadService.EXTRA_URL, mediaFile.url)
+                putExtra(ProgressiveAudioDownloadService.EXTRA_TITLE, mediaFile.title)
+                putExtra(ProgressiveAudioDownloadService.EXTRA_USER_AGENT, userAgent)
+                putExtra(ProgressiveAudioDownloadService.EXTRA_REFERER, mediaFile.referer ?: webView.url)
+                putExtra(ProgressiveAudioDownloadService.EXTRA_COOKIE, cookie)
+            }
+            startService(intent)
+            Toast.makeText(this, "Audio download started: ${mediaFile.title}", Toast.LENGTH_LONG).show()
+            return
+        }
+
         try {
             val request = DownloadManager.Request(Uri.parse(mediaFile.url))
                 .setTitle(mediaFile.title)
@@ -4506,6 +4523,9 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             request.addRequestHeader("User-Agent", userAgent)
             if (cookie != null) {
                 request.addRequestHeader("Cookie", cookie)
+            }
+            if (mediaFile.referer != null) {
+                request.addRequestHeader("Referer", mediaFile.referer)
             }
 
             val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
