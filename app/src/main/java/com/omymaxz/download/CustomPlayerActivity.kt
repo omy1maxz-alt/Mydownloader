@@ -632,6 +632,14 @@ class CustomPlayerActivity : AppCompatActivity() {
             val cleanSystemLang = if (rawLang.contains("[id]", true) || rawLang.contains("indones", true)) "id"
                                   else if (rawLang.contains("[en]", true) || rawLang.contains("english", true)) "en"
                                   else if (rawLang.contains("[es]", true) || rawLang.contains("spanish", true)) "es"
+                                  else if (rawLang.contains("[fil]", true) || rawLang.contains("filipino", true) || rawLang.contains("tagalog", true) || rawLang.contains("[tl]", true)) "tl"
+                                  else if (rawLang.contains("[km]", true) || rawLang.contains("khmer", true)) "km"
+                                  else if (rawLang.contains("[ms]", true) || rawLang.contains("malay", true)) "ms"
+                                  else if (rawLang.contains("[pt]", true) || rawLang.contains("portuguese", true)) "pt"
+                                  else if (rawLang.contains("[ar]", true) || rawLang.contains("arabic", true)) "ar"
+                                  else if (rawLang.contains("[hi]", true) || rawLang.contains("hindi", true)) "hi"
+                                  else if (rawLang.contains("[de]", true) || rawLang.contains("german", true)) "de"
+                                  else if (rawLang.contains("[fr]", true) || rawLang.contains("french", true)) "fr"
                                   else "und"
 
 
@@ -861,6 +869,14 @@ class CustomPlayerActivity : AppCompatActivity() {
             val cleanSystemLang = if (rawLang.contains("[id]", true) || rawLang.contains("indones", true)) "id"
                                   else if (rawLang.contains("[en]", true) || rawLang.contains("english", true)) "en"
                                   else if (rawLang.contains("[es]", true) || rawLang.contains("spanish", true)) "es"
+                                  else if (rawLang.contains("[fil]", true) || rawLang.contains("filipino", true) || rawLang.contains("tagalog", true) || rawLang.contains("[tl]", true)) "tl"
+                                  else if (rawLang.contains("[km]", true) || rawLang.contains("khmer", true)) "km"
+                                  else if (rawLang.contains("[ms]", true) || rawLang.contains("malay", true)) "ms"
+                                  else if (rawLang.contains("[pt]", true) || rawLang.contains("portuguese", true)) "pt"
+                                  else if (rawLang.contains("[ar]", true) || rawLang.contains("arabic", true)) "ar"
+                                  else if (rawLang.contains("[hi]", true) || rawLang.contains("hindi", true)) "hi"
+                                  else if (rawLang.contains("[de]", true) || rawLang.contains("german", true)) "de"
+                                  else if (rawLang.contains("[fr]", true) || rawLang.contains("french", true)) "fr"
                                   else "und"
 
 
