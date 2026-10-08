@@ -140,17 +140,30 @@ object SubtitleUtils {
             val englishCount = words.count { it in setOf("the", "be", "to", "of", "and", "a", "in", "that", "have", "i", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at") }
             val spanishCount = words.count { it in setOf("el", "la", "de", "que", "y", "en", "un", "una", "los", "las", "por", "con", "para", "como", "su") }
             val tagalogCount = words.count { it in setOf("ang", "ng", "sa", "na", "at", "mga", "ay", "ako", "ito", "si", "mo", "ni", "niya", "kami", "kaya") }
-
             val indonesianCount = words.count { it in setOf("yang", "di", "ke", "dari", "untuk", "pada", "dengan", "adalah", "ini", "itu", "dan", "atau", "tidak") }
+            val malayCount = words.count { it in setOf("yang", "di", "ke", "dari", "untuk", "pada", "dengan", "ini", "itu", "dan", "atau", "tidak", "boleh", "saya", "awak") }
+            val khmerCount = words.count { it in setOf("ខ្ញុំ", "អ្នក", "គាត់", "នាង", "វា", "យើង", "ពួកគេ", "នេះ", "នោះ") }
+            val portugueseCount = words.count { it in setOf("o", "a", "os", "as", "um", "uma", "de", "do", "da", "em", "no", "na", "para", "com", "por", "que", "e", "é", "não") }
+            val arabicCount = words.count { it in setOf("في", "من", "على", "إلى", "عن", "مع", "هذا", "هذه", "ذلك", "تلك", "هو", "هي", "هم", "هن", "نحن") }
+            val hindiCount = words.count { it in setOf("है", "कि", "की", "और", "में", "का", "के", "से", "को", "नहीं", "एक", "यह", "पर", "हो", "तो") }
+            val germanCount = words.count { it in setOf("der", "die", "das", "und", "sein", "in", "ein", "zu", "haben", "ich", "werden", "sie", "von", "nicht", "mit", "es") }
+            val frenchCount = words.count { it in setOf("le", "la", "les", "un", "une", "des", "de", "et", "à", "en", "que", "pour", "dans", "ce", "il", "qui", "ne", "sur", "se") }
 
-            if (indonesianCount >= 1 && indonesianCount >= englishCount && indonesianCount >= spanishCount && indonesianCount >= tagalogCount) {
-                language = "Indonesian"
-            } else if (englishCount >= 1 && englishCount >= spanishCount && englishCount >= tagalogCount && englishCount >= indonesianCount) {
-                language = "English"
-            } else if (spanishCount >= 1 && spanishCount >= englishCount && spanishCount >= tagalogCount && spanishCount >= indonesianCount) {
-                language = "Spanish"
-            } else if (tagalogCount >= 1 && tagalogCount >= englishCount && tagalogCount >= spanishCount && tagalogCount >= indonesianCount) {
-                language = "Tagalog"
+            // Require a minimum threshold to avoid false positives on short names
+            val maxCount = listOf(englishCount, spanishCount, tagalogCount, indonesianCount, malayCount, khmerCount, portugueseCount, arabicCount, hindiCount, germanCount, frenchCount).maxOrNull() ?: 0
+
+            if (maxCount >= 2) {
+                if (khmerCount == maxCount) language = "Khmer"
+                else if (arabicCount == maxCount) language = "Arabic"
+                else if (hindiCount == maxCount) language = "Hindi"
+                else if (indonesianCount == maxCount && indonesianCount > malayCount) language = "Indonesian"
+                else if (malayCount == maxCount) language = "Malay"
+                else if (tagalogCount == maxCount) language = "Filipino"
+                else if (portugueseCount == maxCount) language = "Portuguese"
+                else if (germanCount == maxCount) language = "German"
+                else if (frenchCount == maxCount) language = "French"
+                else if (spanishCount == maxCount) language = "Spanish"
+                else if (englishCount == maxCount) language = "English"
             }
         }
 
