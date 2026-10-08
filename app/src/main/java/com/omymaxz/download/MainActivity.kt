@@ -4296,6 +4296,19 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                 val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                 if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                if (!mediaFile.audioUrl.isNullOrEmpty()) {
+                    putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
+                    putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
+                }
+                if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
+                    val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
+                        if (mediaFile.language != null && !url.contains("lang=")) {
+                            val joiner = if (url.contains("?")) "&lang=${mediaFile.language}" else "?lang=${mediaFile.language}"
+                            url + joiner
+                        } else url
+                    }
+                    putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(taggedUrls))
+                }
             }
             startActivity(intent)
             return
@@ -4359,8 +4372,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 if (mediaFile.url.contains("googlevideo.com") && (mediaFile.mimeType == "application/dash+xml" || mediaFile.mimeType == "application/x-mpegURL")) {
                     android.util.Log.d("PlayInApp", "Launching extracted YouTube DASH/HLS media directly bypassing engine: ${mediaFile.url}")
                     // DO NOT go back through launchLegacyPlayer's googlevideo interceptor which would bounce it back to extraction!
-                    val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK);
-                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                         if (mediaFile.mimeType != null) {
                             putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
                         }
@@ -4371,6 +4383,19 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                         val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                if (!mediaFile.audioUrl.isNullOrEmpty()) {
+                    putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
+                    putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
+                }
+                if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
+                    val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
+                        if (mediaFile.language != null && !url.contains("lang=")) {
+                            val joiner = if (url.contains("?")) "&lang=${mediaFile.language}" else "?lang=${mediaFile.language}"
+                            url + joiner
+                        } else url
+                    }
+                    putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(taggedUrls))
+                }
                     }
                     startActivity(intent)
                     return@setNegativeButton
@@ -4380,8 +4405,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                     android.util.Log.d("PlayInApp", "Launching extracted media directly bypassing engine: ${mediaFile.url}")
 
                     // Directly construct intent to avoid googlevideo interception loop inside launchLegacyPlayer!
-                    val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK);
-                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                         if (mediaFile.mimeType != null) {
                             putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
                         }
@@ -4392,6 +4416,19 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                         val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
+                if (!mediaFile.audioUrl.isNullOrEmpty()) {
+                    putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
+                    putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
+                }
+                if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
+                    val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
+                        if (mediaFile.language != null && !url.contains("lang=")) {
+                            val joiner = if (url.contains("?")) "&lang=${mediaFile.language}" else "?lang=${mediaFile.language}"
+                            url + joiner
+                        } else url
+                    }
+                    putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(taggedUrls))
+                }
                     }
                     startActivity(intent)
                     return@setNegativeButton
