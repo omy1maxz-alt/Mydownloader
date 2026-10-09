@@ -424,7 +424,7 @@ object HlsDownloadHelper {
         return try { c.inputStream.use { it.readBytes() } } catch (t: Throwable) { null }
         finally { c.disconnect() }
     }
-    suspend fun checkIsFullyCached(context: Context, mainUri: Uri, mimeType: String, streamKeys: List<androidx.media3.common.StreamKey>): Boolean = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+    suspend fun checkIsFullyCached(context: Context, mainUri: Uri, mimeType: String, streamKeys: List<androidx.media3.common.StreamKey>, splitAudioUrl: String? = null): Boolean = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
         val cache = getUnifiedCache(context)
 
         try {
@@ -444,7 +444,27 @@ object HlsDownloadHelper {
                     if (!span.isCached || span.file == null || !span.file!!.exists()) return@withContext false
                     currentPosition += span.length
                 }
-                return@withContext currentPosition > 0 && currentPosition >= expectedLength
+                val videoCached = currentPosition > 0 && currentPosition >= expectedLength
+                if (!videoCached) return@withContext false
+
+                // If there's a split audio URL, check that too!
+                if (!splitAudioUrl.isNullOrEmpty()) {
+                    val audioCacheKey = customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec.Builder().setUri(android.net.Uri.parse(splitAudioUrl)).build())
+                    val audioSpans = cache.getCachedSpans(audioCacheKey).sortedBy { it.position }
+                    val audioMetadata = cache.getContentMetadata(audioCacheKey)
+                    val expectedAudioLength = androidx.media3.datasource.cache.ContentMetadata.getContentLength(audioMetadata)
+                    if (expectedAudioLength <= 0 || audioSpans.isEmpty()) return@withContext false
+
+                    var audioPos = 0L
+                    for (span in audioSpans) {
+                        if (span.position != audioPos) return@withContext false
+                        if (!span.isCached || span.file == null || !span.file!!.exists()) return@withContext false
+                        audioPos += span.length
+                    }
+                    return@withContext audioPos > 0 && audioPos >= expectedAudioLength
+                }
+
+                return@withContext true
             }
 
             // For HLS

@@ -1004,7 +1004,8 @@ class CustomPlayerActivity : AppCompatActivity() {
                             cached
                         } else {
                             cacheCheckMethod = "HlsDownloadHelper.checkIsFullyCached"
-                            val cached = HlsDownloadHelper.checkIsFullyCached(this@CustomPlayerActivity, uri, mimeType, streamKeys)
+                            val splitAudioUrl = intent.getStringExtra("com.omymaxz.download.extra.AUDIO_URL") ?: intent.getStringExtra(YouTubeDownloadService.EXTRA_AUDIO_URL)
+                            val cached = HlsDownloadHelper.checkIsFullyCached(this@CustomPlayerActivity, uri, mimeType, streamKeys, splitAudioUrl)
                             reason = if (cached) "Logical cache spans complete" else "Missing logical spans or playlist"
                             cached
                         }
@@ -1155,6 +1156,10 @@ class CustomPlayerActivity : AppCompatActivity() {
 
                     putExtra(HlsExportService.EXTRA_VIDEO_URL, videoUrl) // Fallback for FFmpeg
                     putExtra(HlsExportService.EXTRA_TITLE, videoTitle)
+                    val splitAudioUrl = intent.getStringExtra(YouTubeDownloadService.EXTRA_AUDIO_URL)
+                    if (!splitAudioUrl.isNullOrEmpty()) {
+                        putExtra("com.omymaxz.download.extra.AUDIO_URL", splitAudioUrl)
+                    }
                     putExtra(HlsExportService.EXTRA_MIME_TYPE, mimeType)
                     putStringArrayListExtra(HlsExportService.EXTRA_STREAM_KEYS, streamKeyStrings)
                     putExtra(HlsExportService.EXTRA_FORCE_TRANSFORMER, true) // User pressed save, so guarantee offline mode
