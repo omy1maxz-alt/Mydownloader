@@ -138,14 +138,14 @@ class HlsExportService : Service() {
                         writeExportLog("source=PATH_A_CACHE\\ndownload_id=null\\nhas_media_item_bundle=true\\nhas_video_url=${videoUrl != null}\\ninput_uri=$videoUrl\\nmimeType=$mimeType\\nexport_method=muxToMp4FromCache\\ncache_export=true\\nforceTransformer=$forceTransformer")
 
                         try {
-                            val isYouTubeHls = videoUrl != null && videoUrl.contains("googlevideo.com") && videoUrl.contains(".m3u8", ignoreCase = true)
+                            val isSplitHls = videoUrl != null && (videoUrl.contains("manifest/hls_variant") || videoUrl.contains("googlevideo.com")) && videoUrl.contains(".m3u8", ignoreCase = true)
                             val hasSplitStreamKeys = !streamKeyStrings.isNullOrEmpty() && streamKeyStrings.size > 1
-                            if (forceTransformer && splitAudioUrl.isNullOrEmpty() && !(isYouTubeHls && hasSplitStreamKeys)) {
+                            if (forceTransformer && splitAudioUrl.isNullOrEmpty() && !(isSplitHls && hasSplitStreamKeys)) {
                                 writeExportLog("User forced Transformer (Save to device), executing Transformer path directly.")
                                 muxToMp4WithTransformer(bundledMediaItem, title)
                                 return@launch
                             }
-                            if (forceTransformer && (isYouTubeHls && hasSplitStreamKeys)) {
+                            if (forceTransformer && (isSplitHls && hasSplitStreamKeys)) {
                                 writeExportLog("Transformer forced but source is split YouTube HLS. Falling back to FFmpeg cache export to preserve video+audio muxing.")
                             }
                             if (videoUrl != null) {
