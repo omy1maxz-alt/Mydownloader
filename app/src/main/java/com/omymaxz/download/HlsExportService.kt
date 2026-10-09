@@ -145,7 +145,7 @@ class HlsExportService : Service() {
                             }
                             if (videoUrl != null) {
                                 if (videoUrl.contains(".mp4", ignoreCase = true) && !videoUrl.contains(".m3u8", ignoreCase = true)) {
-                                    copyMp4FromCache(videoUrl, title)
+                                    copyMp4FromCache(videoUrl, title, splitAudioUrl)
                                 } else {
                                     muxToMp4FromCache(videoUrl, streamKeyStrings, title)
                                 }
@@ -319,6 +319,7 @@ class HlsExportService : Service() {
             .setCacheKeyFactory(HlsDownloadHelper.customCacheKeyFactory)
             .createDataSource()
     }
+
 
 
     private suspend fun copyMp4FromCache(url: String, title: String, splitAudioUrl: String? = null) = withContext(Dispatchers.IO) {
