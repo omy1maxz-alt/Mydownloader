@@ -138,10 +138,15 @@ class HlsExportService : Service() {
                         writeExportLog("source=PATH_A_CACHE\\ndownload_id=null\\nhas_media_item_bundle=true\\nhas_video_url=${videoUrl != null}\\ninput_uri=$videoUrl\\nmimeType=$mimeType\\nexport_method=muxToMp4FromCache\\ncache_export=true\\nforceTransformer=$forceTransformer")
 
                         try {
-                            if (forceTransformer && splitAudioUrl.isNullOrEmpty()) {
+                            val isYouTubeHls = videoUrl != null && videoUrl.contains("googlevideo.com") && videoUrl.contains(".m3u8", ignoreCase = true)
+                            val hasSplitStreamKeys = !streamKeyStrings.isNullOrEmpty() && streamKeyStrings.size > 1
+                            if (forceTransformer && splitAudioUrl.isNullOrEmpty() && !(isYouTubeHls && hasSplitStreamKeys)) {
                                 writeExportLog("User forced Transformer (Save to device), executing Transformer path directly.")
                                 muxToMp4WithTransformer(bundledMediaItem, title)
                                 return@launch
+                            }
+                            if (forceTransformer && (isYouTubeHls && hasSplitStreamKeys)) {
+                                writeExportLog("Transformer forced but source is split YouTube HLS. Falling back to FFmpeg cache export to preserve video+audio muxing.")
                             }
                             if (videoUrl != null) {
                                 if (videoUrl.contains(".mp4", ignoreCase = true) && !videoUrl.contains(".m3u8", ignoreCase = true)) {
@@ -203,12 +208,19 @@ class HlsExportService : Service() {
                 .setMimeType(downloadRequestMimeType)
 
                 .build()
+            val url = download.request.uri.toString()
+            val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
+            val isYouTubeHls = url.contains("googlevideo.com") && url.contains(".m3u8", ignoreCase = true)
+            val hasSplitStreamKeys = streamKeysStr.size > 1
+
             try {
+                if (isYouTubeHls && hasSplitStreamKeys) {
+                    writeExportLog("Transformer skipped for split YouTube HLS from PATH_C. Falling back to FFmpeg cache export.")
+                    throw Exception("Skipping Transformer for YouTube split stream")
+                }
                 muxToMp4WithTransformer(mediaItem, title)
             } catch (e: Exception) {
-                writeExportLog("Transformer failed on downloaded item, falling back to muxToMp4FromCache: ${e.message}")
-                val url = download.request.uri.toString()
-                val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
+                writeExportLog("Transformer failed or skipped on downloaded item, falling back to muxToMp4FromCache: ${e.message}")
 
                 try {
                     if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
