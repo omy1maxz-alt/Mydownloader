@@ -286,28 +286,51 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-private fun checkBatteryOptimization() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
-        if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
-            createThemedDialogBuilder(this)
-                .setTitle("Background Playback")
-                .setMessage("For reliable background playback, please disable battery optimization for this app.")
-                .setPositiveButton("Settings") { _, _ ->
-                    try {
-                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                        intent.data = Uri.parse("package:$packageName")
-                        startActivity(intent)
-                    } catch (e: Exception) {
-                        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                        startActivity(intent)
+    inner class DoubaoInterface(private val activity: MainActivity) {
+        @JavascriptInterface
+        fun downloadImage(url: String) {
+            activity.runOnUiThread {
+                try {
+                    val request = DownloadManager.Request(Uri.parse(url)).apply {
+                        setTitle("Doubao Image")
+                        setDescription("Downloading image from Doubao")
+                        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "Doubao_${System.currentTimeMillis()}.png")
+                        allowScanningByMediaScanner()
                     }
+                    val dm = activity.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                    dm.enqueue(request)
+                    Toast.makeText(activity, "Download started", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Toast.makeText(activity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
-                .setNegativeButton("Later", null)
-                .show()
+            }
         }
     }
-}
+
+    private fun checkBatteryOptimization() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                createThemedDialogBuilder(this)
+                    .setTitle("Background Playback")
+                    .setMessage("For reliable background playback, please disable battery optimization for this app.")
+                    .setPositiveButton("Settings") { _, _ ->
+                        try {
+                            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                            intent.data = Uri.parse("package:$packageName")
+                            startActivity(intent)
+                        } catch (e: Exception) {
+                            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                            startActivity(intent)
+                        }
+                    }
+                    .setNegativeButton("Later", null)
+                    .show()
+            }
+        }
+    }
 
     private fun showManageStoragePermissionDialog() {
         createThemedDialogBuilder(this)
@@ -1134,6 +1157,7 @@ private fun checkBatteryOptimization() {
             addJavascriptInterface(userscriptInterface, "AndroidUserscriptAPI")
             addJavascriptInterface(gmApi, "GMApi")
             addJavascriptInterface(YouTubeInterface(this@MainActivity), "YouTubeInterface")
+            addJavascriptInterface(DoubaoInterface(this@MainActivity), "AndroidDoubao")
 
             setOnCreateContextMenuListener { _, _, _ ->
                 val hitTestResult = this.hitTestResult
@@ -1330,6 +1354,9 @@ private fun checkBatteryOptimization() {
                     }
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
+                    }
+                    if (url?.contains("doubao.com") == true) {
+                        injectDoubaoIntegration(view)
                     }
                     injectMediaStateDetector()
                     injectAdvancedMediaDetector()
@@ -4819,6 +4846,20 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
 
 
+
+    private fun injectDoubaoIntegration(view: WebView?) {
+        try {
+            val inputStream = assets.open("removemark_doubao.js")
+            val size = inputStream.available()
+            val buffer = ByteArray(size)
+            inputStream.read(buffer)
+            inputStream.close()
+            val script = String(buffer, Charsets.UTF_8)
+            view?.evaluateJavascript(script, null)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     private fun injectTranslateScript(view: WebView?) {
 

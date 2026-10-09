@@ -1,0 +1,46 @@
+<<<<<<< SEARCH
+    inner class YouTubeInterface(private val activity: MainActivity) {
+        @JavascriptInterface
+        fun setIntentUrl(url: String) {
+            val intent = Intent(activity, CustomPlayerActivity::class.java).apply {
+                putExtra("EXTRA_URL", url)
+                putExtra("EXTRA_REFERER", activity.webView.url)
+            }
+            activity.startActivity(intent)
+        }
+    }
+=======
+    inner class YouTubeInterface(private val activity: MainActivity) {
+        @JavascriptInterface
+        fun setIntentUrl(url: String) {
+            val intent = Intent(activity, CustomPlayerActivity::class.java).apply {
+                putExtra("EXTRA_URL", url)
+                putExtra("EXTRA_REFERER", activity.webView.url)
+            }
+            activity.startActivity(intent)
+        }
+    }
+
+    inner class DoubaoInterface(private val activity: MainActivity) {
+        @JavascriptInterface
+        fun downloadImage(url: String) {
+            activity.runOnUiThread {
+                try {
+                    val request = DownloadManager.Request(Uri.parse(url)).apply {
+                        setTitle("Doubao Image")
+                        setDescription("Downloading image from Doubao")
+                        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "Doubao_${System.currentTimeMillis()}.png")
+                        allowScanningByMediaScanner()
+                    }
+                    val dm = activity.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                    dm.enqueue(request)
+                    Toast.makeText(activity, "Download started", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Toast.makeText(activity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+>>>>>>> REPLACE
