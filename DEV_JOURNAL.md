@@ -174,3 +174,6 @@
 2026-10-05 Fixed Subtitle language URL extraction to explicitly support and parse query string tokens e.g. '?lang=ko', preserving extraction flags directly injected by the YoutubeExtractor or webview hooks.
 2026-10-06 Restructured MediaDetectionEngine and MainActivity filtering logic to properly classify, intercept, and export direct audio MIME streams (audio/mp4, m4a, mp3, ogg, wav) as first-class Audio MediaCandidates.
 2026-10-06 Built a dedicated ProgressiveAudioDownloadService to handle first-class direct audio stream downloading, verifying M4A/MP4 signatures natively over HTTP headers before triggering local file saves to bypass corrupted HTML blob error responses.
+2026-10-10 Fixed Doubao RemoveMark floating panel visibility by enforcing `display: block !important` to overcome site CSS overrides.
+2026-10-10 Fixed Doubao `blob:` downloads by implementing a chunked `FileReader` bridge from JS into a new `DoubaoInterface` Android API, bypassing `DownloadManager`'s inability to handle localized WebView blobs.
+2026-10-10 Fixed YouTube HLS Cache exports producing audio-only files by forcing Media3 Transformer to fallback to FFmpeg `muxToMp4FromCache` whenever complex StreamKeys (`googlevideo.com` with multiple keys) are detected, ensuring split audio and video variants are correctly extracted and muxed via `-map 0:v:0 -map 1:a:0`.

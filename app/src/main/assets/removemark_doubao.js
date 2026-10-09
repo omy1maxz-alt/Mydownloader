@@ -569,7 +569,42 @@
     }
   }
 
-  function downloadSelectedImages(triggerButton) {
+    async function processBlobDownload(url, button) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const mimeType = blob.type || "image/jpeg";
+
+      const sessionId = window.AndroidDoubao.startBlobDownload(url, mimeType, blob.size);
+      if (!sessionId) {
+         console.error("[Doubao] Failed to start blob session.");
+         return false;
+      }
+
+      const buffer = await blob.arrayBuffer();
+      const chunkSize = 512 * 1024; // 512KB chunks
+      const uint8Array = new Uint8Array(buffer);
+
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.slice(i, i + chunkSize);
+        // Convert to base64
+        let binary = '';
+        for (let j = 0; j < chunk.byteLength; j++) {
+            binary += String.fromCharCode(chunk[j]);
+        }
+        const base64 = btoa(binary);
+        window.AndroidDoubao.appendBlobChunk(sessionId, base64);
+      }
+
+      window.AndroidDoubao.finishBlobDownload(sessionId);
+      return true;
+    } catch(e) {
+      console.error("[Doubao] Blob download error:", e);
+      return false;
+    }
+  }
+
+  async function downloadSelectedImages(triggerButton) {
     const selected = doubaoImages.filter((item) => selectedImageUrls.has(item.url));
     if (!selected.length) return;
 
@@ -580,15 +615,22 @@
 
     let successCount = 0;
 
-    // Instead of doing JS fetch + ObjectURL downloads like Chrome Extension,
-    // we bridge it directly to Android's DownloadManager.
     for (let index = 0; index < selected.length; index += 1) {
       setButtonState(triggerButton, "is-busy", `Downloading ${index + 1}/${selected.length}`);
       const item = selected[index];
 
-      if (window.AndroidDoubao && window.AndroidDoubao.downloadImage) {
-          window.AndroidDoubao.downloadImage(item.url);
-          successCount += 1;
+      if (window.AndroidDoubao) {
+          if (item.url.startsWith("blob:")) {
+              if (window.AndroidDoubao.startBlobDownload) {
+                  const success = await processBlobDownload(item.url, triggerButton);
+                  if (success) successCount += 1;
+              }
+          } else {
+              if (window.AndroidDoubao.downloadImage) {
+                  window.AndroidDoubao.downloadImage(item.url);
+                  successCount += 1;
+              }
+          }
       }
     }
 

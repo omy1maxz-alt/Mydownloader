@@ -287,6 +287,55 @@ class MainActivity : AppCompatActivity() {
     }
 
     inner class DoubaoInterface(private val activity: MainActivity) {
+        private val blobSessions = mutableMapOf<String, java.io.FileOutputStream>()
+
+        @JavascriptInterface
+        fun startBlobDownload(url: String, mimeType: String, totalSize: Int): String {
+            val sessionId = java.util.UUID.randomUUID().toString()
+            try {
+                val extension = if (mimeType.contains("png")) "png" else if (mimeType.contains("webp")) "webp" else "jpg"
+                val file = java.io.File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Doubao_${System.currentTimeMillis()}.$extension")
+                val fos = java.io.FileOutputStream(file)
+                blobSessions[sessionId] = fos
+                return sessionId
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return ""
+            }
+        }
+
+        @JavascriptInterface
+        fun appendBlobChunk(sessionId: String, base64Chunk: String) {
+            try {
+                val fos = blobSessions[sessionId] ?: return
+                // Remove potential data URI prefix if accidentally passed
+                val cleanBase64 = if (base64Chunk.contains(",")) base64Chunk.substringAfter(",") else base64Chunk
+                val bytes = android.util.Base64.decode(cleanBase64, android.util.Base64.DEFAULT)
+                fos.write(bytes)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        @JavascriptInterface
+        fun finishBlobDownload(sessionId: String) {
+            try {
+                blobSessions[sessionId]?.apply {
+                    flush()
+                    close()
+                }
+                blobSessions.remove(sessionId)
+                activity.runOnUiThread {
+                    Toast.makeText(activity, "Blob Download complete", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                activity.runOnUiThread {
+                    Toast.makeText(activity, "Blob Download failed to finish", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
         @JavascriptInterface
         fun downloadImage(url: String) {
             activity.runOnUiThread {
