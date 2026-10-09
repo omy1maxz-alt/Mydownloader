@@ -3052,7 +3052,7 @@ private fun injectMediaStateDetector() {
 
                     synchronized(activity.detectedMediaFiles) {
                         activity.detectedMediaFiles.removeIf { it.url == mediaFile.url }
-                        activity.detectedMediaFiles.add(0, mediaFile)
+                        activity.detectedMediaFiles.add(mediaFile)
                     }
                     activity.updateFabVisibility()
                     activity.currentMediaListAdapter?.notifyDataSetChanged()
@@ -6668,11 +6668,11 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                     val existsAlready = synchronized(detectedMediaFiles) {
                         detectedMediaFiles.any { it.url == mediaFile.url }
                     }
+                    android.util.Log.d("YouTubeExtract", "Exists already: $existsAlready, URL: ${mediaFile.url}, Audio: ${mediaFile.audioUrl}, Subs: ${mediaFile.subtitleUrls?.size}")
                     if (!existsAlready) {
                         synchronized(detectedMediaFiles) {
-                            detectedMediaFiles.add(0, mediaFile)
 
-                            // Also add audio as a separate entry if available
+                            // Add audio as a separate entry if available
                             if (!mediaFile.audioUrl.isNullOrEmpty()) {
                                 val audioFile = mediaFile.copy(
                                     url = mediaFile.audioUrl!!,
@@ -6687,7 +6687,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                                 }
                             }
 
-                            // Also add subtitles as separate entries
+                            // Add subtitles as separate entries
                             if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                                 mediaFile.subtitleUrls!!.forEach { subUrl ->
                                     val subLang = subUrl.substringAfter("lang=", "en").substringBefore("&")
@@ -6705,6 +6705,9 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                                     }
                                 }
                             }
+
+                            // Add main video LAST using add(0) so it's always at the very top of the list!
+                            detectedMediaFiles.add(0, mediaFile)
                         }
                         updateFabVisibility()
                         currentMediaListAdapter?.notifyDataSetChanged()

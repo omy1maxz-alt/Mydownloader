@@ -79,8 +79,14 @@ object YoutubeExtractorHelper {
                 }
             } catch(e: Exception) {}
 
-            val audioStreams = extractor.audioStreams
-            val bestAudio = audioStreams.maxByOrNull { it.bitrate }
+            var bestAudioUrl: String? = null
+            try {
+                val audioStreams = extractor.audioStreams
+                val bestAudio = audioStreams.maxByOrNull { it.bitrate }
+                bestAudioUrl = bestAudio?.content
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to extract audioStreams explicitly: ${e.message}")
+            }
             if (!dashManifestUrl.isNullOrEmpty()) {
                 Log.d(TAG, "Successfully extracted YouTube DASH manifest: $dashManifestUrl")
                 return@withContext MediaFile(
@@ -93,7 +99,7 @@ object YoutubeExtractorHelper {
                     language = null,
                     isMainContent = true,
                     subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
-                    audioUrl = bestAudio?.content
+                    audioUrl = bestAudioUrl
                 )
             }
 
@@ -109,7 +115,7 @@ object YoutubeExtractorHelper {
                     language = null,
                     isMainContent = true,
                     subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
-                    audioUrl = bestAudio?.content
+                    audioUrl = bestAudioUrl
                 )
             }
 
@@ -129,15 +135,15 @@ object YoutubeExtractorHelper {
                     language = null,
                     isMainContent = true,
                     subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
-                    audioUrl = bestAudio?.content
+                    audioUrl = bestAudioUrl
                 )
             }
 
             val videoOnlyStreams = extractor.videoOnlyStreams
-            if (videoOnlyStreams.isNotEmpty() && bestAudio != null) {
+            if (videoOnlyStreams.isNotEmpty() && bestAudioUrl != null) {
                 val highestVideo = videoOnlyStreams.maxByOrNull { it.resolution.replace(Regex("[^0-9]"), "").toIntOrNull() ?: 0 }
                 if (highestVideo != null && !highestVideo.content.isNullOrEmpty()) {
-                    Log.d(TAG, "Falling back to separate highest quality VideoOnly stream: ${highestVideo.content} and Audio: ${bestAudio.content}")
+                    Log.d(TAG, "Falling back to separate highest quality VideoOnly stream: ${highestVideo.content} and Audio: ${bestAudioUrl!!}")
                     return@withContext MediaFile(
                         url = highestVideo.content,
                         title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
@@ -147,7 +153,7 @@ object YoutubeExtractorHelper {
                         fileSize = "Unknown",
                         language = null,
                         isMainContent = true,
-                        audioUrl = bestAudio.content,
+                        audioUrl = bestAudioUrl!!,
                         subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
                     )
                 }
