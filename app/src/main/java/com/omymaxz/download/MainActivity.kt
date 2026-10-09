@@ -3052,7 +3052,7 @@ private fun injectMediaStateDetector() {
 
                     synchronized(activity.detectedMediaFiles) {
                         activity.detectedMediaFiles.removeIf { it.url == mediaFile.url }
-                        activity.detectedMediaFiles.add(mediaFile)
+                        activity.detectedMediaFiles.add(0, mediaFile)
                     }
                     activity.updateFabVisibility()
                     activity.currentMediaListAdapter?.notifyDataSetChanged()
@@ -3158,7 +3158,7 @@ private fun injectMediaStateDetector() {
                             )
 
                             synchronized(activity.detectedMediaFiles) {
-                                activity.detectedMediaFiles.add(mediaFile)
+                                activity.detectedMediaFiles.add(0, mediaFile)
                             }
                             activity.updateFabVisibility()
                             android.util.Log.d("MediaStateInterface", "Advanced detection found: $url")
@@ -6665,53 +6665,59 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
             val mediaFile = YoutubeExtractorHelper.extractMedia(applicationContext, url)
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                 if (mediaFile != null) {
-                    val existsAlready = synchronized(detectedMediaFiles) {
-                        detectedMediaFiles.any { it.url == mediaFile.url }
-                    }
-                    android.util.Log.d("YouTubeExtract", "Exists already: $existsAlready, URL: ${mediaFile.url}, Audio: ${mediaFile.audioUrl}, Subs: ${mediaFile.subtitleUrls?.size}")
-                    if (!existsAlready) {
-                        synchronized(detectedMediaFiles) {
-
-                            // Add audio as a separate entry if available
-                            if (!mediaFile.audioUrl.isNullOrEmpty()) {
-                                val audioFile = mediaFile.copy(
-                                    url = mediaFile.audioUrl!!,
-                                    title = "${mediaFile.title}_audio",
-                                    mimeType = "audio/mp4",
-                                    category = MediaCategory.AUDIO,
-                                    audioUrl = null,
-                                    subtitleUrls = null
-                                )
-                                if (!detectedMediaFiles.any { it.url == audioFile.url }) {
-                                    detectedMediaFiles.add(0, audioFile)
-                                }
-                            }
-
-                            // Add subtitles as separate entries
-                            if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
-                                mediaFile.subtitleUrls!!.forEach { subUrl ->
-                                    val subLang = subUrl.substringAfter("lang=", "en").substringBefore("&")
-                                    val subFile = mediaFile.copy(
-                                        url = subUrl,
-                                        title = "${mediaFile.title}_$subLang.vtt",
-                                        mimeType = "text/vtt",
-                                        category = MediaCategory.SUBTITLE,
-                                        audioUrl = null,
-                                        subtitleUrls = null,
-                                        language = subLang
-                                    )
-                                    if (!detectedMediaFiles.any { it.url == subFile.url }) {
-                                        detectedMediaFiles.add(0, subFile)
-                                    }
-                                }
-                            }
-
-                            // Add main video LAST using add(0) so it's always at the very top of the list!
+                    android.util.Log.d("YouTube_Regression", "Extracted media: ${mediaFile.title}, URL: ${mediaFile.url}")
+                    android.util.Log.d("YouTube_Regression", "Target Audio URL: ${mediaFile.audioUrl}, Target Subtitles: ${mediaFile.subtitleUrls?.size}")
+                    var wasAdded = false
+                    synchronized(detectedMediaFiles) {
+                        // 1. Add main video
+                        if (!detectedMediaFiles.any { it.url == mediaFile.url }) {
                             detectedMediaFiles.add(0, mediaFile)
+                            wasAdded = true
                         }
+                        android.util.Log.d("YouTube_Regression", "Main video was added to list: $wasAdded. Current list size: ${detectedMediaFiles.size}")
+
+                        // 2. Add audio
+                        if (!mediaFile.audioUrl.isNullOrEmpty()) {
+                            val audioFile = mediaFile.copy(
+                                url = mediaFile.audioUrl!!,
+                                title = "${mediaFile.title}_audio",
+                                mimeType = "audio/mp4",
+                                category = MediaCategory.AUDIO,
+                                audioUrl = null,
+                                subtitleUrls = null
+                            )
+                            if (!detectedMediaFiles.any { it.url == audioFile.url }) {
+                                detectedMediaFiles.add(audioFile)
+                                wasAdded = true
+                            }
+                        }
+
+                        // 3. Add subtitles
+                        if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
+                            mediaFile.subtitleUrls!!.forEach { subUrl ->
+                                val subLang = subUrl.substringAfter("lang=", "en").substringBefore("&")
+                                val subFile = mediaFile.copy(
+                                    url = subUrl,
+                                    title = "${mediaFile.title}_$subLang.vtt",
+                                    mimeType = "text/vtt",
+                                    category = MediaCategory.SUBTITLE,
+                                    audioUrl = null,
+                                    subtitleUrls = null,
+                                    language = subLang
+                                )
+                                if (!detectedMediaFiles.any { it.url == subFile.url }) {
+                                    detectedMediaFiles.add(subFile)
+                                    wasAdded = true
+                                }
+                            }
+                        }
+                    }
+
+                    if (wasAdded) {
                         updateFabVisibility()
                         currentMediaListAdapter?.notifyDataSetChanged()
                     }
+                    android.util.Log.d("YouTube_Regression", "UI Updated. Final list count: ${detectedMediaFiles.size}")
 
                     if (pendingYouTubeAutoPlay) {
                         pendingYouTubeAutoPlay = false
