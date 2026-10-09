@@ -79,6 +79,8 @@ object YoutubeExtractorHelper {
                 }
             } catch(e: Exception) {}
 
+            val audioStreams = extractor.audioStreams
+            val bestAudio = audioStreams.maxByOrNull { it.bitrate }
             if (!dashManifestUrl.isNullOrEmpty()) {
                 Log.d(TAG, "Successfully extracted YouTube DASH manifest: $dashManifestUrl")
                 return@withContext MediaFile(
@@ -90,7 +92,8 @@ object YoutubeExtractorHelper {
                     fileSize = "Unknown",
                     language = null,
                     isMainContent = true,
-                    subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null
+                    subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
+                    audioUrl = bestAudio?.content
                 )
             }
 
@@ -105,7 +108,8 @@ object YoutubeExtractorHelper {
                     fileSize = "Unknown",
                     language = null,
                     isMainContent = true,
-                    subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null
+                    subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
+                    audioUrl = bestAudio?.content
                 )
             }
 
@@ -124,12 +128,11 @@ object YoutubeExtractorHelper {
                     fileSize = "Unknown",
                     language = null,
                     isMainContent = true,
-                    subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null
+                    subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
+                    audioUrl = bestAudio?.content
                 )
             }
 
-            val audioStreams = extractor.audioStreams
-            val bestAudio = audioStreams.maxByOrNull { it.bitrate }
             val videoOnlyStreams = extractor.videoOnlyStreams
             if (videoOnlyStreams.isNotEmpty() && bestAudio != null) {
                 val highestVideo = videoOnlyStreams.maxByOrNull { it.resolution.replace(Regex("[^0-9]"), "").toIntOrNull() ?: 0 }
@@ -145,7 +148,7 @@ object YoutubeExtractorHelper {
                         language = null,
                         isMainContent = true,
                         audioUrl = bestAudio.content,
-                        subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null
+                        subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
                     )
                 }
             }

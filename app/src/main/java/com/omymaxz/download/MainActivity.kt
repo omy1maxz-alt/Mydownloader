@@ -6671,6 +6671,40 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                     if (!existsAlready) {
                         synchronized(detectedMediaFiles) {
                             detectedMediaFiles.add(0, mediaFile)
+
+                            // Also add audio as a separate entry if available
+                            if (!mediaFile.audioUrl.isNullOrEmpty()) {
+                                val audioFile = mediaFile.copy(
+                                    url = mediaFile.audioUrl!!,
+                                    title = "${mediaFile.title}_audio",
+                                    mimeType = "audio/mp4",
+                                    category = MediaCategory.AUDIO,
+                                    audioUrl = null,
+                                    subtitleUrls = null
+                                )
+                                if (!detectedMediaFiles.any { it.url == audioFile.url }) {
+                                    detectedMediaFiles.add(0, audioFile)
+                                }
+                            }
+
+                            // Also add subtitles as separate entries
+                            if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
+                                mediaFile.subtitleUrls!!.forEach { subUrl ->
+                                    val subLang = subUrl.substringAfter("lang=", "en").substringBefore("&")
+                                    val subFile = mediaFile.copy(
+                                        url = subUrl,
+                                        title = "${mediaFile.title}_$subLang.vtt",
+                                        mimeType = "text/vtt",
+                                        category = MediaCategory.SUBTITLE,
+                                        audioUrl = null,
+                                        subtitleUrls = null,
+                                        language = subLang
+                                    )
+                                    if (!detectedMediaFiles.any { it.url == subFile.url }) {
+                                        detectedMediaFiles.add(0, subFile)
+                                    }
+                                }
+                            }
                         }
                         updateFabVisibility()
                         currentMediaListAdapter?.notifyDataSetChanged()
