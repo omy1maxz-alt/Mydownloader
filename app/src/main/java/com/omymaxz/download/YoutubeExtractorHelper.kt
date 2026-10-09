@@ -158,6 +158,20 @@ object YoutubeExtractorHelper {
                     )
                 }
             }
+            if (bestAudioUrl != null) {
+                Log.d(TAG, "Falling back to AudioOnly stream: $bestAudioUrl")
+                return@withContext MediaFile(
+                    url = bestAudioUrl,
+                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_") + "_AudioOnly",
+                    mimeType = "audio/mp4",
+                    quality = "Audio",
+                    category = MediaCategory.AUDIO,
+                    fileSize = "Unknown",
+                    language = null,
+                    isMainContent = true,
+                    subtitleUrls = null
+                )
+            }
             Log.e(TAG, "Failed to extract any suitable streams. VideoOnly+AudioOnly merge without DASH not natively supported by basic ExoPlayer setup yet.")
             return@withContext null
 

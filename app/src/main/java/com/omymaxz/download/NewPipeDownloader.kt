@@ -40,6 +40,15 @@ class NewPipeDownloader : Downloader() {
                 connection.setRequestProperty("User-Agent", USER_AGENT)
             }
 
+            // Inject WebView cookies to bypass YouTube age restrictions / bot detection
+            try {
+                val cookieManager = android.webkit.CookieManager.getInstance()
+                val cookies = cookieManager.getCookie(url)
+                if (!cookies.isNullOrEmpty()) {
+                    connection.setRequestProperty("Cookie", cookies)
+                }
+            } catch (e: Exception) {}
+
             // Body
             if (dataToSend != null && (httpMethod == "POST" || httpMethod == "PUT")) {
                 connection.doOutput = true

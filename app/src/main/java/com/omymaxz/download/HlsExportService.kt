@@ -85,6 +85,7 @@ class HlsExportService : Service() {
         val extraDownloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID)
         val videoUrl = intent.getStringExtra(EXTRA_VIDEO_URL)
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
+        val splitAudioUrl = intent.getStringExtra("com.omymaxz.download.extra.AUDIO_URL")
         val mimeType   = intent.getStringExtra(EXTRA_MIME_TYPE) ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
 
         android.util.Log.d("HLS_EXPORT_DEBUG", "[HLS_EXPORT_DEBUG] intentVideoUrl=$videoUrl, intentMimeType=$mimeType")
@@ -131,13 +132,17 @@ class HlsExportService : Service() {
                 when {
                     extraDownloadId != null -> {
                         writeExportLog("source=PATH_C_DOWNLOAD_ID\ndownload_id=$extraDownloadId\nhas_media_item_bundle=${bundledMediaItem != null}\nhas_video_url=${videoUrl != null}\ninput_uri=null\nmimeType=$mimeType\nexport_method=exportFromDownloadId")
-                        exportFromDownloadId(extraDownloadId, title, mimeType)
+                        exportFromDownloadId(extraDownloadId, title, mimeType, splitAudioUrl)
                     }
                     bundledMediaItem != null -> {
-                        writeExportLog("source=PATH_A_CACHE\ndownload_id=null\nhas_media_item_bundle=true\nhas_video_url=${videoUrl != null}\ninput_uri=$videoUrl\nmimeType=$mimeType\nexport_method=muxToMp4FromCache\ncache_export=true")
+                        writeExportLog("source=PATH_A_CACHE\\ndownload_id=null\\nhas_media_item_bundle=true\\nhas_video_url=${videoUrl != null}\\ninput_uri=$videoUrl\\nmimeType=$mimeType\\nexport_method=muxToMp4FromCache\\ncache_export=true\\nforceTransformer=$forceTransformer")
 
-                        // Use the new muxToMp4FromCache method which reads the exact cached segments based on the exact quality the user chose in the player.
                         try {
+                            if (forceTransformer && splitAudioUrl.isNullOrEmpty()) {
+                                writeExportLog("User forced Transformer (Save to device), executing Transformer path directly.")
+                                muxToMp4WithTransformer(bundledMediaItem, title)
+                                return@launch
+                            }
                             if (videoUrl != null) {
                                 if (videoUrl.contains(".mp4", ignoreCase = true) && !videoUrl.contains(".m3u8", ignoreCase = true)) {
                                     copyMp4FromCache(videoUrl, title)
@@ -156,7 +161,7 @@ class HlsExportService : Service() {
                                     androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, request, false)
                                 } else {
                                     val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                                    muxToMp4(finalUrl, title)
+                                    muxToMp4(finalUrl, title, splitAudioUrl, streamKeyStrings)
                                 }
                             } else {
                                 throw e
@@ -166,7 +171,7 @@ class HlsExportService : Service() {
                     videoUrl != null -> {
                         writeExportLog("source=PATH_B_NETWORK_FFMPEG\ndownload_id=null\nhas_media_item_bundle=false\nhas_video_url=true\ninput_uri=$videoUrl\nmimeType=$mimeType\nexport_method=muxToMp4\ncache_export=false")
                         val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                        muxToMp4(finalUrl, title) // Fallback to FFmpeg
+                        muxToMp4(finalUrl, title, splitAudioUrl, streamKeyStrings) // Fallback to FFmpeg
                     }
                 }
             } catch (t: Throwable) {
@@ -180,7 +185,7 @@ class HlsExportService : Service() {
         return START_NOT_STICKY
     }
 
-    private suspend fun exportFromDownloadId(extraDownloadId: String, title: String, mimeType: String?) {
+    private suspend fun exportFromDownloadId(extraDownloadId: String, title: String, mimeType: String?, splitAudioUrl: String? = null) {
         val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
         val download = dm.downloadIndex.getDownload(extraDownloadId)
             ?: run {
@@ -196,7 +201,7 @@ class HlsExportService : Service() {
             // Ensure we use the exact MIME type stored in the DownloadRequest, with a fallback if needed
             val mediaItem = rawMediaItem.buildUpon()
                 .setMimeType(downloadRequestMimeType)
-                .setStreamKeys(emptyList())
+
                 .build()
             try {
                 muxToMp4WithTransformer(mediaItem, title)
@@ -218,7 +223,7 @@ class HlsExportService : Service() {
                     // Export fails, and it asks to Download again using a cached URI.
                     // Instead, fallback directly to FFmpeg muxToMp4 using the original URI from the request.
                     val finalUrl = resolveVariantUrl(url, streamKeysStr)
-                    muxToMp4(finalUrl, title)
+                    muxToMp4(finalUrl, title, splitAudioUrl, streamKeysStr)
                 }
             }
         } else {
@@ -227,7 +232,7 @@ class HlsExportService : Service() {
             // CRITICAL FIX: Same as above. Do not call sendAddDownload if the download failed or was interrupted.
             // Just fallback to FFmpeg network download.
             val finalUrl = resolveVariantUrl(url, streamKeysStr)
-            muxToMp4(finalUrl, title)
+            muxToMp4(finalUrl, title, splitAudioUrl, streamKeysStr)
         }
     }
 
@@ -315,7 +320,8 @@ class HlsExportService : Service() {
             .createDataSource()
     }
 
-    private suspend fun copyMp4FromCache(url: String, title: String) = withContext(Dispatchers.IO) {
+
+    private suspend fun copyMp4FromCache(url: String, title: String, splitAudioUrl: String? = null) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
         var out = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -330,45 +336,18 @@ class HlsExportService : Service() {
             counter++
         }
 
-        val uri = android.net.Uri.parse(url)
-        val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec.Builder().setUri(uri).build())
         val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
 
-        val spans = cache.getCachedSpans(cacheKey).sortedBy { it.position }
-        val metadata = cache.getContentMetadata(cacheKey)
-        val expectedLength = androidx.media3.datasource.cache.ContentMetadata.getContentLength(metadata)
+        fun extractSpansToFile(targetUrl: String, destFile: File) {
+            val uri = android.net.Uri.parse(targetUrl)
+            val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec.Builder().setUri(uri).build())
+            val spans = cache.getCachedSpans(cacheKey).sortedBy { it.position }
+            val metadata = cache.getContentMetadata(cacheKey)
+            val expectedLength = androidx.media3.datasource.cache.ContentMetadata.getContentLength(metadata)
 
-        writeExportLog("CACHE_MP4_CHECK\nurl=$url\ncache_key=$cacheKey\nspan_count=${spans.size}\nspan_0_position=${spans.firstOrNull()?.position}\nspan_0_length=${spans.firstOrNull()?.length}\ntotal_cached_bytes=${spans.sumOf { it.length }}\nfirst_position=${spans.firstOrNull()?.position}\nlast_end=${spans.lastOrNull()?.let { it.position + it.length }}\ncontent_length=$expectedLength\ncomplete=calculating")
+            if (spans.isEmpty() || expectedLength <= 0) throw Exception("CACHE_MP4_INCOMPLETE: $targetUrl")
 
-        if (spans.isEmpty()) {
-            writeExportLog("CACHE_MP4_INCOMPLETE: No cache spans found for key: $cacheKey")
-            throw Exception("CACHE_MP4_INCOMPLETE")
-        }
-
-        if (expectedLength <= 0) {
-            writeExportLog("CACHE_MP4_INCOMPLETE: Unknown content length for key: $cacheKey")
-            throw Exception("CACHE_MP4_INCOMPLETE")
-        }
-
-        var currentPosition = 0L
-        for (span in spans) {
-            if (span.position != currentPosition) {
-                writeExportLog("CACHE_MP4_INCOMPLETE: Gap found at position $currentPosition (next span at ${span.position})")
-                throw Exception("CACHE_MP4_INCOMPLETE")
-            }
-            currentPosition += span.length
-        }
-
-        if (currentPosition < expectedLength) {
-            writeExportLog("CACHE_MP4_INCOMPLETE: Truncated cache. Found $currentPosition bytes, expected $expectedLength")
-            throw Exception("CACHE_MP4_INCOMPLETE")
-        }
-
-        writeExportLog("CACHE_MP4_CHECK complete=true")
-
-        try {
-            writeExportLog("Copying MP4 from cache via direct spans (${spans.size} found) for key: $cacheKey")
-            out.outputStream().use { fos ->
+            destFile.outputStream().use { fos ->
                 var expectedPos = 0L
                 for (span in spans) {
                     if (span.position != expectedPos) throw Exception("CACHE_GAP: Unexpected span position")
@@ -382,29 +361,64 @@ class HlsExportService : Service() {
                     }
                     expectedPos += span.length
                 }
+                if (expectedPos < expectedLength) throw Exception("CACHE_MP4_INCOMPLETE: Not fully cached")
             }
+        }
 
-            // Notify MediaStore
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                val contentValues = android.content.ContentValues().apply {
-                    put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, out.name)
-                    put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
-                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
-                }
-                val resolver = applicationContext.contentResolver
-                val targetUri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
-                if (targetUri != null) {
-                    resolver.openOutputStream(targetUri)?.use { output ->
-                        out.inputStream().use { input -> input.copyTo(output) }
-                    }
-                    out.delete()
-                }
+        if (splitAudioUrl.isNullOrEmpty()) {
+            // Direct copy for single streams
+            try {
+                extractSpansToFile(url, out)
+                notifyMediaStore(out, "video/mp4")
+                writeExportLog("MP4 cache copy complete: $title")
+                withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show() }
+            } catch (e: Exception) {
+                if (out.exists()) out.delete()
+                throw e
             }
-            writeExportLog("MP4 cache copy complete: $title")
-        } catch (e: Exception) {
-            if (out.exists()) out.delete()
-            writeExportLog("Failed to copy MP4 from cache spans: ${e.message}")
-            throw Exception("Failed to copy MP4 from cache spans", e)
+        } else {
+            // Extract both to temp dir and mux with FFmpeg
+            val tmpDir = File(applicationContext.filesDir, "tmp_export_${System.currentTimeMillis()}")
+            tmpDir.mkdirs()
+            val videoTmp = File(tmpDir, "video.mp4")
+            val audioTmp = File(tmpDir, "audio.m4a")
+
+            try {
+                writeExportLog("Extracting split cached MP4s for muxing...")
+                extractSpansToFile(url, videoTmp)
+                extractSpansToFile(splitAudioUrl, audioTmp)
+
+                val ffmpegArgs = listOf("-y", "-i", videoTmp.absolutePath, "-i", audioTmp.absolutePath, "-map", "0:v:0", "-map", "1:a:0", "-c", "copy", "-movflags", "+faststart", out.absolutePath)
+                val session = FFmpegKit.executeWithArguments(ffmpegArgs.toTypedArray())
+                if (com.arthenica.ffmpegkit.ReturnCode.isSuccess(session.returnCode)) {
+                    notifyMediaStore(out, "video/mp4")
+                    writeExportLog("Split MP4 cache muxing complete: $title")
+                    withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show() }
+                } else {
+                    if (out.exists()) out.delete()
+                    throw Exception("FFmpeg muxing failed for split MP4 cache.")
+                }
+            } finally {
+                tmpDir.deleteRecursively()
+            }
+        }
+    }
+
+    private fun notifyMediaStore(file: File, mimeType: String) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            val contentValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, file.name)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+            }
+            val resolver = applicationContext.contentResolver
+            val targetUri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+            if (targetUri != null) {
+                resolver.openOutputStream(targetUri)?.use { output ->
+                    file.inputStream().use { input -> input.copyTo(output) }
+                }
+                file.delete()
+            }
         }
     }
 
@@ -880,7 +894,7 @@ if (!success) {
         }
     }
 
-    private suspend fun muxToMp4(url: String, title: String) = withContext(Dispatchers.IO) {
+    private suspend fun muxToMp4(url: String, title: String, splitAudioUrl: String? = null, streamKeyStrings: List<String>? = null) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
         var out = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -920,11 +934,18 @@ if (!success) {
 
         commandArgs.add("-i")
         commandArgs.add(url)
-
+        if (!splitAudioUrl.isNullOrEmpty()) {
+            commandArgs.add("-i")
+            commandArgs.add(splitAudioUrl)
+            commandArgs.add("-map")
+            commandArgs.add("0:v:0")
+            commandArgs.add("-map")
+            commandArgs.add("1:a:0")
+        }
         commandArgs.add("-c")
         commandArgs.add("copy")
 
-        if (!url.contains(".mp4", ignoreCase = true)) {
+        if (!url.contains(".mp4", ignoreCase = true) && splitAudioUrl.isNullOrEmpty()) {
             commandArgs.add("-bsf:a")
             commandArgs.add("aac_adtstoasc")
         }
