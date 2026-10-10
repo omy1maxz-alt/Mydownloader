@@ -5861,6 +5861,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         val mutedColor = if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
         val density = resources.displayMetrics.density
 
+        var settingsDialog: AlertDialog? = null
         val content = android.widget.LinearLayout(this).apply {
             orientation = android.widget.LinearLayout.VERTICAL
             setPadding((20 * density).toInt(), (8 * density).toInt(), (20 * density).toInt(), (12 * density).toInt())
@@ -5917,7 +5918,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 contentDescription = "Open ${settingsAction.title}"
             }
             row.addView(chevron, LinearLayout.LayoutParams((20 * density).toInt(), (20 * density).toInt()))
-            row.setOnClickListener { settingsAction.onClick() }
+            row.setOnClickListener { settingsDialog?.dismiss(); settingsAction.onClick() }
             content.addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         }
 
@@ -5926,6 +5927,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             .setView(scroll)
             .setNegativeButton("Close", null)
             .create()
+        settingsDialog = dialog
         dialog.setOnShowListener {
             val maxHeight = (resources.displayMetrics.heightPixels * 0.72f).toInt()
             scroll.layoutParams = scroll.layoutParams.apply {
