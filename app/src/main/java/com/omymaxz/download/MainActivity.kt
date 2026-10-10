@@ -5882,107 +5882,116 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             .show()
     }
     private fun showMasterSettingsDialog() {
-        data class SettingsAction(val title: String, val iconRes: Int, val section: String, val onClick: () -> Unit)
-        val settingsActions = listOf(
-            SettingsAction("Content blocking", android.R.drawable.ic_menu_close_clear_cancel, "PRIVACY & BLOCKING") { showContentBlockingDialog() },
-            SettingsAction("Manage blocked sites", android.R.drawable.ic_delete, "PRIVACY & BLOCKING") { showBlockedSitesDialog() },
-            SettingsAction("Manage whitelist", android.R.drawable.ic_menu_agenda, "PRIVACY & BLOCKING") { showWhitelistManagementDialog() },
-            SettingsAction("Pop-up & redirect blocker", android.R.drawable.ic_dialog_alert, "PRIVACY & BLOCKING") { showPopupBlockerSettingsDialog() },
-            SettingsAction("Confirm navigation", android.R.drawable.ic_menu_set_as, "PRIVACY & BLOCKING") { showConfirmNavigationSettingsDialog() },
-            SettingsAction("Media detection", android.R.drawable.ic_media_play, "MEDIA & DOWNLOADS") { showMediaDetectionSettingsDialog() },
-            SettingsAction("Floating detector", android.R.drawable.ic_menu_view, "MEDIA & DOWNLOADS") { showFloatingDetectorSettingsDialog() },
-            SettingsAction("Clear video cache", android.R.drawable.ic_menu_delete, "MEDIA & DOWNLOADS") {
-                HlsDownloadHelper.clearUnifiedCache(this)
-                Toast.makeText(this, "Video cache cleared", Toast.LENGTH_SHORT).show()
-            },
-            SettingsAction("Background loading", android.R.drawable.ic_media_ff, "MEDIA & DOWNLOADS") { showBackgroundLoadingDialog() },
-            SettingsAction("Gemini AI", android.R.drawable.ic_menu_edit, "AI & PERSONALIZATION") { showGeminiSettingsDialog() },
-            SettingsAction("Backup & restore", android.R.drawable.ic_menu_save, "DATA & DIAGNOSTICS") { showBackupRestoreDialog() },
-            SettingsAction("View app logs", android.R.drawable.ic_menu_info_details, "DATA & DIAGNOSTICS") {
-                startActivity(Intent(this, LogcatViewerActivity::class.java))
-            },
-            SettingsAction("View export logs", android.R.drawable.ic_menu_search, "DATA & DIAGNOSTICS") { showExportLogsDialog() }
+        data class SettingsAction(val title: String, val iconRes: Int, val onClick: () -> Unit)
+        data class SettingsCategory(val title: String, val iconRes: Int, val actions: List<SettingsAction>)
+
+        val categories = listOf(
+            SettingsCategory("Privacy & Blocking", android.R.drawable.ic_menu_close_clear_cancel, listOf(
+                SettingsAction("Content Blocking", android.R.drawable.ic_menu_close_clear_cancel) { showContentBlockingDialog() },
+                SettingsAction("Manage Blocked Sites", android.R.drawable.ic_delete) { showBlockedSitesDialog() },
+                SettingsAction("Manage Whitelist", android.R.drawable.ic_menu_agenda) { showWhitelistManagementDialog() },
+                SettingsAction("Popup & Redirect Blocker", android.R.drawable.ic_dialog_alert) { showPopupBlockerSettingsDialog() },
+                SettingsAction("Confirm Navigation", android.R.drawable.ic_menu_set_as) { showConfirmNavigationSettingsDialog() }
+            )),
+            SettingsCategory("Media & Downloads", android.R.drawable.ic_media_play, listOf(
+                SettingsAction("Media Detection", android.R.drawable.ic_media_play) { showMediaDetectionSettingsDialog() },
+                SettingsAction("Floating Detector", android.R.drawable.ic_menu_view) { showFloatingDetectorSettingsDialog() },
+                SettingsAction("Background Loading", android.R.drawable.ic_media_ff) { showBackgroundLoadingDialog() },
+                SettingsAction("Clear Video Cache", android.R.drawable.ic_menu_delete) {
+                    HlsDownloadHelper.clearUnifiedCache(this)
+                    Toast.makeText(this, "Video cache cleared", Toast.LENGTH_SHORT).show()
+                }
+            )),
+            SettingsCategory("AI & Personalization", android.R.drawable.ic_menu_edit, listOf(
+                SettingsAction("Gemini AI Settings", android.R.drawable.ic_menu_edit) { showGeminiSettingsDialog() }
+            )),
+            SettingsCategory("Data & Diagnostics", android.R.drawable.ic_menu_info_details, listOf(
+                SettingsAction("Backup & Restore", android.R.drawable.ic_menu_save) { showBackupRestoreDialog() },
+                SettingsAction("View App Logs", android.R.drawable.ic_menu_info_details) {
+                    startActivity(Intent(this, LogcatViewerActivity::class.java))
+                },
+                SettingsAction("View Export Logs", android.R.drawable.ic_menu_search) { showExportLogsDialog() }
+            ))
         )
 
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val hexColor = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-        val bgColor = try { android.graphics.Color.parseColor(hexColor) } catch (e: Exception) { android.graphics.Color.BLACK }
+        val baseColor = try { android.graphics.Color.parseColor(hexColor) } catch (e: Exception) { android.graphics.Color.BLACK }
+        val bgColor = android.graphics.Color.rgb(
+            android.graphics.Color.red(baseColor),
+            android.graphics.Color.green(baseColor),
+            android.graphics.Color.blue(baseColor)
+        )
         val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
         val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
         val mutedColor = if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
         val density = resources.displayMetrics.density
 
-        var settingsDialog: AlertDialog? = null
-        val content = android.widget.LinearLayout(this).apply {
-            orientation = android.widget.LinearLayout.VERTICAL
-            setPadding((20 * density).toInt(), (8 * density).toInt(), (20 * density).toInt(), (12 * density).toInt())
-        }
-        val scroll = ScrollView(this).apply {
-            isFillViewport = true
-            addView(content, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        }
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
+        var showingCategory: SettingsCategory? = null
 
-        var currentSection = ""
-        settingsActions.forEach { settingsAction ->
-            if (settingsAction.section != currentSection) {
-                currentSection = settingsAction.section
-                val header = TextView(this).apply {
-                    text = currentSection
-                    textSize = 12f
-                    typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
-                    letterSpacing = 0.08f
-                    setTextColor(mutedColor)
-                    setPadding((4 * density).toInt(), (18 * density).toInt(), 0, (8 * density).toInt())
-                    contentDescription = "$currentSection settings"
+        fun buildSettingsScreen(category: SettingsCategory? = null): android.widget.LinearLayout {
+            val root = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding((16 * density).toInt(), (12 * density).toInt(), (16 * density).toInt(), (8 * density).toInt())
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(bgColor)
+                    cornerRadii = floatArrayOf(18f,18f,18f,18f,0f,0f,0f,0f).map { it * density }.toFloatArray()
                 }
-                content.addView(header, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            }
+            val title = TextView(this).apply {
+                text = category?.title ?: "Settings"
+                textSize = 18f
+                typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+                setTextColor(textColor)
+                setPadding((4 * density).toInt(), (4 * density).toInt(), (4 * density).toInt(), (12 * density).toInt())
+            }
+            root.addView(title, LinearLayout.LayoutParams(-1, -2))
+
+            val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            if (category == null) {
+                categories.forEach { settingsCategory ->
+                    val row = makeMenuRow(settingsCategory.title, settingsCategory.iconRes, textColor, density, true)
+                    row.setOnClickListener {
+                        showingCategory = settingsCategory
+                        dialog.setContentView(buildSettingsScreen(settingsCategory))
+                    }
+                    body.addView(row, LinearLayout.LayoutParams(-1, -2))
+                }
+            } else {
+                category.actions.forEach { action ->
+                    val row = makeMenuRow(action.title, action.iconRes, textColor, density, false)
+                    row.setOnClickListener {
+                        dialog.dismiss()
+                        action.onClick()
+                    }
+                    body.addView(row, LinearLayout.LayoutParams(-1, -2))
+                }
+                val backRow = makeMenuRow("Back to Settings", android.R.drawable.ic_media_previous, textColor, density, true)
+                backRow.setOnClickListener {
+                    showingCategory = null
+                    dialog.setContentView(buildSettingsScreen())
+                }
+                body.addView(backRow, LinearLayout.LayoutParams(-1, -2))
             }
 
-            val row = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = android.view.Gravity.CENTER_VERTICAL
-                minimumHeight = (52 * density).toInt()
-                setPadding((12 * density).toInt(), (8 * density).toInt(), (8 * density).toInt(), (8 * density).toInt())
-                isClickable = true
-                isFocusable = true
-                background = androidx.appcompat.content.res.AppCompatResources.getDrawable(this@MainActivity, android.R.drawable.list_selector_background)
+            val scroll = ScrollView(this).apply {
+                isFillViewport = true
+                addView(body, ViewGroup.LayoutParams(-1, -2))
             }
-            val icon = android.widget.ImageView(this).apply {
-                setImageResource(settingsAction.iconRes)
-                setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
-                contentDescription = null
-            }
-            row.addView(icon, LinearLayout.LayoutParams((24 * density).toInt(), (24 * density).toInt()).apply {
-                marginEnd = (16 * density).toInt()
-            })
-            val title = TextView(this).apply {
-                text = settingsAction.title
-                textSize = 15f
-                setTextColor(textColor)
-                typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
-                gravity = android.view.Gravity.CENTER_VERTICAL
-            }
-            row.addView(title, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            val chevron = android.widget.ImageView(this).apply {
-                setImageResource(android.R.drawable.ic_media_next)
-                setColorFilter(mutedColor, android.graphics.PorterDuff.Mode.SRC_IN)
-                contentDescription = "Open ${settingsAction.title}"
-            }
-            row.addView(chevron, LinearLayout.LayoutParams((20 * density).toInt(), (20 * density).toInt()))
-            row.setOnClickListener { settingsDialog?.dismiss(); settingsAction.onClick() }
-            content.addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+            return root
         }
 
-        val dialog = createThemedDialogBuilder(this)
-            .setTitle("Settings")
-            .setView(scroll)
-            .setNegativeButton("Close", null)
-            .create()
-        settingsDialog = dialog
+        dialog.setContentView(buildSettingsScreen())
         dialog.setOnShowListener {
-            val maxHeight = (resources.displayMetrics.heightPixels * 0.72f).toInt()
-            scroll.layoutParams = scroll.layoutParams.apply {
-                height = minOf(content.measuredHeight, maxHeight).coerceAtLeast((180 * density).toInt())
+            val sheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            sheet?.let {
+                it.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                it.layoutParams = it.layoutParams.apply {
+                    height = (resources.displayMetrics.heightPixels * 0.72f).toInt()
+                }
+                it.requestLayout()
             }
         }
         dialog.show()
