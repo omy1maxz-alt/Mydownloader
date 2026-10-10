@@ -4995,6 +4995,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             override fun isEnabled(position: Int): Boolean = !getItem(position)!!.isHeader
         }
 
+        view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
         listView.adapter = adapter
         listView.isNestedScrollingEnabled = true
         listView.setOnItemClickListener { _, _, position, _ ->
