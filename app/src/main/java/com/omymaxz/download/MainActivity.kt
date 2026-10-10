@@ -4902,17 +4902,26 @@ private fun showRenameDialog(mediaFile: MediaFile) {
     private fun showCustomOverflowMenu(anchor: View) {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val hexColor = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-        val bgColor = try { android.graphics.Color.parseColor(hexColor) } catch (e: Exception) { android.graphics.Color.BLACK }
+        val bgColor = try {
+            android.graphics.Color.parseColor(hexColor)
+        } catch (e: Exception) {
+            android.graphics.Color.BLACK
+        }
         val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
         val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
 
-        val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
+        val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(
+            this,
+            R.style.TransparentBottomSheetDialogTheme
+        )
         val view = layoutInflater.inflate(R.layout.bottom_sheet_menu, null)
         val rootLayout = view.findViewById<android.widget.LinearLayout>(R.id.bottom_sheet_root)
         val bgDrawable = (rootLayout.background as? android.graphics.drawable.GradientDrawable)
-            ?: (androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bottom_sheet_bg) as android.graphics.drawable.GradientDrawable).mutate() as android.graphics.drawable.GradientDrawable
+            ?: (androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bottom_sheet_bg)
+                as android.graphics.drawable.GradientDrawable).mutate() as android.graphics.drawable.GradientDrawable
         bgDrawable.setColor(bgColor)
         rootLayout.background = bgDrawable
+        view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
 
         data class MenuRow(
             val id: Int = 0,
@@ -4920,10 +4929,10 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             val iconRes: Int = 0,
             val isHeader: Boolean = false
         )
+
         val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
         val popupNoticeTitle = if (showNotice) "Popup Notices: On" else "Popup Notices: Off"
-
         val menuRows = listOf(
             MenuRow(title = "BROWSER", isHeader = true),
             MenuRow(R.id.menu_back, "Back", R.drawable.ic_arrow_back),
@@ -4955,39 +4964,42 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             MenuRow(R.id.menu_debug_page, "Debug Page", android.R.drawable.ic_menu_search)
         )
 
-        view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
         val listView = view.findViewById<android.widget.ListView>(R.id.bottom_sheet_list)
-        val adapter = object : android.widget.ArrayAdapter<MenuRow>(this, R.layout.bottom_sheet_menu_item, menuRows) {
+        val adapter = object : android.widget.ArrayAdapter<MenuRow>(
+            this,
+            R.layout.bottom_sheet_menu_item,
+            menuRows
+        ) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val itemView = convertView ?: layoutInflater.inflate(R.layout.bottom_sheet_menu_item, parent, false)
+                val itemView = convertView
+                    ?: layoutInflater.inflate(R.layout.bottom_sheet_menu_item, parent, false)
                 val iconView = itemView.findViewById<android.widget.ImageView>(R.id.menu_item_icon)
                 val textView = itemView.findViewById<android.widget.TextView>(R.id.menu_item_text)
-                val row = getItem(position)
+                val row = getItem(position) ?: return itemView
 
-                if (row?.isHeader == true) {
+                if (row.isHeader) {
                     iconView.visibility = View.GONE
                     textView.text = row.title
-                    textView.setTextColor(if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY)
+                    textView.setTextColor(
+                        if (luminance > 0.5) android.graphics.Color.DKGRAY
+                        else android.graphics.Color.LTGRAY
+                    )
                     textView.textSize = 11f
                     textView.setTypeface(null, android.graphics.Typeface.BOLD)
                     textView.setPadding(4, 8, 4, 2)
-                    itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                    itemView.isClickable = false
-                    itemView.isFocusable = false
                     itemView.minimumHeight = (28 * resources.displayMetrics.density).toInt()
+                    itemView.isEnabled = false
                 } else {
                     iconView.visibility = View.VISIBLE
-                    textView.text = row?.title.orEmpty()
+                    textView.text = row.title
                     textView.setTextColor(textColor)
                     textView.textSize = 15f
                     textView.setTypeface(null, android.graphics.Typeface.NORMAL)
                     textView.setPadding(0, 0, 0, 0)
-                    iconView.setImageResource(row?.iconRes ?: android.R.drawable.ic_menu_help)
+                    iconView.setImageResource(row.iconRes)
                     iconView.setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
-                    itemView.background = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, android.R.drawable.list_selector_background)
-                    itemView.isClickable = true
-                    itemView.isFocusable = true
                     itemView.minimumHeight = (48 * resources.displayMetrics.density).toInt()
+                    itemView.isEnabled = true
                 }
                 return itemView
             }
@@ -4995,12 +5007,11 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             override fun isEnabled(position: Int): Boolean = !getItem(position)!!.isHeader
         }
 
-        view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
         listView.adapter = adapter
-        listView.isNestedScrollingEnabled = true
         listView.setOnItemClickListener { _, _, position, _ ->
             val item = menuRows[position]
             if (item.isHeader) return@setOnItemClickListener
+
             bottomSheetDialog.dismiss()
             when (item.id) {
                 R.id.menu_back -> binding.backButton.performClick()
@@ -5033,12 +5044,12 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         bottomSheetDialog.setContentView(view)
         bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
             ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-        bottomSheetDialog.setOnShowListener {
-            val sheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            sheet?.layoutParams?.height = (resources.displayMetrics.heightPixels * 0.82f).toInt()
-            sheet?.requestLayout()
-        }
         bottomSheetDialog.show()
+        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let { sheet ->
+            val height = (resources.displayMetrics.heightPixels * 0.82f).toInt()
+            sheet.layoutParams = sheet.layoutParams.apply { this.height = height }
+            sheet.requestLayout()
+        }
     }
 
 
