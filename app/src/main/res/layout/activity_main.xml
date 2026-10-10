@@ -96,11 +96,14 @@
                             android:contentDescription="Refresh"
                             android:src="@drawable/ic_refresh" />
 
+                        <!-- Secondary actions stay in the layout for existing click handlers,
+                             but no longer consume scarce toolbar width in portrait. -->
                         <ImageButton
                             android:id="@+id/translateButton"
                             style="?attr/borderlessButtonStyle"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
+                            android:visibility="gone"
                             android:contentDescription="Translate Page"
                             android:src="@drawable/ic_translate" />
 
@@ -109,6 +112,7 @@
                             style="?attr/borderlessButtonStyle"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
+                            android:visibility="gone"
                             android:contentDescription="Back"
                             android:src="@drawable/ic_arrow_back" />
 
@@ -117,6 +121,7 @@
                             style="?attr/borderlessButtonStyle"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
+                            android:visibility="gone"
                             android:contentDescription="Forward"
                             android:src="@drawable/ic_arrow_forward" />
 
@@ -125,6 +130,7 @@
                             style="?attr/borderlessButtonStyle"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
+                            android:visibility="gone"
                             android:contentDescription="Gemini AI"
                             android:src="@drawable/ic_ai_sparkle" />
 
