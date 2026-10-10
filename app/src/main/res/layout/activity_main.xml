@@ -112,7 +112,6 @@
                             style="?attr/borderlessButtonStyle"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:visibility="gone"
                             android:contentDescription="Back"
                             android:src="@drawable/ic_arrow_back" />
 
@@ -121,7 +120,6 @@
                             style="?attr/borderlessButtonStyle"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:visibility="gone"
                             android:contentDescription="Forward"
                             android:src="@drawable/ic_arrow_forward" />
 
