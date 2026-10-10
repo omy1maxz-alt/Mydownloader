@@ -4912,9 +4912,6 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
         val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
         val view = layoutInflater.inflate(R.layout.bottom_sheet_menu, null)
-        bottomSheetDialog.setContentView(view)
-        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
         val rootLayout = view.findViewById<android.widget.LinearLayout>(R.id.bottom_sheet_root)
         val bgDrawable = (rootLayout.background as? android.graphics.drawable.GradientDrawable)
             ?: (androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bottom_sheet_bg) as android.graphics.drawable.GradientDrawable).mutate() as android.graphics.drawable.GradientDrawable
@@ -4963,6 +4960,9 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         )
 
         view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
+        bottomSheetDialog.setContentView(view)
+        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
         bottomSheetDialog.setContentView(view)
         bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
             ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
