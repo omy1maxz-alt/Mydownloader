@@ -96,9 +96,8 @@
                             android:contentDescription="Refresh"
                             android:src="@drawable/ic_refresh" />
 
-                        <ImageButton
-                            <!-- Keep only the frequently used navigation controls in the fixed toolbar.
-                             Secondary actions remain available in the overflow menu. -->
+                        <!-- Secondary actions stay in the layout for existing click handlers,
+                             but no longer consume scarce toolbar width in portrait. -->
                         <ImageButton
                             android:id="@+id/translateButton"
                             style="?attr/borderlessButtonStyle"
@@ -137,15 +136,6 @@
 
                         <ImageButton
                             android:id="@+id/fabShowMedia"
-                            style="?attr/borderlessButtonStyle"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:contentDescription="Downloads"
-                            android:src="@drawable/ic_download"
-                            android:visibility="gone"
-                            tools:visibility="visible" />
-
-                        android:id="@+id/fabShowMedia"
                             style="?attr/borderlessButtonStyle"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
