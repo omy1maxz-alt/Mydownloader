@@ -707,68 +707,72 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupToolbarNavButtons() {
         binding.overflowMenuButton.setOnClickListener { showCustomOverflowMenu(it) }
-        binding.backButton.setOnClickListener {
-            if (currentTabIndex in tabs.indices) {
-                val tab = tabs[currentTabIndex]
-                if (tab.historyStack.size > 1) {
-                    tab.historyStack.removeAt(tab.historyStack.size - 1)
-                    val prevUrl = tab.historyStack.last()
-                    webView.loadUrl(prevUrl)
-                } else if (webView.canGoBack()) {
-                    webView.goBack()
-                }
-            }
-            updateToolbarNavButtonState()
-        }
-        binding.forwardButton.setOnClickListener {
-            if (webView.canGoForward()) {
-                webView.goForward()
-            }
-        }
-        binding.aiButton.setOnClickListener {
-            // Extract webpage context before launching chat
-            WebpageContextHolder.url = webView.url
-            WebpageContextHolder.title = webView.title
-
-            webView.evaluateJavascript("(function() { return document.body ? document.body.innerText : ''; })();") { result ->
-                // The result comes back as a JSON string literal, e.g., "\"text...\""
-                // Remove the enclosing quotes and unescape newlines if it's not null/empty
-                var cleanedText = result?.trim('"')?.replace("\\n", "\n") ?: ""
-
-                // Truncate to avoid massive payloads (e.g. max 15000 chars)
-                if (cleanedText.length > 15000) {
-                    cleanedText = cleanedText.substring(0, 15000) + "... (truncated)"
-                }
-
-                WebpageContextHolder.textContent = cleanedText
-
-                val intent = Intent(this, GeminiChatActivity::class.java)
-                startActivity(intent)
-            }
-        }
-        binding.refreshButton.setOnClickListener {
-            webView.reload()
-        }
-
-        binding.translateButton.setOnClickListener {
-            isAutoTranslateEnabled = !isAutoTranslateEnabled
-            val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-            prefs.edit().putBoolean("auto_translate_enabled", isAutoTranslateEnabled).apply()
-
-            if (isAutoTranslateEnabled) {
-                binding.translateButton.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
-                injectTranslateScript(webView)
-                Toast.makeText(this, "Auto-Translate ON", Toast.LENGTH_SHORT).show()
-            } else {
-                binding.translateButton.clearColorFilter()
-                Toast.makeText(this, "Auto-Translate OFF (Reloading...)", Toast.LENGTH_SHORT).show()
-                webView.reload()
-            }
-        }
-
+        binding.backButton.setOnClickListener { navigateBack() }
+        binding.forwardButton.setOnClickListener { navigateForward() }
+        binding.aiButton.setOnClickListener { openGeminiForCurrentPage() }
+        binding.refreshButton.setOnClickListener { webView.reload() }
+        binding.translateButton.setOnClickListener { toggleAutoTranslate() }
         binding.translateButton.setOnLongClickListener {
             showTranslateSettingsDialog()
             true
+        }
+    }
+
+    private fun navigateBack() {
+        if (currentTabIndex in tabs.indices) {
+            val tab = tabs[currentTabIndex]
+            if (tab.historyStack.size > 1) {
+                tab.historyStack.removeAt(tab.historyStack.size - 1)
+                webView.loadUrl(tab.historyStack.last())
+            } else if (webView.canGoBack()) {
+                webView.goBack()
+            }
+        } else if (webView.canGoBack()) {
+            webView.goBack()
+        }
+        updateToolbarNavButtonState()
+    }
+
+    private fun navigateForward() {
+        if (webView.canGoForward()) {
+            webView.goForward()
+        } else {
+            Toast.makeText(this, "No page to go forward to", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openGeminiForCurrentPage() {
+        WebpageContextHolder.url = webView.url
+        WebpageContextHolder.title = webView.title
+        try {
+            webView.evaluateJavascript("(function() { return document.body ? document.body.innerText : ''; })();") { result ->
+                var cleanedText = result?.trim('"')?.replace("\\n", "\n") ?: ""
+                if (cleanedText.length > 15000) {
+                    cleanedText = cleanedText.substring(0, 15000) + "... (truncated)"
+                }
+                WebpageContextHolder.textContent = cleanedText
+                startActivity(Intent(this, GeminiChatActivity::class.java))
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Could not read page context for Gemini", e)
+            WebpageContextHolder.textContent = ""
+            startActivity(Intent(this, GeminiChatActivity::class.java))
+        }
+    }
+
+    private fun toggleAutoTranslate() {
+        isAutoTranslateEnabled = !isAutoTranslateEnabled
+        getSharedPreferences("Settings", Context.MODE_PRIVATE)
+            .edit().putBoolean("auto_translate_enabled", isAutoTranslateEnabled).apply()
+
+        if (isAutoTranslateEnabled) {
+            binding.translateButton.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
+            injectTranslateScript(webView)
+            Toast.makeText(this, "Auto-Translate ON", Toast.LENGTH_SHORT).show()
+        } else {
+            binding.translateButton.clearColorFilter()
+            Toast.makeText(this, "Auto-Translate OFF (Reloading...)", Toast.LENGTH_SHORT).show()
+            webView.reload()
         }
     }
 
@@ -4908,11 +4912,6 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
         val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
         val view = layoutInflater.inflate(R.layout.bottom_sheet_menu, null)
-        // Attach the custom view before configuring its ListView so touch handling
-        // and row hit targets are established before the adapter and click listener.
-        bottomSheetDialog.setContentView(view)
-        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
         val rootLayout = view.findViewById<android.widget.LinearLayout>(R.id.bottom_sheet_root)
         val bgDrawable = (rootLayout.background as? android.graphics.drawable.GradientDrawable)
             ?: (androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bottom_sheet_bg) as android.graphics.drawable.GradientDrawable).mutate() as android.graphics.drawable.GradientDrawable
@@ -4961,6 +4960,9 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         )
 
         view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
+        bottomSheetDialog.setContentView(view)
+        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
         val listView = view.findViewById<android.widget.ListView>(R.id.bottom_sheet_list)
         val adapter = object : android.widget.ArrayAdapter<MenuRow>(this, R.layout.bottom_sheet_menu_item, menuRows) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -5008,10 +5010,10 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             if (item.isHeader) return@setOnItemClickListener
             bottomSheetDialog.dismiss()
             when (item.id) {
-                R.id.menu_back -> binding.backButton.performClick()
-                R.id.menu_forward -> binding.forwardButton.performClick()
-                R.id.menu_translate -> binding.translateButton.performClick()
-                R.id.menu_ai -> binding.aiButton.performClick()
+                R.id.menu_back -> navigateBack()
+                R.id.menu_forward -> navigateForward()
+                R.id.menu_translate -> toggleAutoTranslate()
+                R.id.menu_ai -> openGeminiForCurrentPage()
                 R.id.menu_history -> showHistory()
                 R.id.menu_add_bookmark -> addCurrentPageToBookmarks()
                 R.id.menu_add_link -> showManualAddLinkDialog()
