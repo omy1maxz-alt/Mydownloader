@@ -137,12 +137,17 @@ class ProgressiveAudioDownloadService : Service() {
             val sigHex = firstBytes.joinToString("") { "%02x".format(it) }
             Log.d(TAG, "[AUDIO_VALIDATE] signature=$sigHex fileSize=${tempFile.length()}")
 
-            // Perform simple MP4/M4A validation (ftyp box)
+            // Perform signature validation based on the intended file extension
             val isValid = if (title.endsWith(".m4a", true) || title.endsWith(".mp4", true)) {
-                val hasFtyp = sigHex.contains("66747970") // "ftyp" in hex
-                hasFtyp
+                sigHex.contains("66747970") // "ftyp" in hex
+            } else if (title.endsWith(".webm", true) || title.endsWith(".mkv", true)) {
+                sigHex.startsWith("1a45dfa3") // EBML header for WebM/MKV
+            } else if (title.endsWith(".mp3", true)) {
+                sigHex.startsWith("494433") || sigHex.startsWith("ffe3") || sigHex.startsWith("fffb") // ID3 tag or MP3 sync word
+            } else if (title.endsWith(".ogg", true)) {
+                sigHex.startsWith("4f676753") // "OggS"
             } else {
-                true // Allow other formats without strict container checks for now
+                true // Allow unknown/other formats to bypass strict signature check
             }
 
             Log.d(TAG, "[AUDIO_VALIDATE] containerValid=$isValid")

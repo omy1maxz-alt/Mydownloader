@@ -80,10 +80,18 @@ object YoutubeExtractorHelper {
             } catch(e: Exception) {}
 
             var bestAudioUrl: String? = null
+            var bestAudioExtension = "m4a"
+            var bestAudioMimeType = "audio/mp4"
             try {
                 val audioStreams = extractor.audioStreams
                 val bestAudio = audioStreams.maxByOrNull { it.bitrate }
                 bestAudioUrl = bestAudio?.content
+                if (bestAudio != null) {
+                    val format = bestAudio.format
+                    bestAudioExtension = format?.suffix ?: "m4a"
+                    bestAudioMimeType = format?.mimeType ?: "audio/mp4"
+                    Log.d(TAG, "Best audio stream selected: suffix=$bestAudioExtension, mime=$bestAudioMimeType, codec=${format?.name}")
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to extract audioStreams explicitly: ${e.message}")
             }
@@ -91,7 +99,7 @@ object YoutubeExtractorHelper {
                 Log.d(TAG, "Successfully extracted YouTube DASH manifest: $dashManifestUrl")
                 return@withContext MediaFile(
                     url = dashManifestUrl,
-                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
+                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_") + ".mp4", // Default container for adaptive dash video exports
                     mimeType = "application/dash+xml",
                     quality = "Adaptive DASH",
                     category = MediaCategory.VIDEO,
@@ -107,7 +115,7 @@ object YoutubeExtractorHelper {
                 Log.d(TAG, "Successfully extracted YouTube HLS manifest: $hlsManifestUrl")
                 return@withContext MediaFile(
                     url = hlsManifestUrl,
-                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
+                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_") + ".mp4",
                     mimeType = "application/x-mpegURL",
                     quality = "Adaptive HLS",
                     category = MediaCategory.VIDEO,
@@ -127,7 +135,7 @@ object YoutubeExtractorHelper {
                 Log.d(TAG, "Successfully extracted YouTube MP4 combined: ${bestCombinedStream.content}")
                 return@withContext MediaFile(
                     url = bestCombinedStream.content,
-                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
+                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_") + ".mp4",
                     mimeType = "video/mp4",
                     quality = bestCombinedStream.resolution,
                     category = MediaCategory.VIDEO,
@@ -146,7 +154,7 @@ object YoutubeExtractorHelper {
                     Log.d(TAG, "Falling back to separate highest quality VideoOnly stream: ${highestVideo.content} and Audio: ${bestAudioUrl!!}")
                     return@withContext MediaFile(
                         url = highestVideo.content,
-                        title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_"),
+                        title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_") + ".mp4",
                         mimeType = "video/mp4",
                         quality = highestVideo.resolution,
                         category = MediaCategory.VIDEO,
@@ -159,11 +167,16 @@ object YoutubeExtractorHelper {
                 }
             }
             if (bestAudioUrl != null) {
-                Log.d(TAG, "Falling back to AudioOnly stream: $bestAudioUrl")
+                Log.d(TAG, "Falling back to AudioOnly stream: $bestAudioUrl with ext=$bestAudioExtension")
+
+                // Determine file extension
+                val finalExt = if (bestAudioExtension.isNotBlank()) ".$bestAudioExtension" else ".m4a"
+                val finalTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_") + "_AudioOnly" + finalExt
+
                 return@withContext MediaFile(
                     url = bestAudioUrl,
-                    title = title.replace(Regex("[^a-zA-Z0-9.-]"), "_") + "_AudioOnly",
-                    mimeType = "audio/mp4",
+                    title = finalTitle,
+                    mimeType = bestAudioMimeType,
                     quality = "Audio",
                     category = MediaCategory.AUDIO,
                     fileSize = "Unknown",

@@ -184,3 +184,5 @@
 
 - Analyzed `HlsExportService` outputting auto audio when preferred was requested. Resolved track detection flaw by iterating through `HlsMultivariantPlaylist.audios` dynamically checking physical `CacheDataSource` bytes for each track (`cache.getCachedBytes`) instead of relying on `parsedPlaylist.copy(streamKeys)`, properly bridging the explicit language variant to FFmpeg mapping.
 - Resolved KAPT Duplicate Class generation exceptions that caused the build failure on `master` due to overlapping `WebAPIPolyfill` declarations inside `MainActivity`.
+
+2026-10-10 Ensure YouTube audio streams are saved with their actual container extension (e.g. .webm) by leveraging NewPipe's MediaFormat instead of blindly defaulting to .m4a, and updated signature validation in ProgressiveAudioDownloadService to accommodate WebM, MP3, and OGG.
