@@ -177,3 +177,5 @@
 2026-10-10 Fixed Doubao RemoveMark floating panel visibility by enforcing `display: block !important` to overcome site CSS overrides.
 2026-10-10 Fixed Doubao `blob:` downloads by implementing a chunked `FileReader` bridge from JS into a new `DoubaoInterface` Android API, bypassing `DownloadManager`'s inability to handle localized WebView blobs.
 2026-10-10 Fixed YouTube HLS Cache exports producing audio-only files by forcing Media3 Transformer to fallback to FFmpeg `muxToMp4FromCache` whenever complex StreamKeys (`googlevideo.com` with multiple keys) are detected, ensuring split audio and video variants are correctly extracted and muxed via `-map 0:v:0 -map 1:a:0`.
+2026-10-10 Fixed `ProgressiveAudioDownloadService` silent abortion by explicitly instantiating `startForeground` in `onStartCommand` and manually forwarding session cookies from Chromium.
+2026-10-10 Ensured custom user track selection on cached YouTube HLS accurately exports audio by forcing `HlsExportService` to abandon `Media3 Transformer` logic inside `PATH_A_CACHE` if `isSplitHls` and `hasSplitStreamKeys` are both true, executing the FFmpeg sequence instead.

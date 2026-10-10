@@ -3,6 +3,11 @@ package com.omymaxz.download
 import android.app.Service
 import android.content.Intent
 import android.os.Environment
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import android.webkit.CookieManager
 import android.os.IBinder
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +28,23 @@ class ProgressiveAudioDownloadService : Service() {
         const val EXTRA_REFERER = "extra_referer"
         const val EXTRA_COOKIE = "extra_cookie"
         private const val TAG = "ProgressiveAudioDownloadService"
+        const val NOTIFICATION_ID = 4001
+    }
+
+
+    private fun createNotification(title: String): android.app.Notification {
+        val channelId = "progressive_audio_channel"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Audio Downloads", NotificationManager.IMPORTANCE_LOW)
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(channel)
+        }
+        return NotificationCompat.Builder(this, channelId)
+            .setContentTitle("Downloading Audio")
+            .setContentText(title)
+            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setOngoing(true)
+            .build()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -39,8 +61,17 @@ class ProgressiveAudioDownloadService : Service() {
         val referer = intent.getStringExtra(EXTRA_REFERER)
         val cookie = intent.getStringExtra(EXTRA_COOKIE)
 
+        startForeground(NOTIFICATION_ID, createNotification(title))
+
+        val activeCookie = if (cookie.isNullOrEmpty()) {
+            CookieManager.getInstance().getCookie(url) ?: ""
+        } else {
+            cookie
+        }
+
+
         CoroutineScope(Dispatchers.IO).launch {
-            downloadAudio(url, title, userAgent, referer, cookie)
+            downloadAudio(url, title, userAgent, referer, activeCookie)
             stopSelf()
         }
 
