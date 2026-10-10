@@ -4926,12 +4926,16 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
         val menuRows = listOf(
             MenuRow(title = "BROWSER", isHeader = true),
+            MenuRow(R.id.menu_back, "Back", R.drawable.ic_arrow_back),
+            MenuRow(R.id.menu_forward, "Forward", R.drawable.ic_arrow_forward),
             MenuRow(R.id.menu_history, "History", R.drawable.ic_public),
             MenuRow(R.id.menu_add_bookmark, "Add Bookmark", R.drawable.ic_add),
             MenuRow(R.id.menu_add_link, "Add Link", R.drawable.ic_download),
             MenuRow(R.id.menu_open_external, "Open in External Browser", R.drawable.ic_public),
 
             MenuRow(title = "TOOLS", isHeader = true),
+            MenuRow(R.id.menu_translate, if (isAutoTranslateEnabled) "Auto-Translate: On" else "Auto-Translate: Off", R.drawable.ic_translate),
+            MenuRow(R.id.menu_ai, "Ask Gemini About This Page", R.drawable.ic_ai_sparkle),
             MenuRow(R.id.menu_user_scripts, "User Scripts", R.drawable.ic_translate),
             MenuRow(R.id.menu_proxy_settings, getString(R.string.proxy_settings), R.drawable.ic_public),
             MenuRow(R.id.menu_nuke_traps, "Block Ads / Traps on This Page", R.drawable.ic_close),
@@ -4997,6 +5001,10 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             if (item.isHeader) return@setOnItemClickListener
             bottomSheetDialog.dismiss()
             when (item.id) {
+                R.id.menu_back -> binding.backButton.performClick()
+                R.id.menu_forward -> binding.forwardButton.performClick()
+                R.id.menu_translate -> binding.translateButton.performClick()
+                R.id.menu_ai -> binding.aiButton.performClick()
                 R.id.menu_history -> showHistory()
                 R.id.menu_add_bookmark -> addCurrentPageToBookmarks()
                 R.id.menu_add_link -> showManualAddLinkDialog()
