@@ -509,10 +509,27 @@ class HlsExportService : Service() {
                     val parsedPlaylist = parser.parse(android.net.Uri.parse(masterUrl), masterInputStream)
 
                     if (parsedPlaylist is androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist) {
-                        val filteredPlaylist = parsedPlaylist.copy(streamKeys) as androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist
-                        // After filtering by streamKeys, the remaining variant/audio in the lists are the exact ones the user downloaded!
-                        videoVariantUrl = filteredPlaylist.variants.firstOrNull()?.url?.toString() ?: masterUrl
-                        audioVariantUrl = filteredPlaylist.audios.firstOrNull()?.url?.toString()
+                        // Scan for actual cached variants instead of blind streamKey matching to avoid Media3 track group mismatch bugs
+                        val videoKey = streamKeys.firstOrNull { it.groupIndex == 0 }
+                        if (videoKey != null && videoKey.streamIndex < parsedPlaylist.variants.size) {
+                            videoVariantUrl = parsedPlaylist.variants[videoKey.streamIndex].url.toString()
+                        } else {
+                            videoVariantUrl = parsedPlaylist.variants.firstOrNull()?.url?.toString() ?: masterUrl
+                        }
+
+                        for (audio in parsedPlaylist.audios) {
+                            val aUrl = audio.url.toString()
+                            try {
+                                val aSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(aUrl))
+                                cacheOnlyFactory.open(aSpec)
+                                cacheOnlyFactory.close() // Found the physically downloaded track!
+                                audioVariantUrl = aUrl
+                                break
+                            } catch (e: Exception) {
+                                // Cache miss, continue searching
+                            }
+                        }
+                        writeExportLog("Parsed Master. Video Variant: $videoVariantUrl, Audio: $audioVariantUrl")
                     }
                 } catch (e: Exception) {
                     writeExportLog("Failed to parse master playlist with HlsPlaylistParser: ${e.message}")

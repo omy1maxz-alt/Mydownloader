@@ -2936,6 +2936,16 @@ private fun injectMediaStateDetector() {
         val resumeScript = "javascript:(function() { var video = document.querySelector('video'); if (video && video.paused && video.hasAttribute('data-was-playing')) { video.play().catch(function(e) {}); } })();"
         webView.loadUrl(resumeScript)
     }
+    inner class WebAPIPolyfill(private val context: Context) {
+        @JavascriptInterface
+        fun copyToClipboard(text: String) {
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("Copied Text", text)
+            clipboard.setPrimaryClip(clip)
+            android.widget.Toast.makeText(context, "Copied to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     inner class MediaStateInterface(private val activity: MainActivity) {
 
         @JavascriptInterface
