@@ -181,3 +181,6 @@
 2026-10-10 Ensured custom user track selection on cached YouTube HLS accurately exports audio by forcing `HlsExportService` to abandon `Media3 Transformer` logic inside `PATH_A_CACHE` if `isSplitHls` and `hasSplitStreamKeys` are both true, executing the FFmpeg sequence instead.
 
 - Verified that `CookieManager` injection inside `NewPipeDownloader.kt` is currently active on the `master` branch. The previous commit intended to revert it was overwritten during a merge conflict. It remains active to support bypassing YouTube age restrictions using active WebView session cookies.
+
+- Analyzed `HlsExportService` outputting auto audio when preferred was requested. Resolved track detection flaw by iterating through `HlsMultivariantPlaylist.audios` dynamically checking physical `CacheDataSource` bytes for each track (`cache.getCachedBytes`) instead of relying on `parsedPlaylist.copy(streamKeys)`, properly bridging the explicit language variant to FFmpeg mapping.
+- Resolved KAPT Duplicate Class generation exceptions that caused the build failure on `master` due to overlapping `WebAPIPolyfill` declarations inside `MainActivity`.

@@ -517,19 +517,30 @@ class HlsExportService : Service() {
                             videoVariantUrl = parsedPlaylist.variants.firstOrNull()?.url?.toString() ?: masterUrl
                         }
 
+                        // To find the specifically downloaded audio track (ignoring partially buffered default tracks),
+                        // we must check which audio variant has the MOST cached data.
+                        var bestAudioUrl: String? = null
+                        var maxCachedBytes: Long = 0
+                        val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
+                        val cacheKeyFactory = HlsDownloadHelper.customCacheKeyFactory
+
                         for (audio in parsedPlaylist.audios) {
                             val aUrl = audio.url.toString()
                             try {
                                 val aSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(aUrl))
-                                cacheOnlyFactory.open(aSpec)
-                                cacheOnlyFactory.close() // Found the physically downloaded track!
-                                audioVariantUrl = aUrl
-                                break
+                                val cacheKey = cacheKeyFactory.buildCacheKey(aSpec)
+                                val cachedBytes = cache.getCachedBytes(cacheKey, 0L, androidx.media3.common.C.LENGTH_UNSET.toLong())
+                                if (cachedBytes > maxCachedBytes) {
+                                    maxCachedBytes = cachedBytes
+                                    bestAudioUrl = aUrl
+                                }
                             } catch (e: Exception) {
-                                // Cache miss, continue searching
+                                // Ignore
                             }
                         }
-                        writeExportLog("Parsed Master. Video Variant: $videoVariantUrl, Audio: $audioVariantUrl")
+
+                        audioVariantUrl = bestAudioUrl
+                        writeExportLog("Parsed Master. Video Variant: $videoVariantUrl, Audio: $audioVariantUrl (Cached bytes: $maxCachedBytes)")
                     }
                 } catch (e: Exception) {
                     writeExportLog("Failed to parse master playlist with HlsPlaylistParser: ${e.message}")
