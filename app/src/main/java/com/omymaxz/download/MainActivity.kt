@@ -4908,6 +4908,11 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
         val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
         val view = layoutInflater.inflate(R.layout.bottom_sheet_menu, null)
+        // Attach the custom view before configuring its ListView so touch handling
+        // and row hit targets are established before the adapter and click listener.
+        bottomSheetDialog.setContentView(view)
+        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
         val rootLayout = view.findViewById<android.widget.LinearLayout>(R.id.bottom_sheet_root)
         val bgDrawable = (rootLayout.background as? android.graphics.drawable.GradientDrawable)
             ?: (androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bottom_sheet_bg) as android.graphics.drawable.GradientDrawable).mutate() as android.graphics.drawable.GradientDrawable
@@ -5030,9 +5035,6 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             }
         }
 
-        bottomSheetDialog.setContentView(view)
-        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
         bottomSheetDialog.setOnShowListener {
             val sheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
             sheet?.layoutParams?.height = (resources.displayMetrics.heightPixels * 0.82f).toInt()
