@@ -4997,7 +4997,7 @@ public final class YouTubeFormat {
 warning: File for type 'com.omymaxz.download.BookmarkDao_Impl' created in the last round will not be subject to annotation processing.
 warning: File for type 'com.omymaxz.download.UserScriptDao_Impl' created in the last round will not be subject to annotation processing.
 warning: File for type 'com.omymaxz.download.AppDatabase_Impl' created in the last round will not be subject to annotation processing.
-[WARN]
+[WARN] 
 Running non-incrementally because analyzing file:///storage/emulated/0/AndroidIDEProjects/Mydownloader/app/build/tmp/kapt3/stubs/debug/com/omymaxz/download/MainActivity.java failed.
 
 > Task :app:kaptDebugKotlin FAILED
