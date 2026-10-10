@@ -5918,9 +5918,9 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                     rowView.text = row.title
                     rowView.setPadding(
                         (20 * resources.displayMetrics.density).toInt(),
-                        (if (row.isHeader) 12 else 14) * resources.displayMetrics.density.toInt(),
+                        ((if (row.isHeader) 12 else 14) * resources.displayMetrics.density).toInt(),
                         (20 * resources.displayMetrics.density).toInt(),
-                        (if (row.isHeader) 4 else 14) * resources.displayMetrics.density.toInt()
+                        ((if (row.isHeader) 4 else 14) * resources.displayMetrics.density).toInt()
                     )
                     rowView.setTextColor(
                         if (row.isHeader) {
@@ -5931,7 +5931,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                     rowView.setTypeface(null, if (row.isHeader) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
                     rowView.isEnabled = !row.isHeader
                     rowView.isClickable = !row.isHeader
-                    rowView.minimumHeight = (if (row.isHeader) 32 else 48) * resources.displayMetrics.density.toInt()
+                    rowView.minimumHeight = ((if (row.isHeader) 32 else 48) * resources.displayMetrics.density).toInt()
                     return rowView
                 }
 
