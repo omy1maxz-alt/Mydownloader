@@ -4918,6 +4918,10 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         bgDrawable.setColor(bgColor)
         rootLayout.background = bgDrawable
 
+        bottomSheetDialog.setContentView(view)
+        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+
         data class MenuRow(
             val id: Int = 0,
             val title: String,
@@ -4960,12 +4964,6 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         )
 
         view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
-        bottomSheetDialog.setContentView(view)
-        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-        bottomSheetDialog.setContentView(view)
-        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
         val listView = view.findViewById<android.widget.ListView>(R.id.bottom_sheet_list)
         val adapter = object : android.widget.ArrayAdapter<MenuRow>(this, R.layout.bottom_sheet_menu_item, menuRows) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
