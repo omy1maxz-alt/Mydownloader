@@ -5867,8 +5867,8 @@ private fun showRenameDialog(mediaFile: MediaFile) {
     private fun showMasterSettingsDialog() {
         data class SettingsRow(
             val title: String,
-            val action: (() -> Unit)? = null,
-            val isHeader: Boolean = false
+            val isHeader: Boolean = false,
+            val action: (() -> Unit)? = null
         )
 
         val rows = listOf(
@@ -5941,7 +5941,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             setPadding(0, 0, 0, 0)
             addView(dialogView, android.widget.FrameLayout.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                (resources.displayMetrics.heightPixels * 0.68f).toInt()
+                (resources.displayMetrics.heightPixels * 0.55f).toInt()
             ))
         }
 
