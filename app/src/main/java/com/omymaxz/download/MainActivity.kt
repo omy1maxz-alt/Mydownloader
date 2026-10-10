@@ -1433,9 +1433,7 @@ class MainActivity : AppCompatActivity() {
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
-                    if (url?.contains("doubao.com") == true) {
-                        injectDoubaoIntegration(view)
-                    }
+
                     injectMediaStateDetector()
                     injectAdvancedMediaDetector()
                     injectStandardMediaDetector()
@@ -5021,19 +5019,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
 
 
-    private fun injectDoubaoIntegration(view: WebView?) {
-        try {
-            val inputStream = assets.open("removemark_doubao.js")
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            inputStream.close()
-            val script = String(buffer, Charsets.UTF_8)
-            view?.evaluateJavascript(script, null)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
+
 
     private fun injectTranslateScript(view: WebView?) {
 
