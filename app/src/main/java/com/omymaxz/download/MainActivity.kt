@@ -4955,6 +4955,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             MenuRow(R.id.menu_debug_page, "Debug Page", android.R.drawable.ic_menu_search)
         )
 
+        view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
         val listView = view.findViewById<android.widget.ListView>(R.id.bottom_sheet_list)
         val adapter = object : android.widget.ArrayAdapter<MenuRow>(this, R.layout.bottom_sheet_menu_item, menuRows) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
