@@ -4902,29 +4902,22 @@ private fun showRenameDialog(mediaFile: MediaFile) {
     private fun showCustomOverflowMenu(anchor: View) {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val hexColor = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-        val bgColor = try {
-            android.graphics.Color.parseColor(hexColor)
-        } catch (e: Exception) {
-            android.graphics.Color.BLACK
-        }
+        val bgColor = try { android.graphics.Color.parseColor(hexColor) } catch (e: Exception) { android.graphics.Color.BLACK }
         val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
         val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
 
-        val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(
-            this,
-            R.style.TransparentBottomSheetDialogTheme
-        )
+        val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
         val view = layoutInflater.inflate(R.layout.bottom_sheet_menu, null)
+        // Attach the custom view before configuring its ListView so touch handling
+        // and row hit targets are established before the adapter and click listener.
         bottomSheetDialog.setContentView(view)
         bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
             ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
         val rootLayout = view.findViewById<android.widget.LinearLayout>(R.id.bottom_sheet_root)
         val bgDrawable = (rootLayout.background as? android.graphics.drawable.GradientDrawable)
-            ?: (androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bottom_sheet_bg)
-                as android.graphics.drawable.GradientDrawable).mutate() as android.graphics.drawable.GradientDrawable
+            ?: (androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bottom_sheet_bg) as android.graphics.drawable.GradientDrawable).mutate() as android.graphics.drawable.GradientDrawable
         bgDrawable.setColor(bgColor)
         rootLayout.background = bgDrawable
-        view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
 
         data class MenuRow(
             val id: Int = 0,
@@ -4932,10 +4925,10 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             val iconRes: Int = 0,
             val isHeader: Boolean = false
         )
-
         val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
         val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
         val popupNoticeTitle = if (showNotice) "Popup Notices: On" else "Popup Notices: Off"
+
         val menuRows = listOf(
             MenuRow(title = "BROWSER", isHeader = true),
             MenuRow(R.id.menu_back, "Back", R.drawable.ic_arrow_back),
@@ -4967,42 +4960,39 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             MenuRow(R.id.menu_debug_page, "Debug Page", android.R.drawable.ic_menu_search)
         )
 
+        view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
         val listView = view.findViewById<android.widget.ListView>(R.id.bottom_sheet_list)
-        val adapter = object : android.widget.ArrayAdapter<MenuRow>(
-            this,
-            R.layout.bottom_sheet_menu_item,
-            menuRows
-        ) {
+        val adapter = object : android.widget.ArrayAdapter<MenuRow>(this, R.layout.bottom_sheet_menu_item, menuRows) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val itemView = convertView
-                    ?: layoutInflater.inflate(R.layout.bottom_sheet_menu_item, parent, false)
+                val itemView = convertView ?: layoutInflater.inflate(R.layout.bottom_sheet_menu_item, parent, false)
                 val iconView = itemView.findViewById<android.widget.ImageView>(R.id.menu_item_icon)
                 val textView = itemView.findViewById<android.widget.TextView>(R.id.menu_item_text)
-                val row = getItem(position) ?: return itemView
+                val row = getItem(position)
 
-                if (row.isHeader) {
+                if (row?.isHeader == true) {
                     iconView.visibility = View.GONE
                     textView.text = row.title
-                    textView.setTextColor(
-                        if (luminance > 0.5) android.graphics.Color.DKGRAY
-                        else android.graphics.Color.LTGRAY
-                    )
+                    textView.setTextColor(if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY)
                     textView.textSize = 11f
                     textView.setTypeface(null, android.graphics.Typeface.BOLD)
                     textView.setPadding(4, 8, 4, 2)
+                    itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    itemView.isClickable = false
+                    itemView.isFocusable = false
                     itemView.minimumHeight = (28 * resources.displayMetrics.density).toInt()
-                    itemView.isEnabled = false
                 } else {
                     iconView.visibility = View.VISIBLE
-                    textView.text = row.title
+                    textView.text = row?.title.orEmpty()
                     textView.setTextColor(textColor)
                     textView.textSize = 15f
                     textView.setTypeface(null, android.graphics.Typeface.NORMAL)
                     textView.setPadding(0, 0, 0, 0)
-                    iconView.setImageResource(row.iconRes)
+                    iconView.setImageResource(row?.iconRes ?: android.R.drawable.ic_menu_help)
                     iconView.setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                    itemView.background = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, android.R.drawable.list_selector_background)
+                    itemView.isClickable = true
+                    itemView.isFocusable = true
                     itemView.minimumHeight = (48 * resources.displayMetrics.density).toInt()
-                    itemView.isEnabled = true
                 }
                 return itemView
             }
@@ -5010,11 +5000,12 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             override fun isEnabled(position: Int): Boolean = !getItem(position)!!.isHeader
         }
 
+        view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
         listView.adapter = adapter
+        listView.isNestedScrollingEnabled = true
         listView.setOnItemClickListener { _, _, position, _ ->
             val item = menuRows[position]
             if (item.isHeader) return@setOnItemClickListener
-
             bottomSheetDialog.dismiss()
             when (item.id) {
                 R.id.menu_back -> binding.backButton.performClick()
@@ -5044,12 +5035,12 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             }
         }
 
-        bottomSheetDialog.show()
-        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let { sheet ->
-            val height = (resources.displayMetrics.heightPixels * 0.82f).toInt()
-            sheet.layoutParams = sheet.layoutParams.apply { this.height = height }
-            sheet.requestLayout()
+        bottomSheetDialog.setOnShowListener {
+            val sheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            sheet?.layoutParams?.height = (resources.displayMetrics.heightPixels * 0.82f).toInt()
+            sheet?.requestLayout()
         }
+        bottomSheetDialog.show()
     }
 
 
@@ -5877,98 +5868,110 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             .show()
     }
     private fun showMasterSettingsDialog() {
-        data class SettingsRow(
-            val title: String,
-            val isHeader: Boolean = false,
-            val action: (() -> Unit)? = null
-        )
-
-        val rows = listOf(
-            SettingsRow("CONTENT & PRIVACY", isHeader = true),
-            SettingsRow("Content Blocking") { showContentBlockingDialog() },
-            SettingsRow("Manage Blocked Sites") { showBlockedSitesDialog() },
-            SettingsRow("Manage Whitelist") { showWhitelistManagementDialog() },
-            SettingsRow("Popup & Redirect Blocker") { showPopupBlockerSettingsDialog() },
-            SettingsRow("Confirm Navigation") { showConfirmNavigationSettingsDialog() },
-
-            SettingsRow("APP & DATA", isHeader = true),
-            SettingsRow("Backup and Restore") { showBackupRestoreDialog() },
-            SettingsRow("Background Loading") { showBackgroundLoadingDialog() },
-            SettingsRow("Clear Video Cache") {
+        data class SettingsAction(val title: String, val iconRes: Int, val section: String, val onClick: () -> Unit)
+        val settingsActions = listOf(
+            SettingsAction("Content blocking", android.R.drawable.ic_menu_close_clear_cancel, "PRIVACY & BLOCKING") { showContentBlockingDialog() },
+            SettingsAction("Manage blocked sites", android.R.drawable.ic_delete, "PRIVACY & BLOCKING") { showBlockedSitesDialog() },
+            SettingsAction("Manage whitelist", android.R.drawable.ic_menu_agenda, "PRIVACY & BLOCKING") { showWhitelistManagementDialog() },
+            SettingsAction("Pop-up & redirect blocker", android.R.drawable.ic_dialog_alert, "PRIVACY & BLOCKING") { showPopupBlockerSettingsDialog() },
+            SettingsAction("Confirm navigation", android.R.drawable.ic_menu_set_as, "PRIVACY & BLOCKING") { showConfirmNavigationSettingsDialog() },
+            SettingsAction("Media detection", android.R.drawable.ic_media_play, "MEDIA & DOWNLOADS") { showMediaDetectionSettingsDialog() },
+            SettingsAction("Floating detector", android.R.drawable.ic_menu_view, "MEDIA & DOWNLOADS") { showFloatingDetectorSettingsDialog() },
+            SettingsAction("Clear video cache", android.R.drawable.ic_menu_delete, "MEDIA & DOWNLOADS") {
                 HlsDownloadHelper.clearUnifiedCache(this)
                 Toast.makeText(this, "Video cache cleared", Toast.LENGTH_SHORT).show()
             },
-
-            SettingsRow("AI", isHeader = true),
-            SettingsRow("Gemini AI Settings") { showGeminiSettingsDialog() },
-
-            SettingsRow("DIAGNOSTICS", isHeader = true),
-            SettingsRow("View App Logs") {
+            SettingsAction("Background loading", android.R.drawable.ic_media_ff, "MEDIA & DOWNLOADS") { showBackgroundLoadingDialog() },
+            SettingsAction("Gemini AI", android.R.drawable.ic_menu_edit, "AI & PERSONALIZATION") { showGeminiSettingsDialog() },
+            SettingsAction("Backup & restore", android.R.drawable.ic_menu_save, "DATA & DIAGNOSTICS") { showBackupRestoreDialog() },
+            SettingsAction("View app logs", android.R.drawable.ic_menu_info_details, "DATA & DIAGNOSTICS") {
                 startActivity(Intent(this, LogcatViewerActivity::class.java))
             },
-            SettingsRow("View Export Logs") { showExportLogsDialog() }
+            SettingsAction("View export logs", android.R.drawable.ic_menu_search, "DATA & DIAGNOSTICS") { showExportLogsDialog() }
         )
 
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val hexColor = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-        val bgColor = try { android.graphics.Color.parseColor(hexColor) } catch (_: Exception) { android.graphics.Color.BLACK }
+        val bgColor = try { android.graphics.Color.parseColor(hexColor) } catch (e: Exception) { android.graphics.Color.BLACK }
         val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
         val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
-        val dialogView = android.widget.ListView(this).apply {
-            divider = null
-            dividerHeight = 0
-            adapter = object : android.widget.ArrayAdapter<SettingsRow>(
-                this@MainActivity,
-                android.R.layout.simple_list_item_1,
-                rows
-            ) {
-                override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                    val rowView = (convertView as? android.widget.TextView)
-                        ?: android.widget.TextView(this@MainActivity)
-                    val row = getItem(position)!!
-                    rowView.text = row.title
-                    rowView.setPadding(
-                        (20 * resources.displayMetrics.density).toInt(),
-                        ((if (row.isHeader) 12 else 14) * resources.displayMetrics.density).toInt(),
-                        (20 * resources.displayMetrics.density).toInt(),
-                        ((if (row.isHeader) 4 else 14) * resources.displayMetrics.density).toInt()
-                    )
-                    rowView.setTextColor(
-                        if (row.isHeader) {
-                            if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
-                        } else textColor
-                    )
-                    rowView.textSize = if (row.isHeader) 11f else 15f
-                    rowView.setTypeface(null, if (row.isHeader) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
-                    rowView.isEnabled = !row.isHeader
-                    rowView.isClickable = !row.isHeader
-                    rowView.minimumHeight = ((if (row.isHeader) 32 else 48) * resources.displayMetrics.density).toInt()
-                    return rowView
+        val mutedColor = if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
+        val density = resources.displayMetrics.density
+
+        var settingsDialog: AlertDialog? = null
+        val content = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding((20 * density).toInt(), (8 * density).toInt(), (20 * density).toInt(), (12 * density).toInt())
+        }
+        val scroll = ScrollView(this).apply {
+            isFillViewport = true
+            addView(content, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+
+        var currentSection = ""
+        settingsActions.forEach { settingsAction ->
+            if (settingsAction.section != currentSection) {
+                currentSection = settingsAction.section
+                val header = TextView(this).apply {
+                    text = currentSection
+                    textSize = 12f
+                    typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+                    letterSpacing = 0.08f
+                    setTextColor(mutedColor)
+                    setPadding((4 * density).toInt(), (18 * density).toInt(), 0, (8 * density).toInt())
+                    contentDescription = "$currentSection settings"
                 }
-
-                override fun isEnabled(position: Int): Boolean = !getItem(position)!!.isHeader
+                content.addView(header, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
             }
-        }
-        val container = android.widget.FrameLayout(this).apply {
-            setPadding(0, 0, 0, 0)
-            addView(dialogView, android.widget.FrameLayout.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                (resources.displayMetrics.heightPixels * 0.55f).toInt()
-            ))
+
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                minimumHeight = (52 * density).toInt()
+                setPadding((12 * density).toInt(), (8 * density).toInt(), (8 * density).toInt(), (8 * density).toInt())
+                isClickable = true
+                isFocusable = true
+                background = androidx.appcompat.content.res.AppCompatResources.getDrawable(this@MainActivity, android.R.drawable.list_selector_background)
+            }
+            val icon = android.widget.ImageView(this).apply {
+                setImageResource(settingsAction.iconRes)
+                setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                contentDescription = null
+            }
+            row.addView(icon, LinearLayout.LayoutParams((24 * density).toInt(), (24 * density).toInt()).apply {
+                marginEnd = (16 * density).toInt()
+            })
+            val title = TextView(this).apply {
+                text = settingsAction.title
+                textSize = 15f
+                setTextColor(textColor)
+                typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+                gravity = android.view.Gravity.CENTER_VERTICAL
+            }
+            row.addView(title, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            val chevron = android.widget.ImageView(this).apply {
+                setImageResource(android.R.drawable.ic_media_next)
+                setColorFilter(mutedColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                contentDescription = "Open ${settingsAction.title}"
+            }
+            row.addView(chevron, LinearLayout.LayoutParams((20 * density).toInt(), (20 * density).toInt()))
+            row.setOnClickListener { settingsDialog?.dismiss(); settingsAction.onClick() }
+            content.addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         }
 
-        createThemedDialogBuilder(this)
+        val dialog = createThemedDialogBuilder(this)
             .setTitle("Settings")
-            .setView(container)
+            .setView(scroll)
             .setNegativeButton("Close", null)
             .create()
-            .also { dialog ->
-                dialogView.setOnItemClickListener { _, _, position, _ ->
-                    dialog.dismiss()
-                    rows[position].action?.invoke()
-                }
-                dialog.show()
+        settingsDialog = dialog
+        dialog.setOnShowListener {
+            val maxHeight = (resources.displayMetrics.heightPixels * 0.72f).toInt()
+            scroll.layoutParams = scroll.layoutParams.apply {
+                height = minOf(content.measuredHeight, maxHeight).coerceAtLeast((180 * density).toInt())
             }
+        }
+        dialog.show()
     }
 
 
