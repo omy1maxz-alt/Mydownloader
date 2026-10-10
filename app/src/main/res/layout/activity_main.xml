@@ -91,7 +91,7 @@
                         <ImageButton
                             android:id="@+id/refreshButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="40dp"
+                            android:layout_width="36dp"
                             android:layout_height="40dp"
                             android:contentDescription="Refresh"
                             android:src="@drawable/ic_refresh" />
@@ -101,7 +101,7 @@
                         <ImageButton
                             android:id="@+id/translateButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="40dp"
+                            android:layout_width="36dp"
                             android:layout_height="40dp"
                             android:visibility="gone"
                             android:contentDescription="Translate Page"
@@ -110,25 +110,23 @@
                         <ImageButton
                             android:id="@+id/backButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="40dp"
+                            android:layout_width="36dp"
                             android:layout_height="40dp"
-                            android:visibility="gone"
                             android:contentDescription="Back"
                             android:src="@drawable/ic_arrow_back" />
 
                         <ImageButton
                             android:id="@+id/forwardButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="40dp"
+                            android:layout_width="36dp"
                             android:layout_height="40dp"
-                            android:visibility="gone"
                             android:contentDescription="Forward"
                             android:src="@drawable/ic_arrow_forward" />
 
                         <ImageButton
                             android:id="@+id/aiButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="40dp"
+                            android:layout_width="36dp"
                             android:layout_height="40dp"
                             android:visibility="gone"
                             android:contentDescription="Gemini AI"
@@ -137,7 +135,7 @@
                         <ImageButton
                             android:id="@+id/fabShowMedia"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="40dp"
+                            android:layout_width="36dp"
                             android:layout_height="40dp"
                             android:contentDescription="Downloads"
                             android:src="@drawable/ic_download"
@@ -146,7 +144,7 @@
 
                         <FrameLayout
                             android:id="@+id/tabButton"
-                            android:layout_width="40dp"
+                            android:layout_width="36dp"
                             android:layout_height="40dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Tabs">
@@ -170,7 +168,7 @@
                         <ImageButton
                             android:id="@+id/overflowMenuButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="40dp"
+                            android:layout_width="36dp"
                             android:layout_height="40dp"
                             android:contentDescription="More options"
                             android:src="@drawable/ic_more_vert" />
