@@ -4910,144 +4910,151 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
         val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
 
-        val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_menu, null)
-        val rootLayout = view.findViewById<android.widget.LinearLayout>(R.id.bottom_sheet_root)
-        val bgDrawable = (rootLayout.background as? android.graphics.drawable.GradientDrawable)
-            ?: (androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bottom_sheet_bg) as android.graphics.drawable.GradientDrawable).mutate() as android.graphics.drawable.GradientDrawable
-        bgDrawable.setColor(bgColor)
-        rootLayout.background = bgDrawable
+        data class MenuAction(val title: String, val iconRes: Int, val onClick: () -> Unit)
+        data class MenuCategory(val title: String, val iconRes: Int, val actions: List<MenuAction>)
 
-        bottomSheetDialog.setContentView(view)
-        bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            ?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-
-        data class MenuRow(
-            val id: Int = 0,
-            val title: String,
-            val iconRes: Int = 0,
-            val isHeader: Boolean = false
-        )
         val settingsPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
-        val showNotice = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
-        val popupNoticeTitle = if (showNotice) "Popup Notices: On" else "Popup Notices: Off"
-
-        val menuRows = listOf(
-            MenuRow(title = "BROWSER", isHeader = true),
-            MenuRow(R.id.backButton, "Back", R.drawable.ic_arrow_back),
-            MenuRow(R.id.forwardButton, "Forward", R.drawable.ic_arrow_forward),
-            MenuRow(R.id.menu_history, "History", R.drawable.ic_public),
-            MenuRow(R.id.menu_add_bookmark, "Add Bookmark", R.drawable.ic_add),
-            MenuRow(R.id.menu_add_link, "Add Link", R.drawable.ic_download),
-            MenuRow(R.id.menu_open_external, "Open in External Browser", R.drawable.ic_public),
-
-            MenuRow(title = "TOOLS", isHeader = true),
-            MenuRow(R.id.translateButton, if (isAutoTranslateEnabled) "Auto-Translate: On" else "Auto-Translate: Off", R.drawable.ic_translate),
-            MenuRow(R.id.aiButton, "Ask Gemini About This Page", R.drawable.ic_ai_sparkle),
-            MenuRow(R.id.menu_user_scripts, "User Scripts", R.drawable.ic_translate),
-            MenuRow(R.id.menu_proxy_settings, getString(R.string.proxy_settings), R.drawable.ic_public),
-            MenuRow(R.id.menu_nuke_traps, "Block Ads / Traps on This Page", R.drawable.ic_close),
-
-            MenuRow(title = "MEDIA & APPEARANCE", isHeader = true),
-            MenuRow(R.id.menu_media_detection_settings, "Media Detection", R.drawable.ic_play_arrow),
-            MenuRow(R.id.menu_floating_detector_settings, "Floating Detector", R.drawable.ic_play_arrow),
-            MenuRow(R.id.menu_theme_color, "Theme Color", android.R.drawable.ic_menu_gallery),
-            MenuRow(R.id.menu_toggle_popup_notice, popupNoticeTitle, android.R.drawable.ic_dialog_alert),
-
-            MenuRow(title = "SETTINGS", isHeader = true),
-            MenuRow(R.id.menu_settings, "App Settings", android.R.drawable.ic_menu_manage),
-
-            MenuRow(title = "DEVELOPER", isHeader = true),
-            MenuRow(R.id.menu_api_sniffer, "API Network Sniffer", R.drawable.ic_public),
-            MenuRow(R.id.menu_debug_site, "Debug Site", android.R.drawable.ic_menu_info_details),
-            MenuRow(R.id.menu_debug_page, "Debug Page", android.R.drawable.ic_menu_search)
+        val noticeOn = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
+        val categories = listOf(
+            MenuCategory("Browser", android.R.drawable.ic_menu_view, listOf(
+                MenuAction("Back", R.drawable.ic_arrow_back) { navigateBack() },
+                MenuAction("Forward", R.drawable.ic_arrow_forward) { navigateForward() },
+                MenuAction("History", R.drawable.ic_public) { showHistory() },
+                MenuAction("Add Bookmark", R.drawable.ic_add) { addCurrentPageToBookmarks() },
+                MenuAction("Add Link", R.drawable.ic_download) { showManualAddLinkDialog() },
+                MenuAction("Open in External Browser", R.drawable.ic_public) { openCurrentPageInExternalBrowser() }
+            )),
+            MenuCategory("Tools", R.drawable.ic_translate, listOf(
+                MenuAction(if (isAutoTranslateEnabled) "Auto-Translate: On" else "Auto-Translate: Off", R.drawable.ic_translate) { toggleAutoTranslate() },
+                MenuAction("Ask Gemini About This Page", R.drawable.ic_ai_sparkle) { openGeminiForCurrentPage() },
+                MenuAction("User Scripts", R.drawable.ic_translate) { startActivity(Intent(this, UserScriptManagerActivity::class.java)) },
+                MenuAction(getString(R.string.proxy_settings), R.drawable.ic_public) { showProxySettingsDialog() },
+                MenuAction("Block Ads / Traps on This Page", R.drawable.ic_close) { nukeAdsAndTraps() }
+            )),
+            MenuCategory("Media & Appearance", R.drawable.ic_play_arrow, listOf(
+                MenuAction("Media Detection Settings", R.drawable.ic_play_arrow) { showMediaDetectionSettingsDialog() },
+                MenuAction("Floating Detector Settings", R.drawable.ic_play_arrow) { showFloatingDetectorSettingsDialog() },
+                MenuAction("Theme Color", android.R.drawable.ic_menu_gallery) { showThemeColorPickerDialog() },
+                MenuAction(if (noticeOn) "Popup Notices: On" else "Popup Notices: Off", android.R.drawable.ic_dialog_alert) {
+                    val current = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
+                    settingsPrefs.edit().putBoolean("SHOW_POPUP_BLOCKED_NOTICE", !current).apply()
+                    Toast.makeText(this, "Popup block notices " + if (!current) "enabled" else "disabled", Toast.LENGTH_SHORT).show()
+                }
+            )),
+            MenuCategory("Settings", android.R.drawable.ic_menu_manage, listOf(
+                MenuAction("App Settings", android.R.drawable.ic_menu_manage) { showMasterSettingsDialog() }
+            )),
+            MenuCategory("Developer", android.R.drawable.ic_menu_info_details, listOf(
+                MenuAction("API Network Sniffer", R.drawable.ic_public) { launchApiSniffer() },
+                MenuAction("Debug Site", android.R.drawable.ic_menu_info_details) { showSiteDebuggingOptions() },
+                MenuAction("Debug Page", android.R.drawable.ic_menu_search) { showPageSource() }
+            ))
         )
 
-        view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
-        val listView = view.findViewById<android.widget.ListView>(R.id.bottom_sheet_list)
-        val adapter = object : android.widget.ArrayAdapter<MenuRow>(this, R.layout.bottom_sheet_menu_item, menuRows) {
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val itemView = convertView ?: layoutInflater.inflate(R.layout.bottom_sheet_menu_item, parent, false)
-                val iconView = itemView.findViewById<android.widget.ImageView>(R.id.menu_item_icon)
-                val textView = itemView.findViewById<android.widget.TextView>(R.id.menu_item_text)
-                val row = getItem(position)
-
-                if (row?.isHeader == true) {
-                    iconView.visibility = View.GONE
-                    textView.text = row.title
-                    textView.setTextColor(if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY)
-                    textView.textSize = 11f
-                    textView.setTypeface(null, android.graphics.Typeface.BOLD)
-                    textView.setPadding(4, 8, 4, 2)
-                    itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                    itemView.isClickable = false
-                    itemView.isFocusable = false
-                    itemView.minimumHeight = (28 * resources.displayMetrics.density).toInt()
-                } else {
-                    iconView.visibility = View.VISIBLE
-                    textView.text = row?.title.orEmpty()
-                    textView.setTextColor(textColor)
-                    textView.textSize = 15f
-                    textView.setTypeface(null, android.graphics.Typeface.NORMAL)
-                    textView.setPadding(0, 0, 0, 0)
-                    iconView.setImageResource(row?.iconRes ?: android.R.drawable.ic_menu_help)
-                    iconView.setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
-                    itemView.background = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, android.R.drawable.list_selector_background)
-                    // Let ListView receive the tap and dispatch its item-click listener.
-                    itemView.isClickable = false
-                    itemView.isFocusable = false
-                    itemView.minimumHeight = (48 * resources.displayMetrics.density).toInt()
-                }
-                return itemView
-            }
-
-            override fun isEnabled(position: Int): Boolean = !getItem(position)!!.isHeader
-        }
-
-        view.findViewById<android.widget.TextView>(R.id.bottom_sheet_title)?.setTextColor(textColor)
-        listView.adapter = adapter
-        listView.isNestedScrollingEnabled = true
-        listView.setOnItemClickListener { _, _, position, _ ->
-            val item = menuRows[position]
-            if (item.isHeader) return@setOnItemClickListener
-            bottomSheetDialog.dismiss()
-            when (item.id) {
-                R.id.backButton -> navigateBack()
-                R.id.forwardButton -> navigateForward()
-                R.id.translateButton -> toggleAutoTranslate()
-                R.id.aiButton -> openGeminiForCurrentPage()
-                R.id.menu_history -> showHistory()
-                R.id.menu_add_bookmark -> addCurrentPageToBookmarks()
-                R.id.menu_add_link -> showManualAddLinkDialog()
-                R.id.menu_user_scripts -> startActivity(Intent(this, UserScriptManagerActivity::class.java))
-                R.id.menu_open_external -> openCurrentPageInExternalBrowser()
-                R.id.menu_proxy_settings -> showProxySettingsDialog()
-                R.id.menu_nuke_traps -> nukeAdsAndTraps()
-                R.id.menu_settings -> showMasterSettingsDialog()
-                R.id.menu_media_detection_settings -> showMediaDetectionSettingsDialog()
-                R.id.menu_floating_detector_settings -> showFloatingDetectorSettingsDialog()
-                R.id.menu_theme_color -> showThemeColorPickerDialog()
-                R.id.menu_debug_site -> showSiteDebuggingOptions()
-                R.id.menu_api_sniffer -> launchApiSniffer()
-                R.id.menu_debug_page -> showPageSource()
-                R.id.menu_toggle_popup_notice -> {
-                    val currentSetting = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
-                    settingsPrefs.edit().putBoolean("SHOW_POPUP_BLOCKED_NOTICE", !currentSetting).apply()
-                    val stateStr = if (!currentSetting) "enabled" else "disabled"
-                    Toast.makeText(this@MainActivity, "Popup block notices $stateStr", Toast.LENGTH_SHORT).show()
+        val menuDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
+        fun createMenuContent(category: MenuCategory? = null): android.widget.LinearLayout {
+            val root = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+                val density = resources.displayMetrics.density
+                setPadding((16 * density).toInt(), (12 * density).toInt(), (16 * density).toInt(), (8 * density).toInt())
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(bgColor)
+                    cornerRadii = floatArrayOf(16f,16f,16f,16f,0f,0f,0f,0f).map { it * resources.displayMetrics.density }.toFloatArray()
                 }
             }
+            val density = resources.displayMetrics.density
+            val title = android.widget.TextView(this).apply {
+                text = category?.title ?: "Menu"
+                textSize = 18f
+                typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+                setTextColor(textColor)
+                setPadding((4 * density).toInt(), (4 * density).toInt(), (4 * density).toInt(), (12 * density).toInt())
+            }
+            root.addView(title, android.widget.LinearLayout.LayoutParams(-1, -2))
+
+            val body = android.widget.LinearLayout(this).apply { orientation = android.widget.LinearLayout.VERTICAL }
+            val actions = category?.actions
+            if (actions == null) {
+                categories.forEach { item ->
+                    val row = makeMenuRow(item.title, item.iconRes, textColor, density, true)
+                    row.setOnClickListener { menuDialog.setContentView(createMenuContent(item)) }
+                    body.addView(row, android.widget.LinearLayout.LayoutParams(-1, -2))
+                }
+            } else {
+                actions.forEach { action ->
+                    val row = makeMenuRow(action.title, action.iconRes, textColor, density, false)
+                    row.setOnClickListener { menuDialog.dismiss(); action.onClick() }
+                    body.addView(row, android.widget.LinearLayout.LayoutParams(-1, -2))
+                }
+                val backRow = makeMenuRow("Back to Menu", android.R.drawable.ic_media_previous, textColor, density, true)
+                backRow.setOnClickListener { menuDialog.setContentView(createMenuContent()) }
+                body.addView(backRow, android.widget.LinearLayout.LayoutParams(-1, -2))
+            }
+
+            val scroll = ScrollView(this).apply {
+                isFillViewport = true
+                addView(body, ViewGroup.LayoutParams(-1, -2))
+            }
+            root.addView(scroll, android.widget.LinearLayout.LayoutParams(-1, 0, 1f))
+            return root
         }
 
-        bottomSheetDialog.setOnShowListener {
-            val sheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            val maxHeight = (resources.displayMetrics.heightPixels * 0.82f).toInt()
+        // Keep each view to a short category list. The sheet background is opaque and uses
+        // the same saved theme color as the rest of the app's dialogs.
+        menuDialog.setContentView(createMenuContent())
+        menuDialog.setOnShowListener {
+            val sheet = menuDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
             sheet?.let {
-                it.layoutParams = it.layoutParams.apply { height = maxHeight }
+                it.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                it.layoutParams = it.layoutParams.apply {
+                    height = (resources.displayMetrics.heightPixels * 0.72f).toInt()
+                }
                 it.requestLayout()
             }
         }
-        bottomSheetDialog.show()
+        menuDialog.show()
+    }
+
+    private fun makeMenuRow(
+        title: String,
+        iconRes: Int,
+        textColor: Int,
+        density: Float,
+        categoryRow: Boolean
+    ): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            minimumHeight = ((if (categoryRow) 56 else 48) * density).toInt()
+            setPadding((12 * density).toInt(), (8 * density).toInt(), (8 * density).toInt(), (8 * density).toInt())
+            isClickable = true
+            isFocusable = true
+            background = androidx.appcompat.content.res.AppCompatResources.getDrawable(this@MainActivity, android.R.drawable.list_selector_background)
+            val icon = android.widget.ImageView(this@MainActivity).apply {
+                setImageResource(iconRes)
+                setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                contentDescription = null
+            }
+            addView(icon, LinearLayout.LayoutParams((24 * density).toInt(), (24 * density).toInt()).apply {
+                marginEnd = (16 * density).toInt()
+            })
+            val label = android.widget.TextView(this@MainActivity).apply {
+                text = title
+                textSize = 15f
+                setTextColor(textColor)
+                typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+                gravity = android.view.Gravity.CENTER_VERTICAL
+            }
+            addView(label, LinearLayout.LayoutParams(0, -2, 1f))
+            if (categoryRow) {
+                val chevron = android.widget.ImageView(this@MainActivity).apply {
+                    setImageResource(android.R.drawable.ic_media_next)
+                    setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                    contentDescription = "Open $title"
+                }
+                addView(chevron, LinearLayout.LayoutParams((20 * density).toInt(), (20 * density).toInt()))
+            }
+        }
     }
 
 
