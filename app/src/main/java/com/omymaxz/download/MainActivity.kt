@@ -5856,33 +5856,99 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             .show()
     }
     private fun showMasterSettingsDialog() {
-        val items = arrayOf("Content Blocking", "Manage Blocked Sites", "Manage Whitelist", "Backup and Restore", "Background Loading", "View App Logs", "Gemini AI Settings", "Clear Video Cache", "Popup & Redirect Blocker", "Confirm Navigation", "View Export Logs")
-        createThemedDialogBuilder(this)
+        val categories = linkedMapOf(
+            "Protection & Privacy" to listOf(
+                "Content Blocking" to { showContentBlockingDialog() },
+                "Manage Blocked Sites" to { showBlockedSitesDialog() },
+                "Manage Whitelist" to { showWhitelistManagementDialog() },
+                "Popup & Redirect Blocker" to { showPopupBlockerSettingsDialog() },
+                "Confirm Navigation" to { showConfirmNavigationSettingsDialog() }
+            ),
+            "Downloads & Performance" to listOf(
+                "Background Loading" to { showBackgroundLoadingDialog() },
+                "Clear Video Cache" to {
+                    HlsDownloadHelper.clearUnifiedCache(this)
+                    Toast.makeText(this, "Video cache cleared", Toast.LENGTH_SHORT).show()
+                },
+                "Backup and Restore" to { showBackupRestoreDialog() }
+            ),
+            "AI & Personalization" to listOf(
+                "Gemini AI Settings" to { showGeminiSettingsDialog() }
+            ),
+            "Logs & Diagnostics" to listOf(
+                "View App Logs" to {
+                    startActivity(Intent(this, LogcatViewerActivity::class.java))
+                },
+                "View Export Logs" to { showExportLogsDialog() }
+            )
+        )
+
+        val dialogView = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, (8 * resources.displayMetrics.density).toInt(), pad, pad)
+        }
+        val scrollView = android.widget.ScrollView(this).apply {
+            isFillViewport = true
+            addView(dialogView)
+        }
+        val builder = createThemedDialogBuilder(this)
             .setTitle("Settings")
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> showContentBlockingDialog()
-                    1 -> showBlockedSitesDialog()
-                    2 -> showWhitelistManagementDialog()
-                    3 -> showBackupRestoreDialog()
-                    4 -> showBackgroundLoadingDialog()
-                    5 -> {
-                        val intent = Intent(this, LogcatViewerActivity::class.java)
-                        startActivity(intent)
-                    }
-                    6 -> showGeminiSettingsDialog()
-                    7 -> {
-                        HlsDownloadHelper.clearUnifiedCache(this)
-                        Toast.makeText(this, "Video cache cleared", Toast.LENGTH_SHORT).show()
-                    }
-                    8 -> showPopupBlockerSettingsDialog()
-                    9 -> showConfirmNavigationSettingsDialog()
-                    10 -> showExportLogsDialog()
+            .setView(scrollView)
+            .setNegativeButton("Close", null)
+
+        val textColor = try {
+            val typedValue = android.util.TypedValue()
+            theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+            if (typedValue.resourceId != 0) androidx.core.content.ContextCompat.getColor(this, typedValue.resourceId) else typedValue.data
+        } catch (_: Exception) {
+            android.graphics.Color.WHITE
+        }
+
+        categories.forEach { (category, actions) ->
+            val header = android.widget.TextView(this).apply {
+                text = category.uppercase(java.util.Locale.getDefault())
+                textSize = 11f
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                setTextColor(if (androidx.core.graphics.ColorUtils.calculateLuminance(textColor) > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY)
+                val top = (14 * resources.displayMetrics.density).toInt()
+                val bottom = (6 * resources.displayMetrics.density).toInt()
+                setPadding((4 * resources.displayMetrics.density).toInt(), top, 0, bottom)
+            }
+            dialogView.addView(header, android.widget.LinearLayout.LayoutParams(-1, -2))
+
+            actions.forEach { (label, action) ->
+                val row = android.widget.TextView(this).apply {
+                    text = label
+                    textSize = 15f
+                    setTextColor(textColor)
+                    gravity = android.view.Gravity.CENTER_VERTICAL
+                    minHeight = (48 * resources.displayMetrics.density).toInt()
+                    setPadding((12 * resources.displayMetrics.density).toInt(), 0, (8 * resources.displayMetrics.density).toInt(), 0)
+                    background = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, android.R.drawable.list_selector_background)
+                    isClickable = true
+                    isFocusable = true
+                    tag = action
+                }
+                dialogView.addView(row, android.widget.LinearLayout.LayoutParams(-1, -2))
+            }
+        }
+
+        val dialog = builder.create()
+        // Set listeners after creation so the settings sheet closes before opening a destination.
+        for (i in 0 until dialogView.childCount) {
+            val child = dialogView.getChildAt(i)
+            if (child is android.widget.TextView && child.tag is Function0<*>) {
+                @Suppress("UNCHECKED_CAST")
+                val action = child.tag as () -> Unit
+                child.setOnClickListener {
+                    dialog.dismiss()
+                    action()
                 }
             }
-            .show()
+        }
+        dialog.show()
     }
-
 
 
     private fun showConfirmNavigationSettingsDialog() {
