@@ -1,0 +1,2111 @@
+[2026-10-10 09:46:00.895 Uid(value=10806):23803:23803 E/AndroidRuntime]
+FATAL EXCEPTION: main
+Process: com.omymaxz.download.debug, PID: 23803
+java.lang.RuntimeException: android.os.TransactionTooLargeException: data parcel size 2023144 bytes
+	at android.content.ClipboardManager.setPrimaryClip(ClipboardManager.java:195)
+	at com.omymaxz.download.MainActivity.showDebugInfoDialog$lambda$135(MainActivity.kt:5698)
+	at com.omymaxz.download.MainActivity.$r8$lambda$vW9aq0w_7ALIXVMRXRV1bwgGv0w(MainActivity.kt:0)
+	at com.omymaxz.download.MainActivity$$ExternalSyntheticLambda44.onClick(D8$$SyntheticClass:0)
+	at androidx.appcompat.app.AlertController$ButtonHandler.handleMessage(AlertController.java:167)
+	at android.os.Handler.dispatchMessage(Handler.java:107)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:337)
+	at android.app.ActivityThread.main(ActivityThread.java:9682)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:625)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:944)
+Caused by: android.os.TransactionTooLargeException: data parcel size 2023144 bytes
+	at android.os.BinderProxy.transactNative(Native Method)
+	at android.os.BinderProxy.transact(BinderProxy.java:689)
+	at android.content.IClipboard$Stub$Proxy.setPrimaryClip(IClipboard.java:467)
+	at android.content.ClipboardManager.setPrimaryClip(ClipboardManager.java:188)
+	... 11 more
+
+[2026-10-10 12:30:22.659 Uid(value=10806):4369:4369 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:30:22.689 Uid(value=10806):4369:4369 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,4]
+
+[2026-10-10 12:30:22.811 Uid(value=10806):4369:4369 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,12]
+
+[2026-10-10 12:30:22.854 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:30:31.278 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=32]
+
+[2026-10-10 12:30:31.303 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=32]
+
+[2026-10-10 12:30:31.477 Uid(value=10806):4369:16798 I/jank_cuj_events_end_request]
+[81,1791610231475879000,341531850118971,318142829458011]
+
+[2026-10-10 12:30:31.611 Uid(value=10806):4369:4369 I/wm_on_resume_called]
+[0,11465182,com.omymaxz.download.CustomPlayerActivity,RESUME_ACTIVITY,14]
+
+[2026-10-10 12:30:31.614 Uid(value=10806):4369:4369 I/wm_on_top_resumed_gained_called]
+[11465182,com.omymaxz.download.CustomPlayerActivity,topWhenResuming]
+
+[2026-10-10 12:30:31.616 Uid(value=10806):4369:4369 I/wm_on_idle_called]
+com.omymaxz.download.CustomPlayerActivity
+
+[2026-10-10 12:30:32.377 Uid(value=10806):4369:4369 I/wm_on_top_resumed_lost_called]
+[11465182,com.omymaxz.download.CustomPlayerActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:30:32.379 Uid(value=10806):4369:4369 I/wm_on_paused_called]
+[0,11465182,com.omymaxz.download.CustomPlayerActivity,performPause,1]
+
+[2026-10-10 12:30:32.395 Uid(value=10806):4369:4369 I/wm_on_restart_called]
+[0,106177576,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 12:30:32.426 Uid(value=10806):4369:4369 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,31]
+
+[2026-10-10 12:30:32.444 Uid(value=10806):4369:4369 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,7]
+
+[2026-10-10 12:30:32.445 Uid(value=10806):4369:4369 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 12:30:32.456 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 12:30:32.467 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:30:32.566 Uid(value=10806):4369:4369 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:30:32.769 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:30:32.772 Uid(value=10806):4369:4369 I/wm_on_stop_called]
+[0,11465182,com.omymaxz.download.CustomPlayerActivity,LIFECYCLER_STOP_ACTIVITY,1]
+
+[2026-10-10 12:30:32.922 Uid(value=10806):4369:4369 I/wm_on_destroy_called]
+[0,11465182,com.omymaxz.download.CustomPlayerActivity,performDestroy,148]
+
+[2026-10-10 12:30:32.922 Uid(value=10806):4369:4369 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{56b5f40 I.E...... R.....ID 0,0-1080,2400 aid=2}[CustomPlayerActivity] of Surface(name=null mNativeObject=0)/@0x13d3e79android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.ActivityThread.handleDestroyActivity:6548 android.app.servertransaction.DestroyActivityItem.execute:46 
+
+[2026-10-10 12:30:32.923 Uid(value=10806):4369:4369 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{56b5f40 I.E...... R.....ID 0,0-1080,2400 aid=2}[CustomPlayerActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:30:33.531 Uid(value=10806):4369:4369 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:30:33.536 Uid(value=10806):4369:4369 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,1]
+
+[2026-10-10 12:30:33.878 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:30:34.031 Uid(value=10806):4369:4369 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,31]
+
+[2026-10-10 12:30:51.135 Uid(value=10806):4369:4369 I/wm_on_restart_called]
+[0,106177576,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 12:30:51.181 Uid(value=10806):4369:4369 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,46]
+
+[2026-10-10 12:30:51.217 Uid(value=10806):4369:4369 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,4]
+
+[2026-10-10 12:30:51.217 Uid(value=10806):4369:4369 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 12:30:51.265 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 12:30:51.358 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:30:51.729 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:30:51.770 Uid(value=10806):4369:4369 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:30:51.957 Uid(value=10806):4369:4369 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:30:51.959 Uid(value=10806):4369:4369 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,1]
+
+[2026-10-10 12:30:52.637 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:30:52.724 Uid(value=10806):4369:4369 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,31]
+
+[2026-10-10 12:31:41.006 Uid(value=10806):4369:4369 I/wm_on_restart_called]
+[0,106177576,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 12:31:41.020 Uid(value=10806):4369:4369 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,13]
+
+[2026-10-10 12:31:41.034 Uid(value=10806):4369:4369 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,1]
+
+[2026-10-10 12:31:41.036 Uid(value=10806):4369:4369 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:31:41.055 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 12:31:41.087 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:31:41.209 Uid(value=10806):4369:4369 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:31:42.510 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:31:45.111 Uid(value=10806):4369:4369 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{f3c16bc V.ED..... R......D 0,0-1026,2159}[MainActivity] of Surface(name=null mNativeObject=-5476376651941113472)/@0xceb2645android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 12:31:45.112 Uid(value=10806):4369:4369 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{f3c16bc V.ED..... R......D 0,0-1026,2159}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:32:17.712 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:32:18.487 Uid(value=10806):4369:4369 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{b40d721 V.ED..... R....... 0,0-1026,2159}[MainActivity] of Surface(name=null mNativeObject=-5476376651941113472)/@0xadd746android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 12:32:18.488 Uid(value=10806):4369:4369 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{b40d721 V.ED..... R....... 0,0-1026,2159}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:32:22.017 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:32:25.081 Uid(value=10806):4369:4369 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{8a8801a V.ED..... R......D 0,0-1026,2159}[MainActivity] of Surface(name=null mNativeObject=-5476376651941113472)/@0x4e2a74bandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 12:32:25.084 Uid(value=10806):4369:4369 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{8a8801a V.ED..... R......D 0,0-1026,2159}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:32:59.867 Uid(value=10806):4369:4369 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:32:59.880 Uid(value=10806):4369:4369 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,1]
+
+[2026-10-10 12:33:00.271 Uid(value=10806):4369:4369 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:33:00.399 Uid(value=10806):4369:4369 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,70]
+
+[2026-10-10 12:33:09.932 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:272392): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_displayfeature_prop:s0" dev="tmpfs" ino=463 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_displayfeature_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:33:09.936 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:272393): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_displayfeature_prop:s0" dev="tmpfs" ino=463 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_displayfeature_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:33:10.537 Uid(value=10806):4304:4304 I/wm_on_create_called]
+[0,106177576,com.omymaxz.download.MainActivity,performCreate,685]
+
+[2026-10-10 12:33:10.557 Uid(value=10806):4304:4304 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,18]
+
+[2026-10-10 12:33:10.575 Uid(value=10806):4304:4304 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,8]
+
+[2026-10-10 12:33:10.651 Uid(value=10806):4304:4304 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:33:10.732 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:272394): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:33:10.732 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:272395): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:33:10.859 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:33:11.211 Uid(value=10806):4304:4304 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:33:12.054 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:3e9 view:android.widget.PopupWindow$PopupDecorView{f199382 V.E...... R.....I. 0,0-0,0} of Surface(name=null mNativeObject=0)/@0x1619a93android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:33:12.055 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:3e9 view:android.widget.PopupWindow$PopupDecorView{f199382 V.E...... R.....I. 0,0-0,0} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:33:12.112 Uid(value=10806):4304:11207 I/jank_cuj_events_begin_request]
+[80,1791610392109275000,341692483564847,318303462905398,0@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:33:12.613 Uid(value=10806):4304:11207 I/jank_cuj_events_end_request]
+[80,1791610392613384000,341692987647190,318303966986804]
+
+[2026-10-10 12:33:15.502 Uid(value=10806):4304:11207 I/jank_cuj_events_begin_request]
+[81,1791610395499372000,341695873613752,318306852953417,1@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:33:16.007 Uid(value=10806):4304:11207 I/jank_cuj_events_end_request]
+[81,1791610396005120000,341696379362345,318307358701646]
+
+[2026-10-10 12:33:17.396 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:272413): avc:  denied  { getattr } for  comm="RenderThread" path="/sys/module/metis/parameters/minor_window_app" dev="sysfs" ino=69317 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:sysfs_migt:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:33:19.488 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:272414): avc:  denied  { getopt } for  comm="FinalizerDaemon" path="/dev/socket/usap_pool_primary" scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:r:zygote:s0 tclass=unix_stream_socket permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:33:59.104 Uid(value=10806):4304:11207 I/jank_cuj_events_begin_request]
+[80,1791610439103708000,341739477948475,318350457287724,0@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:33:59.620 Uid(value=10806):4304:11207 I/jank_cuj_events_end_request]
+[80,1791610439620240000,341739994485037,318350973824390]
+
+[2026-10-10 12:34:21.959 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:7dec299],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:22.002 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:7dec299],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:22.080 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:7dec299 view:android.widget.PopupWindow$PopupDecorView{9cec1d3 V.E...... R.....ID 0,0-55,66} of Surface(name=null mNativeObject=-5476376651941427392)/@0x8490110android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:34:22.080 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:7dec299 view:android.widget.PopupWindow$PopupDecorView{9cec1d3 V.E...... R.....ID 0,0-55,66} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:34:22.148 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:272988): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:22.148 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:272989): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:22.164 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:91260e],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:22.172 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:272991): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:22.172 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:272992): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:22.184 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:bbfab41],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:22.215 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:91260e],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:22.232 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:bbfab41],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:22.974 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:dbd9ea8],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:23.023 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:dbd9ea8],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:23.029 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:91260e view:android.widget.PopupWindow$PopupDecorView{4bfe14a V.E...... R.....ID 0,0-121,61} of Surface(name=null mNativeObject=-5476376651941427392)/@0x593a8bbandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:34:23.029 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:91260e view:android.widget.PopupWindow$PopupDecorView{4bfe14a V.E...... R.....ID 0,0-121,61} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:34:23.046 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:bbfab41 view:android.widget.PopupWindow$PopupDecorView{8ea01d8 V.E...... R.....ID 0,0-121,61} of Surface(name=null mNativeObject=-5476376651941244272)/@0xd42c931android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:34:23.047 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:bbfab41 view:android.widget.PopupWindow$PopupDecorView{8ea01d8 V.E...... R.....ID 0,0-121,61} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:34:23.091 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:7dec299],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:23.124 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:7dec299],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:23.296 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:dbd9ea8 view:android.widget.PopupWindow$PopupDecorView{5bb30fa V.E...... R......D 0,0-793,238} of Surface(name=null mNativeObject=-5476376651941226832)/@0x4fc36abandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:34:23.296 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:dbd9ea8 view:android.widget.PopupWindow$PopupDecorView{5bb30fa V.E...... R......D 0,0-793,238} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:34:25.095 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:7dec299 view:android.widget.PopupWindow$PopupDecorView{66760a1 V.E...... R.....ID 0,0-55,66} of Surface(name=null mNativeObject=-5476376651941244272)/@0x6fb62c6android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:34:25.096 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:7dec299 view:android.widget.PopupWindow$PopupDecorView{66760a1 V.E...... R.....ID 0,0-55,66} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:34:30.236 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273003): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:30.240 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273004): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:30.251 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:7dec299],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:30.268 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:7dec299],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:30.397 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:7dec299 view:android.widget.PopupWindow$PopupDecorView{d5ce80a V.E...... R.....ID 0,0-55,66} of Surface(name=null mNativeObject=-5476376651941244272)/@0xfe087bandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:34:30.397 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:7dec299 view:android.widget.PopupWindow$PopupDecorView{d5ce80a V.E...... R.....ID 0,0-55,66} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:34:30.432 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273005): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:30.432 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273006): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:30.443 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:91260e],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:30.452 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273007): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:30.452 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273008): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:30.461 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:bbfab41],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:30.518 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:e82e00c],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:30.535 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:91260e],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:30.539 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:e82e00c],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:31.085 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:91260e view:android.widget.PopupWindow$PopupDecorView{f12462f V.E...... R.....ID 0,0-121,61} of Surface(name=null mNativeObject=-5476376651941209392)/@0x384643candroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:34:31.086 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:91260e view:android.widget.PopupWindow$PopupDecorView{f12462f V.E...... R.....ID 0,0-121,61} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:34:31.098 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:bbfab41 view:android.widget.PopupWindow$PopupDecorView{85125c5 V.E...... R.....ID 0,0-121,61} of Surface(name=null mNativeObject=-5476376651941401232)/@0xf6d4b1aandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:34:31.098 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:bbfab41 view:android.widget.PopupWindow$PopupDecorView{85125c5 V.E...... R.....ID 0,0-121,61} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:34:31.350 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:e82e00c view:android.widget.PopupWindow$PopupDecorView{384fee6 V.E...... R......D 0,0-793,238} of Surface(name=null mNativeObject=-5476376651941270432)/@0x12ecc27android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:34:31.350 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:e82e00c view:android.widget.PopupWindow$PopupDecorView{384fee6 V.E...... R......D 0,0-793,238} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:34:35.624 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273023): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:35.628 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273024): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:35.640 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:7dec299],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:35.666 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:7dec299],reportDrawFinished seqId=0]
+
+[2026-10-10 12:34:36.044 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273025): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:36.048 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273026): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:34:37.677 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:7dec299 view:android.widget.PopupWindow$PopupDecorView{ba28c21 V.E...... R.....ID 0,0-55,66} of Surface(name=null mNativeObject=-5476376651941270432)/@0xd6de846android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:34:37.679 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:7dec299 view:android.widget.PopupWindow$PopupDecorView{ba28c21 V.E...... R.....ID 0,0-55,66} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:35:04.895 Uid(value=10806):4304:11207 I/jank_cuj_events_begin_request]
+[81,1791610504894861000,341805269101731,318416248440876,1@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:35:05.385 Uid(value=10806):4304:11207 I/jank_cuj_events_end_request]
+[81,1791610505384855000,341805759094543,318416738433636]
+
+[2026-10-10 12:35:18.832 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273089): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:35:18.832 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273090): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:35:18.843 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:91260e],reportDrawFinished seqId=0]
+
+[2026-10-10 12:35:18.848 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273091): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:35:18.848 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273092): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:35:18.858 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:bbfab41],reportDrawFinished seqId=0]
+
+[2026-10-10 12:35:18.873 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[PopupWindow:91260e],reportDrawFinished seqId=0]
+
+[2026-10-10 12:35:20.719 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:91260e view:android.widget.PopupWindow$PopupDecorView{dd52cad V.E...... R.....ID 0,0-121,61} of Surface(name=null mNativeObject=-5476376651941270432)/@0x22eebe2android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:35:20.720 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:91260e view:android.widget.PopupWindow$PopupDecorView{dd52cad V.E...... R.....ID 0,0-121,61} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:35:20.741 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:PopupWindow:bbfab41 view:android.widget.PopupWindow$PopupDecorView{ca57b73 V.E...... R.....ID 0,0-121,61} of Surface(name=null mNativeObject=-5476376651941401232)/@0xc04ca30android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:35:20.742 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:bbfab41 view:android.widget.PopupWindow$PopupDecorView{ca57b73 V.E...... R.....ID 0,0-121,61} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:36:53.165 Uid(value=10806):4304:4304 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:36:53.178 Uid(value=10806):4304:4304 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,2]
+
+[2026-10-10 12:36:55.195 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:37:04.421 Uid(value=10806):4304:4304 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,465]
+
+[2026-10-10 12:37:29.522 Uid(value=10806):4304:4304 I/wm_on_restart_called]
+[0,106177576,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 12:37:29.546 Uid(value=10806):4304:4304 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,23]
+
+[2026-10-10 12:37:29.558 Uid(value=10806):4304:4304 I/wm_on_activity_result_called]
+[0,106177576,com.omymaxz.download.MainActivity,ACTIVITY_RESULT,6]
+
+[2026-10-10 12:37:29.561 Uid(value=10806):4304:4304 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,3]
+
+[2026-10-10 12:37:29.562 Uid(value=10806):4304:4304 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 12:37:29.588 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273341): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:37:29.588 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273342): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:37:29.597 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 12:37:29.668 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:37:29.881 Uid(value=10806):4304:4304 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:38:32.308 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273379): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:38:32.312 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273380): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:38:32.371 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:38:34.310 Uid(value=10806):4304:4304 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{1abcb7 V.ED..... R....... 0,0-1026,2159}[MainActivity] of Surface(name=null mNativeObject=-5476376651941401232)/@0xd6c4c24android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 12:38:34.312 Uid(value=10806):4304:4304 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{1abcb7 V.ED..... R....... 0,0-1026,2159}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:38:36.336 Uid(value=10806):4304:11207 I/jank_cuj_events_begin_request]
+[80,1791610716334167000,342016708412588,318627687752149,0@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:38:36.845 Uid(value=10806):4304:11207 I/jank_cuj_events_end_request]
+[80,1791610716845010000,342017219256650,318628198596576]
+
+[2026-10-10 12:38:40.245 Uid(value=10806):4304:11207 I/jank_cuj_events_begin_request]
+[81,1791610720245235000,342020619476076,318631598815325,1@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:38:40.731 Uid(value=10806):4304:11207 I/jank_cuj_events_end_request]
+[81,1791610720730846000,342021105086544,318632084425793]
+
+[2026-10-10 12:38:55.334 Uid(value=10806):4304:11207 I/jank_cuj_events_begin_request]
+[80,1791610735334176000,342035708415497,318646687754746,0@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:38:55.818 Uid(value=10806):4304:11207 I/jank_cuj_events_end_request]
+[80,1791610735818399000,342036192640809,318647171980058]
+
+[2026-10-10 12:39:31.067 Uid(value=10806):4304:11207 I/jank_cuj_events_begin_request]
+[81,1791610771067066000,342071441307723,318682420647024,1@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:39:31.588 Uid(value=10806):4304:11207 I/jank_cuj_events_end_request]
+[81,1791610771588435000,342071962677983,318682942017441]
+
+[2026-10-10 12:39:39.955 Uid(value=10806):4304:4304 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:39:39.972 Uid(value=10806):4304:4304 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,1]
+
+[2026-10-10 12:39:45.700 Uid(value=10806):4304:4304 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,103]
+
+[2026-10-10 12:39:45.701 Uid(value=10806):4304:4304 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 12:39:45.721 Uid(value=10806):4304:4304 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:39:49.198 Uid(value=10806):4304:4304 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:39:49.201 Uid(value=10806):4304:4304 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,0]
+
+[2026-10-10 12:39:50.524 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:39:50.573 Uid(value=10806):4304:4304 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,26]
+
+[2026-10-10 12:40:06.549 Uid(value=10806):4304:4304 I/wm_on_restart_called]
+[0,106177576,com.omymaxz.download.MainActivity,,6]
+
+[2026-10-10 12:40:06.602 Uid(value=10806):4304:4304 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,53]
+
+[2026-10-10 12:40:06.654 Uid(value=10806):4304:4304 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,8]
+
+[2026-10-10 12:40:06.655 Uid(value=10806):4304:4304 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 12:40:06.672 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273542): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:40:06.672 Uid(value=10806):4304:4304 I/auditd]
+type=1400 audit(0.0:273543): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 12:40:06.686 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 12:40:06.746 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:40:06.838 Uid(value=10806):4304:4304 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:40:30.772 Uid(value=10806):4304:4304 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:40:30.774 Uid(value=10806):4304:4304 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,1]
+
+[2026-10-10 12:40:31.304 Uid(value=10806):4304:4304 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:40:31.354 Uid(value=10806):4304:4304 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,24]
+
+[2026-10-10 12:43:53.675 Uid(value=10806):30346:30346 I/wm_on_create_called]
+[0,106177576,com.omymaxz.download.MainActivity,performCreate,536]
+
+[2026-10-10 12:43:53.689 Uid(value=10806):30346:30346 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,10]
+
+[2026-10-10 12:43:53.705 Uid(value=10806):30346:30346 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,6]
+
+[2026-10-10 12:43:53.819 Uid(value=10806):30346:30346 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:43:53.961 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:43:54.057 Uid(value=10806):30346:30346 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:43:54.259 Uid(value=10806):30346:1000 I/dvm_lock_sample]
+[com.omymaxz.download.debug,0,binder:30346_3,358,CameraManager.java,3286,void android.hardware.camera2.CameraManager$CameraManagerGlobal.onTorchStatusChanged(int, java.lang.String, int),-,3221,void android.hardware.camera2.CameraManager$CameraManagerGlobal.registerAvailabilityCallback(android.hardware.camera2.CameraManager$AvailabilityCallback, java.util.concurrent.Executor, boolean, int, int),71]
+
+[2026-10-10 12:43:56.844 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:44:00.039 Uid(value=10806):30346:30346 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{a954faf V.ED..... R....... 0,0-1026,2159 aid=1073741865}[MainActivity] of Surface(name=null mNativeObject=-5476376651941279152)/@0x346fbcandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 12:44:00.040 Uid(value=10806):30346:30346 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{a954faf V.ED..... R....... 0,0-1026,2159 aid=1073741865}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:44:01.773 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:44:02.636 Uid(value=10806):30346:30346 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{200f4f4 V.ED..... R......D 0,0-1026,2159}[MainActivity] of Surface(name=null mNativeObject=-5476376651941235552)/@0xdc2d41dandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 12:44:02.637 Uid(value=10806):30346:30346 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{200f4f4 V.ED..... R......D 0,0-1026,2159}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:44:02.950 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:44:03.071 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:44:04.183 Uid(value=10806):30346:30346 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{a2a8b55 V.ED..... R....... 0,0-1026,2159}[MainActivity] of Surface(name=null mNativeObject=-5476376651941235552)/@0x34f696aandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 12:44:04.184 Uid(value=10806):30346:30346 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{a2a8b55 V.ED..... R....... 0,0-1026,2159}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:44:05.311 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:44:06.960 Uid(value=10806):30346:30346 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{3c7b949 V.E...... R......D 0,0-1080,2159 aid=1073741878}[MainActivity] of Surface(name=null mNativeObject=-5476376651941235552)/@0xdf4524eandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 12:44:06.961 Uid(value=10806):30346:30346 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{3c7b949 V.E...... R......D 0,0-1080,2159 aid=1073741878}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:44:07.008 Uid(value=10806):30346:30346 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:44:07.011 Uid(value=10806):30346:30346 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,1]
+
+[2026-10-10 12:44:07.066 Uid(value=10806):30346:30346 I/wm_on_create_called]
+[0,147973055,com.omymaxz.download.HistoryActivity,performCreate,27]
+
+[2026-10-10 12:44:07.069 Uid(value=10806):30346:30346 I/wm_on_start_called]
+[0,147973055,com.omymaxz.download.HistoryActivity,handleStartActivity,1]
+
+[2026-10-10 12:44:07.072 Uid(value=10806):30346:30346 I/wm_on_resume_called]
+[0,147973055,com.omymaxz.download.HistoryActivity,RESUME_ACTIVITY,2]
+
+[2026-10-10 12:44:07.141 Uid(value=10806):30346:30346 I/wm_on_top_resumed_gained_called]
+[147973055,com.omymaxz.download.HistoryActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:44:07.232 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[HistoryActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:44:07.263 Uid(value=10806):30346:30346 I/wm_on_idle_called]
+com.omymaxz.download.HistoryActivity
+
+[2026-10-10 12:44:07.526 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:44:07.539 Uid(value=10806):30346:30346 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,6]
+
+[2026-10-10 12:44:11.771 Uid(value=10806):30346:30346 I/wm_on_top_resumed_lost_called]
+[147973055,com.omymaxz.download.HistoryActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:44:11.773 Uid(value=10806):30346:30346 I/wm_on_paused_called]
+[0,147973055,com.omymaxz.download.HistoryActivity,performPause,0]
+
+[2026-10-10 12:44:11.787 Uid(value=10806):30346:30346 I/wm_on_restart_called]
+[0,106177576,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 12:44:11.796 Uid(value=10806):30346:30346 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,9]
+
+[2026-10-10 12:44:11.805 Uid(value=10806):30346:30346 I/wm_on_activity_result_called]
+[0,106177576,com.omymaxz.download.MainActivity,ACTIVITY_RESULT,5]
+
+[2026-10-10 12:44:11.807 Uid(value=10806):30346:30346 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,1]
+
+[2026-10-10 12:44:11.807 Uid(value=10806):30346:30346 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 12:44:11.827 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 12:44:11.837 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:44:11.965 Uid(value=10806):30346:30346 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:44:12.126 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[HistoryActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:44:12.128 Uid(value=10806):30346:30346 I/wm_on_stop_called]
+[0,147973055,com.omymaxz.download.HistoryActivity,LIFECYCLER_STOP_ACTIVITY,1]
+
+[2026-10-10 12:44:12.131 Uid(value=10806):30346:30346 I/wm_on_destroy_called]
+[0,147973055,com.omymaxz.download.HistoryActivity,performDestroy,1]
+
+[2026-10-10 12:44:12.131 Uid(value=10806):30346:30346 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.HistoryActivity view:com.android.internal.policy.DecorView{c284dd8 I.E...... R.....ID 0,0-1080,2400 aid=1}[HistoryActivity] of Surface(name=null mNativeObject=0)/@0x1f12531android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.ActivityThread.handleDestroyActivity:6548 android.app.servertransaction.DestroyActivityItem.execute:46 
+
+[2026-10-10 12:44:12.132 Uid(value=10806):30346:30346 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.HistoryActivity view:com.android.internal.policy.DecorView{c284dd8 I.E...... R.....ID 0,0-1080,2400 aid=1}[HistoryActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:44:34.920 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:44:36.631 Uid(value=10806):30346:30346 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{5f3ae94 V.ED..... R......D 0,0-1026,2159}[MainActivity] of Surface(name=null mNativeObject=-5476376651941200672)/@0x26a9d3dandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 12:44:36.632 Uid(value=10806):30346:30346 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{5f3ae94 V.ED..... R......D 0,0-1026,2159}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:44:36.840 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:44:36.963 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:44:37.596 Uid(value=10806):30346:30346 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{1b0807a V.ED..... R......D 0,0-1026,2159}[MainActivity] of Surface(name=null mNativeObject=-5476376651941200672)/@0x7a8102bandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 12:44:37.597 Uid(value=10806):30346:30346 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{1b0807a V.ED..... R......D 0,0-1026,2159}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:45:53.469 Uid(value=10806):30346:30346 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:45:53.482 Uid(value=10806):30346:30346 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,6]
+
+[2026-10-10 12:45:54.507 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:45:56.384 Uid(value=10806):30346:30346 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,26]
+
+[2026-10-10 12:46:14.601 Uid(value=10806):30346:30346 I/wm_on_restart_called]
+[0,106177576,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 12:46:14.630 Uid(value=10806):30346:30346 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,30]
+
+[2026-10-10 12:46:14.638 Uid(value=10806):30346:30346 I/wm_on_activity_result_called]
+[0,106177576,com.omymaxz.download.MainActivity,ACTIVITY_RESULT,1]
+
+[2026-10-10 12:46:14.640 Uid(value=10806):30346:30346 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,1]
+
+[2026-10-10 12:46:14.640 Uid(value=10806):30346:30346 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 12:46:14.653 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 12:46:14.671 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:46:14.704 Uid(value=10806):30346:30346 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:46:16.760 Uid(value=10806):30346:7312 I/jank_cuj_events_end_request]
+[80,1791611176759780000,342477134073922,319088113414422]
+
+[2026-10-10 12:46:27.163 Uid(value=10806):30346:7312 I/jank_cuj_events_begin_request]
+[81,1791611187163426000,342487537668762,319098517008011,1@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:46:27.639 Uid(value=10806):30346:7312 I/jank_cuj_events_end_request]
+[81,1791611187639143000,342488013383658,319098992722594]
+
+[2026-10-10 12:47:21.072 Uid(value=10806):30346:30346 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:47:21.093 Uid(value=10806):30346:30346 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,3]
+
+[2026-10-10 12:47:21.850 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:47:21.903 Uid(value=10806):30346:30346 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,17]
+
+[2026-10-10 12:51:07.416 Uid(value=10806):30346:30346 I/wm_on_restart_called]
+[0,106177576,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 12:51:07.441 Uid(value=10806):30346:30346 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,25]
+
+[2026-10-10 12:51:07.467 Uid(value=10806):30346:30346 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,3]
+
+[2026-10-10 12:51:07.468 Uid(value=10806):30346:30346 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 12:51:07.496 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 12:51:07.568 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 12:51:07.652 Uid(value=10806):30346:30346 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 12:51:14.264 Uid(value=10806):30346:30346 I/input_focus]
+DIE in:PopupWindow:3e9 view:android.widget.PopupWindow$PopupDecorView{c939875 V.E...... R.....I. 0,0-0,0} of Surface(name=null mNativeObject=0)/@0x2c9c00aandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:51:14.265 Uid(value=10806):30346:30346 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:3e9 view:android.widget.PopupWindow$PopupDecorView{c939875 V.E...... R.....I. 0,0-0,0} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:51:14.301 Uid(value=10806):30346:7312 I/jank_cuj_events_begin_request]
+[80,1791611474301187000,342774675460892,319385654800037,0@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:51:14.768 Uid(value=10806):30346:7312 I/jank_cuj_events_end_request]
+[80,1791611474768093000,342775142333548,319386121672641]
+
+[2026-10-10 12:51:16.613 Uid(value=10806):30346:7312 I/jank_cuj_events_begin_request]
+[81,1791611476607303000,342776981542662,319387960881911,1@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:51:17.058 Uid(value=10806):30346:7312 I/jank_cuj_events_end_request]
+[81,1791611477057772000,342777432014433,319388411353630]
+
+[2026-10-10 12:51:35.432 Uid(value=10806):30346:30346 I/input_focus]
+DIE in:PopupWindow:3e9 view:android.widget.PopupWindow$PopupDecorView{6fb7658 V.E...... R.....I. 0,0-0,0} of Surface(name=null mNativeObject=0)/@0x73063b1android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:51:35.432 Uid(value=10806):30346:30346 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:3e9 view:android.widget.PopupWindow$PopupDecorView{6fb7658 V.E...... R.....I. 0,0-0,0} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:51:35.540 Uid(value=10806):30346:7312 I/jank_cuj_events_begin_request]
+[80,1791611495539877000,342795914117082,319406893456123,0@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:51:35.993 Uid(value=10806):30346:7312 I/jank_cuj_events_end_request]
+[80,1791611495993493000,342796367732499,319407347071435]
+
+[2026-10-10 12:51:39.624 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[PopupWindow:3e9],reportDrawFinished seqId=0]
+
+[2026-10-10 12:51:39.680 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[PopupWindow:3e9],reportDrawFinished seqId=0]
+
+[2026-10-10 12:51:45.604 Uid(value=10806):30346:30346 I/input_focus]
+DIE in:PopupWindow:3e9 view:android.widget.PopupWindow$PopupDecorView{887dbc6 V.E...... R....... 0,0-110,110} of Surface(name=null mNativeObject=-5476376651941043712)/@0x7f31787android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 12:51:45.604 Uid(value=10806):30346:30346 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:3e9 view:android.widget.PopupWindow$PopupDecorView{887dbc6 V.E...... R....... 0,0-110,110} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 12:51:45.643 Uid(value=10806):30346:7312 I/jank_cuj_events_begin_request]
+[81,1791611505642591000,342806016831505,319416996170754,1@0@com.omymaxz.download.debug]
+
+[2026-10-10 12:51:46.093 Uid(value=10806):30346:7312 I/jank_cuj_events_end_request]
+[81,1791611506093179000,342806467420255,319417446759140]
+
+[2026-10-10 12:52:12.872 Uid(value=10806):30346:30346 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 12:52:12.876 Uid(value=10806):30346:30346 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,1]
+
+[2026-10-10 12:52:13.876 Uid(value=10806):30346:30346 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 12:52:13.940 Uid(value=10806):30346:30346 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,37]
+
+[2026-10-10 13:00:45.568 Uid(value=10806):23358:23358 I/auditd]
+type=1400 audit(0.0:275317): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_displayfeature_prop:s0" dev="tmpfs" ino=463 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_displayfeature_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:00:45.572 Uid(value=10806):23358:23358 I/auditd]
+type=1400 audit(0.0:275318): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_displayfeature_prop:s0" dev="tmpfs" ino=463 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_displayfeature_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:00:46.056 Uid(value=10806):23358:23358 I/wm_on_create_called]
+[0,106177576,com.omymaxz.download.MainActivity,performCreate,542]
+
+[2026-10-10 13:00:46.068 Uid(value=10806):23358:23358 I/wm_on_start_called]
+[0,106177576,com.omymaxz.download.MainActivity,handleStartActivity,10]
+
+[2026-10-10 13:00:46.094 Uid(value=10806):23358:23358 I/wm_on_resume_called]
+[0,106177576,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,6]
+
+[2026-10-10 13:00:46.160 Uid(value=10806):23358:23358 I/wm_on_top_resumed_gained_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:00:46.224 Uid(value=10806):23358:23358 I/auditd]
+type=1400 audit(0.0:275319): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:00:46.224 Uid(value=10806):23358:23358 I/auditd]
+type=1400 audit(0.0:275320): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:00:46.284 Uid(value=10806):23358:23358 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:00:46.416 Uid(value=10806):23358:23358 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 13:00:46.596 Uid(value=10806):23358:29523 I/dvm_lock_sample]
+[com.omymaxz.download.debug,0,binder:23358_5,366,CameraManager.java,3286,void android.hardware.camera2.CameraManager$CameraManagerGlobal.onTorchStatusChanged(int, java.lang.String, int),-,3221,void android.hardware.camera2.CameraManager$CameraManagerGlobal.registerAvailabilityCallback(android.hardware.camera2.CameraManager$AvailabilityCallback, java.util.concurrent.Executor, boolean, int, int),73]
+
+[2026-10-10 13:00:54.032 Uid(value=10806):23358:23358 I/auditd]
+type=1400 audit(0.0:275322): avc:  denied  { getattr } for  comm="RenderThread" path="/sys/module/metis/parameters/minor_window_app" dev="sysfs" ino=69317 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:sysfs_migt:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:00:55.524 Uid(value=10806):23358:23358 I/auditd]
+type=1400 audit(0.0:275323): avc:  denied  { getopt } for  comm="FinalizerDaemon" path="/dev/socket/usap_pool_primary" scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:r:zygote:s0 tclass=unix_stream_socket permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:00:57.266 Uid(value=10806):23358:23358 I/wm_on_top_resumed_lost_called]
+[106177576,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:00:57.273 Uid(value=10806):23358:23358 I/wm_on_paused_called]
+[0,106177576,com.omymaxz.download.MainActivity,performPause,0]
+
+[2026-10-10 13:00:57.453 Uid(value=10806):23358:23358 I/wm_on_stop_called]
+[0,106177576,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,32]
+
+[2026-10-10 13:00:57.516 Uid(value=10806):23358:23358 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 13:40:15.261 Uid(value=10806):23432:27808 I/ActivityThread]
+TrafficStats init done
+
+[2026-10-10 13:40:15.271 Uid(value=10806):23432:23432 D/ActivityThread]
+useGrowthLimitOutExpendMethod invoke error.
+
+[2026-10-10 13:40:15.291 Uid(value=10806):23432:27808 I/PluginScenarioManager]
+miui.scenariorecognition.plugins.VideoStreamPlugin, (App)create success!
+
+[2026-10-10 13:40:15.291 Uid(value=10806):23432:27808 I/ActivityThread]
+Miui Feature Init done
+
+[2026-10-10 13:40:15.320 Uid(value=10806):23432:23432 D/FramePredict]
+FramePredict init: false
+
+[2026-10-10 13:40:15.324 Uid(value=10806):23432:27808 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-10-10 13:40:15.428 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:277952): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_displayfeature_prop:s0" dev="tmpfs" ino=463 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_displayfeature_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:40:15.432 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:277953): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_displayfeature_prop:s0" dev="tmpfs" ino=463 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_displayfeature_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:40:15.607 Uid(value=10806):23432:23432 V/PhoneWindowStubImpl]
+modifyNavigationBarColor from -16777216 to -1
+
+[2026-10-10 13:40:15.753 Uid(value=10806):23432:23432 I/wm_on_create_called]
+[0,105487507,com.omymaxz.download.MainActivity,performCreate,376]
+
+[2026-10-10 13:40:15.762 Uid(value=10806):23432:23432 I/wm_on_start_called]
+[0,105487507,com.omymaxz.download.MainActivity,handleStartActivity,7]
+
+[2026-10-10 13:40:15.766 Uid(value=10806):23432:23432 D/Activity]
+Activity = ActivityInfo{59c1f06 com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:40:15.771 Uid(value=10806):23432:23432 I/wm_on_resume_called]
+[0,105487507,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,5]
+
+[2026-10-10 13:40:15.787 Uid(value=10806):23432:23432 D/FramePredict]
+init success
+
+[2026-10-10 13:40:15.793 Uid(value=10806):23432:27996 E/FramePredict]
+registerContentObserver fail
+
+[2026-10-10 13:40:15.795 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:40:15.815 Uid(value=10806):23432:23432 I/wm_on_top_resumed_gained_called]
+[105487507,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:40:15.830 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-10-10 13:40:15.832 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-10-10 13:40:15.832 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-10-10 13:40:15.836 Uid(value=10806):23432:23432 D/MiuiNBIManagerImpl]
+init success,pkgName=com.omymaxz.download.debug mIsNBIEnable=false mActivityRules=ActivityRules{}}
+
+[2026-10-10 13:40:15.836 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-10-10 13:40:15.872 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:277954): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:40:15.872 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:277955): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:40:15.908 Uid(value=10806):23432:27803 I/dvm_lock_sample]
+[com.omymaxz.download.debug,0,binder:23432_2,54,CameraManager.java,3286,void android.hardware.camera2.CameraManager$CameraManagerGlobal.onTorchStatusChanged(int, java.lang.String, int),-,3221,void android.hardware.camera2.CameraManager$CameraManagerGlobal.registerAvailabilityCallback(android.hardware.camera2.CameraManager$AvailabilityCallback, java.util.concurrent.Executor, boolean, int, int),10]
+
+[2026-10-10 13:40:15.909 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:40:15.954 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:40:16.009 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:40:16.110 Uid(value=10806):23432:23432 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 13:40:18.167 Uid(value=10806):23432:28056 W/BpBinder]
+PerfMonitor binderTransact: time=1975ms interface=android.speech.tts.ITextToSpeechService code=15
+
+[2026-10-10 13:40:19.808 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:277956): avc:  denied  { getattr } for  comm="RenderThread" path="/sys/module/metis/parameters/minor_window_app" dev="sysfs" ino=69317 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:sysfs_migt:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:40:25.323 Uid(value=10806):23432:27802 D/ActivityThread]
+invoke error.
+
+[2026-10-10 13:40:25.372 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:277957): avc:  denied  { getopt } for  comm="FinalizerDaemon" path="/dev/socket/usap_pool_primary" scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:r:zygote:s0 tclass=unix_stream_socket permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:40:31.019 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:31.730 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:32.043 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:32.376 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:32.735 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:33.106 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:33.622 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:33.985 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:36.908 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:53.517 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:56.323 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:57.563 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:40:58.211 Uid(value=10806):23432:29215 I/jank_cuj_events_begin_request]
+[80,1791614458210951000,345758585234962,322369564574784,0@0@com.omymaxz.download.debug]
+
+[2026-10-10 13:40:58.694 Uid(value=10806):23432:29215 I/jank_cuj_events_end_request]
+[80,1791614458694290000,345759068533191,322370047872336]
+
+[2026-10-10 13:41:01.831 Uid(value=10806):23432:23432 I/wm_on_top_resumed_lost_called]
+[105487507,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:41:01.855 Uid(value=10806):23432:23432 I/wm_on_paused_called]
+[0,105487507,com.omymaxz.download.MainActivity,performPause,3]
+
+[2026-10-10 13:41:02.213 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 13:41:02.303 Uid(value=10806):23432:23432 I/wm_on_stop_called]
+[0,105487507,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,66]
+
+[2026-10-10 13:41:02.330 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:41:15.939 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:41:15.985 Uid(value=10806):23432:23432 I/wm_on_restart_called]
+[0,105487507,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 13:41:16.007 Uid(value=10806):23432:23432 I/wm_on_start_called]
+[0,105487507,com.omymaxz.download.MainActivity,handleStartActivity,22]
+
+[2026-10-10 13:41:16.012 Uid(value=10806):23432:23432 D/Activity]
+Activity = ActivityInfo{59c1f06 com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:41:16.015 Uid(value=10806):23432:23432 I/wm_on_resume_called]
+[0,105487507,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,2]
+
+[2026-10-10 13:41:16.015 Uid(value=10806):23432:23432 I/wm_on_top_resumed_gained_called]
+[105487507,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 13:41:16.028 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278030): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:41:16.028 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278031): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:41:16.046 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 13:41:16.098 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:41:16.167 Uid(value=10806):23432:23432 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 13:41:16.969 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:17.382 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:19.280 Uid(value=10806):23432:23432 I/wm_on_top_resumed_lost_called]
+[105487507,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:41:19.286 Uid(value=10806):23432:23432 I/wm_on_paused_called]
+[0,105487507,com.omymaxz.download.MainActivity,performPause,1]
+
+[2026-10-10 13:41:19.480 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 13:41:19.504 Uid(value=10806):23432:23432 I/wm_on_stop_called]
+[0,105487507,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,14]
+
+[2026-10-10 13:41:21.312 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:41:21.355 Uid(value=10806):23432:23432 I/wm_on_restart_called]
+[0,105487507,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 13:41:21.368 Uid(value=10806):23432:23432 I/wm_on_start_called]
+[0,105487507,com.omymaxz.download.MainActivity,handleStartActivity,14]
+
+[2026-10-10 13:41:21.369 Uid(value=10806):23432:23432 D/Activity]
+Activity = ActivityInfo{59c1f06 com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:41:21.370 Uid(value=10806):23432:23432 I/wm_on_resume_called]
+[0,105487507,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,1]
+
+[2026-10-10 13:41:21.371 Uid(value=10806):23432:23432 I/wm_on_top_resumed_gained_called]
+[105487507,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 13:41:21.384 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278036): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:41:21.384 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278037): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:41:21.393 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 13:41:21.406 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:41:21.479 Uid(value=10806):23432:23432 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 13:41:22.893 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:24.874 Uid(value=10806):23432:23432 I/wm_on_top_resumed_lost_called]
+[105487507,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:41:24.881 Uid(value=10806):23432:23432 I/wm_on_paused_called]
+[0,105487507,com.omymaxz.download.MainActivity,performPause,1]
+
+[2026-10-10 13:41:25.073 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 13:41:25.101 Uid(value=10806):23432:23432 I/wm_on_stop_called]
+[0,105487507,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,22]
+
+[2026-10-10 13:41:26.509 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:41:26.545 Uid(value=10806):23432:23432 I/wm_on_restart_called]
+[0,105487507,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 13:41:26.565 Uid(value=10806):23432:23432 I/wm_on_start_called]
+[0,105487507,com.omymaxz.download.MainActivity,handleStartActivity,20]
+
+[2026-10-10 13:41:26.566 Uid(value=10806):23432:23432 D/Activity]
+Activity = ActivityInfo{59c1f06 com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:41:26.567 Uid(value=10806):23432:23432 I/wm_on_resume_called]
+[0,105487507,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,0]
+
+[2026-10-10 13:41:26.567 Uid(value=10806):23432:23432 I/wm_on_top_resumed_gained_called]
+[105487507,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 13:41:26.568 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278042): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:41:26.572 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278043): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:41:26.576 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 13:41:26.589 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:41:26.610 Uid(value=10806):23432:23432 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 13:41:27.881 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:27.999 Uid(value=10806):23432:29215 I/jank_cuj_events_begin_request]
+[81,1791614487998295000,345788372597295,322399351936388,1@0@com.omymaxz.download.debug]
+
+[2026-10-10 13:41:28.444 Uid(value=10806):23432:29215 I/jank_cuj_events_end_request]
+[81,1791614488444494000,345788818735315,322399798074356]
+
+[2026-10-10 13:41:29.067 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:29.485 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:30.341 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:30.812 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:31.243 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:32.423 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:33.773 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:34.862 Uid(value=10806):23432:23432 I/wm_on_top_resumed_lost_called]
+[105487507,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:41:34.868 Uid(value=10806):23432:23432 I/wm_on_paused_called]
+[0,105487507,com.omymaxz.download.MainActivity,performPause,1]
+
+[2026-10-10 13:41:34.992 Uid(value=10806):23432:23432 I/wm_on_stop_called]
+[0,105487507,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,13]
+
+[2026-10-10 13:41:35.058 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 13:41:43.827 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:41:43.856 Uid(value=10806):23432:23432 I/wm_on_restart_called]
+[0,105487507,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 13:41:43.880 Uid(value=10806):23432:23432 I/wm_on_start_called]
+[0,105487507,com.omymaxz.download.MainActivity,handleStartActivity,23]
+
+[2026-10-10 13:41:43.881 Uid(value=10806):23432:23432 D/Activity]
+Activity = ActivityInfo{59c1f06 com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:41:43.882 Uid(value=10806):23432:23432 I/wm_on_resume_called]
+[0,105487507,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,1]
+
+[2026-10-10 13:41:43.882 Uid(value=10806):23432:23432 I/wm_on_top_resumed_gained_called]
+[105487507,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 13:41:43.892 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278063): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:41:43.892 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278064): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:41:43.897 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 13:41:43.929 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:41:44.043 Uid(value=10806):23432:23432 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 13:41:44.834 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:45.075 Uid(value=10806):23432:23432 V/PhoneWindowStubImpl]
+modifyNavigationBarColor from -16777216 to -1
+
+[2026-10-10 13:41:45.123 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:41:45.137 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:41:45.141 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-10-10 13:41:45.141 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-10-10 13:41:45.141 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-10-10 13:41:45.141 Uid(value=10806):23432:23432 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-10-10 13:41:45.141 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-10-10 13:41:45.260 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278065): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:41:45.264 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278066): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:41:45.269 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:41:45.311 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:41:45.317 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:41:45.387 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:47.158 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:47.253 Uid(value=10806):23432:23432 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{40846c7 V.ED..... R......D 0,0-1026,2159}[MainActivity] of Surface(name=null mNativeObject=-5476376651941209392)/@0x200f4f4android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 13:41:47.258 Uid(value=10806):23432:23432 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity view:com.android.internal.policy.DecorView{40846c7 V.ED..... R......D 0,0-1026,2159}[MainActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 13:41:47.261 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-10-10 13:41:55.727 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:56.123 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:57.013 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:57.820 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:58.418 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:41:59.244 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:00.228 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:00.693 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:01.456 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:01.914 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:02.361 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:02.966 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:42:03.138 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:03.519 Uid(value=10806):23432:27859 W/BpBinder]
+PerfMonitor binderTransact: time=287ms interface=android.os.IBatteryPropertiesRegistrar code=1
+
+[2026-10-10 13:42:03.698 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:42:04.749 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:05.268 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:05.859 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:10.017 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:10.032 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278067): avc:  denied  { read } for  comm="Chrome_InProcGp" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:10.196 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278068): avc:  denied  { read } for  comm="ThreadPoolForeg" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:10.374 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:11.100 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278069): avc:  denied  { read } for  comm="MediaCodec_loop" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:11.736 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278070): avc:  denied  { read } for  comm="Chrome_InProcGp" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:11.772 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278071): avc:  denied  { read } for  comm="ThreadPoolForeg" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:13.220 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:14.427 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:14.716 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:15.340 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278072): avc:  denied  { read } for  comm="MediaCodec_loop" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:16.144 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278073): avc:  denied  { read } for  comm="Chrome_InProcGp" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:16.176 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278074): avc:  denied  { read } for  comm="ThreadPoolForeg" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:16.496 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:16.517 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:16.704 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278075): avc:  denied  { read } for  comm="MediaCodec_loop" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:16.775 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:22.261 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:25.627 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:28.957 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:29.958 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:30.392 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:32.883 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:34.700 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278076): avc:  denied  { read } for  comm="Chrome_InProcGp" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:34.744 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278077): avc:  denied  { read } for  comm="ThreadPoolForeg" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:34.809 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:40.852 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:40.964 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278078): avc:  denied  { read } for  comm="MediaCodec_loop" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:41.015 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:41.308 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278079): avc:  denied  { read } for  comm="Chrome_InProcGp" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:41.344 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278080): avc:  denied  { read } for  comm="ThreadPoolForeg" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:41.449 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:41.754 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:41.846 Uid(value=10806):23432:23432 V/PhoneWindowStubImpl]
+modifyNavigationBarColor from -16777216 to -1
+
+[2026-10-10 13:42:41.870 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:42:41.880 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-10-10 13:42:41.881 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.MainActivity
+
+[2026-10-10 13:42:41.881 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-10-10 13:42:41.881 Uid(value=10806):23432:23432 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-10-10 13:42:41.881 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-10-10 13:42:41.964 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278081): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:41.964 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278082): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:41.971 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:42:42.012 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:42:42.015 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:42:42.018 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:43.166 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:44.778 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:46.607 Uid(value=10806):23432:23432 D/VRI[MainActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:46.743 Uid(value=10806):23432:23432 I/wm_on_top_resumed_lost_called]
+[105487507,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:42:46.747 Uid(value=10806):23432:23432 I/wm_on_paused_called]
+[0,105487507,com.omymaxz.download.MainActivity,performPause,3]
+
+[2026-10-10 13:42:46.796 Uid(value=10806):23432:27808 I/ActivityThread]
+HardwareRenderer preload  done
+
+[2026-10-10 13:42:46.810 Uid(value=10806):23432:23432 V/PhoneWindowStubImpl]
+modifyNavigationBarColor from -16777216 to -1
+
+[2026-10-10 13:42:46.921 Uid(value=10806):23432:23432 I/wm_on_create_called]
+[0,10560866,com.omymaxz.download.CustomPlayerActivity,performCreate,117]
+
+[2026-10-10 13:42:47.215 Uid(value=10806):23432:23432 I/wm_on_start_called]
+[0,10560866,com.omymaxz.download.CustomPlayerActivity,handleStartActivity,291]
+
+[2026-10-10 13:42:47.215 Uid(value=10806):23432:23432 W/MessageMonitor]
+PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onStart took 291ms
+
+[2026-10-10 13:42:47.216 Uid(value=10806):23432:23432 D/Activity]
+Activity = ActivityInfo{c43408c com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:42:47.217 Uid(value=10806):23432:23432 I/wm_on_resume_called]
+[0,10560866,com.omymaxz.download.CustomPlayerActivity,RESUME_ACTIVITY,0]
+
+[2026-10-10 13:42:47.221 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:42:47.230 Uid(value=10806):23432:23432 I/wm_on_top_resumed_gained_called]
+[10560866,com.omymaxz.download.CustomPlayerActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:42:47.232 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:42:47.235 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-10-10 13:42:47.235 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+getWindowType: 1 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-10-10 13:42:47.235 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+window type: 1
+
+[2026-10-10 13:42:47.235 Uid(value=10806):23432:23432 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-10-10 13:42:47.236 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-10-10 13:42:47.256 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278083): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:47.256 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278084): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:47.264 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278085): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:47.268 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278086): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:47.297 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:42:47.408 Uid(value=10806):23432:27839 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:42:47.467 Uid(value=10806):23432:23432 I/wm_on_idle_called]
+com.omymaxz.download.CustomPlayerActivity
+
+[2026-10-10 13:42:47.549 Uid(value=10806):23432:29215 I/jank_cuj_events_end_request]
+[81,1791614567548994000,345867923231327,322478902570055]
+
+[2026-10-10 13:42:47.549 Uid(value=10806):23432:32014 I/dvm_lock_sample]
+[com.omymaxz.download.debug,0,ExoPlayer:Loader:DefaultHlsPlaylistTracker:MultivariantPlaylist,339,SimpleCache.java,-1,androidx.media3.datasource.cache.ContentMetadata androidx.media3.datasource.cache.SimpleCache.getContentMetadata(java.lang.String),-,237,void androidx.media3.datasource.cache.SimpleCache$1.run(),67]
+
+[2026-10-10 13:42:47.604 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 13:42:47.657 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 13:42:47.675 Uid(value=10806):23432:23432 I/wm_on_stop_called]
+[0,105487507,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,10]
+
+[2026-10-10 13:42:47.688 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278087): avc:  denied  { read } for  comm="MediaCodec_loop" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:49.208 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278088): avc:  denied  { read } for  comm="ExoPlayer:Playb" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:49.993 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:50.114 Uid(value=10806):23432:23432 V/PhoneWindowStubImpl]
+modifyNavigationBarColor from -16777216 to -1
+
+[2026-10-10 13:42:50.136 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:42:50.149 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-10-10 13:42:50.149 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-10-10 13:42:50.149 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-10-10 13:42:50.149 Uid(value=10806):23432:23432 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-10-10 13:42:50.149 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-10-10 13:42:50.168 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278089): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:50.168 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278090): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:50.175 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:42:50.207 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:42:51.367 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:51.441 Uid(value=10806):23432:23432 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{ed6b789 V.ED..... R......D 0,0-1026,1097}[CustomPlayerActivity] of Surface(name=null mNativeObject=-5476376651941096032)/@0xa4e138eandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 13:42:51.442 Uid(value=10806):23432:23432 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{ed6b789 V.ED..... R......D 0,0-1026,1097}[CustomPlayerActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 13:42:51.443 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-10-10 13:42:52.040 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278091): avc:  denied  { read } for  comm="MediaCodec_loop" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:52.108 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278092): avc:  denied  { read } for  comm="ExoPlayer:Playb" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:52.490 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:52.514 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:42:52.528 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278093): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:52.532 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278094): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:52.536 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:42:52.543 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[PopupWindow:d62ca2],reportDrawFinished seqId=0]
+
+[2026-10-10 13:42:52.552 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[PopupWindow:d62ca2],reportDrawFinished seqId=0]
+
+[2026-10-10 13:42:52.645 Uid(value=10806):23432:23432 D/VRI[PopupWindow:d62ca2]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:52.851 Uid(value=10806):23432:23432 D/VRI[PopupWindow:d62ca2]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:53.408 Uid(value=10806):23432:23432 I/input_focus]
+DIE in:PopupWindow:d62ca2 view:android.widget.PopupWindow$PopupDecorView{622967 V.E...... R.....ID 0,0-413,286 aid=1073741824} of Surface(name=null mNativeObject=-5476376651941096032)/@0xf133314android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 13:42:53.409 Uid(value=10806):23432:23432 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:d62ca2 view:android.widget.PopupWindow$PopupDecorView{622967 V.E...... R.....ID 0,0-413,286 aid=1073741824} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 13:42:53.423 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:42:53.444 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278095): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:53.444 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278096): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:42:53.448 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:42:53.454 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[PopupWindow:d62ca2],reportDrawFinished seqId=0]
+
+[2026-10-10 13:42:53.464 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[PopupWindow:d62ca2],reportDrawFinished seqId=0]
+
+[2026-10-10 13:42:53.745 Uid(value=10806):23432:23432 D/VRI[PopupWindow:d62ca2]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:53.945 Uid(value=10806):23432:23432 D/VRI[PopupWindow:d62ca2]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:54.609 Uid(value=10806):23432:23432 I/input_focus]
+DIE in:PopupWindow:d62ca2 view:android.widget.PopupWindow$PopupDecorView{6be6c5e V.E...... R......D 0,0-474,715 aid=1073741825} of Surface(name=null mNativeObject=-5476376651941096032)/@0x2ccf83fandroid.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.widget.PopupWindow.dismissImmediate:2154 android.widget.PopupWindow.dismiss:2088 
+
+[2026-10-10 13:42:54.610 Uid(value=10806):23432:23432 I/input_focus]
+dispatchDetachedFromWindow:PopupWindow:d62ca2 view:android.widget.PopupWindow$PopupDecorView{6be6c5e V.E...... R......D 0,0-474,715 aid=1073741825} calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 13:42:55.515 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:55.653 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:55.774 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:55.884 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:58.485 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:59.125 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:42:59.980 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:43:02.339 Uid(value=10806):23432:29215 I/jank_cuj_events_begin_request]
+[81,1791614582338886000,345882713125800,322493692464789,1@0@com.omymaxz.download.debug]
+
+[2026-10-10 13:43:02.518 Uid(value=10806):23432:29215 I/jank_cuj_events_end_request]
+[81,1791614582517022000,345882891260332,322493870599060]
+
+[2026-10-10 13:43:07.622 Uid(value=10806):23432:32045 I/dvm_lock_sample]
+[com.omymaxz.download.debug,0,ExoPlayer:Loader:Loader:HlsSampleStreamWrapper,427,SimpleCache.java,-1,void androidx.media3.datasource.cache.SimpleCache.commitFile(java.io.File, long),-,509,void androidx.media3.datasource.cache.SimpleCache.applyContentMetadataMutations(java.lang.String, androidx.media3.datasource.cache.ContentMetadataMutations),85]
+
+[2026-10-10 13:43:08.411 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:43:10.132 Uid(value=10806):23432:32045 I/dvm_lock_sample]
+[com.omymaxz.download.debug,0,ExoPlayer:Loader:Loader:HlsSampleStreamWrapper,1099,SimpleCache.java,-1,void androidx.media3.datasource.cache.SimpleCache.releaseHoleSpan(androidx.media3.datasource.cache.CacheSpan),-,432,void androidx.media3.datasource.cache.SimpleCache.commitFile(java.io.File, long),100]
+
+[2026-10-10 13:43:12.540 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:43:12.647 Uid(value=10806):23432:23432 V/PhoneWindowStubImpl]
+modifyNavigationBarColor from -16777216 to -1
+
+[2026-10-10 13:43:12.669 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:43:12.679 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+onAttachedToWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-10-10 13:43:12.679 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+getWindowType: 2 title:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity
+
+[2026-10-10 13:43:12.679 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+window type: 2
+
+[2026-10-10 13:43:12.679 Uid(value=10806):23432:23432 D/MiuiNBIManagerImpl]
+mRemote has create
+
+[2026-10-10 13:43:12.679 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+isNBIEnable=false
+
+[2026-10-10 13:43:12.688 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278097): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:43:12.688 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278098): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:43:12.695 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:43:12.706 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:43:14.301 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:43:14.403 Uid(value=10806):23432:23432 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{256d288 V.E...... R......D 0,0-1026,578 aid=1073741827}[CustomPlayerActivity] of Surface(name=null mNativeObject=-5476376651941191952)/@0x4d4421android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.Dialog.dismissDialog:418 android.app.Dialog.dismiss:400 
+
+[2026-10-10 13:43:14.403 Uid(value=10806):23432:23432 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{256d288 V.E...... R......D 0,0-1026,578 aid=1073741827}[CustomPlayerActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 13:43:14.404 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-10-10 13:43:25.097 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:43:28.028 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:43:28.678 Uid(value=10806):23432:23432 I/wm_on_top_resumed_lost_called]
+[10560866,com.omymaxz.download.CustomPlayerActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:43:28.697 Uid(value=10806):23432:23432 I/wm_on_paused_called]
+[0,10560866,com.omymaxz.download.CustomPlayerActivity,performPause,1]
+
+[2026-10-10 13:43:29.850 Uid(value=10806):23432:23432 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@3319ab7, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw122dp w216dp h122dp 440dpi smll hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(441, 1891 - 1036, 2226) mAppBounds=Rect(441, 1891 - 1036, 2226) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=pinned mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.6 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:43:29.852 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:43:29.878 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=3]
+
+[2026-10-10 13:43:32.818 Uid(value=10806):23432:23432 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@3319ab7, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw108dp w192dp h108dp 440dpi smll hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(1698, 739 - 2226, 1036) mAppBounds=Rect(1698, 739 - 2226, 1036) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_90 mWindowingMode=pinned mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_90 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.8 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:43:32.821 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:43:32.823 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:43:32.824 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:43:32.869 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=3]
+
+[2026-10-10 13:43:40.069 Uid(value=10806):23432:23432 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@3319ab7, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw121dp w216dp h121dp 440dpi smll hdr widecg land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(442, 1892 - 1036, 2226) mAppBounds=Rect(442, 1892 - 1036, 2226) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=pinned mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.10 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:43:40.098 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:43:40.165 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:43:40.428 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=3]
+
+[2026-10-10 13:43:45.501 Uid(value=10806):23432:32012 I/dvm_lock_sample]
+[com.omymaxz.download.debug,0,ExoPlayer:Playback,7,AsynchronousMediaCodecCallback.java,137,int androidx.media3.exoplayer.mediacodec.AsynchronousMediaCodecCallback.dequeueInputBufferIndex(),-,220,void androidx.media3.exoplayer.mediacodec.AsynchronousMediaCodecCallback.onInputBufferAvailable(android.media.MediaCodec, int),1]
+
+[2026-10-10 13:44:14.814 Uid(value=10806):23432:23432 D/ActivityThread]
+Activity = com.omymaxz.download.CustomPlayerActivity@3319ab7, onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.12 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:44:14.867 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.CustomPlayerActivity@3319ab7, reason: AppDarkModeEnable
+
+[2026-10-10 13:44:14.869 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:44:14.934 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=7]
+
+[2026-10-10 13:44:14.997 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[CustomPlayerActivity],reportDrawFinished seqId=7]
+
+[2026-10-10 13:44:15.155 Uid(value=10806):23432:29215 I/jank_cuj_events_end_request]
+[81,1791614655154176000,345955528419783,322566507758980]
+
+[2026-10-10 13:44:15.318 Uid(value=10806):23432:23432 D/Activity]
+Activity = ActivityInfo{c43408c com.omymaxz.download.CustomPlayerActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:44:15.351 Uid(value=10806):23432:23432 I/wm_on_resume_called]
+[0,10560866,com.omymaxz.download.CustomPlayerActivity,RESUME_ACTIVITY,32]
+
+[2026-10-10 13:44:15.354 Uid(value=10806):23432:23432 I/wm_on_top_resumed_gained_called]
+[10560866,com.omymaxz.download.CustomPlayerActivity,topWhenResuming]
+
+[2026-10-10 13:44:15.357 Uid(value=10806):23432:23432 I/wm_on_idle_called]
+com.omymaxz.download.CustomPlayerActivity
+
+[2026-10-10 13:44:15.783 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:44:18.072 Uid(value=10806):23432:23432 D/VRI[CustomPlayerActivity]]
+getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+
+[2026-10-10 13:44:18.646 Uid(value=10806):23432:23432 I/wm_on_top_resumed_lost_called]
+[10560866,com.omymaxz.download.CustomPlayerActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:44:18.659 Uid(value=10806):23432:23432 I/wm_on_paused_called]
+[0,10560866,com.omymaxz.download.CustomPlayerActivity,performPause,10]
+
+[2026-10-10 13:44:18.723 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:44:18.724 Uid(value=10806):23432:23432 I/ForceDarkHelperStubImpl]
+setViewRootImplForceDark: false for com.omymaxz.download.MainActivity@ce5685e, reason: AppDarkModeEnable
+
+[2026-10-10 13:44:18.727 Uid(value=10806):23432:23432 I/wm_on_restart_called]
+[0,105487507,com.omymaxz.download.MainActivity,,0]
+
+[2026-10-10 13:44:18.737 Uid(value=10806):23432:23432 I/wm_on_start_called]
+[0,105487507,com.omymaxz.download.MainActivity,handleStartActivity,10]
+
+[2026-10-10 13:44:18.746 Uid(value=10806):23432:23432 D/Activity]
+Activity = ActivityInfo{59c1f06 com.omymaxz.download.MainActivity}, Resume onConfigurationChanged = {0.9 510mcc10mnc [en_GB] ldltr sw393dp w393dp h785dp 440dpi nrml long hdr widecg port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 111 - 1080, 2270) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} as.4 s.2 fontWeightAdjustment=0/d themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+
+[2026-10-10 13:44:18.756 Uid(value=10806):23432:23432 I/wm_on_resume_called]
+[0,105487507,com.omymaxz.download.MainActivity,RESUME_ACTIVITY,11]
+
+[2026-10-10 13:44:18.757 Uid(value=10806):23432:23432 I/wm_on_top_resumed_gained_called]
+[105487507,com.omymaxz.download.MainActivity,topWhenResuming]
+
+[2026-10-10 13:44:18.780 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278248): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:44:18.780 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278249): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:44:18.791 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 13:44:18.868 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:44:18.924 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278250): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:44:18.924 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278251): avc:  denied  { read } for  comm=".download.debug" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:44:18.947 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Start draw after previous draw not visible]
+
+[2026-10-10 13:44:19.003 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:44:19.047 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:44:19.097 Uid(value=10806):23432:29215 I/jank_cuj_events_begin_request]
+[81,1791614659093754000,345959467995146,322570447334551,1@0@com.omymaxz.download.debug]
+
+[2026-10-10 13:44:19.216 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:44:19.234 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],reportDrawFinished seqId=0]
+
+[2026-10-10 13:44:19.261 Uid(value=10806):23432:29214 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:44:19.275 Uid(value=10806):23432:23432 I/wm_on_stop_called]
+[0,10560866,com.omymaxz.download.CustomPlayerActivity,LIFECYCLER_STOP_ACTIVITY,1]
+
+[2026-10-10 13:44:19.368 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278252): avc:  denied  { read } for  comm="MediaCodec_loop" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:44:19.436 Uid(value=10806):23432:29215 I/jank_cuj_events_end_request]
+[81,1791614659435362000,345959809600927,322570788939916]
+
+[2026-10-10 13:44:19.494 Uid(value=10806):23432:23432 I/wm_on_destroy_called]
+[0,10560866,com.omymaxz.download.CustomPlayerActivity,performDestroy,206]
+
+[2026-10-10 13:44:19.494 Uid(value=10806):23432:23432 W/MessageMonitor]
+PerfMonitor: Slow Operation: Activity com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity onDestroy took 206ms
+
+[2026-10-10 13:44:19.498 Uid(value=10806):23432:23432 I/input_focus]
+DIE in:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{b50ace3 I.E...... R......D 0,0-1080,2400 aid=1}[CustomPlayerActivity] of Surface(name=null mNativeObject=0)/@0x98f6e0android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 android.app.ActivityThread.handleDestroyActivity:6548 android.app.servertransaction.DestroyActivityItem.execute:46 
+
+[2026-10-10 13:44:19.499 Uid(value=10806):23432:23432 I/input_focus]
+dispatchDetachedFromWindow:com.omymaxz.download.debug/com.omymaxz.download.CustomPlayerActivity view:com.android.internal.policy.DecorView{b50ace3 I.E...... R......D 0,0-1080,2400 aid=1}[CustomPlayerActivity] calllers:android.view.ViewRootImpl.doDie:11138 android.view.ViewRootImpl.die:11092 android.view.WindowManagerGlobal.removeViewLocked:686 android.view.WindowManagerGlobal.removeView:629 android.view.WindowManagerImpl.removeViewImmediate:283 
+
+[2026-10-10 13:44:19.504 Uid(value=10806):23432:23432 D/DecorViewImmersiveImpl]
+onDetachedFromWindow
+
+[2026-10-10 13:44:19.523 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:44:19.586 Uid(value=10806):23432:23432 I/wm_on_idle_called]
+com.omymaxz.download.MainActivity
+
+[2026-10-10 13:44:19.795 Uid(value=10806):23432:29215 I/jank_cuj_events_end_request]
+[80,1791614659794549000,345960168788375,322571148127260]
+
+[2026-10-10 13:44:19.873 Uid(value=10806):23432:23432 I/wm_on_top_resumed_lost_called]
+[105487507,com.omymaxz.download.MainActivity,topStateChangedWhenResumed]
+
+[2026-10-10 13:44:19.875 Uid(value=10806):23432:23432 I/wm_on_paused_called]
+[0,105487507,com.omymaxz.download.MainActivity,performPause,0]
+
+[2026-10-10 13:44:20.009 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:44:20.372 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278264): avc:  denied  { read } for  comm="Chrome_InProcGp" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:44:20.723 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:44:20.968 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 13:44:21.147 Uid(value=10806):23432:23432 I/wm_on_stop_called]
+[0,105487507,com.omymaxz.download.MainActivity,STOP_ACTIVITY_ITEM,89]
+
+[2026-10-10 13:44:21.175 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:44:21.420 Uid(value=10806):23432:23432 I/viewroot_draw_event]
+[VRI[MainActivity],Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+
+[2026-10-10 13:44:21.456 Uid(value=10806):23432:23432 D/UserSceneDetector]
+invoke error.
+
+[2026-10-10 13:44:21.504 Uid(value=10806):23432:23432 I/auditd]
+type=1400 audit(0.0:278279): avc:  denied  { read } for  comm="MediaCodec_loop" name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=462 scontext=u:r:untrusted_app:s0:c38,c259,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.omymaxz.download.debug
+
+[2026-10-10 13:44:27.782 Uid(value=10806):23432:23432 I/chromium]
+[INFO:CONSOLE:0] "The resource https://i.ytimg.com/generate_204 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: https://m.youtube.com/watch?v=VUm0UIzTkFA&t=9s (0)
+
+[2026-10-10 13:44:31.439 Uid(value=10806):23432:31394 D/BufferPoolAccessor2.0]
+evictor expired: 1, evicted: 0
+
+[2026-10-10 13:44:32.439 Uid(value=10806):23432:31394 D/BufferPoolAccessor2.0]
+evictor expired: 1, evicted: 0
+
+[2026-10-10 13:44:33.469 Uid(value=10806):23432:27805 W/.download.debug]
+PerfMonitor async binderTransact :  time=404ms interface=android.app.IApplicationThread code=54
+
+[2026-10-10 13:44:35.407 Uid(value=10806):23432:31395 D/BufferPoolAccessor2.0]
+bufferpool2 0xb40000738ccdffd8 : 0(0 size) total buffers - 0(0 size) used buffers - 1719/1734 (recycle/alloc) - 26/1716 (fetch/transfer)
+
+[2026-10-10 13:44:35.408 Uid(value=10806):23432:31395 D/BufferPoolAccessor2.0]
+Destruction - bufferpool2 0xb40000738ccdffd8 cached: 0/0M, 0/0% in use; allocs: 1734, 99% recycled; transfers: 1716, 98% unfetched
+
+[2026-10-10 13:44:40.408 Uid(value=10806):23432:31394 D/BufferPoolAccessor2.0]
+evictor expired: 1, evicted: 0
+
+[2026-10-10 13:44:41.219 Uid(value=10806):23432:28020 D/.download.debug]
+PlayerBase::~PlayerBase()
+
