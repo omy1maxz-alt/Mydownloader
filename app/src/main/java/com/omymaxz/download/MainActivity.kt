@@ -1678,7 +1678,9 @@ class MainActivity : AppCompatActivity() {
                         addCategory(Intent.CATEGORY_OPENABLE)
                         type = "*/*"
                         val acceptedTypes = fileChooserParams?.acceptTypes
-                        if (acceptedTypes != null && acceptedTypes.isNotEmpty()) {
+                        if (webView?.url?.contains("jules.google.com") == true) {
+                            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("*/*"))
+                        } else if (acceptedTypes != null && acceptedTypes.isNotEmpty()) {
                             putExtra(Intent.EXTRA_MIME_TYPES, acceptedTypes)
                         }
                         if (fileChooserParams?.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
@@ -2345,144 +2347,135 @@ class MainActivity : AppCompatActivity() {
         webView?.loadUrl(polyfillScript)
     }
 
+
+
     private fun injectJulesLongPress(webView: WebView?) {
         val script = """
             (function() {
-                if (window.julesLongPressInjected) return;
-                window.julesLongPressInjected = true;
+                if (window.julesEditButtonsInjected) return;
+                window.julesEditButtonsInjected = true;
 
-                // Create custom context menu container
-                var menu = document.createElement('div');
-                menu.id = 'jules-custom-context-menu';
-                menu.style.position = 'fixed';
-                menu.style.background = '#ffffff';
-                menu.style.border = '1px solid #ccc';
-                menu.style.borderRadius = '8px';
-                menu.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                menu.style.padding = '8px 0';
-                menu.style.zIndex = '999999';
-                menu.style.display = 'none';
-                menu.style.fontFamily = 'sans-serif';
-                menu.style.fontSize = '14px';
-                menu.style.minWidth = '160px';
-
-                var copyBtn = document.createElement('div');
-                copyBtn.innerText = 'Copy Message';
-                copyBtn.style.padding = '12px 16px';
-                copyBtn.style.cursor = 'pointer';
-                copyBtn.style.color = '#333';
-                copyBtn.onmouseover = function() { this.style.backgroundColor = '#f0f0f0'; };
-                copyBtn.onmouseout = function() { this.style.backgroundColor = 'transparent'; };
-
-                var editBtn = document.createElement('div');
-                editBtn.innerText = 'Copy to Input (Edit)';
-                editBtn.style.padding = '12px 16px';
-                editBtn.style.cursor = 'pointer';
-                editBtn.style.color = '#333';
-                editBtn.onmouseover = function() { this.style.backgroundColor = '#f0f0f0'; };
-                editBtn.onmouseout = function() { this.style.backgroundColor = 'transparent'; };
-
-                menu.appendChild(copyBtn);
-                menu.appendChild(editBtn);
-                document.body.appendChild(menu);
-
-                var activeMessageText = "";
-
-                document.addEventListener('click', function() {
-                    menu.style.display = 'none';
+                // Also inject accept="*/*" to any file inputs to allow file uploads
+                var inputs = document.querySelectorAll('input[type="file"]');
+                inputs.forEach(function(input) {
+                    input.setAttribute('accept', '*/*');
                 });
 
-                document.addEventListener('contextmenu', function(e) {
-                    var target = e.target;
-                    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
-                    if (target.closest('a')) return;
+                function addEditButtons() {
+                    var messages = document.querySelectorAll('.message-container');
+                    messages.forEach(function(container) {
+                        // Avoid adding multiple buttons
+                        if (container.querySelector('.jules-edit-btn-container')) return;
 
-                    var container = target;
-                    var bestContainer = null;
+                        // Create the button container
+                        var btnContainer = document.createElement('div');
+                        btnContainer.className = 'jules-edit-btn-container';
+                        btnContainer.style.display = 'flex';
+                        btnContainer.style.gap = '8px';
+                        btnContainer.style.marginTop = '8px';
 
-                    while (container && container !== document.body) {
-                        var role = container.getAttribute('data-message-author-role');
-                        if (role === 'model' || role === 'user') {
-                            bestContainer = container;
-                            break;
-                        }
-                        if (container.classList.contains('model-turn') || container.classList.contains('user-turn') || container.classList.contains('assistant-message')) {
-                            bestContainer = container;
-                            break;
-                        }
-                        if (container.parentElement) {
-                            var parentRole = container.parentElement.getAttribute('role');
-                            if (parentRole === 'log' || parentRole === 'feed' || parentRole === 'list') {
-                                bestContainer = container;
-                                break;
-                            }
-                        }
-                        container = container.parentElement;
-                    }
+                        // Check if it's user or agent
+                        var isUser = container.closest('swebot-user-chat-bubble') !== null;
 
-                    if (!bestContainer) {
-                        container = target;
-                        while (container && container !== document.body) {
-                            if (container.tagName === 'MAIN') break;
-                            if (container.offsetWidth > (window.innerWidth * 0.8)) {
-                                bestContainer = container;
-                            }
-                            container = container.parentElement;
-                        }
-                    }
-
-                    var finalTarget = bestContainer || target;
-                    var text = finalTarget.innerText;
-
-                    if (text && text.trim().length > 0) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        activeMessageText = text.trim();
-
-                        // Position menu
-                        menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
-                        menu.style.top = Math.min(e.clientY, window.innerHeight - 100) + 'px';
-                        menu.style.display = 'block';
-
-                        finalTarget.style.outline = '2px solid #4CAF50';
-                        setTimeout(function() { finalTarget.style.outline = ''; }, 200);
-                    }
-                }, true);
-
-                copyBtn.onclick = function() {
-                    if (window.AndroidWebAPI && window.AndroidWebAPI.copyToClipboard) {
-                        window.AndroidWebAPI.copyToClipboard(activeMessageText);
-                        menu.style.display = 'none';
-                    }
-                };
-
-                editBtn.onclick = function() {
-                    // Try to find the Jules input box. Usually it's a textarea or contenteditable div.
-                    var inputArea = document.querySelector('textarea, [contenteditable="true"]');
-                    if (inputArea) {
-                        if (inputArea.tagName === 'TEXTAREA' || inputArea.tagName === 'INPUT') {
-                            inputArea.value = activeMessageText;
-                            // Trigger input event to resize textarea and enable send button
-                            inputArea.dispatchEvent(new Event('input', { bubbles: true }));
-                            inputArea.dispatchEvent(new Event('change', { bubbles: true }));
+                        if (isUser) {
+                            btnContainer.style.justifyContent = 'flex-end';
                         } else {
-                            inputArea.innerText = activeMessageText;
-                            inputArea.dispatchEvent(new Event('input', { bubbles: true }));
+                            btnContainer.style.justifyContent = 'flex-start';
                         }
-                        inputArea.focus();
-                    } else {
-                        // Fallback: Copy to clipboard if input not found
-                        if (window.AndroidWebAPI && window.AndroidWebAPI.copyToClipboard) {
-                            window.AndroidWebAPI.copyToClipboard(activeMessageText);
+
+                        // Copy Button
+                        var copyBtn = document.createElement('button');
+                        copyBtn.innerText = 'Copy';
+                        copyBtn.style.padding = '4px 8px';
+                        copyBtn.style.fontSize = '12px';
+                        copyBtn.style.cursor = 'pointer';
+                        copyBtn.style.border = '1px solid #ccc';
+                        copyBtn.style.borderRadius = '4px';
+                        copyBtn.style.background = '#f9f9f9';
+                        copyBtn.style.color = '#333';
+                        copyBtn.onclick = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            var viewer = container.querySelector('swebot-markdown-viewer');
+                            var text = viewer ? viewer.innerText : container.innerText;
+                            text = text.replace('CopyEdit', '').trim();
+                            if (window.AndroidWebAPI && window.AndroidWebAPI.copyToClipboard) {
+                                window.AndroidWebAPI.copyToClipboard(text);
+                            }
+                        };
+
+                        // Edit Button
+                        var editBtn = document.createElement('button');
+                        editBtn.innerText = 'Edit';
+                        editBtn.style.padding = '4px 8px';
+                        editBtn.style.fontSize = '12px';
+                        editBtn.style.cursor = 'pointer';
+                        editBtn.style.border = '1px solid #ccc';
+                        editBtn.style.borderRadius = '4px';
+                        editBtn.style.background = '#f9f9f9';
+                        editBtn.style.color = '#333';
+                        editBtn.onclick = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            var viewer = container.querySelector('swebot-markdown-viewer');
+                            var text = viewer ? viewer.innerText : container.innerText;
+                            text = text.replace('CopyEdit', '').trim();
+
+                            var inputArea = document.querySelector('textarea, [contenteditable="true"]');
+                            if (inputArea) {
+                                if (inputArea.tagName === 'TEXTAREA' || inputArea.tagName === 'INPUT') {
+                                    inputArea.value = text;
+                                    inputArea.dispatchEvent(new Event('input', { bubbles: true }));
+                                    inputArea.dispatchEvent(new Event('change', { bubbles: true }));
+                                } else {
+                                    inputArea.innerText = text;
+                                    inputArea.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                                inputArea.focus();
+                            } else {
+                                if (window.AndroidWebAPI && window.AndroidWebAPI.copyToClipboard) {
+                                    window.AndroidWebAPI.copyToClipboard(text);
+                                }
+                            }
+                        };
+
+                        btnContainer.appendChild(copyBtn);
+                        btnContainer.appendChild(editBtn);
+
+                        // Append after the swebot-markdown-viewer
+                        var viewer = container.querySelector('swebot-markdown-viewer');
+                        if (viewer) {
+                            viewer.parentElement.appendChild(btnContainer);
+                        } else {
+                            container.appendChild(btnContainer);
                         }
-                    }
-                    menu.style.display = 'none';
-                };
+                    });
+                }
+
+                // Run it initially and on mutations
+                addEditButtons();
+                var observer = new MutationObserver(function(mutations) {
+                    addEditButtons();
+                    // Also watch for new file inputs
+                    var inputs = document.querySelectorAll('input[type="file"]');
+                    inputs.forEach(function(input) {
+                        if (input.getAttribute('accept') !== '*/*') {
+                            input.setAttribute('accept', '*/*');
+                        }
+                    });
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+
+                // Hide the old custom context menu just in case
+                var oldMenu = document.getElementById('jules-custom-context-menu');
+                if (oldMenu) oldMenu.style.display = 'none';
+
             })();
         """.trimIndent()
         webView?.evaluateJavascript(script, null)
     }
+
+
     private fun injectAdvancedMediaDetector() {
         val script = """
             javascript:(function() {
