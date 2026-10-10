@@ -127,10 +127,10 @@ class MainActivity : AppCompatActivity() {
         "propellerads.com", "revcontent.com", "mgid.com"
     )
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
-    private val fileChooserLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val fileChooserLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { result ->
         if (filePathCallback == null) return@registerForActivityResult
-        var results: Array<Uri>? = null
-        if (result.resultCode == Activity.RESULT_OK) {
+        var results: Array<android.net.Uri>? = null
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
             val data = result.data
             if (data?.clipData != null) {
                 // Handle multiple files
@@ -1184,6 +1184,27 @@ class MainActivity : AppCompatActivity() {
     private fun setupWebView(webView: WebView) {
         val density = resources.displayMetrics.density
 
+        // Inject Doubao script at document start using a local intercepted URL
+        val wrappedScript = "(function() { " +
+            "if (!window.location.hostname.includes('doubao.com')) return; " +
+            "if (window._doubaoInjectedEarly) return; " +
+            "window._doubaoInjectedEarly = true; " +
+            "var inject = function() {" +
+            "  var script = document.createElement('script');" +
+            "  script.id = 'doubao-injector';" +
+            "  script.type = 'text/javascript';" +
+            "  script.src = 'https://mydownloader.local/removemark_doubao.js';" +
+            "  var parent = document.head || document.documentElement;" +
+            "  if (parent) { parent.appendChild(script); console.log('[Doubao] Android injected script tag EARLY successfully'); }" +
+            "  else { setTimeout(inject, 50); }" +
+            "};" +
+            "inject();" +
+        "})();"
+
+        if (androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            androidx.webkit.WebViewCompat.addDocumentStartJavaScript(webView, wrappedScript, setOf("*"))
+        }
+
         // --- PERFORMANCE OPTIMIZATIONS ---
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null) // Enable hardware acceleration
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
@@ -1473,6 +1494,16 @@ class MainActivity : AppCompatActivity() {
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                     val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
 
+                    // Intercept local Doubao script
+                    if (url.contains("mydownloader.local/removemark_doubao.js")) {
+                        try {
+                            val inputStream = assets.open("removemark_doubao.js")
+                            return WebResourceResponse("application/javascript", "UTF-8", inputStream)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+
                     val reqHeaders = request?.requestHeaders
                     val reqReferer = reqHeaders?.get("Referer") ?: reqHeaders?.get("referer")
                     val userAgent = reqHeaders?.get("User-Agent") ?: reqHeaders?.get("user-agent")
@@ -1669,26 +1700,26 @@ class MainActivity : AppCompatActivity() {
                 }
                 override fun onShowFileChooser(
                     webView: WebView?,
-                    filePathCallback: ValueCallback<Array<Uri>>?,
-                    fileChooserParams: FileChooserParams?
+                    filePathCallback: android.webkit.ValueCallback<Array<android.net.Uri>>?,
+                    fileChooserParams: android.webkit.WebChromeClient.FileChooserParams?
                 ): Boolean {
                     this@MainActivity.filePathCallback?.onReceiveValue(null)
                     this@MainActivity.filePathCallback = filePathCallback
-                    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                        addCategory(Intent.CATEGORY_OPENABLE)
+                    val intent = android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
+                        addCategory(android.content.Intent.CATEGORY_OPENABLE)
                         type = "*/*"
                         val acceptedTypes = fileChooserParams?.acceptTypes
                         if (acceptedTypes != null && acceptedTypes.isNotEmpty()) {
-                            putExtra(Intent.EXTRA_MIME_TYPES, acceptedTypes)
+                            putExtra(android.content.Intent.EXTRA_MIME_TYPES, acceptedTypes)
                         }
-                        if (fileChooserParams?.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
-                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                        if (fileChooserParams?.mode == android.webkit.WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE) {
+                            putExtra(android.content.Intent.EXTRA_ALLOW_MULTIPLE, true)
                         }
                     }
                     try {
                         fileChooserLauncher.launch(intent)
-                    } catch (e: ActivityNotFoundException) {
-                        Toast.makeText(this@MainActivity, "Cannot open file chooser", Toast.LENGTH_LONG).show()
+                    } catch (e: android.content.ActivityNotFoundException) {
+                        android.widget.Toast.makeText(this@MainActivity, "Cannot open file chooser", android.widget.Toast.LENGTH_LONG).show()
                         return false
                     }
                     return true
@@ -4997,20 +5028,8 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             val buffer = ByteArray(size)
             inputStream.read(buffer)
             inputStream.close()
-            val scriptBase64 = android.util.Base64.encodeToString(buffer, android.util.Base64.NO_WRAP)
-
-            // Inject via script tag to avoid syntax parsing truncation limits of evaluateJavascript
-            val loaderScript = "(function() {" +
-                    "if (document.getElementById('doubao-injector')) return;" +
-                    "var script = document.createElement('script');" +
-                    "script.id = 'doubao-injector';" +
-                    "script.type = 'text/javascript';" +
-                    "script.innerHTML = decodeURIComponent(escape(window.atob('" + scriptBase64 + "')));" +
-                    "document.head.appendChild(script);" +
-                    "console.log('[Doubao] Android injected script tag successfully');" +
-                    "})();"
-
-            view?.evaluateJavascript(loaderScript, null)
+            val script = String(buffer, Charsets.UTF_8)
+            view?.evaluateJavascript(script, null)
         } catch (e: Exception) {
             e.printStackTrace()
         }
