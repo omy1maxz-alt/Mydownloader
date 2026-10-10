@@ -5943,7 +5943,8 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         }
 
         val dialog = builder.create()
-        // Set listeners after creation so the settings sheet closes before opening a destination.
+        dialog.show()
+        // Wire clicks after the dialog is shown so it dismisses before opening the destination.
         for (i in 0 until dialogView.childCount) {
             val child = dialogView.getChildAt(i)
             if (child is android.widget.TextView && child.tag is Function0<*>) {
@@ -5955,7 +5956,6 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 }
             }
         }
-        dialog.show()
     }
 
 
