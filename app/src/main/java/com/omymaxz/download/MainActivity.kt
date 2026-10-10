@@ -4993,8 +4993,9 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                     iconView.setImageResource(row?.iconRes ?: android.R.drawable.ic_menu_help)
                     iconView.setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
                     itemView.background = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, android.R.drawable.list_selector_background)
-                    itemView.isClickable = true
-                    itemView.isFocusable = true
+                    // Let ListView receive the tap and dispatch its item-click listener.
+                    itemView.isClickable = false
+                    itemView.isFocusable = false
                     itemView.minimumHeight = (48 * resources.displayMetrics.density).toInt()
                 }
                 return itemView
