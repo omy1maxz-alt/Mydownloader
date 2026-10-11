@@ -60,6 +60,8 @@ class AddEditScriptActivity : AppCompatActivity() {
                     binding.editScriptName.setText(it.name) 
                     binding.editScriptUrl.setText(it.matches.takeIf { values -> values.isNotEmpty() }?.joinToString("\n") ?: it.targetUrl)
                     binding.editScriptExcludes.setText(it.excludes.joinToString("\n"))
+                    binding.editScriptRequires.setText(it.requires.joinToString("\n"))
+                    binding.editScriptGrants.setText(it.grants.joinToString("\n"))
                     binding.editScriptRunAt.setSelection(
                         when (it.runAt) {
                             UserScript.RunAt.DOCUMENT_START -> 0
@@ -90,6 +92,8 @@ class AddEditScriptActivity : AppCompatActivity() {
         var urlPattern = binding.editScriptUrl.text.toString().trim()
         val matches = urlPattern.lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
         val excludes = binding.editScriptExcludes.text.toString().lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        val requires = binding.editScriptRequires.text.toString().lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        val grants = binding.editScriptGrants.text.toString().lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
         val code = binding.editScriptCode.text.toString()
         val runAt = when (binding.editScriptRunAt.selectedItemPosition) {
             0 -> UserScript.RunAt.DOCUMENT_START
@@ -118,6 +122,8 @@ class AddEditScriptActivity : AppCompatActivity() {
             targetUrl = finalMatches.firstOrNull() ?: urlPattern,
             matches = finalMatches,
             excludes = excludes,
+            requires = requires,
+            grants = grants,
             runAt = runAt,
             script = code
         ) ?: UserScript(
@@ -126,6 +132,8 @@ class AddEditScriptActivity : AppCompatActivity() {
             targetUrl = finalMatches.firstOrNull() ?: urlPattern,
             matches = finalMatches,
             excludes = excludes,
+            requires = requires,
+            grants = grants,
             runAt = runAt,
             script = code,
             isEnabled = true
@@ -133,7 +141,18 @@ class AddEditScriptActivity : AppCompatActivity() {
 
         // **FIX IMPLEMENTED HERE:** Parse metadata from the script's code before saving.
         // This will update the name, runAt, grants, etc., based on the script's header.
-        val scriptToSave = initialScript.parseMetadata()
+        val parsedMetadata = initialScript.parseMetadata()
+        // The explicit editor controls are authoritative; source metadata remains available
+        // for name and for fields not represented in the editor.
+        val scriptToSave = parsedMetadata.copy(
+            name = parsedMetadata.name.ifBlank { name },
+            matches = finalMatches,
+            excludes = excludes,
+            requires = requires,
+            grants = grants,
+            runAt = runAt,
+            targetUrl = finalMatches.first()
+        )
 
         if (!scriptToSave.isValid()) {
             Toast.makeText(this, "Script is invalid or too large (max ${UserScript.MAX_SCRIPT_SIZE_BYTES / 1000}KB)", Toast.LENGTH_LONG).show()
