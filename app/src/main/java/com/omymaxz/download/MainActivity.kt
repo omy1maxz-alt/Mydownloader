@@ -501,21 +501,47 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyProxy() {
         val sharedPrefs = getSharedPreferences("proxy", Context.MODE_PRIVATE)
-        val host = sharedPrefs.getString("proxy_host", null)
+        val host = sharedPrefs.getString("proxy_host", null)?.trim()?.takeIf { it.isNotEmpty() }
         val port = sharedPrefs.getInt("proxy_port", -1)
+        val proxyEnabled = host != null && port in 1..65535
 
-        val proxyConfig: ProxyConfig
-        if (host != null && port != -1) {
-            proxyConfig = ProxyConfig.Builder()
+        val proxyConfig = if (proxyEnabled) {
+            ProxyConfig.Builder()
                 .addProxyRule("$host:$port")
                 .build()
-            Toast.makeText(this, "Proxy set to $host:$port", Toast.LENGTH_SHORT).show()
         } else {
-            proxyConfig = ProxyConfig.Builder().addDirect().build()
+            ProxyConfig.Builder().addDirect().build()
         }
 
-        ProxyController.getInstance().setProxyOverride(proxyConfig, ContextCompat.getMainExecutor(this), Runnable {
-        })
+        android.util.Log.i(
+            "MyDownloaderProxy",
+            if (proxyEnabled) "Applying WebView proxy override for $host:$port"
+            else "Applying direct WebView connection (proxy disabled or invalid settings)"
+        )
+
+        try {
+            ProxyController.getInstance().setProxyOverride(
+                proxyConfig,
+                ContextCompat.getMainExecutor(this),
+                Runnable {
+                    android.util.Log.i(
+                        "MyDownloaderProxy",
+                        if (proxyEnabled) "WebView proxy configuration applied; server reachability/authentication not yet verified"
+                        else "Direct WebView configuration applied"
+                    )
+                    if (proxyEnabled) {
+                        Toast.makeText(
+                            this,
+                            "Proxy configuration applied to WebView. Connection is not yet verified.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("MyDownloaderProxy", "Failed to apply WebView proxy configuration", e)
+            Toast.makeText(this, "Could not apply proxy: ${e.message ?: "unknown error"}", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun checkInitialStoragePermissions() {
@@ -5927,59 +5953,91 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         val sharedPrefs = getSharedPreferences("proxy", Context.MODE_PRIVATE)
         val currentHost = sharedPrefs.getString("proxy_host", "")
         val currentPort = sharedPrefs.getInt("proxy_port", -1)
+        val density = resources.displayMetrics.density
+        fun dp(value: Int) = (value * density).toInt()
 
         val dialogView = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(50, 50, 50, 50)
+            setPadding(dp(20), dp(12), dp(20), dp(4))
         }
 
-        val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        val explanation = TextView(this).apply {
+            text = "Enter the hostname or IP address and port from a proxy provider. This does not connect to Urban VPN by itself. The current setting targets WebView traffic; native downloads and player requests may use separate network clients."
+            textSize = 14f
+            setLineSpacing(dp(2).toFloat(), 1f)
+        }
+        dialogView.addView(
+            explanation,
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                bottomMargin = dp(12)
+            }
+        )
 
         val hostInput = EditText(this).apply {
-            hint = "Proxy Host"
+            hint = "Proxy host or IP (without http://)"
             setText(currentHost)
-            layoutParams = lp
+            singleLine = true
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
         }
-        dialogView.addView(hostInput)
+        dialogView.addView(
+            hostInput,
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        )
 
         val portInput = EditText(this).apply {
-            hint = "Proxy Port"
+            hint = "Proxy port (1–65535)"
             inputType = InputType.TYPE_CLASS_NUMBER
-            layoutParams = lp
-            if (currentPort != -1) {
-                setText(currentPort.toString())
-            }
+            singleLine = true
+            if (currentPort in 1..65535) setText(currentPort.toString())
         }
-        dialogView.addView(portInput)
+        dialogView.addView(
+            portInput,
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        )
 
         createThemedDialogBuilder(this)
-            .setTitle("Proxy Settings")
+            .setTitle("WebView Proxy Settings")
             .setView(dialogView)
-            .setPositiveButton("Save") { _, _ ->
-                val host = hostInput.text.toString().trim()
-                val portStr = portInput.text.toString().trim()
-                val port = if (portStr.isNotEmpty()) portStr.toInt() else -1
-
-                if (host.isNotEmpty() && port != -1) {
-                    sharedPrefs.edit()
-                        .putString("proxy_host", host)
-                        .putInt("proxy_port", port)
-                        .apply()
-                    applyProxy()
-                } else {
-                    Toast.makeText(this, "Invalid host or port", Toast.LENGTH_SHORT).show()
-                }
-            }
+            .setPositiveButton("Save and Apply", null)
             .setNegativeButton("Disable Proxy") { _, _ ->
                 sharedPrefs.edit()
                     .remove("proxy_host")
                     .remove("proxy_port")
                     .apply()
                 applyProxy()
-                Toast.makeText(this, "Proxy disabled", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "WebView proxy disabled", Toast.LENGTH_SHORT).show()
             }
             .setNeutralButton("Cancel", null)
-            .show()
+            .create()
+            .also { dialog ->
+                dialog.setOnShowListener {
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val host = hostInput.text.toString().trim()
+                        val portText = portInput.text.toString().trim()
+                        val port = portText.toIntOrNull()
+                        val invalidHost = host.isBlank() ||
+                            host.contains("://") ||
+                            host.any { it.isWhitespace() || it == '/' || it == '\\' || it == '@' || it == ':' }
+
+                        if (invalidHost || port == null || port !in 1..65535) {
+                            Toast.makeText(
+                                this,
+                                "Enter a hostname/IP without a scheme and a port from 1 to 65535.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@setOnClickListener
+                        }
+
+                        sharedPrefs.edit()
+                            .putString("proxy_host", host)
+                            .putInt("proxy_port", port)
+                            .apply()
+                        dialog.dismiss()
+                        applyProxy()
+                    }
+                }
+                dialog.show()
+            }
     }
     private fun showMasterSettingsDialog() {
         data class SettingsAction(val title: String, val iconRes: Int, val onClick: () -> Unit)
