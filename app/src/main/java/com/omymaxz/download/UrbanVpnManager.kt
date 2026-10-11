@@ -55,7 +55,8 @@ internal object UrbanVpnManager {
     fun status(): ConnectionInfo? = activeInfo
 
     fun fetchLocations(): List<Location> {
-        val root = apiRequest("/entrypoints/countries", null) as? JSONObject
+        val bearerToken = ensureSecurityToken()
+        val root = apiRequest("/entrypoints/countries", null, bearerToken) as? JSONObject
             ?: throw IllegalStateException("Urban VPN country response was not a JSON object")
         val countries = root.optJSONObject("countries")?.optJSONArray("elements")
             ?: throw IllegalStateException("Urban VPN response did not contain countries.elements")
@@ -83,13 +84,15 @@ internal object UrbanVpnManager {
     @Synchronized
     fun connect(location: Location): ConnectionInfo {
         disconnect()
+        val bearerToken = ensureSecurityToken()
         val tokenResponse = apiRequest(
             "/security/tokens/accs-proxy",
             JSONObject().apply {
                 put("type", "accs-proxy")
                 put("clientApp", JSONObject().put("name", CLIENT_APP))
                 put("signature", location.signature)
-            }
+            },
+            bearerToken
         )
         val token = when (tokenResponse) {
             is JSONObject -> tokenResponse.optString("token")
@@ -136,8 +139,53 @@ internal object UrbanVpnManager {
         }
     }
 
-    private fun apiRequest(path: String, body: JSONObject?): Any {
-        val connection = (URL(API_BASE + path).openConnection() as HttpURLConnection).apply {
+    /**
+     * The extension obtains a short-lived security token before requesting locations
+     * or proxy credentials. Countries and proxy-token calls without this Bearer token
+     * are not equivalent to the extension's authenticated flow.
+     */
+    @Synchronized
+    private fun ensureSecurityToken(): String {
+        securityToken?.takeIf { it.isNotBlank() }?.let { return it }
+
+        val registration = apiRequest(
+            "/registrations/clientApps/$CLIENT_APP/users/anonymous",
+            JSONObject().put(
+                "clientApp",
+                JSONObject()
+                    .put("name", CLIENT_APP)
+                    .put("browser", "CHROME")
+            )
+        ) as? JSONObject ?: throw IllegalStateException("Urban VPN registration response was invalid")
+        val accountToken = registration.optString("value")
+        if (accountToken.isBlank() || accountToken == "null") {
+            throw IllegalStateException("Urban VPN did not return an account token")
+        }
+
+        val tokenResponse = apiRequest(
+            "/security/tokens/accs",
+            JSONObject().apply {
+                put("type", "accs")
+                put("clientApp", JSONObject().put("name", CLIENT_APP))
+            },
+            accountToken
+        ) as? JSONObject ?: throw IllegalStateException("Urban VPN security-token response was invalid")
+        val token = tokenResponse.optString("value")
+        if (token.isBlank() || token == "null") {
+            throw IllegalStateException("Urban VPN did not return a security token")
+        }
+        securityToken = token
+        return token
+    }
+
+    private var securityToken: String? = null
+
+    private fun apiRequest(
+        path: String,
+        body: JSONObject?,
+        bearerToken: String? = null
+    ): Any {
+        val connection = (URL("$API_BASE$path").openConnection() as HttpURLConnection).apply {
             requestMethod = if (body == null) "GET" else "POST"
             connectTimeout = CONNECT_TIMEOUT_MS
             readTimeout = READ_TIMEOUT_MS
@@ -145,6 +193,9 @@ internal object UrbanVpnManager {
             setRequestProperty("Accept", "application/json")
             setRequestProperty("Cache-Control", "no-cache")
             setRequestProperty("Pragma", "no-cache")
+            bearerToken?.takeIf { it.isNotBlank() }?.let {
+                setRequestProperty("Authorization", "Bearer $it")
+            }
             if (body != null) {
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json")
