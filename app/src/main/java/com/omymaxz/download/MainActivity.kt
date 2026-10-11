@@ -6905,8 +6905,9 @@ if (isDesktopMode) {
             polyfillBuilder.append("""
                 window.GM_getValue = function(key, defaultValue) {
                     try {
-                        var value = AndroidUserscriptAPI.getValue($nameJson, String(key), defaultValue == null ? null : String(defaultValue));
-                        return value == null ? defaultValue : value;
+                        var value = AndroidUserscriptAPI.getValue($nameJson, String(key), defaultValue == null ? null : JSON.stringify(defaultValue));
+                        if (value == null) return defaultValue;
+                        try { return JSON.parse(value); } catch (e) { return value; }
                     } catch (e) { return defaultValue; }
                 };
             """.trimIndent())
@@ -6914,7 +6915,9 @@ if (isDesktopMode) {
         if (script.grants.contains("GM_setValue")) {
             polyfillBuilder.append("""
                 window.GM_setValue = function(key, value) {
-                    AndroidUserscriptAPI.setValue($nameJson, String(key), String(value));
+                    var serialized;
+                    try { serialized = JSON.stringify(value); } catch (e) { serialized = String(value); }
+                    AndroidUserscriptAPI.setValue($nameJson, String(key), serialized);
                 };
             """.trimIndent())
         }
