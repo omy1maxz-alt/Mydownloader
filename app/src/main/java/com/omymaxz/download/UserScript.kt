@@ -48,7 +48,10 @@ data class UserScript(
 
     /** Common userscript scheme/host/path wildcard matching plus legacy simple patterns. */
     internal fun matchesPattern(url: String, pattern: String): Boolean {
-        if (pattern == "*") return true
+        if (pattern == "*" || pattern.equals("<all_urls>", ignoreCase = true)) {
+            val scheme = Uri.parse(url).scheme?.lowercase()
+            return scheme in setOf("http", "https", "file", "ftp")
+        }
         if (!pattern.contains("://")) return legacyWildcardMatch(url, pattern)
         return try {
             val target = Uri.parse(url)
