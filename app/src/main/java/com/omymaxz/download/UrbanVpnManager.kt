@@ -209,9 +209,15 @@ internal object UrbanVpnManager {
             val stream = if (status in 200..399) connection.inputStream else connection.errorStream
             val text = stream?.bufferedReader(StandardCharsets.UTF_8)?.use { it.readText() }.orEmpty()
             if (status !in 200..399) {
-                Log.w(TAG, "Urban VPN API returned HTTP $status for $path")
+                val contentType = connection.getHeaderField("Content-Type").orEmpty()
+                val diagnosticBody = text.replace(Regex("[\\r\\n\\t]+"), " ").take(400)
+                Log.w(
+                    TAG,
+                    "Urban VPN API HTTP $status for ${connection.url}; contentType=$contentType; body=$diagnosticBody"
+                )
                 throw IllegalStateException("Urban VPN request failed (HTTP $status)")
             }
+            Log.d(TAG, "Urban VPN API HTTP $status for $path; contentType=${connection.getHeaderField("Content-Type").orEmpty()}")
             return if (text.isBlank()) JSONObject() else JSONTokener(text).nextValue()
         } finally {
             connection.disconnect()
