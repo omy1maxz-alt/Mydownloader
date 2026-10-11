@@ -48,22 +48,7 @@
                 android:layout_marginTop="8dp"
                 android:text="Apply to all websites" />
 
-            <!-- Target URL Input -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/editScriptUrlLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editScriptUrl"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Target URL (e.g., youtube.com)"
-                    android:inputType="textUri" />
-            </com.google.android.material.textfield.TextInputLayout>
-
+            <!-- Match patterns: one userscript pattern per line -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -81,11 +66,11 @@
                     android:id="@+id/editScriptUrl"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="https://example.com/* or youtube.com"
+                    android:hint="https://example.com/* (one per line)"
                     android:gravity="top|start"
                     android:inputType="textMultiLine|textUri"
                     android:minLines="2"
-                    android:maxLines="5" />
+                    android:maxLines="6" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
