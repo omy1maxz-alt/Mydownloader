@@ -186,6 +186,7 @@ class MediaForegroundService : Service() {
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(if (isPlaying) "Playing" else "Paused")
+            .setSubText("Web Media • Browser playback")
             .setContentIntent(openAppPendingIntent)
             .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)) // Or use ACTION_PAUSE if preferred for swipe
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
