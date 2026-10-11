@@ -19,6 +19,9 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
 
+    private fun ctypeIsAudio(contentType: String?): Boolean =
+        contentType?.substringBefore(";")?.trim()?.lowercase()?.startsWith("audio/") == true
+
     private fun classifyMedia(rawUrl: String, contentType: String?): MediaKind {
         val lowerUrl = rawUrl.lowercase()
         val mime = contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
@@ -154,9 +157,11 @@ class MediaDetectionEngine(private val context: Context) {
         val type = when (mediaKind) {
             MediaKind.HLS_MANIFEST -> "hls"
             MediaKind.DASH_MANIFEST -> "dash"
-            MediaKind.PROGRESSIVE -> if (isAudioMime ||
-                lowerUrl.substringBefore('?').matches(Regex(".*\\.(mp3|m4a|aac|ogg|opus|wav)$")) ||
-                isSunoProgressiveAudio) "audio" else "video"
+            MediaKind.PROGRESSIVE -> if (
+                ctypeIsAudio(contentType) ||
+                url.substringBefore('?').lowercase().matches(Regex(".*\\.(mp3|m4a|aac|ogg|opus|wav)$")) ||
+                url.lowercase().contains("d2lwuy8qc234o3.cloudfront.net/1/clip/")
+            ) "audio" else "video"
             MediaKind.SEGMENT -> "segment"
             else -> "unknown"
         }
