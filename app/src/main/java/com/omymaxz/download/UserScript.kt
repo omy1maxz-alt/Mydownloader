@@ -75,7 +75,7 @@ data class UserScript(
             }
             if (!hostOk) return false
             val pathAndQuery = buildString {
-                append(target.path.ifEmpty { "/" })
+                append(target.path?.ifEmpty { "/" } ?: "/")
                 target.encodedQuery?.let { append("?").append(it) }
             }
             wildcardRegex(pathPattern).matches(pathAndQuery)
