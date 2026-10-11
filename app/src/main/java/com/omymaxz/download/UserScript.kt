@@ -29,7 +29,7 @@ data class UserScript(
     enum class RunAt { DOCUMENT_START, DOCUMENT_END, DOCUMENT_IDLE }
 
     companion object {
-        const val MAX_SCRIPT_SIZE_BYTES: Long = 5 * 1024 * 1024
+        const val MAX_SCRIPT_SIZE_BYTES: Long = 10 * 1024 * 1024
         private const val TAG = "UserScript"
         private val METADATA_PATTERN = Pattern.compile(
             "(?s)// *==UserScript==.*?// *==/UserScript=="
