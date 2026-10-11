@@ -26,6 +26,7 @@ class PlaybackService : MediaSessionService() {
     companion object {
         const val NOTIFICATION_ID = 2001
         const val CHANNEL_ID = "playback_service_channel"
+        const val ACTION_CLOSE_BACKGROUND = "com.omymaxz.download.ACTION_CLOSE_BACKGROUND"
     }
 
     @OptIn(UnstableApi::class)
@@ -78,6 +79,14 @@ private fun createNotificationChannel() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_CLOSE_BACKGROUND) {
+            player?.stop()
+            player?.clearMediaItems()
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         val title = intent?.getStringExtra("video_title") ?: "Background Audio"
 
         // Prevent ForegroundServiceDidNotStartInTimeException by calling startForeground immediately
@@ -95,11 +104,22 @@ private fun createNotificationChannel() {
             openPlayerIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val closeIntent = Intent(this, PlaybackService::class.java).apply {
+            action = ACTION_CLOSE_BACKGROUND
+        }
+        val closePendingIntent = PendingIntent.getService(
+            this,
+            2002,
+            closeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Custom Player")
             .setContentText(title)
             .setSubText("Custom Player • Background playback")
             .setContentIntent(openPlayerPendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", closePendingIntent)
+            .setDeleteIntent(closePendingIntent)
             .setSmallIcon(R.drawable.ic_headset)
             .setOngoing(true)
             .build()
