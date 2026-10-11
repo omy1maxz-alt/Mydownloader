@@ -6112,28 +6112,91 @@ private fun showRenameDialog(mediaFile: MediaFile) {
     private fun showExportLogsDialog() {
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             val logFile = java.io.File(filesDir, "export_logs.txt")
-            val logContent = if (logFile.exists()) {
-                val lines = logFile.readLines()
-                // Limit to the last 1000 lines so we don't freeze the UI rendering a massive string
-                lines.takeLast(1000).joinToString("\n")
-            } else {
-                "No export logs found."
+            val lines = if (logFile.exists()) logFile.readLines().takeLast(1500) else emptyList()
+            val entries = mutableListOf<String>()
+            val current = StringBuilder()
+            val startPattern = Regex("""^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]\s+Starting export for:""")
+
+            lines.forEach { line ->
+                if (startPattern.containsMatchIn(line) && current.isNotEmpty()) {
+                    entries.add(current.toString().trim())
+                    current.setLength(0)
+                }
+                if (current.isNotEmpty()) current.append('\n')
+                current.append(line)
             }
+            if (current.isNotEmpty()) entries.add(current.toString().trim())
 
             withContext(kotlinx.coroutines.Dispatchers.Main) {
-                val scrollView = android.widget.ScrollView(this@MainActivity)
-                val textView = android.widget.TextView(this@MainActivity).apply {
-                    text = logContent
-                    setPadding(32, 32, 32, 32)
-                    textSize = 12f
-                    typeface = android.graphics.Typeface.MONOSPACE
-                    setTextIsSelectable(true)
+                val density = resources.displayMetrics.density
+                fun dp(value: Int) = (value * density).toInt()
+                val scroll = android.widget.ScrollView(this@MainActivity).apply {
+                    clipToPadding = false
+                    setPadding(dp(12), dp(8), dp(12), dp(8))
                 }
-                scrollView.addView(textView)
+                val content = android.widget.LinearLayout(this@MainActivity).apply {
+                    orientation = android.widget.LinearLayout.VERTICAL
+                }
 
+                if (entries.isEmpty()) {
+                    content.addView(android.widget.TextView(this@MainActivity).apply {
+                        text = if (logFile.exists()) "No export entries found." else "No export logs found."
+                        setPadding(dp(12), dp(16), dp(12), dp(16))
+                    })
+                } else {
+                    entries.asReversed().forEachIndexed { reverseIndex, entry ->
+                        val firstLine = entry.lineSequence().firstOrNull().orEmpty()
+                        val label = Regex("""Starting export for:\s*(.*?)(?:,\s*URL:|$)""")
+                            .find(firstLine)?.groupValues?.getOrNull(1)?.trim()
+                            .orEmpty().ifBlank { "Export " + (entries.size - reverseIndex) }
+                        val card = android.widget.LinearLayout(this@MainActivity).apply {
+                            orientation = android.widget.LinearLayout.VERTICAL
+                            setPadding(dp(12), dp(10), dp(12), dp(10))
+                            background = android.graphics.drawable.GradientDrawable().apply {
+                                setColor(android.graphics.Color.argb(20, 128, 128, 128))
+                                cornerRadius = dp(12).toFloat()
+                                setStroke(dp(1), android.graphics.Color.argb(64, 128, 128, 128))
+                            }
+                        }
+                        val header = android.widget.LinearLayout(this@MainActivity).apply {
+                            orientation = android.widget.LinearLayout.HORIZONTAL
+                            gravity = android.view.Gravity.CENTER_VERTICAL
+                        }
+                        header.addView(android.widget.TextView(this@MainActivity).apply {
+                            text = label
+                            textSize = 14f
+                            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+                            maxLines = 2
+                            ellipsize = android.text.TextUtils.TruncateAt.END
+                        }, android.widget.LinearLayout.LayoutParams(0, -2, 1f))
+                        header.addView(android.widget.Button(this@MainActivity).apply {
+                            text = "Copy"
+                            isAllCaps = false
+                            setOnClickListener {
+                                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Export log: " + label, entry))
+                                Toast.makeText(this@MainActivity, "Export log copied", Toast.LENGTH_SHORT).show()
+                            }
+                        }, android.widget.LinearLayout.LayoutParams(-2, dp(44)).apply { marginStart = dp(8) })
+                        card.addView(header)
+                        card.addView(android.widget.TextView(this@MainActivity).apply {
+                            text = entry
+                            setPadding(0, dp(8), 0, dp(2))
+                            textSize = 11f
+                            typeface = android.graphics.Typeface.MONOSPACE
+                            setTextIsSelectable(true)
+                            maxLines = 18
+                            ellipsize = android.text.TextUtils.TruncateAt.END
+                        })
+                        content.addView(card, android.widget.LinearLayout.LayoutParams(-1, -2).apply {
+                            bottomMargin = dp(10)
+                        })
+                    }
+                }
+                scroll.addView(content, android.view.ViewGroup.LayoutParams(-1, -2))
                 createThemedDialogBuilder(this@MainActivity)
-                    .setTitle("Export Logs")
-                    .setView(scrollView)
+                    .setTitle("Export Logs (" + entries.size + ")")
+                    .setView(scroll)
                     .setPositiveButton("Close", null)
                     .setNegativeButton("Clear Logs") { _, _ ->
                         if (logFile.exists()) logFile.delete()
