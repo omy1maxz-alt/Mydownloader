@@ -37,10 +37,10 @@ class AddEditScriptActivity : AppCompatActivity() {
         }
 
         binding.applyToAllCheckbox.setOnCheckedChangeListener { _, isChecked ->
-            binding.editScriptUrlLayout.isEnabled = !isChecked
+            binding.editScriptUrl.isEnabled = !isChecked
             if (isChecked) {
                 binding.editScriptUrl.setText("*")
-            } else {
+            } else if (binding.editScriptUrl.text.toString().trim() == "*") {
                 binding.editScriptUrl.setText("")
             }
         }
@@ -77,7 +77,7 @@ class AddEditScriptActivity : AppCompatActivity() {
                     }
                     title = "Edit Script"
                     
-                    if (it.targetUrl == "*") {
+                    if (it.matches.contains("*") || it.targetUrl == "*") {
                         binding.applyToAllCheckbox.isChecked = true
                     }
                 }
