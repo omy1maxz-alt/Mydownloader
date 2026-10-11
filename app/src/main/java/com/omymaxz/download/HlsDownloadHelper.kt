@@ -163,8 +163,13 @@ object HlsDownloadHelper {
     var currentCookie: String? = null
     var currentReferer: String? = null
 
+    data class RequestHeaders(val userAgent: String? = null, val referer: String? = null, val cookie: String? = null)
+
     @Synchronized
-    fun getDataSourceFactory(context: Context): DataSource.Factory {
+    fun getDataSourceFactory(context: Context, requestHeaders: RequestHeaders? = null): DataSource.Factory {
+        val userAgent = requestHeaders?.userAgent?.takeIf { it.isNotBlank() } ?: currentUserAgent
+        val referer = requestHeaders?.referer?.takeIf { it.isNotBlank() } ?: currentReferer
+        val cookie = requestHeaders?.cookie?.takeIf { it.isNotBlank() } ?: currentCookie
         // Instantiate a NEW factory per request rather than mutating the global singleton
         // to prevent race conditions or missing headers on background fetches.
         // Also use a ResolvingDataSource to explicitly log the final resolved DataSpec URI.
@@ -174,10 +179,10 @@ object HlsDownloadHelper {
                 .setConnectTimeoutMs(15_000)
                 .setReadTimeoutMs(15_000)
 
-            currentUserAgent?.let { upstream.setUserAgent(it) }
+            userAgent?.let { upstream.setUserAgent(it) }
             val props = mutableMapOf<String, String>()
-            currentCookie?.let { props["Cookie"] = it }
-            currentReferer?.let {
+            cookie?.let { props["Cookie"] = it }
+            referer?.let {
                 props["Referer"] = it
                 try {
                     val refererUri = java.net.URL(it)
@@ -226,11 +231,14 @@ object HlsDownloadHelper {
 
     /** CacheDataSource used by player + export. `readOnly` disables writes (export path). */
     @Synchronized
-    fun getCacheDataSourceFactory(context: Context, readOnly: Boolean = false):
-            androidx.media3.datasource.cache.CacheDataSource.Factory {
+    fun getCacheDataSourceFactory(
+        context: Context,
+        readOnly: Boolean = false,
+        requestHeaders: RequestHeaders? = null
+    ): androidx.media3.datasource.cache.CacheDataSource.Factory {
         val f = androidx.media3.datasource.cache.CacheDataSource.Factory()
             .setCache(getUnifiedCache(context))
-            .setUpstreamDataSourceFactory(DefaultDataSource.Factory(context, getDataSourceFactory(context)))
+            .setUpstreamDataSourceFactory(DefaultDataSource.Factory(context, getDataSourceFactory(context, requestHeaders)))
             // DO NOT STRIP QUERY FROM CACHE KEY if it's the primary content identifier, or at least
             // ensure the query is not mistakenly stripped from the URI itself by some Exoplayer bug.
             .setCacheKeyFactory(customCacheKeyFactory)
