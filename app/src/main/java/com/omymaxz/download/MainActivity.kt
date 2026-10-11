@@ -3655,6 +3655,11 @@ private fun injectMediaStateDetector() {
         val lowerUrl = url.lowercase()
         val cleanUrl = lowerUrl.substringBefore('?')
         return when {
+            cleanUrl.endsWith(".m4a") -> VideoFormat(".m4a", "audio/mp4")
+            cleanUrl.endsWith(".mp3") -> VideoFormat(".mp3", "audio/mpeg")
+            cleanUrl.endsWith(".aac") -> VideoFormat(".aac", "audio/aac")
+            cleanUrl.endsWith(".ogg") || cleanUrl.endsWith(".opus") -> VideoFormat(".ogg", "audio/ogg")
+            cleanUrl.endsWith(".wav") -> VideoFormat(".wav", "audio/wav")
             cleanUrl.endsWith(".mp4") -> VideoFormat(".mp4", "video/mp4")
             cleanUrl.endsWith(".mkv") -> VideoFormat(".mkv", "video/x-matroska")
             cleanUrl.endsWith(".webm") -> VideoFormat(".webm", "video/webm")
