@@ -607,8 +607,24 @@ class CustomPlayerActivity : AppCompatActivity() {
             .build()
 
         mediaSession?.release()
+        val sessionActivityIntent = Intent(this, CustomPlayerActivity::class.java).apply {
+            putExtra(EXTRA_VIDEO_URL, videoUrl)
+            putExtra(EXTRA_VIDEO_TITLE, videoTitle)
+            putExtra(EXTRA_MIME_TYPE, intent.getStringExtra(EXTRA_MIME_TYPE))
+            putExtra(EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
+            putExtra(EXTRA_REFERER, HlsDownloadHelper.currentReferer)
+            putExtra(EXTRA_COOKIE, HlsDownloadHelper.currentCookie)
+            addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+        val sessionActivityPendingIntent = PendingIntent.getActivity(
+            this,
+            (videoUrl ?: "").hashCode(),
+            sessionActivityIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         mediaSession = MediaSession.Builder(this, player!!)
             .setId("CustomPlayerSession_${System.currentTimeMillis()}")
+            .setSessionActivity(sessionActivityPendingIntent)
             .build()
 
         activePlayer = player
