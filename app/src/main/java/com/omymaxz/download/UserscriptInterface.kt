@@ -89,11 +89,12 @@ class UserscriptInterface(
                 }
                 val method = (details.method ?: "GET").uppercase()
                 require(method.matches(Regex("[A-Z]{3,10}"))) { "Invalid HTTP method" }
-                connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = method
-                connection.connectTimeout = boundedTimeout(details.timeout)
-                connection.readTimeout = boundedTimeout(details.timeout)
-                connection.instanceFollowRedirects = true
+                val conn = url.openConnection() as HttpURLConnection
+                connection = conn
+                conn.requestMethod = method
+                conn.connectTimeout = boundedTimeout(details.timeout)
+                conn.readTimeout = boundedTimeout(details.timeout)
+                conn.instanceFollowRedirects = true
                 details.headers?.forEach { (key, value) ->
                     require(key.matches(Regex("[A-Za-z0-9!#$%&'*+.^_|~-]{1,128}"))) {
                         "Invalid HTTP header name"
@@ -101,21 +102,21 @@ class UserscriptInterface(
                     require(!key.equals("Host", true) && !key.equals("Content-Length", true)) {
                         "Managed HTTP header is not allowed"
                     }
-                    connection.setRequestProperty(key, value.take(8192))
+                    conn.setRequestProperty(key, value.take(8192))
                 }
                 if (details.data != null && method !in setOf("GET", "HEAD")) {
-                    connection.doOutput = true
-                    connection.setRequestProperty(
+                    conn.doOutput = true
+                    conn.setRequestProperty(
                         "Content-Type",
-                        connection.getRequestProperty("Content-Type") ?: "text/plain; charset=utf-8"
+                        conn.getRequestProperty("Content-Type") ?: "text/plain; charset=utf-8"
                     )
-                    connection.outputStream.use {
+                    conn.outputStream.use {
                         it.write(details.data.toByteArray(StandardCharsets.UTF_8))
                     }
                 }
 
-                val status = connection.responseCode
-                val stream = if (status >= 400) connection.errorStream else connection.inputStream
+                val status = conn.responseCode
+                val stream = if (status >= 400) conn.errorStream else conn.inputStream
                 val responseText = stream?.use { input ->
                     val output = java.io.ByteArrayOutputStream()
                     val buffer = ByteArray(8192)
@@ -128,7 +129,7 @@ class UserscriptInterface(
                     }
                     output.toString(StandardCharsets.UTF_8.name())
                 }.orEmpty()
-                val responseHeaders = connection.headerFields
+                val responseHeaders = conn.headerFields
                     .filterKeys { it != null }
                     .map { entry -> entry.key + ": " + entry.value.joinToString(", ") }
                     .joinToString("\n")
@@ -136,9 +137,9 @@ class UserscriptInterface(
                 val response = XmlHttpResponse(
                     responseText = responseText,
                     status = status,
-                    statusText = connection.responseMessage.orEmpty(),
+                    statusText = conn.responseMessage.orEmpty(),
                     responseHeaders = responseHeaders,
-                    finalUrl = connection.url.toString()
+                    finalUrl = conn.url.toString()
                 )
                 val responseJson = gson.toJson(response)
                 withContext(Dispatchers.Main) {
