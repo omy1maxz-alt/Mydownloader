@@ -6932,6 +6932,53 @@ if (isDesktopMode) {
                 };
             """.trimIndent())
         }
+        if (script.grants.contains("GM_xmlhttpRequest")) {
+            polyfillBuilder.append("""
+                window.userscript_callbacks = window.userscript_callbacks || Object.create(null);
+                window.GM_xmlhttpRequest = function(details) {
+                    details = details || {};
+                    var id = "gm_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2);
+                    var active = true;
+                    var finish = function(callbackName, payload) {
+                        var callbacks = window.userscript_callbacks;
+                        var callback = callbacks && callbacks[id];
+                        if (!active || !callback) return;
+                        active = false;
+                        delete callbacks[id];
+                        if (typeof details[callbackName] === "function") {
+                            try { details[callbackName](payload); } catch (e) { console.error("GM_xmlhttpRequest callback failed", e); }
+                        }
+                    };
+                    window.userscript_callbacks[id] = {
+                        onload: function(response) {
+                            response.response = response.responseText;
+                            if (details.responseType === "json") {
+                                try { response.response = JSON.parse(response.responseText); } catch (e) {}
+                            }
+                            finish("onload", response);
+                        },
+                        onerror: function(message) { finish("onerror", { error: String(message || "Request failed") }); },
+                        ontimeout: function() { finish("ontimeout", { error: "Request timed out" }); }
+                    };
+                    try {
+                        AndroidUserscriptAPI.xmlHttpRequest(JSON.stringify({
+                            method: details.method || "GET",
+                            url: details.url,
+                            headers: details.headers || {},
+                            data: details.data == null ? null : String(details.data),
+                            timeout: Number(details.timeout || 15000),
+                            responseType: details.responseType || "text"
+                        }), id);
+                    } catch (e) {
+                        finish("onerror", { error: String(e && e.message || e) });
+                    }
+                    return { abort: function() {
+                        active = false;
+                        delete window.userscript_callbacks[id];
+                    } };
+                };
+            """.trimIndent())
+        }
         if (script.grants.contains("GM_log")) {
             polyfillBuilder.append("""
                 window.GM_log = function() {
