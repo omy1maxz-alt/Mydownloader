@@ -6989,7 +6989,7 @@ if (isDesktopMode) {
                     webView.evaluateJavascript(builder.toString(), null)
                 }
             } catch (e: Exception) {
-                android.util.Log.w("Userscript", "Failed to load @require for script $nameJson: ${e.javaClass.simpleName}: ${e.message}")
+                android.util.Log.w("Userscript", "Failed to load @require for script $nameJson (${e.javaClass.simpleName}); resource details omitted")
                 withContext(Dispatchers.Main) {
                     android.widget.Toast.makeText(this@MainActivity, "Could not load a required userscript library.", android.widget.Toast.LENGTH_LONG).show()
                 }
