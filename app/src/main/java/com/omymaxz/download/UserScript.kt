@@ -124,7 +124,7 @@ data class UserScript(
         val newMatches = mutableListOf<String>()
         val newExcludes = mutableListOf<String>()
         var newRunAt = runAt
-        for (line in metadataBlock.split("\\n")) {
+        for (line in metadataBlock.lines()) {
             val directive = line.trim()
                 .removePrefix("//")
                 .removePrefix("/*")
