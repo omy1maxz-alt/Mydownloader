@@ -743,8 +743,6 @@ class CustomPlayerActivity : AppCompatActivity() {
             }
 
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                android.util.Log.e("SUNO_SOURCE_TEST", "[SUNO_SOURCE_TEST] playback-error code=${error.errorCode} name=${error.errorCodeName} host=${failedUri?.host} path=$failedPath queryPresent=${!failedUri?.encodedQuery.isNullOrEmpty()} mimeType=${player?.currentMediaItem?.localConfiguration?.mimeType}")
-
                 var causeChain = ""
                 var currentCause: Throwable? = error.cause
                 while (currentCause != null) {
@@ -754,6 +752,7 @@ class CustomPlayerActivity : AppCompatActivity() {
 
                 val failedUri = player?.currentMediaItem?.localConfiguration?.uri
                 val failedPath = failedUri?.path.orEmpty()
+                android.util.Log.e("SUNO_SOURCE_TEST", "[SUNO_SOURCE_TEST] playback-error code=${error.errorCode} name=${error.errorCodeName} host=${failedUri?.host} path=$failedPath queryPresent=${!failedUri?.encodedQuery.isNullOrEmpty()} mimeType=${player?.currentMediaItem?.localConfiguration?.mimeType}")
                 android.util.Log.e("PLAYER_ERROR_TRACE", "[PLAYER_ERROR_TRACE] Code: ${error.errorCode} Name: ${error.errorCodeName} host=${failedUri?.host} path=$failedPath queryPresent=${!failedUri?.encodedQuery.isNullOrEmpty()} mimeType=${player?.currentMediaItem?.localConfiguration?.mimeType}\nException: ${error.javaClass.name} - ${error.message}\n$causeChain")
 
                 AlertDialog.Builder(this@CustomPlayerActivity)
