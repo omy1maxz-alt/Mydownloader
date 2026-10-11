@@ -531,7 +531,7 @@ class MainActivity : AppCompatActivity() {
             )
         } catch (e: Exception) {
             android.util.Log.e("MyDownloaderProxy", "Failed to apply WebView proxy override", e)
-            Toast.makeText(this, "Could not apply WebView proxy: \${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Could not apply WebView proxy: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -5946,7 +5946,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         if (connected != null) {
             createThemedDialogBuilder(this)
                 .setTitle("Urban VPN")
-                .setMessage("Connected to \${connected.countryName}\nExit proxy: \${connected.exitProxy}\n\nThis prototype currently routes WebView traffic only.")
+                .setMessage("Connected to ${connected.countryName}\nExit proxy: ${connected.exitProxy}\n\nThis prototype currently routes WebView traffic only.")
                 .setPositiveButton("Disconnect") { _, _ ->
                     UrbanVpnManager.disconnect()
                     applyProxy()
@@ -5967,13 +5967,13 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 val locations = withContext(Dispatchers.IO) { UrbanVpnManager.fetchLocations() }
                 if (isFinishing || isDestroyed) return@launch
                 loading.dismiss()
-                val labels = locations.map { "\${it.countryName} (\${it.countryCode})" }.toTypedArray()
+                val labels = locations.map { "${it.countryName} (${it.countryCode})" }.toTypedArray()
                 createThemedDialogBuilder(this@MainActivity)
                     .setTitle("Choose Urban VPN country")
                     .setItems(labels) { _, index ->
                         val selected = locations[index]
                         val progress = createThemedDialogBuilder(this@MainActivity)
-                            .setTitle("Connecting to \${selected.countryName}")
+                            .setTitle("Connecting to ${selected.countryName}")
                             .setMessage("Requesting proxy credentials and starting the local relay…")
                             .setNegativeButton("Cancel", null)
                             .show()
@@ -5984,7 +5984,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                                 progress.dismiss()
                                 createThemedDialogBuilder(this@MainActivity)
                                     .setTitle("Urban VPN connected")
-                                    .setMessage("Selected: \${info.countryName}\nProxy: \${info.exitProxy}\n\nThe app has applied the local relay to WebView. Exit IP verification and native download/player routing are not implemented yet.")
+                                    .setMessage("Selected: ${info.countryName}\nProxy: ${info.exitProxy}\n\nThe app has applied the local relay to WebView. Exit IP verification and native download/player routing are not implemented yet.")
                                     .setPositiveButton("OK", null)
                                     .show()
                             } catch (e: Exception) {
