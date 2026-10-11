@@ -59,15 +59,21 @@ class BackupRestoreManager(private val context: Context) {
                 db.bookmarkDao().insert(bookmark)
             }
 
-            // Restore Room Database - User Scripts
+            // Restore Room Database - User Scripts. Older backup files won't have the
+            // new matches/excludes fields; Gson may materialize those absent fields as null.
             val userScripts: List<UserScript> = gson.fromJson(
-                gson.toJson(backupData["userScripts"]), 
+                gson.toJson(backupData["userScripts"]),
                 object : TypeToken<List<UserScript>>() {}.type
             )
-            // Clear existing scripts and insert new ones
-            // Since there's no bulk delete, you might want to add a deleteAll method to your DAO
             for (script in userScripts) {
-                db.userScriptDao().insert(script)
+                db.userScriptDao().insert(
+                    script.copy(
+                        matches = script.matches.orEmpty(),
+                        excludes = script.excludes.orEmpty(),
+                        grants = script.grants.orEmpty(),
+                        requires = script.requires.orEmpty()
+                    )
+                )
             }
         }
     }

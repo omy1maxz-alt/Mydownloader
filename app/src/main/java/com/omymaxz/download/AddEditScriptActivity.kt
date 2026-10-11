@@ -18,6 +18,7 @@ class AddEditScriptActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
     private var existingScript: UserScript? = null
     private var scriptId: String? = null
+    private var runAtTouchedByUser = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,12 +38,17 @@ class AddEditScriptActivity : AppCompatActivity() {
         }
 
         binding.applyToAllCheckbox.setOnCheckedChangeListener { _, isChecked ->
-            binding.editScriptUrlLayout.isEnabled = !isChecked
+            binding.editScriptUrl.isEnabled = !isChecked
             if (isChecked) {
                 binding.editScriptUrl.setText("*")
-            } else {
+            } else if (binding.editScriptUrl.text.toString().trim() == "*") {
                 binding.editScriptUrl.setText("")
             }
+        }
+
+        binding.editScriptRunAt.setOnTouchListener { _, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) runAtTouchedByUser = true
+            false
         }
 
         binding.saveScriptButton.setOnClickListener {
@@ -58,7 +64,17 @@ class AddEditScriptActivity : AppCompatActivity() {
                     existingScript = it
                     // The name in the EditText should be the one the user can edit, not the metadata one.
                     binding.editScriptName.setText(it.name) 
-                    binding.editScriptUrl.setText(it.targetUrl)
+                    binding.editScriptUrl.setText(it.matches.takeIf { values -> values.isNotEmpty() }?.joinToString("\n") ?: it.targetUrl)
+                    binding.editScriptExcludes.setText(it.excludes.joinToString("\n"))
+                    binding.editScriptRequires.setText(it.requires.joinToString("\n"))
+                    binding.editScriptGrants.setText(it.grants.joinToString("\n"))
+                    binding.editScriptRunAt.setSelection(
+                        when (it.runAt) {
+                            UserScript.RunAt.DOCUMENT_START -> 0
+                            UserScript.RunAt.DOCUMENT_END -> 1
+                            UserScript.RunAt.DOCUMENT_IDLE -> 2
+                        }
+                    )
 
                     val scriptByteSize = it.script.toByteArray(Charsets.UTF_8).size
                     if (scriptByteSize <= UserScript.MAX_SCRIPT_SIZE_BYTES) {
@@ -69,7 +85,7 @@ class AddEditScriptActivity : AppCompatActivity() {
                     }
                     title = "Edit Script"
                     
-                    if (it.targetUrl == "*") {
+                    if (it.matches.contains("*") || it.targetUrl == "*") {
                         binding.applyToAllCheckbox.isChecked = true
                     }
                 }
@@ -78,8 +94,12 @@ class AddEditScriptActivity : AppCompatActivity() {
     }
 
     private fun saveScript() {
-        val name = binding.editScriptName.text.toString().trim()
+        val enteredName = binding.editScriptName.text.toString().trim()
         var urlPattern = binding.editScriptUrl.text.toString().trim()
+        val enteredMatches = urlPattern.lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        val enteredExcludes = binding.editScriptExcludes.text.toString().lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        val enteredRequires = binding.editScriptRequires.text.toString().lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        val enteredGrants = binding.editScriptGrants.text.toString().lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
         val code = binding.editScriptCode.text.toString()
 
         val codeByteSize = code.toByteArray(Charsets.UTF_8).size
@@ -88,33 +108,64 @@ class AddEditScriptActivity : AppCompatActivity() {
             return
         }
 
-        if (binding.applyToAllCheckbox.isChecked) {
-            urlPattern = "*"
+        val runAtFromEditor = when (binding.editScriptRunAt.selectedItemPosition) {
+            0 -> UserScript.RunAt.DOCUMENT_START
+            2 -> UserScript.RunAt.DOCUMENT_IDLE
+            else -> UserScript.RunAt.DOCUMENT_END
         }
-
-        if (name.isEmpty() || urlPattern.isEmpty() || code.isEmpty()) {
-            Toast.makeText(this, "All fields are required.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val initialScript = existingScript?.copy(
-            name = name,
-            targetUrl = urlPattern,
+        val metadataBase = existingScript?.copy(
+            name = enteredName.ifBlank { existingScript?.name.orEmpty() },
+            targetUrl = enteredMatches.firstOrNull() ?: existingScript?.targetUrl ?: "*",
+            matches = enteredMatches,
+            excludes = enteredExcludes,
+            requires = enteredRequires,
+            grants = enteredGrants,
+            runAt = runAtFromEditor,
             script = code
         ) ?: UserScript(
             id = UUID.randomUUID().toString(),
-            name = name,
-            targetUrl = urlPattern,
+            name = enteredName.ifBlank { "Userscript" },
+            targetUrl = enteredMatches.firstOrNull() ?: "*",
+            matches = enteredMatches,
+            excludes = enteredExcludes,
+            requires = enteredRequires,
+            grants = enteredGrants,
+            runAt = runAtFromEditor,
             script = code,
             isEnabled = true
         )
+        val parsedMetadata = metadataBase.parseMetadata()
 
-        // **FIX IMPLEMENTED HERE:** Parse metadata from the script's code before saving.
-        // This will update the name, runAt, grants, etc., based on the script's header.
-        val scriptToSave = initialScript.parseMetadata()
+        val finalMatches = when {
+            binding.applyToAllCheckbox.isChecked -> listOf("*")
+            enteredMatches.isNotEmpty() -> enteredMatches
+            parsedMetadata.matches.isNotEmpty() -> parsedMetadata.matches
+            existingScript != null -> existingScript!!.matches.ifEmpty { listOf(existingScript!!.targetUrl) }
+            else -> emptyList()
+        }.distinct()
+        val finalExcludes = enteredExcludes.ifEmpty { parsedMetadata.excludes }.distinct()
+        val finalRequires = enteredRequires.ifEmpty { parsedMetadata.requires }.distinct()
+        val finalGrants = enteredGrants.ifEmpty { parsedMetadata.grants }.distinct()
+        val finalName = enteredName.ifBlank { parsedMetadata.name }.trim()
+        val finalRunAt = if (runAtTouchedByUser) runAtFromEditor else parsedMetadata.runAt
+
+        if (finalName.isEmpty() || finalMatches.isEmpty() || code.isEmpty()) {
+            Toast.makeText(this, "Add a script name and at least one match pattern, or include them in the userscript metadata header.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val scriptToSave = parsedMetadata.copy(
+            name = finalName,
+            targetUrl = finalMatches.first(),
+            matches = finalMatches,
+            excludes = finalExcludes,
+            requires = finalRequires,
+            grants = finalGrants,
+            runAt = finalRunAt
+        )
 
         if (!scriptToSave.isValid()) {
-            Toast.makeText(this, "Script is invalid or too large (max ${UserScript.MAX_SCRIPT_SIZE_BYTES / 1000}KB)", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Script is invalid. Check its URL patterns, required library URLs, or size limit.", Toast.LENGTH_LONG).show()
             return
         }
 

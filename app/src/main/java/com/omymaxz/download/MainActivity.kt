@@ -444,6 +444,9 @@ class MainActivity : AppCompatActivity() {
 
     private var isPageLoading = false
     private var pendingScriptsToInject = mutableListOf<UserScript>()
+    // Prevent repeated onProgressChanged callbacks from running a script multiple times per page.
+    private var userscriptPageUrl: String? = null
+    private val injectedUserscriptIdsForPage = mutableSetOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -1314,6 +1317,10 @@ class MainActivity : AppCompatActivity() {
                 private var navigationCount = 0
 
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    synchronized(injectedUserscriptIdsForPage) {
+                        userscriptPageUrl = url
+                        injectedUserscriptIdsForPage.clear()
+                    }
                     val isYt = url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))
                     // Auto-clear detected media on new page load to prevent stale episode links
                     // We also skip clearing if YouTube so we don't wipe the list immediately after we add it
@@ -6873,24 +6880,191 @@ if (isDesktopMode) {
     }
     private fun loadEnabledUserScripts() {
         lifecycleScope.launch(Dispatchers.IO) {
-            enabledUserScripts = db.userScriptDao().getEnabledScripts()
+            val scripts = db.userScriptDao().getEnabledScripts()
+            withContext(Dispatchers.Main) {
+                enabledUserScripts = scripts
+            }
         }
     }
-    private fun injectUserscript(script: UserScript) {
+
+    private fun injectUserscript(script: UserScript, expectedPageUrl: String = webView.url.orEmpty()) {
+        val nameJson = org.json.JSONObject.quote(script.name)
         val polyfillBuilder = StringBuilder()
-        if (script.grants.contains("GM_addStyle")) {
+        polyfillBuilder.append("""
+            window.GM_info = window.GM_info || { script: { name: $nameJson } };
+            window.GM_addStyle = window.GM_addStyle || function(css) {
+                if (window.GMApi && GMApi.addStyle) GMApi.addStyle(String(css));
+                else {
+                    var style = document.createElement('style');
+                    style.textContent = String(css);
+                    (document.head || document.documentElement).appendChild(style);
+                }
+            };
+        """.trimIndent())
+        if (script.grants.contains("GM_getValue")) {
             polyfillBuilder.append("""
-                window.GM_addStyle = function(css) {
-                    GMApi.addStyle(css);
+                window.GM_getValue = function(key, defaultValue) {
+                    try {
+                        var value = AndroidUserscriptAPI.getValue($nameJson, String(key), defaultValue == null ? null : JSON.stringify(defaultValue));
+                        if (value == null) return defaultValue;
+                        try { return JSON.parse(value); } catch (e) { return value; }
+                    } catch (e) { return defaultValue; }
                 };
             """.trimIndent())
         }
-        val polyfillScript = polyfillBuilder.toString()
-        if (polyfillScript.isNotEmpty()) {
-            webView.evaluateJavascript(polyfillScript, null)
+        if (script.grants.contains("GM_setValue")) {
+            polyfillBuilder.append("""
+                window.GM_setValue = function(key, value) {
+                    var serialized;
+                    try { serialized = JSON.stringify(value); } catch (e) { serialized = String(value); }
+                    AndroidUserscriptAPI.setValue($nameJson, String(key), serialized);
+                };
+            """.trimIndent())
         }
-        val wrappedScript = "(function() { try { ${script.script} } catch (e) { console.error('Userscript error in ${script.name}:', e); } })();"
-        webView.evaluateJavascript(wrappedScript, null)
+        if (script.grants.contains("GM_deleteValue")) {
+            polyfillBuilder.append("""
+                window.GM_deleteValue = function(key) {
+                    AndroidUserscriptAPI.deleteValue($nameJson, String(key));
+                };
+            """.trimIndent())
+        }
+        if (script.grants.contains("GM_listValues")) {
+            polyfillBuilder.append("""
+                window.GM_listValues = function() {
+                    try { return JSON.parse(AndroidUserscriptAPI.listValues($nameJson)); } catch (e) { return []; }
+                };
+            """.trimIndent())
+        }
+        if (script.grants.contains("GM_xmlhttpRequest")) {
+            polyfillBuilder.append("""
+                window.userscript_callbacks = window.userscript_callbacks || Object.create(null);
+                window.GM_xmlhttpRequest = function(details) {
+                    details = details || {};
+                    var id = "gm_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2);
+                    var active = true;
+                    var finish = function(callbackName, payload) {
+                        var callbacks = window.userscript_callbacks;
+                        var callback = callbacks && callbacks[id];
+                        if (!active || !callback) return;
+                        active = false;
+                        delete callbacks[id];
+                        if (typeof details[callbackName] === "function") {
+                            try { details[callbackName](payload); } catch (e) { console.error("GM_xmlhttpRequest callback failed", e); }
+                        }
+                    };
+                    window.userscript_callbacks[id] = {
+                        onload: function(response) {
+                            response.response = response.responseText;
+                            if (details.responseType === "json") {
+                                try { response.response = JSON.parse(response.responseText); } catch (e) {}
+                            }
+                            finish("onload", response);
+                        },
+                        onerror: function(message) { finish("onerror", { error: String(message || "Request failed") }); },
+                        ontimeout: function() { finish("ontimeout", { error: "Request timed out" }); }
+                    };
+                    try {
+                        AndroidUserscriptAPI.xmlHttpRequest(JSON.stringify({
+                            method: details.method || "GET",
+                            url: details.url,
+                            headers: details.headers || {},
+                            data: details.data == null ? null : String(details.data),
+                            timeout: Number(details.timeout || 15000),
+                            responseType: details.responseType || "text"
+                        }), id);
+                    } catch (e) {
+                        finish("onerror", { error: String(e && e.message || e) });
+                    }
+                    return { abort: function() {
+                        active = false;
+                        delete window.userscript_callbacks[id];
+                    } };
+                };
+            """.trimIndent())
+        }
+        if (script.grants.contains("GM_log")) {
+            polyfillBuilder.append("""
+                window.GM_log = function() {
+                    AndroidUserscriptAPI.log(Array.prototype.slice.call(arguments).join(' '));
+                };
+            """.trimIndent())
+        }
+        if (script.grants.contains("GM_notification")) {
+            polyfillBuilder.append("""
+                window.GM_notification = function(details) {
+                    var message = typeof details === 'string' ? details : ((details && details.text) || (details && details.title) || '');
+                    AndroidUserscriptAPI.showToast(String(message));
+                };
+            """.trimIndent())
+        }
+
+        val polyfills = polyfillBuilder.toString()
+        webView.evaluateJavascript("(function(){ $polyfills })();", null)
+
+        // @require resources are fetched off-thread, then injected in declared order.
+        // Restrict schemes and bound both response size and total wait; no auth headers are forwarded.
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val requiredScripts = script.requires.map { requireUrl ->
+                    requireUrl.trim().also {
+                        require(it.startsWith("https://", true) || it.startsWith("http://", true)) {
+                            "Only HTTP(S) @require URLs are supported"
+                        }
+                    }.let { requireUrl ->
+                        val connection = java.net.URL(requireUrl).openConnection() as java.net.HttpURLConnection
+                        connection.connectTimeout = 10000
+                        connection.readTimeout = 15000
+                        connection.instanceFollowRedirects = true
+                        try {
+                            val status = connection.responseCode
+                            require(status in 200..299) { "@require returned HTTP $status" }
+                            val limit = 2 * 1024 * 1024
+                            connection.inputStream.use { input ->
+                                val output = java.io.ByteArrayOutputStream()
+                                val buffer = ByteArray(8192)
+                                while (true) {
+                                    val count = input.read(buffer)
+                                    if (count < 0) break
+                                    require(output.size() + count <= limit) { "@require resource exceeds 2 MiB" }
+                                    output.write(buffer, 0, count)
+                                }
+                                output.toString(Charsets.UTF_8.name())
+                            }
+                        } finally {
+                            connection.disconnect()
+                        }
+                    }
+                }
+                withContext(Dispatchers.Main) {
+                    // Navigation may have changed while a required library was downloading.
+                    if (webView.url != expectedPageUrl) return@withContext
+                    // Build one ordered script so libraries are installed before the userscript executes.
+                    val builder = StringBuilder("(function(){ try {")
+                    requiredScripts.forEach { builder.append("\n").append(it).append("\n;") }
+                    val encodedName = org.json.JSONObject.quote(script.name)
+                    builder.append("\n").append(script.script)
+                    builder.append("\n} catch (e) { console.error('Userscript error in ', ")
+                        .append(encodedName).append(", e); } })();")
+                    webView.evaluateJavascript(builder.toString(), null)
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("Userscript", "Failed to load @require for script $nameJson (${e.javaClass.simpleName}); resource details omitted")
+                withContext(Dispatchers.Main) {
+                    android.widget.Toast.makeText(this@MainActivity, "Could not load a required userscript library.", android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun injectUserscriptOncePerPage(script: UserScript, url: String) {
+        val accepted = synchronized(injectedUserscriptIdsForPage) {
+            if (userscriptPageUrl != url || !injectedUserscriptIdsForPage.add(script.id)) {
+                false
+            } else {
+                true
+            }
+        }
+        if (accepted) injectUserscript(script, expectedPageUrl = url)
     }
 
     private fun injectEarlyUserscripts(url: String?) {
@@ -6898,19 +7072,16 @@ if (isDesktopMode) {
         val matchingScripts = enabledUserScripts.filter {
             it.shouldRunOnUrl(url) && it.runAt == UserScript.RunAt.DOCUMENT_START
         }
-        for (script in matchingScripts) {
-            injectUserscript(script)
-        }
+        for (script in matchingScripts) injectUserscriptOncePerPage(script, url)
     }
 
     private fun injectPendingUserscripts() {
         val url = webView.url ?: return
         val matchingScripts = enabledUserScripts.filter {
-            it.shouldRunOnUrl(url) && (it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE)
+            it.shouldRunOnUrl(url) &&
+                (it.runAt == UserScript.RunAt.DOCUMENT_END || it.runAt == UserScript.RunAt.DOCUMENT_IDLE)
         }
-        for (script in matchingScripts) {
-            injectUserscript(script)
-        }
+        for (script in matchingScripts) injectUserscriptOncePerPage(script, url)
         pendingScriptsToInject.clear()
     }
     private fun showConfirmNavigationDialog(url: String, view: WebView?) {

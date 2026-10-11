@@ -48,9 +48,15 @@
                 android:layout_marginTop="8dp"
                 android:text="Apply to all websites" />
 
-            <!-- Target URL Input -->
+            <!-- Match patterns: one userscript pattern per line -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Match patterns (one per line)"
+                android:textAppearance="?attr/textAppearanceBody1" />
+
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/editScriptUrlLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -60,8 +66,97 @@
                     android:id="@+id/editScriptUrl"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Target URL (e.g., youtube.com)"
-                    android:inputType="textUri" />
+                    android:hint="https://example.com/* (one per line)"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textUri"
+                    android:minLines="2"
+                    android:maxLines="6" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Exclude patterns (one per line)"
+                android:textAppearance="?attr/textAppearanceBody1" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editScriptExcludes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="https://example.com/private/*"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textUri"
+                    android:minLines="2"
+                    android:maxLines="5" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Run at"
+                android:textAppearance="?attr/textAppearanceBody1" />
+
+            <Spinner
+                android:id="@+id/editScriptRunAt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/userscript_run_at_options"
+                android:contentDescription="When to run this userscript" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Required libraries (one HTTP(S) URL per line)"
+                android:textAppearance="?attr/textAppearanceBody1" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editScriptRequires"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="https://cdn.example.com/library.js"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textUri"
+                    android:minLines="2"
+                    android:maxLines="5" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Granted APIs (one per line)"
+                android:textAppearance="?attr/textAppearanceBody1" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editScriptGrants"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="GM_getValue, GM_setValue"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textNoSuggestions"
+                    android:minLines="2"
+                    android:maxLines="5" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Script Code Input - Modified for large text -->

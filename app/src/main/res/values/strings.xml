@@ -14,4 +14,10 @@
     <string name="redirect_blocked">Redirect blocked</string>
     <string name="proxy_settings">Proxy Settings</string>
     <string name="exo_download_notification_channel_name">Download Notification</string>
+
+    <string-array name="userscript_run_at_options">
+        <item>document-start (early)</item>
+        <item>document-end</item>
+        <item>document-idle</item>
+    </string-array>
 </resources>

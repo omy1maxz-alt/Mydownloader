@@ -1,9 +1,12 @@
 package com.omymaxz.download
 
+import android.net.Uri
+import android.util.Log
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.UUID
-import java.util.regex.Pattern // Add this import for Pattern
+import java.util.regex.Pattern
 
 @Entity(tableName = "user_scripts")
 data class UserScript(
@@ -11,97 +14,148 @@ data class UserScript(
     val name: String,
     val script: String,
     var isEnabled: Boolean = true,
+    /** Legacy primary include pattern. Retained for database/backup compatibility. */
     val targetUrl: String,
     val createdAt: Long = System.currentTimeMillis(),
-    // Add metadata fields
-    val runAt: RunAt = RunAt.DOCUMENT_END, // Default to document-end
+    val runAt: RunAt = RunAt.DOCUMENT_END,
     val grants: List<String> = emptyList(),
-    val requires: List<String> = emptyList()
+    val requires: List<String> = emptyList(),
+    /** Additional userscript metadata. SQL defaults match the 3→4 migration. */
+    @ColumnInfo(defaultValue = "'[]'")
+    val matches: List<String> = emptyList(),
+    @ColumnInfo(defaultValue = "'[]'")
+    val excludes: List<String> = emptyList()
 ) {
-    enum class RunAt {
-        DOCUMENT_START, DOCUMENT_END, DOCUMENT_IDLE
-    }
+    enum class RunAt { DOCUMENT_START, DOCUMENT_END, DOCUMENT_IDLE }
 
     companion object {
-        // Increased limit to 600KB (approx 600,000 characters)
         const val MAX_SCRIPT_SIZE_BYTES: Long = 600_000
-        
-        // Regex pattern to extract metadata block
+        private const val TAG = "UserScript"
         private val METADATA_PATTERN = Pattern.compile(
-            "/\\*\\*?\\s*==UserScript==[\\s\\S]*?==/UserScript==\\s*\\*/", 
-            Pattern.MULTILINE
+            "(?s)// *==UserScript==.*?// *==/UserScript=="
         )
     }
 
     fun shouldRunOnUrl(url: String): Boolean {
-        if (!isEnabled || targetUrl.isBlank()) return false
+        if (!isEnabled || url.isBlank()) return false
+        val includePatterns = (matches.ifEmpty { listOf(targetUrl) })
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+        if (includePatterns.isEmpty() || includePatterns.none { matchesPattern(url, it) }) return false
+        if (excludes.any { it.isNotBlank() && matchesPattern(url, it.trim()) }) return false
+        return true
+    }
 
-        // If targetUrl is "*", it should run on all sites.
-        if (targetUrl == "*") return true
-
+    /** Common userscript scheme/host/path wildcard matching plus legacy simple patterns. */
+    internal fun matchesPattern(url: String, pattern: String): Boolean {
+        if (pattern == "*" || pattern.equals("<all_urls>", ignoreCase = true)) {
+            val scheme = Uri.parse(url).scheme?.lowercase()
+            return scheme in setOf("http", "https", "file", "ftp")
+        }
+        if (!pattern.contains("://")) return legacyWildcardMatch(url, pattern)
         return try {
-            when {
-                targetUrl.startsWith("*") && targetUrl.endsWith("*") -> {
-                    val searchTerm = targetUrl.removeSurrounding("*")
-                    url.contains(searchTerm, ignoreCase = true)
+            val target = Uri.parse(url)
+            val parts = pattern.split("://", limit = 2)
+            if (parts.size != 2) return false
+            val requestedScheme = parts[0].lowercase()
+            val rest = parts[1]
+            val slash = rest.indexOf('/')
+            val hostPattern = if (slash >= 0) rest.substring(0, slash) else rest
+            val pathPattern = if (slash >= 0) rest.substring(slash) else "/*"
+            val actualScheme = target.scheme?.lowercase().orEmpty()
+            val actualHost = target.host?.lowercase().orEmpty()
+            if (actualHost.isEmpty()) return false
+            if (requestedScheme != "*" && requestedScheme != actualScheme &&
+                !(requestedScheme == "http*" && actualScheme in setOf("http", "https"))) return false
+            val hostOk = when {
+                hostPattern == "*" -> true
+                hostPattern.startsWith("*.") -> {
+                    val suffix = hostPattern.removePrefix("*").lowercase()
+                    actualHost == suffix.removePrefix(".") || actualHost.endsWith(suffix)
                 }
-                targetUrl.startsWith("*") -> {
-                    val searchTerm = targetUrl.removePrefix("*")
-                    url.endsWith(searchTerm, ignoreCase = true)
-                }
-                targetUrl.endsWith("*") -> {
-                    val searchTerm = targetUrl.removeSuffix("*")
-                    url.startsWith(searchTerm, ignoreCase = true)
-                }
-                else -> url.contains(targetUrl, ignoreCase = true)
+                hostPattern.contains("*") -> wildcardRegex(hostPattern).matches(actualHost)
+                else -> actualHost.equals(hostPattern, ignoreCase = true)
             }
+            if (!hostOk) return false
+            val pathAndQuery = buildString {
+                append(target.path?.ifEmpty { "/" } ?: "/")
+                target.encodedQuery?.let { append("?").append(it) }
+            }
+            wildcardRegex(pathPattern).matches(pathAndQuery)
         } catch (e: Exception) {
-            android.util.Log.e("UserScript", "Error matching URL pattern: ${e.message}")
-            url.contains(targetUrl, ignoreCase = true)
+            Log.w(TAG, "Invalid userscript URL pattern ignored")
+            false
         }
     }
 
-    fun isValid(): Boolean {
-        return name.isNotBlank() &&
-                script.isNotBlank() &&
-                script.toByteArray(Charsets.UTF_8).size < MAX_SCRIPT_SIZE_BYTES
+    private fun legacyWildcardMatch(url: String, pattern: String): Boolean = when {
+        pattern == "*" -> true
+        pattern.startsWith("*") && pattern.endsWith("*") ->
+            url.contains(pattern.removeSurrounding("*"), ignoreCase = true)
+        pattern.startsWith("*") -> url.endsWith(pattern.removePrefix("*"), ignoreCase = true)
+        pattern.endsWith("*") -> url.startsWith(pattern.removeSuffix("*"), ignoreCase = true)
+        else -> url.contains(pattern, ignoreCase = true)
     }
-    
-    // Parse metadata from the script content
+
+    private fun wildcardRegex(pattern: String): Regex {
+        val regex = buildString {
+            append('^')
+            pattern.forEach { character ->
+                if (character == '*') append(".*") else append(Regex.escape(character.toString()))
+            }
+            append('$')
+        }
+        return Regex(regex, RegexOption.IGNORE_CASE)
+    }
+
+    fun isValid(): Boolean =
+        name.isNotBlank() && script.isNotBlank() &&
+            script.toByteArray(Charsets.UTF_8).size <= MAX_SCRIPT_SIZE_BYTES &&
+            (matches.ifEmpty { listOf(targetUrl) }).any { it.isNotBlank() } &&
+            requires.all { it.startsWith("https://", true) || it.startsWith("http://", true) }
+
     fun parseMetadata(): UserScript {
         val matcher = METADATA_PATTERN.matcher(script)
-        if (!matcher.find()) return this // No metadata block found
-        
+        if (!matcher.find()) return this
         val metadataBlock = matcher.group()
-        val lines = metadataBlock.split("\n")
-        var newName = this.name
-        val newGrants = mutableSetOf<String>()
-        val newRequires = mutableSetOf<String>()
-        var newRunAt = this.runAt
-        
-        for (line in lines) {
-            val trimmedLine = line.trim()
-            if (trimmedLine.startsWith("@name ")) {
-                newName = trimmedLine.substring("@name ".length).trim()
-            } else if (trimmedLine.startsWith("@grant ")) {
-                newGrants.add(trimmedLine.substring("@grant ".length).trim())
-            } else if (trimmedLine.startsWith("@require ")) {
-                newRequires.add(trimmedLine.substring("@require ".length).trim())
-            } else if (trimmedLine.startsWith("@run-at ")) {
-                newRunAt = when (trimmedLine.substring("@run-at ".length).trim()) {
+        var newName = name
+        val newGrants = linkedSetOf<String>()
+        val newRequires = mutableListOf<String>()
+        val newMatches = mutableListOf<String>()
+        val newExcludes = mutableListOf<String>()
+        var newRunAt = runAt
+        for (line in metadataBlock.lines()) {
+            val directive = line.trim()
+                .removePrefix("//")
+                .removePrefix("/*")
+                .removeSuffix("*/")
+                .removePrefix("*")
+                .trim()
+            if (directive.isBlank() || directive.startsWith("==")) continue
+            val keyEnd = directive.indexOfFirst { it.isWhitespace() }.let { if (it < 0) directive.length else it }
+            val key = directive.substring(0, keyEnd).trim()
+            val value = directive.substring(keyEnd).trim()
+            when (key) {
+                "@name" -> if (value.isNotBlank()) newName = value
+                "@match", "@include" -> if (value.isNotBlank()) newMatches.add(value)
+                "@exclude" -> if (value.isNotBlank()) newExcludes.add(value)
+                "@grant" -> if (value.isNotBlank()) newGrants.add(value)
+                "@require" -> if (value.isNotBlank()) newRequires.add(value)
+                "@run-at" -> newRunAt = when (value) {
                     "document-start" -> RunAt.DOCUMENT_START
                     "document-end" -> RunAt.DOCUMENT_END
                     "document-idle" -> RunAt.DOCUMENT_IDLE
-                    else -> RunAt.DOCUMENT_END // Default
+                    else -> RunAt.DOCUMENT_END
                 }
             }
         }
-        
-        return this.copy(
+        return copy(
             name = newName,
-            grants = newGrants.toList(),
-            requires = newRequires.toList(),
-            runAt = newRunAt
+            grants = newGrants.toList().ifEmpty { grants },
+            requires = newRequires.distinct().ifEmpty { requires },
+            runAt = newRunAt,
+            matches = newMatches.distinct().ifEmpty { matches },
+            excludes = newExcludes.distinct().ifEmpty { excludes }
         )
     }
 }
