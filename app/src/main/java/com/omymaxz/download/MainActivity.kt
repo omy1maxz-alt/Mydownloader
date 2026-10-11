@@ -4356,22 +4356,36 @@ private fun showMediaListDialog() {
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, candidate.url)
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
 
-            // Determine explicit MIME type from candidate metadata
+            // Infer audio MIME before generic progressive fallback: Suno commonly serves audio-only .m4a URLs.
+            // Keep the full URL unchanged because query parameters may be signed/required.
             var mimeType: String? = null
-            val ctLower = candidate.contentType?.lowercase()
-            if (ctLower?.contains("mpegurl") == true || ctLower?.contains("x-mpegurl") == true || candidate.url.endsWith(".m3u8")) {
-                mimeType = androidx.media3.common.MimeTypes.APPLICATION_M3U8
-            } else if (ctLower?.contains("dash+xml") == true || candidate.url.endsWith(".mpd")) {
-                mimeType = androidx.media3.common.MimeTypes.APPLICATION_MPD
-            } else if (candidate.isProgressiveFinal || ctLower?.startsWith("video/") == true || candidate.url.contains(".mp4", ignoreCase=true)) {
-                mimeType = androidx.media3.common.MimeTypes.VIDEO_MP4 // Fallback progressive, EXO will try to sniff it though
+            val ctLower = candidate.contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
+            val pathLower = android.net.Uri.parse(candidate.url).path.orEmpty().lowercase()
+            mimeType = when {
+                ctLower.contains("mpegurl") || candidate.url.contains(".m3u8", ignoreCase = true) ->
+                    androidx.media3.common.MimeTypes.APPLICATION_M3U8
+                ctLower.contains("dash+xml") || candidate.url.contains(".mpd", ignoreCase = true) ->
+                    androidx.media3.common.MimeTypes.APPLICATION_MPD
+                ctLower.startsWith("audio/") -> ctLower
+                pathLower.endsWith(".m4a") -> androidx.media3.common.MimeTypes.AUDIO_MP4
+                pathLower.endsWith(".mp3") -> androidx.media3.common.MimeTypes.AUDIO_MPEG
+                pathLower.endsWith(".aac") -> androidx.media3.common.MimeTypes.AUDIO_AAC
+                pathLower.endsWith(".ogg") || pathLower.endsWith(".opus") -> androidx.media3.common.MimeTypes.AUDIO_OGG
+                pathLower.endsWith(".wav") -> androidx.media3.common.MimeTypes.AUDIO_WAV
+                ctLower.startsWith("video/") -> ctLower
+                pathLower.endsWith(".mp4") || pathLower.endsWith(".m4v") -> androidx.media3.common.MimeTypes.VIDEO_MP4
+                pathLower.endsWith(".webm") -> androidx.media3.common.MimeTypes.VIDEO_WEBM
+                pathLower.endsWith(".mkv") -> androidx.media3.common.MimeTypes.VIDEO_MATROSKA
+                candidate.isProgressiveFinal -> null // Let Media3 sniff unknown progressive containers.
+                else -> null
             }
 
             if (mimeType != null) {
                 putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mimeType)
             }
 
-            android.util.Log.d("KISSHKH_DEBUG", "[KISSHKH_DEBUG]\nsourcePageUrl=${webView.url}\ncandidateUrl=${candidate.url}\ncandidateType=${candidate.type}\nmimeType=${mimeType}\nisManifest=${candidate.isManifest}\nisSegment=${candidate.isSegment}\nrequestCount=${candidate.requestCount}\nplaybackScore=${candidate.playbackScore}\nadScore=${candidate.adScore}\nreferer=${candidate.referer}\nuserAgentPresent=${candidate.userAgent != null}\ncookiePresent=${candidate.cookie != null}")
+            val safeCandidateUri = android.net.Uri.parse(candidate.url)
+            android.util.Log.d("SUNO_SOURCE_TEST", "[SUNO_SOURCE_TEST] handoff host=${safeCandidateUri.host} path=${safeCandidateUri.path} queryPresent=${!safeCandidateUri.encodedQuery.isNullOrEmpty()} kind=${candidate.mediaKind} type=${candidate.type} contentType=${candidate.contentType} durationSec=${candidate.durationSec} active=${candidate.isActivePlayer} requests=${candidate.requestCount} mimeType=${mimeType ?: "MEDIA3_SNIFF"} refererHost=${android.net.Uri.parse(candidate.referer ?: fallbackReferer ?: webView.url.orEmpty()).host} userAgentPresent=${candidate.userAgent != null} cookiePresent=${candidate.cookie != null}")
 
             putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, candidate.userAgent ?: webView.settings.userAgentString)
 
