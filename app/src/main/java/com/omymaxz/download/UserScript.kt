@@ -32,7 +32,7 @@ data class UserScript(
         const val MAX_SCRIPT_SIZE_BYTES: Long = 600_000
         private const val TAG = "UserScript"
         private val METADATA_PATTERN = Pattern.compile(
-            "(?m)^[ \\t]*(?://[ \\t]*==UserScript==|/\\*+[ \\t]*==UserScript==)[\\s\\S]*?^[ \\t]*(?://[ \\t]*==/UserScript==|\\*+/[ \\t]*==/UserScript==)[ \\t]*$"
+            "(?s)//\\\\s*==UserScript==.*?//\\\\s*==/UserScript==|/\\\\*\\\\s*==UserScript==.*?==/UserScript==\\\\s*\\\\*/"
         )
     }
 
