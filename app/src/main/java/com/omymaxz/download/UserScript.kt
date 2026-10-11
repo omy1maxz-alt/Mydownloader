@@ -94,8 +94,69 @@ data class UserScript(
         else -> url.contains(pattern, ignoreCase = true)
     }
 
-    private fun wildcardRegex(pattern: String): Regex =
-        Regex("^" + pattern.split("*").joinToString(".*") { Regex.escape(it) } + "$", RegexOption.IGNORE_CASE)
+    private fun wildcardRegex(pattern: String): Regex {
+        val regex = buildString {
+            append('^')
+            pattern.forEach { character ->
+                if (character == '*') append(".*") else append(Regex.escape(character.toString()))
+            }
+            append('
+
+    fun isValid(): Boolean =
+        name.isNotBlank() && script.isNotBlank() &&
+            script.toByteArray(Charsets.UTF_8).size <= MAX_SCRIPT_SIZE_BYTES &&
+            (matches.ifEmpty { listOf(targetUrl) }).any { it.isNotBlank() } &&
+            requires.all { it.startsWith("https://", true) || it.startsWith("http://", true) }
+
+    fun parseMetadata(): UserScript {
+        val matcher = METADATA_PATTERN.matcher(script)
+        if (!matcher.find()) return this
+        val metadataBlock = matcher.group()
+        var newName = name
+        val newGrants = linkedSetOf<String>()
+        val newRequires = mutableListOf<String>()
+        val newMatches = mutableListOf<String>()
+        val newExcludes = mutableListOf<String>()
+        var newRunAt = runAt
+        for (line in metadataBlock.split("\\n")) {
+            val directive = line.trim()
+                .removePrefix("//")
+                .removePrefix("/*")
+                .removeSuffix("*/")
+                .removePrefix("*")
+                .trim()
+            if (directive.isBlank() || directive.startsWith("==")) continue
+            val keyEnd = directive.indexOfFirst { it.isWhitespace() }.let { if (it < 0) directive.length else it }
+            val key = directive.substring(0, keyEnd).trim()
+            val value = directive.substring(keyEnd).trim()
+            when (key) {
+                "@name" -> if (value.isNotBlank()) newName = value
+                "@match", "@include" -> if (value.isNotBlank()) newMatches.add(value)
+                "@exclude" -> if (value.isNotBlank()) newExcludes.add(value)
+                "@grant" -> if (value.isNotBlank()) newGrants.add(value)
+                "@require" -> if (value.isNotBlank()) newRequires.add(value)
+                "@run-at" -> newRunAt = when (value) {
+                    "document-start" -> RunAt.DOCUMENT_START
+                    "document-end" -> RunAt.DOCUMENT_END
+                    "document-idle" -> RunAt.DOCUMENT_IDLE
+                    else -> RunAt.DOCUMENT_END
+                }
+            }
+        }
+        return copy(
+            name = newName,
+            grants = newGrants.toList().ifEmpty { grants },
+            requires = newRequires.distinct().ifEmpty { requires },
+            runAt = newRunAt,
+            matches = newMatches.distinct().ifEmpty { matches },
+            excludes = newExcludes.distinct().ifEmpty { excludes }
+        )
+    }
+}
+)
+        }
+        return Regex(regex, RegexOption.IGNORE_CASE)
+    }
 
     fun isValid(): Boolean =
         name.isNotBlank() && script.isNotBlank() &&
