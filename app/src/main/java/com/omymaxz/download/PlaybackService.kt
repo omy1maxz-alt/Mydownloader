@@ -49,7 +49,7 @@ override fun onCreate() {
         val sessionActivityPendingIntent = PendingIntent.getActivity(
             this,
             0,
-            Intent(this, CustomPlayerActivity::class.java).apply {
+            Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -82,9 +82,24 @@ private fun createNotificationChannel() {
 
         // Prevent ForegroundServiceDidNotStartInTimeException by calling startForeground immediately
         createNotificationChannel()
+        val urlForNotification = intent?.getStringExtra("video_url")
+            ?: player?.currentMediaItem?.localConfiguration?.uri?.toString()
+        val openPlayerIntent = Intent(this, CustomPlayerActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            urlForNotification?.let { putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, it) }
+            putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
+        }
+        val openPlayerPendingIntent = PendingIntent.getActivity(
+            this,
+            (urlForNotification ?: "custom-player").hashCode(),
+            openPlayerIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Playing Audio")
+            .setContentTitle("Custom Player")
             .setContentText(title)
+            .setSubText("Custom Player • Background playback")
+            .setContentIntent(openPlayerPendingIntent)
             .setSmallIcon(R.drawable.ic_headset)
             .setOngoing(true)
             .build()
