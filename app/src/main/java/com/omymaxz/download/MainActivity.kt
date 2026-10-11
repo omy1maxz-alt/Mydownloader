@@ -5979,12 +5979,16 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                             .show()
                         lifecycleScope.launch {
                             try {
-                                val info = withContext(Dispatchers.IO) { UrbanVpnManager.connect(selected) }
+                                val verified = withContext(Dispatchers.IO) {
+                                    val info = UrbanVpnManager.connect(selected)
+                                    try { info to UrbanVpnManager.verifyExitIp() }
+                                    catch (error: Exception) { UrbanVpnManager.disconnect(); throw error }
+                                }
                                 applyProxy()
                                 progress.dismiss()
                                 createThemedDialogBuilder(this@MainActivity)
                                     .setTitle("Urban VPN connected")
-                                    .setMessage("Selected: ${info.countryName}\nProxy: ${info.exitProxy}\n\nThe app has applied the local relay to WebView. Exit IP verification and native download/player routing are not implemented yet.")
+                                    .setMessage("Selected: ${verified.first.countryName}\nExit IP: ${verified.second}\n\nWebView traffic is routed through the local relay. Native download/player routing is not yet included.")
                                     .setPositiveButton("OK", null)
                                     .show()
                             } catch (e: Exception) {
