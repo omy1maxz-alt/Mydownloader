@@ -233,7 +233,7 @@ private class AuthenticatedHttpProxyRelay(
                 val responseHead = readHeaderBlock(upstreamInput)
                 clientOutput.write(responseHead)
                 clientOutput.flush()
-                if (!responseHead.toString(StandardCharsets.ISO_8859_1).startsWith("HTTP/1.1 200") &&
+                if (!String(responseHead, StandardCharsets.ISO_8859_1).startsWith("HTTP/1.1 200") &&
                     !responseHead.toString(StandardCharsets.ISO_8859_1).startsWith("HTTP/1.0 200")) return
                 tunnel(client, upstream, clientInput, clientOutput, upstreamInput, upstreamOutput)
             } else {
