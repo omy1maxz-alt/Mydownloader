@@ -222,7 +222,8 @@ private class AuthenticatedHttpProxyRelay(
             val isConnect = parts[0].equals("CONNECT", ignoreCase = true)
             val outboundHeaders = headers.filterNot {
                 it.substringBefore(':').trim().equals("Proxy-Authorization", true) ||
-                    it.substringBefore(':').trim().equals("Proxy-Connection", true)
+                    it.substringBefore(':').trim().equals("Proxy-Connection", true) ||
+                    it.substringBefore(':').trim().equals("Connection", true)
             }
             upstreamOutput.write((requestLine + "\r\n").toByteArray(StandardCharsets.ISO_8859_1))
             outboundHeaders.forEach { upstreamOutput.write((it + "\r\n").toByteArray(StandardCharsets.ISO_8859_1)) }
@@ -235,7 +236,7 @@ private class AuthenticatedHttpProxyRelay(
                 clientOutput.flush()
                 if (!responseHead.toString(StandardCharsets.ISO_8859_1).startsWith("HTTP/1.1 200") &&
                     !responseHead.toString(StandardCharsets.ISO_8859_1).startsWith("HTTP/1.0 200")) return
-                tunnel(client, upstream)
+                tunnel(client, upstream, clientInput, clientOutput, upstreamInput, upstreamOutput)
             } else {
                 upstreamOutput.write("Connection: close\r\n\r\n".toByteArray(StandardCharsets.ISO_8859_1))
                 upstreamOutput.flush()
@@ -261,19 +262,18 @@ private class AuthenticatedHttpProxyRelay(
         }
     }
 
-    private fun tunnel(client: Socket, upstream: Socket) {
+    private fun tunnel(client: Socket, upstream: Socket, clientInput: InputStream, clientOutput: OutputStream, upstreamInput: InputStream, upstreamOutput: OutputStream) {
         val latch = CountDownLatch(2)
         workers.execute {
-            try { copyUntilEof(client.getInputStream(), upstream.getOutputStream()) } catch (_: Exception) {}
+            try { copyUntilEof(clientInput, upstreamOutput) } catch (_: Exception) {}
             finally { try { upstream.shutdownOutput() } catch (_: Exception) {}; latch.countDown() }
         }
         workers.execute {
-            try { copyUntilEof(upstream.getInputStream(), client.getOutputStream()) } catch (_: Exception) {}
+            try { copyUntilEof(upstreamInput, clientOutput) } catch (_: Exception) {}
             finally { try { client.shutdownOutput() } catch (_: Exception) {}; latch.countDown() }
         }
         latch.await()
     }
-
     private fun readHeaders(input: InputStream): List<String> {
         val result = ArrayList<String>()
         var total = 0
