@@ -123,12 +123,18 @@ data class UserScript(
         var newRunAt = runAt
         for (line in metadataBlock.split("\\n")) {
             val trimmed = line.trim()
-            val directive = trimmed.removePrefix("//").trim()
-            val key = directive.substringBefore(' ').trim()
-            val value = directive.substringAfter(' ', "").trim()
+            val directive = trimmed
+                .removePrefix("//")
+                .removePrefix("/*")
+                .removeSuffix("*/")
+                .removePrefix("*")
+                .trim()
+            if (directive.isBlank() || directive.startsWith("==")) continue
+            val key = directive.substringBefore(Regex("\\s")).trim()
+            val value = directive.removePrefix(key).trim()
             when (key) {
                 "@name" -> if (value.isNotBlank()) newName = value
-                "@match" -> if (value.isNotBlank()) newMatches.add(value)
+                "@match", "@include" -> if (value.isNotBlank()) newMatches.add(value)
                 "@exclude" -> if (value.isNotBlank()) newExcludes.add(value)
                 "@grant" -> if (value.isNotBlank()) newGrants.add(value)
                 "@require" -> if (value.isNotBlank()) newRequires.add(value)
@@ -140,13 +146,15 @@ data class UserScript(
                 }
             }
         }
+        val effectiveMatches = newMatches.distinct().ifEmpty { matches }
+        val effectiveExcludes = newExcludes.distinct().ifEmpty { excludes }
         return copy(
             name = newName,
-            grants = newGrants.toList(),
-            requires = newRequires.toList(),
+            grants = newGrants.toList().ifEmpty { grants },
+            requires = newRequires.toList().ifEmpty { requires },
             runAt = newRunAt,
-            matches = newMatches.distinct(),
-            excludes = newExcludes.distinct()
+            matches = effectiveMatches,
+            excludes = effectiveExcludes
         )
     }
 }
