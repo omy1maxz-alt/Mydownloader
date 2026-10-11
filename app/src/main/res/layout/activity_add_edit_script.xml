@@ -111,6 +111,54 @@
                 android:entries="@array/userscript_run_at_options"
                 android:contentDescription="When to run this userscript" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Required libraries (one HTTP(S) URL per line)"
+                android:textAppearance="?attr/textAppearanceBody1" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editScriptRequires"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="https://cdn.example.com/library.js"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textUri"
+                    android:minLines="2"
+                    android:maxLines="5" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Granted APIs (one per line)"
+                android:textAppearance="?attr/textAppearanceBody1" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editScriptGrants"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="GM_getValue, GM_setValue"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textNoSuggestions"
+                    android:minLines="2"
+                    android:maxLines="5" />
+            </com.google.android.material.textfield.TextInputLayout>
+
             <!-- Script Code Input - Modified for large text -->
             <TextView
                 android:layout_width="match_parent"
