@@ -135,12 +135,22 @@ class HlsExportService : Service() {
                         exportFromDownloadId(extraDownloadId, title, mimeType, splitAudioUrl)
                     }
                     bundledMediaItem != null -> {
-                        writeExportLog("source=PATH_A_CACHE\\ndownload_id=null\\nhas_media_item_bundle=true\\nhas_video_url=${videoUrl != null}\\ninput_uri=$videoUrl\\nmimeType=$mimeType\\nexport_method=muxToMp4FromCache\\ncache_export=true\\nforceTransformer=$forceTransformer")
+                        val isDirectMp4 = videoUrl != null &&
+                            videoUrl.contains(".mp4", ignoreCase = true) &&
+                            !videoUrl.contains(".m3u8", ignoreCase = true)
+                        val selectedExportMethod = if (isDirectMp4) "copyMp4FromCache" else "muxToMp4FromCache"
+                        writeExportLog("source=PATH_A_CACHE\\ndownload_id=null\\nhas_media_item_bundle=true\\nhas_video_url=${videoUrl != null}\\ninput_uri=$videoUrl\\nmimeType=$mimeType\\nexport_method=$selectedExportMethod\\ncache_export=true\\nforceTransformer=$forceTransformer")
 
                         try {
                             val isSplitHls = videoUrl != null && (videoUrl.contains("manifest/hls_variant") || videoUrl.contains("googlevideo.com")) && videoUrl.contains(".m3u8", ignoreCase = true)
                             val hasSplitStreamKeys = !streamKeyStrings.isNullOrEmpty() && streamKeyStrings.size > 1
-                            if (forceTransformer && splitAudioUrl.isNullOrEmpty() && !(isSplitHls && hasSplitStreamKeys)) {
+
+                            // A direct MP4 already in the unified cache should be copied from cache.
+                            // Do this before the user-requested Transformer override: Transformer can
+                            // reopen the original URI and fetch missing bytes, defeating cache-only save.
+                            if (isDirectMp4) {
+                                writeExportLog("Direct MP4 detected; bypassing Transformer and exporting from cache.")
+                            } else if (forceTransformer && splitAudioUrl.isNullOrEmpty() && !(isSplitHls && hasSplitStreamKeys)) {
                                 writeExportLog("User forced Transformer (Save to device), executing Transformer path directly.")
                                 muxToMp4WithTransformer(bundledMediaItem, title)
                                 return@launch
