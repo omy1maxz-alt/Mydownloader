@@ -47,6 +47,9 @@ class HlsExportService : Service() {
         const val EXTRA_TRACK_HEIGHT= "com.omymaxz.download.extra.TRACK_HEIGHT"
         const val EXTRA_TRACK_BITRATE="com.omymaxz.download.extra.TRACK_BITRATE"
         const val EXTRA_FORCE_TRANSFORMER="com.omymaxz.download.extra.FORCE_TRANSFORMER"
+        const val EXTRA_SELECTED_AUDIO_LANGUAGE = "com.omymaxz.download.extra.SELECTED_AUDIO_LANGUAGE"
+        const val EXTRA_SELECTED_AUDIO_LABEL = "com.omymaxz.download.extra.SELECTED_AUDIO_LABEL"
+        const val EXTRA_SELECTED_AUDIO_ID = "com.omymaxz.download.extra.SELECTED_AUDIO_ID"
         const val EXTRA_MEDIA_ITEM_BUNDLE = "com.omymaxz.download.extra.MEDIA_ITEM_BUNDLE"
 
         const val CHANNEL_ID = "hls_export_channel"
@@ -91,6 +94,9 @@ class HlsExportService : Service() {
         android.util.Log.d("HLS_EXPORT_DEBUG", "[HLS_EXPORT_DEBUG] intentVideoUrl=$videoUrl, intentMimeType=$mimeType")
         val streamKeyStrings = intent.getStringArrayListExtra(EXTRA_STREAM_KEYS)
         val forceTransformer = intent.getBooleanExtra(EXTRA_FORCE_TRANSFORMER, false)
+        val selectedAudioLanguage = intent.getStringExtra(EXTRA_SELECTED_AUDIO_LANGUAGE)
+        val selectedAudioLabel = intent.getStringExtra(EXTRA_SELECTED_AUDIO_LABEL)
+        val selectedAudioId = intent.getStringExtra(EXTRA_SELECTED_AUDIO_ID)
         val mediaItemBundle = intent.getBundleExtra(EXTRA_MEDIA_ITEM_BUNDLE)
         var bundledMediaItem = if (mediaItemBundle != null) androidx.media3.common.MediaItem.fromBundle(mediaItemBundle) else null
 
@@ -139,7 +145,7 @@ class HlsExportService : Service() {
                             videoUrl.contains(".mp4", ignoreCase = true) &&
                             !videoUrl.contains(".m3u8", ignoreCase = true)
                         val selectedExportMethod = if (isDirectMp4) "copyMp4FromCache" else "muxToMp4FromCache"
-                        writeExportLog("source=PATH_A_CACHE\\ndownload_id=null\\nhas_media_item_bundle=true\\nhas_video_url=${videoUrl != null}\\ninput_uri=$videoUrl\\nmimeType=$mimeType\\nexport_method=$selectedExportMethod\\ncache_export=true\\nforceTransformer=$forceTransformer")
+                        writeExportLog("source=PATH_A_CACHE\ndownload_id=null\nhas_media_item_bundle=true\nhas_video_url=" + (videoUrl != null) + "\ninput_uri=" + videoUrl + "\nmimeType=" + mimeType + "\nexport_method=" + selectedExportMethod + "\ncache_export=true\nforceTransformer=" + forceTransformer + "\nselectedAudioLanguage=" + selectedAudioLanguage + "\nselectedAudioLabel=" + selectedAudioLabel + "\nselectedAudioId=" + selectedAudioId)
 
                         try {
                             val isSplitHls = videoUrl != null && (videoUrl.contains("manifest/hls_variant") || videoUrl.contains("googlevideo.com")) && videoUrl.contains(".m3u8", ignoreCase = true)
@@ -162,7 +168,7 @@ class HlsExportService : Service() {
                                 if (videoUrl.contains(".mp4", ignoreCase = true) && !videoUrl.contains(".m3u8", ignoreCase = true)) {
                                     copyMp4FromCache(videoUrl, title, splitAudioUrl)
                                 } else {
-                                    muxToMp4FromCache(videoUrl, streamKeyStrings, title)
+                                    muxToMp4FromCache(videoUrl, streamKeyStrings, title, selectedAudioLanguage, selectedAudioLabel, selectedAudioId)
                                 }
                             } else {
                                 throw Exception("videoUrl is null")
@@ -445,7 +451,14 @@ class HlsExportService : Service() {
         }
     }
 
-    private suspend fun muxToMp4FromCache(masterUrl: String, streamKeyStrings: List<String>?, title: String) = withContext(Dispatchers.IO) {
+    private suspend fun muxToMp4FromCache(
+        masterUrl: String,
+        streamKeyStrings: List<String>?,
+        title: String,
+        selectedAudioLanguage: String? = null,
+        selectedAudioLabel: String? = null,
+        selectedAudioId: String? = null
+    ) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
         var out = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -527,33 +540,72 @@ class HlsExportService : Service() {
                             videoVariantUrl = parsedPlaylist.variants.firstOrNull()?.url?.toString() ?: masterUrl
                         }
 
-                        // To find the specifically downloaded audio track (ignoring partially buffered default tracks),
-                        // we must check which audio variant has the MOST cached data.
+                        // Match the rendition selected in the player. Cached-byte count is only a fallback
+                        // when selected-audio metadata was unavailable.
                         var bestAudioUrl: String? = null
                         var maxCachedBytes: Long = 0
                         val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
                         val cacheKeyFactory = HlsDownloadHelper.customCacheKeyFactory
-
-                        for (audio in parsedPlaylist.audios) {
-                            val aUrl = audio.url.toString()
-                            try {
-                                val aSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(aUrl))
-                                val cacheKey = cacheKeyFactory.buildCacheKey(aSpec)
-                                val cachedBytes = cache.getCachedBytes(cacheKey, 0L, androidx.media3.common.C.LENGTH_UNSET.toLong())
-                                if (cachedBytes > maxCachedBytes) {
-                                    maxCachedBytes = cachedBytes
-                                    bestAudioUrl = aUrl
-                                }
-                            } catch (e: Exception) {
-                                // Ignore
+                        fun normalizeAudioToken(value: String?): String =
+                            value.orEmpty().trim().lowercase(java.util.Locale.ROOT).replace(Regex("[^a-z0-9]+"), "")
+                        data class AudioCandidate(val url: String, val name: String?, val language: String?, val label: String?, val id: String?, val cachedBytes: Long, val score: Int)
+                        val selectedLang = normalizeAudioToken(selectedAudioLanguage)
+                        val selectedLangPrimary = normalizeAudioToken(selectedAudioLanguage?.substringBefore("-"))
+                        val selectedLabel = normalizeAudioToken(selectedAudioLabel)
+                        val selectedId = normalizeAudioToken(selectedAudioId)
+                        val audioCandidates = parsedPlaylist.audios.map { audio ->
+                            val url = audio.url.toString()
+                            val name = audio.name
+                            val language = audio.format.language
+                            val label = audio.format.label
+                            val id = audio.format.id
+                            val nName = normalizeAudioToken(name)
+                            val nLanguage = normalizeAudioToken(language)
+                            val nLabel = normalizeAudioToken(label)
+                            val nId = normalizeAudioToken(id)
+                            val score = when {
+                                selectedId.isNotEmpty() && (selectedId == nId || selectedId == nName || selectedId == nLabel) -> 100
+                                selectedLabel.isNotEmpty() && (selectedLabel == nName || selectedLabel == nLabel || selectedLabel == nId) -> 90
+                                selectedLang.isNotEmpty() && selectedLang == nLanguage -> 80
+                                selectedLangPrimary.isNotEmpty() && selectedLangPrimary == nLanguage -> 70
+                                else -> 0
                             }
+                            var cachedBytes = 0L
+                            try {
+                                val spec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(url))
+                                val cacheKey = cacheKeyFactory.buildCacheKey(spec)
+                                cachedBytes = cache.getCachedBytes(cacheKey, 0L, androidx.media3.common.C.LENGTH_UNSET.toLong())
+                            } catch (_: Exception) {}
+                            AudioCandidate(url, name, language, label, id, cachedBytes, score)
                         }
-
+                        val hasSelectedHint = selectedId.isNotEmpty() || selectedLabel.isNotEmpty() || selectedLang.isNotEmpty()
+                        if (audioCandidates.isNotEmpty()) {
+                            val match = audioCandidates.filter { it.score > 0 }
+                                .sortedWith(compareByDescending<AudioCandidate> { it.score }.thenByDescending { it.cachedBytes })
+                                .firstOrNull()
+                            if (match != null) {
+                                bestAudioUrl = match.url
+                                maxCachedBytes = match.cachedBytes
+                                writeExportLog("Selected audio rendition: name=" + match.name + ", language=" + match.language + ", label=" + match.label + ", id=" + match.id + ", score=" + match.score + ", cachedBytes=" + match.cachedBytes)
+                            } else if (hasSelectedHint) {
+                                writeExportLog("ERROR: selected audio did not match manifest. language=" + selectedAudioLanguage + ", label=" + selectedAudioLabel + ", id=" + selectedAudioId + "; candidates=" + audioCandidates.joinToString { it.name.toString() + ":" + it.language + ":" + it.label + ":" + it.id })
+                                throw IllegalStateException("SELECTED_AUDIO_VARIANT_NOT_FOUND: selected audio did not match manifest")
+                            } else {
+                                val fallback = audioCandidates.maxByOrNull { it.cachedBytes }
+                                bestAudioUrl = fallback?.url
+                                maxCachedBytes = fallback?.cachedBytes ?: 0L
+                                writeExportLog("No selected-audio metadata; using rendition with most cached bytes: " + fallback?.name + "/" + fallback?.language)
+                            }
+                        } else {
+                            writeExportLog("Master playlist has no separate audio renditions; audio should be muxed with selected video rendition.")
+                        }
                         audioVariantUrl = bestAudioUrl
+
                         writeExportLog("Parsed Master. Video Variant: $videoVariantUrl, Audio: $audioVariantUrl (Cached bytes: $maxCachedBytes)")
                     }
                 } catch (e: Exception) {
-                    writeExportLog("Failed to parse master playlist with HlsPlaylistParser: ${e.message}")
+                    writeExportLog("Failed to parse master playlist with HlsPlaylistParser: " + e.message)
+                    if (e.message?.contains("SELECTED_AUDIO_VARIANT_NOT_FOUND") == true) throw e
                     // Fallback to videoVariantUrl = masterUrl if parsing fails
                 }
             }

@@ -1128,19 +1128,27 @@ class CustomPlayerActivity : AppCompatActivity() {
                 // Extract using group.mediaTrackGroupIndex to align perfectly with native HLS manifest indices.
                 val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
                 val streamKeyStrings = ArrayList<String>() // Keep for FFmpeg fallback
+                var selectedAudioLanguage: String? = null
+                var selectedAudioLabel: String? = null
+                var selectedAudioId: String? = null
                 if (player != null) {
                     val tracks = player!!.currentTracks
-                    // We need to pass the raw stream keys to Transformer. The groupIndex in tracks.groups
-                    // corresponds directly to the track group index in the master playlist for HLS.
                     tracks.groups.forEachIndexed { groupIndex, group ->
                         for (i in 0 until group.length) {
                             if (group.isTrackSelected(i)) {
                                 streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
-                                streamKeyStrings.add("$groupIndex,$i")
+                                streamKeyStrings.add("${groupIndex},${i}")
+                                if (group.type == androidx.media3.common.C.TRACK_TYPE_AUDIO && selectedAudioLanguage.isNullOrBlank()) {
+                                    val format = group.getTrackFormat(i)
+                                    selectedAudioLanguage = format.language?.takeIf { it.isNotBlank() && it != "und" }
+                                    selectedAudioLabel = format.label?.takeIf { it.isNotBlank() }
+                                    selectedAudioId = format.id?.takeIf { it.isNotBlank() }
+                                }
                             }
                         }
                     }
                 }
+                android.util.Log.i("CACHE_EXPORT_TRACKS", "selectedAudioLanguage=" + selectedAudioLanguage + ", selectedAudioLabel=" + selectedAudioLabel + ", selectedAudioId=" + selectedAudioId + ", streamKeys=" + streamKeyStrings)
 
                 val exportMediaItem = currentMediaItem?.buildUpon()
                     ?.setStreamKeys(streamKeys)
@@ -1162,6 +1170,9 @@ class CustomPlayerActivity : AppCompatActivity() {
                     }
                     putExtra(HlsExportService.EXTRA_MIME_TYPE, mimeType)
                     putStringArrayListExtra(HlsExportService.EXTRA_STREAM_KEYS, streamKeyStrings)
+                    putExtra(HlsExportService.EXTRA_SELECTED_AUDIO_LANGUAGE, selectedAudioLanguage)
+                    putExtra(HlsExportService.EXTRA_SELECTED_AUDIO_LABEL, selectedAudioLabel)
+                    putExtra(HlsExportService.EXTRA_SELECTED_AUDIO_ID, selectedAudioId)
                     putExtra(HlsExportService.EXTRA_FORCE_TRANSFORMER, true) // User pressed save, so guarantee offline mode
 
                     putExtra(HlsExportService.EXTRA_USER_AGENT, HlsDownloadHelper.currentUserAgent)
