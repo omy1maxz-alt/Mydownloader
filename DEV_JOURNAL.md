@@ -194,3 +194,9 @@
 
 
 - 2026-10-11 (Suno Custom Player source test): fixed MIME inference so direct audio extensions/content types (including Suno `.m4a`) are identified as audio before generic progressive fallback. Added `SUNO_SOURCE_TEST` handoff/prepare/error trace with host/path and query-presence only; signed query values, cookies, and tokens are not logged. Direct playback and response behavior remain pending real-device testing.
+
+
+- 2026-10-11 (Suno audio detection and userscript size): The attached Suno public-page source shows completed song metadata in `mediaUrls[]` with a CloudFront `/1/clip/<song-id>.m4a` URL, `contentType: "m4a-opus"`, and progressive delivery; `audio_url` is a forbidden API endpoint, not the playable audio source. Correct progressive audio MIME/type classification so .m4a candidates appear as audio, add audio extension MIME inference, and raise the userscript storage/editing size cap from 600,000 bytes to 5 MiB. Device playback and large-script editing/injection require runtime tests.
+
+
+- 2026-10-11 (Suno userscript PR build follow-up): CI exposed a scope error in the first audio-candidate mapping attempt because classifier-local variables were referenced by `processRequest`. Moved that decision to local URL/content-type checks and pushed a follow-up compile fix. Re-run Android Build to verify the correction before merge.

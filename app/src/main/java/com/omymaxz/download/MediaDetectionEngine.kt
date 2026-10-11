@@ -19,6 +19,9 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
 
+    private fun ctypeIsAudio(contentType: String?): Boolean =
+        contentType?.substringBefore(";")?.trim()?.lowercase()?.startsWith("audio/") == true
+
     private fun classifyMedia(rawUrl: String, contentType: String?): MediaKind {
         val lowerUrl = rawUrl.lowercase()
         val mime = contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
@@ -34,8 +37,13 @@ class MediaDetectionEngine(private val context: Context) {
                     lowerUrl.contains("/hls2/") || (lowerUrl.contains("token=") && lowerUrl.contains("expiry="))
 
         val isDash = lowerUrl.contains(".mpd") || lowerUrl.contains("format=dash") || lowerUrl.contains("type=dash") || mime == "application/dash+xml"
-        val isVideoMime = mime.startsWith("video/") || mime.startsWith("audio/")
-        val isProgressive = lowerUrl.matches(Regex(".*\\.(mp4|webm|mkv|mov|avi|mp3|m4a|aac|ogg|opus|wav)(\\?.*)?$")) || isVideoMime
+        val isVideoMime = mime.startsWith("video/")
+        val isAudioMime = mime.startsWith("audio/")
+        // Suno's page embeds completed audio as progressive CloudFront M4A/Opus mediaUrls.
+        val isSunoProgressiveAudio = lowerUrl.contains("d2lwuy8qc234o3.cloudfront.net/1/clip/") &&
+            (lowerUrl.substringBefore('?').endsWith(".m4a") || mime == "audio/mp4" ||
+             mime == "audio/x-m4a" || mime == "audio/ogg")
+        val isProgressive = lowerUrl.matches(Regex(".*\\.(mp4|webm|mkv|mov|avi|mp3|m4a|aac|ogg|opus|wav)(\\?.*)?$")) || isVideoMime || isAudioMime || isSunoProgressiveAudio
         val cleanUrl = lowerUrl.substringBefore('?')
         val ext = cleanUrl.substringAfterLast('.', "").lowercase()
         val nonMediaExtensions = setOf("css", "js", "gif", "jpg", "jpeg", "png", "svg", "webp", "woff", "woff2", "ttf", "ico", "html", "htm")
@@ -149,7 +157,11 @@ class MediaDetectionEngine(private val context: Context) {
         val type = when (mediaKind) {
             MediaKind.HLS_MANIFEST -> "hls"
             MediaKind.DASH_MANIFEST -> "dash"
-            MediaKind.PROGRESSIVE -> "video"
+            MediaKind.PROGRESSIVE -> if (
+                ctypeIsAudio(contentType) ||
+                url.substringBefore('?').lowercase().matches(Regex(".*\\.(mp3|m4a|aac|ogg|opus|wav)$")) ||
+                url.lowercase().contains("d2lwuy8qc234o3.cloudfront.net/1/clip/")
+            ) "audio" else "video"
             MediaKind.SEGMENT -> "segment"
             else -> "unknown"
         }
