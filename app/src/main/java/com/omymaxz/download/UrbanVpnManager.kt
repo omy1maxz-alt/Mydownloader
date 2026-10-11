@@ -15,6 +15,7 @@ import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.Proxy
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
@@ -117,6 +118,24 @@ internal object UrbanVpnManager {
     }
 
     fun localProxyAddress(): String? = relay?.let { "127.0.0.1:${it.localPort}" }
+
+    fun verifyExitIp(): String {
+        val address = localProxyAddress() ?: throw IllegalStateException("Urban VPN is not connected")
+        val parts = address.split(":")
+        val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress(parts[0], parts[1].toInt()))
+        val connection = (URL("https://api.ipify.org").openConnection(proxy) as HttpURLConnection).apply {
+            connectTimeout = CONNECT_TIMEOUT_MS
+            readTimeout = READ_TIMEOUT_MS
+            setRequestProperty("Cache-Control", "no-cache")
+        }
+        try {
+            val ip = connection.inputStream.bufferedReader(StandardCharsets.UTF_8).use { it.readText() }.trim()
+            if (ip.isBlank() || ip.length > 64) throw IllegalStateException("Proxy verification returned an invalid IP")
+            return ip
+        } finally {
+            connection.disconnect()
+        }
+    }
 
     private fun apiRequest(path: String, body: JSONObject?): Any {
         val connection = (URL(API_BASE + path).openConnection() as HttpURLConnection).apply {
