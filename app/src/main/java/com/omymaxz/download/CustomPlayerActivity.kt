@@ -663,14 +663,26 @@ class CustomPlayerActivity : AppCompatActivity() {
 
 
         val intentMimeType = intent.getStringExtra(EXTRA_MIME_TYPE)
+        val sourcePath = Uri.parse(videoUrl!!).path.orEmpty().lowercase()
         val actualMimeType = when {
             intentMimeType != null -> intentMimeType
             isHls -> androidx.media3.common.MimeTypes.APPLICATION_M3U8
-            videoUrl?.contains(".mpd") == true || videoUrl?.contains("manifest/dash") == true -> androidx.media3.common.MimeTypes.APPLICATION_MPD
-            else -> androidx.media3.common.MimeTypes.APPLICATION_MP4
+            videoUrl?.contains(".mpd", ignoreCase = true) == true || videoUrl?.contains("manifest/dash", ignoreCase = true) == true -> androidx.media3.common.MimeTypes.APPLICATION_MPD
+            sourcePath.endsWith(".m4a") -> MimeTypes.AUDIO_MP4
+            sourcePath.endsWith(".mp3") -> MimeTypes.AUDIO_MPEG
+            sourcePath.endsWith(".aac") -> MimeTypes.AUDIO_AAC
+            sourcePath.endsWith(".ogg") || sourcePath.endsWith(".opus") -> MimeTypes.AUDIO_OGG
+            sourcePath.endsWith(".wav") -> MimeTypes.AUDIO_WAV
+            sourcePath.endsWith(".mp4") || sourcePath.endsWith(".m4v") -> MimeTypes.VIDEO_MP4
+            sourcePath.endsWith(".webm") -> MimeTypes.VIDEO_WEBM
+            sourcePath.endsWith(".mkv") -> MimeTypes.VIDEO_MATROSKA
+            else -> null // Let Media3 infer the container for extensionless URLs.
         }
 
-        android.util.Log.d("PLAYER_DEBUG", "[PLAYER_DEBUG]\nvideoUrl=$videoUrl\nmimeType=$actualMimeType\nsourceType=$intentMimeType")
+        val sourceUri = Uri.parse(videoUrl!!)
+        android.util.Log.d("SUNO_SOURCE_TEST", "[SUNO_SOURCE_TEST] prepare host=${sourceUri.host} path=${sourceUri.path} queryPresent=${!sourceUri.encodedQuery.isNullOrEmpty()} mimeType=${actualMimeType ?: "MEDIA3_SNIFF"} userAgentPresent=${!HlsDownloadHelper.currentUserAgent.isNullOrBlank()} refererHost=${Uri.parse(HlsDownloadHelper.currentReferer.orEmpty()).host} cookiePresent=${!HlsDownloadHelper.currentCookie.isNullOrBlank()}")
+
+        android.util.Log.d("PLAYER_DEBUG", "[PLAYER_DEBUG]\nvideoUrl=${sourceUri.host}${sourceUri.path}\nqueryPresent=${!sourceUri.encodedQuery.isNullOrEmpty()}\nmimeType=${actualMimeType ?: "MEDIA3_SNIFF"}\nsourceType=$intentMimeType")
 
         // Reset cache verification state on new media
         hasNotifiedCacheComplete = false
@@ -738,7 +750,9 @@ class CustomPlayerActivity : AppCompatActivity() {
                     currentCause = currentCause.cause
                 }
 
-                android.util.Log.e("PLAYER_ERROR_TRACE", "[PLAYER_ERROR_TRACE] Code: ${error.errorCode} Name: ${error.errorCodeName}\nException: ${error.javaClass.name} - ${error.message}\n$causeChain")
+                val failedUri = player?.currentMediaItem?.localConfiguration?.uri
+                val failedPath = failedUri?.path.orEmpty()
+                android.util.Log.e("PLAYER_ERROR_TRACE", "[PLAYER_ERROR_TRACE] Code: ${error.errorCode} Name: ${error.errorCodeName} host=${failedUri?.host} path=$failedPath queryPresent=${!failedUri?.encodedQuery.isNullOrEmpty()} mimeType=${player?.currentMediaItem?.localConfiguration?.mimeType}\nException: ${error.javaClass.name} - ${error.message}\n$causeChain")
 
                 AlertDialog.Builder(this@CustomPlayerActivity)
                     .setTitle("Playback Error")
