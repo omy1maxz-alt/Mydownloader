@@ -240,18 +240,9 @@ private class AuthenticatedHttpProxyRelay(
             } else {
                 upstreamOutput.write("Connection: close\r\n\r\n".toByteArray(StandardCharsets.ISO_8859_1))
                 upstreamOutput.flush()
-                // The browser may send a request body. Pump it concurrently with the response.
-                val done = CountDownLatch(2)
-                val target = upstream
-                workers.execute {
-                    try { copyUntilEof(clientInput, target.getOutputStream()) } catch (_: Exception) {}
-                    finally { try { target.shutdownOutput() } catch (_: Exception) {}; done.countDown() }
-                }
-                workers.execute {
-                    try { copyUntilEof(upstreamInput, clientOutput) } catch (_: Exception) {}
-                    finally { try { client.shutdownOutput() } catch (_: Exception) {}; done.countDown() }
-                }
-                done.await(READ_TIMEOUT_MS.toLong() * 4, TimeUnit.MILLISECONDS)
+                forwardRequestBody(clientInput, upstreamOutput, headers)
+                copyUntilEof(upstreamInput, clientOutput)
+                clientOutput.flush()
             }
         } catch (e: Exception) {
             Log.d("UrbanVpn", "Proxy request failed: ${e.javaClass.simpleName}")
@@ -273,6 +264,46 @@ private class AuthenticatedHttpProxyRelay(
             finally { try { client.shutdownOutput() } catch (_: Exception) {}; latch.countDown() }
         }
         latch.await()
+    }
+    private fun forwardRequestBody(input: InputStream, output: OutputStream, headers: List<String>) {
+        val contentLength = headers.firstOrNull { it.substringBefore(':').trim().equals("Content-Length", true) }
+            ?.substringAfter(':')?.trim()?.toLongOrNull()
+        val isChunked = headers.any { it.substringBefore(':').trim().equals("Transfer-Encoding", true) && it.substringAfter(':').contains("chunked", true) }
+        if (contentLength != null && contentLength > 0) {
+            var remaining = contentLength
+            val buffer = ByteArray(8192)
+            while (remaining > 0) {
+                val count = input.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
+                if (count < 0) throw IllegalStateException("Client closed during request body")
+                output.write(buffer, 0, count)
+                remaining -= count
+            }
+            output.flush()
+        } else if (isChunked) {
+            while (true) {
+                val line = readLine(input) ?: throw IllegalStateException("Client closed during chunked request")
+                output.write((line + "\r\n").toByteArray(StandardCharsets.ISO_8859_1))
+                val size = line.substringBefore(';').trim().toLongOrNull(16)
+                    ?: throw IllegalStateException("Invalid chunk size")
+                if (size == 0L) {
+                    while (true) {
+                        val trailer = readLine(input) ?: throw IllegalStateException("Incomplete chunked trailers")
+                        output.write((trailer + "\r\n").toByteArray(StandardCharsets.ISO_8859_1))
+                        if (trailer.isEmpty()) break
+                    }
+                    break
+                }
+                var remaining = size + 2L
+                val buffer = ByteArray(8192)
+                while (remaining > 0) {
+                    val count = input.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
+                    if (count < 0) throw IllegalStateException("Incomplete chunked body")
+                    output.write(buffer, 0, count)
+                    remaining -= count
+                }
+            }
+            output.flush()
+        }
     }
     private fun readHeaders(input: InputStream): List<String> {
         val result = ArrayList<String>()
