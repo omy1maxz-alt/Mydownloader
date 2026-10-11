@@ -259,9 +259,7 @@ class MainActivity : AppCompatActivity() {
     private val mediaControlReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val action = intent?.getStringExtra(EXTRA_COMMAND) ?: return
-            val source = intent.getStringExtra(MediaForegroundService.EXTRA_SOURCE) ?: MediaForegroundService.SOURCE_WEB_MEDIA
-            android.util.Log.d("MainActivity", "source=$source action=$action activeTab=$currentTabIndex")
-            if (source != MediaForegroundService.SOURCE_WEB_MEDIA) return
+            android.util.Log.d("MainActivity", "source=WEB_MEDIA action=$action activeTab=$currentTabIndex")
             val script = when (action) {
                 MediaForegroundService.ACTION_PLAY -> "window.AndroidMediaController && window.AndroidMediaController.play();"
                 MediaForegroundService.ACTION_PAUSE -> "window.AndroidMediaController && window.AndroidMediaController.pause();"
@@ -270,7 +268,7 @@ class MainActivity : AppCompatActivity() {
                 MediaForegroundService.ACTION_STOP_SERVICE -> "window.AndroidMediaController && window.AndroidMediaController.pause();"
                 else -> null
             }
-            if (script != null && ::webView.isInitialized && !webView.isDestroyed) webView.evaluateJavascript(script, null)
+            if (script != null && ::webView.isInitialized && !this@MainActivity.isFinishing && !this@MainActivity.isDestroyed) webView.evaluateJavascript(script, null)
             if (action == MediaForegroundService.ACTION_STOP_SERVICE) {
                 tabs.forEach { it.isMediaPlaying = false }
                 isMediaPlaying = false
