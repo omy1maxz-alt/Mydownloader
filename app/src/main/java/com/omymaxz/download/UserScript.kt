@@ -2,6 +2,7 @@ package com.omymaxz.download
 
 import android.net.Uri
 import android.util.Log
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.UUID
@@ -19,8 +20,10 @@ data class UserScript(
     val runAt: RunAt = RunAt.DOCUMENT_END,
     val grants: List<String> = emptyList(),
     val requires: List<String> = emptyList(),
-    /** Additional userscript metadata. Defaults keep existing Room rows readable. */
+    /** Additional userscript metadata. SQL defaults match the 3→4 migration. */
+    @ColumnInfo(defaultValue = "'[]'")
     val matches: List<String> = emptyList(),
+    @ColumnInfo(defaultValue = "'[]'")
     val excludes: List<String> = emptyList()
 ) {
     enum class RunAt { DOCUMENT_START, DOCUMENT_END, DOCUMENT_IDLE }
