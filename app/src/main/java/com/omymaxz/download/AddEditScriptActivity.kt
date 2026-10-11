@@ -58,7 +58,15 @@ class AddEditScriptActivity : AppCompatActivity() {
                     existingScript = it
                     // The name in the EditText should be the one the user can edit, not the metadata one.
                     binding.editScriptName.setText(it.name) 
-                    binding.editScriptUrl.setText(it.targetUrl)
+                    binding.editScriptUrl.setText(it.matches.takeIf { values -> values.isNotEmpty() }?.joinToString("\n") ?: it.targetUrl)
+                    binding.editScriptExcludes.setText(it.excludes.joinToString("\n"))
+                    binding.editScriptRunAt.setSelection(
+                        when (it.runAt) {
+                            UserScript.RunAt.DOCUMENT_START -> 0
+                            UserScript.RunAt.DOCUMENT_END -> 1
+                            UserScript.RunAt.DOCUMENT_IDLE -> 2
+                        }
+                    )
 
                     val scriptByteSize = it.script.toByteArray(Charsets.UTF_8).size
                     if (scriptByteSize <= UserScript.MAX_SCRIPT_SIZE_BYTES) {
@@ -80,7 +88,14 @@ class AddEditScriptActivity : AppCompatActivity() {
     private fun saveScript() {
         val name = binding.editScriptName.text.toString().trim()
         var urlPattern = binding.editScriptUrl.text.toString().trim()
+        val matches = urlPattern.lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        val excludes = binding.editScriptExcludes.text.toString().lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
         val code = binding.editScriptCode.text.toString()
+        val runAt = when (binding.editScriptRunAt.selectedItemPosition) {
+            0 -> UserScript.RunAt.DOCUMENT_START
+            2 -> UserScript.RunAt.DOCUMENT_IDLE
+            else -> UserScript.RunAt.DOCUMENT_END
+        }
 
         val codeByteSize = code.toByteArray(Charsets.UTF_8).size
         if (codeByteSize > UserScript.MAX_SCRIPT_SIZE_BYTES) {
@@ -92,19 +107,26 @@ class AddEditScriptActivity : AppCompatActivity() {
             urlPattern = "*"
         }
 
-        if (name.isEmpty() || urlPattern.isEmpty() || code.isEmpty()) {
+        val finalMatches = if (binding.applyToAllCheckbox.isChecked) listOf("*") else matches
+        if (name.isEmpty() || finalMatches.isEmpty() || code.isEmpty()) {
             Toast.makeText(this, "All fields are required.", Toast.LENGTH_SHORT).show()
             return
         }
 
         val initialScript = existingScript?.copy(
             name = name,
-            targetUrl = urlPattern,
+            targetUrl = finalMatches.firstOrNull() ?: urlPattern,
+            matches = finalMatches,
+            excludes = excludes,
+            runAt = runAt,
             script = code
         ) ?: UserScript(
             id = UUID.randomUUID().toString(),
             name = name,
-            targetUrl = urlPattern,
+            targetUrl = finalMatches.firstOrNull() ?: urlPattern,
+            matches = finalMatches,
+            excludes = excludes,
+            runAt = runAt,
             script = code,
             isEnabled = true
         )
