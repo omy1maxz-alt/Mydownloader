@@ -4142,12 +4142,19 @@ private fun showMediaListDialog() {
                 currentMediaListAdapter?.notifyItemChanged(position)
             }
         }, { mediaFile ->
+            val candidate = mediaEngine.getCandidate(mediaFile.url)
             val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
                 val title = if (mediaFile.title.contains("\n")) mediaFile.title.substringBefore("\n") else mediaFile.title
                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
                 if (mediaFile.mimeType != null) {
                     putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
+                }
+                // Direct CDN media may require the same request context as the originating WebView.
+                putExtra(CustomPlayerActivity.EXTRA_REFERER, candidate?.referer ?: webView.url)
+                putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, candidate?.userAgent ?: webView.settings.userAgentString)
+                candidate?.cookie?.takeIf { it.isNotBlank() }?.let {
+                    putExtra(CustomPlayerActivity.EXTRA_COOKIE, it)
                 }
                 addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }
@@ -7037,14 +7044,14 @@ if (isDesktopMode) {
                         try {
                             val status = connection.responseCode
                             require(status in 200..299) { "@require returned HTTP $status" }
-                            val limit = 2 * 1024 * 1024
+                            val limit = 5 * 1024 * 1024
                             connection.inputStream.use { input ->
                                 val output = java.io.ByteArrayOutputStream()
                                 val buffer = ByteArray(8192)
                                 while (true) {
                                     val count = input.read(buffer)
                                     if (count < 0) break
-                                    require(output.size() + count <= limit) { "@require resource exceeds 2 MiB" }
+                                    require(output.size() + count <= limit) { "@require resource exceeds 5 MiB" }
                                     output.write(buffer, 0, count)
                                 }
                                 output.toString(Charsets.UTF_8.name())
