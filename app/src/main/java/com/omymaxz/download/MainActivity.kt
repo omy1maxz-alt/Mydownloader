@@ -7064,14 +7064,17 @@ if (isDesktopMode) {
                 withContext(Dispatchers.Main) {
                     // Navigation may have changed while a required library was downloading.
                     if (webView.url != expectedPageUrl) return@withContext
-                    // Build one ordered script so libraries are installed before the userscript executes.
+                    // Keep each WebView IPC payload small. Large userscripts can exceed the
+                    // single evaluateJavascript payload size even when they pass the storage limit.
+                    val totalRequiredBytes = requiredScripts.sumOf { it.toByteArray(Charsets.UTF_8).size }
+                    require(totalRequiredBytes <= 10 * 1024 * 1024) { "Combined @require resources exceed 10 MiB" }
                     val builder = StringBuilder("(function(){ try {")
                     requiredScripts.forEach { builder.append("\n").append(it).append("\n;") }
                     val encodedName = org.json.JSONObject.quote(script.name)
                     builder.append("\n").append(script.script)
                     builder.append("\n} catch (e) { console.error('Userscript error in ', ")
                         .append(encodedName).append(", e); } })();")
-                    webView.evaluateJavascript(builder.toString(), null)
+                    evaluateUserscriptInChunks(builder.toString(), expectedPageUrl)
                 }
             } catch (e: Exception) {
                 android.util.Log.w("Userscript", "Failed to load @require for script $nameJson (${e.javaClass.simpleName}); resource details omitted")
@@ -7080,6 +7083,35 @@ if (isDesktopMode) {
                 }
             }
         }
+    }
+
+    /**
+     * Injects large userscripts through small, ordered WebView JavaScript evaluations.
+     * The completion callback of each chunk gates the next one so source order is preserved.
+     */
+    private fun evaluateUserscriptInChunks(source: String, expectedPageUrl: String) {
+        val chunks = source.chunked(32 * 1024)
+        val accumulatorKey = "__omyUserscriptSource_${System.nanoTime()}"
+        val keyJson = org.json.JSONObject.quote(accumulatorKey)
+        webView.evaluateJavascript("window[$keyJson] = '';", null)
+
+        fun appendChunk(index: Int) {
+            if (webView.url != expectedPageUrl) {
+                webView.evaluateJavascript("delete window[$keyJson];", null)
+                return
+            }
+            if (index >= chunks.size) {
+                webView.evaluateJavascript("(0, eval)(window[$keyJson]); delete window[$keyJson];", null)
+                return
+            }
+            val chunkJson = org.json.JSONObject.quote(chunks[index])
+            webView.evaluateJavascript(
+                "window[$keyJson] += $chunkJson;",
+                android.webkit.ValueCallback { appendChunk(index + 1) }
+            )
+        }
+
+        appendChunk(0)
     }
 
     private fun injectUserscriptOncePerPage(script: UserScript, url: String) {
