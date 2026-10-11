@@ -2,7 +2,6 @@ package com.omymaxz.download
 
 import android.util.Base64
 import android.util.Log
-import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.io.BufferedInputStream
@@ -21,7 +20,6 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -57,7 +55,8 @@ internal object UrbanVpnManager {
     fun status(): ConnectionInfo? = activeInfo
 
     fun fetchLocations(): List<Location> {
-        val root = apiRequest("/entrypoints/countries", null)
+        val root = apiRequest("/entrypoints/countries", null) as? JSONObject
+            ?: throw IllegalStateException("Urban VPN country response was not a JSON object")
         val countries = root.optJSONObject("countries")?.optJSONArray("elements")
             ?: throw IllegalStateException("Urban VPN response did not contain countries.elements")
         val result = LinkedHashMap<String, Location>()
