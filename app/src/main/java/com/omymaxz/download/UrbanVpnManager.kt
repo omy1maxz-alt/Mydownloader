@@ -173,6 +173,7 @@ private class AuthenticatedHttpProxyRelay(
     private val upstreamPort: Int,
     token: String
 ) : Closeable {
+    private companion object { const val MAX_HEADER_BYTES = 64 * 1024 }
     private val running = AtomicBoolean(false)
     private val workers: ExecutorService = Executors.newCachedThreadPool()
     private val server = ServerSocket()
