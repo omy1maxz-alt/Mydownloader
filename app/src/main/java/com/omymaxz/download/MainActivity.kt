@@ -5976,7 +5976,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         val hostInput = EditText(this).apply {
             hint = "Proxy host or IP (without http://)"
             setText(currentHost)
-            singleLine = true
+            isSingleLine = true
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
         }
         dialogView.addView(
@@ -5987,7 +5987,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         val portInput = EditText(this).apply {
             hint = "Proxy port (1–65535)"
             inputType = InputType.TYPE_CLASS_NUMBER
-            singleLine = true
+            isSingleLine = true
             if (currentPort in 1..65535) setText(currentPort.toString())
         }
         dialogView.addView(
