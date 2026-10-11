@@ -23,9 +23,7 @@ data class UserScript(
     val matches: List<String> = emptyList(),
     val excludes: List<String> = emptyList()
 ) {
-    enum class RunAt {
-        DOCUMENT_START, DOCUMENT_END, DOCUMENT_IDLE
-    }
+    enum class RunAt { DOCUMENT_START, DOCUMENT_END, DOCUMENT_IDLE }
 
     companion object {
         const val MAX_SCRIPT_SIZE_BYTES: Long = 600_000
@@ -45,17 +43,10 @@ data class UserScript(
         return true
     }
 
-    /**
-     * Supports common userscript match patterns (scheme/host/path wildcards) and
-     * the app's historical simple wildcard patterns. Unsupported match syntax fails
-     * closed rather than unexpectedly running a script on unrelated pages.
-     */
+    /** Common userscript scheme/host/path wildcard matching plus legacy simple patterns. */
     internal fun matchesPattern(url: String, pattern: String): Boolean {
         if (pattern == "*") return true
-        if (!pattern.contains("://")) {
-            // Preserve the existing app's URL-substring behavior for legacy entries.
-            return legacyWildcardMatch(url, pattern)
-        }
+        if (!pattern.contains("://")) return legacyWildcardMatch(url, pattern)
         return try {
             val target = Uri.parse(url)
             val parts = pattern.split("://", limit = 2)
@@ -70,7 +61,6 @@ data class UserScript(
             if (actualHost.isEmpty()) return false
             if (requestedScheme != "*" && requestedScheme != actualScheme &&
                 !(requestedScheme == "http*" && actualScheme in setOf("http", "https"))) return false
-
             val hostOk = when {
                 hostPattern == "*" -> true
                 hostPattern.startsWith("*.") -> {
@@ -92,15 +82,13 @@ data class UserScript(
         }
     }
 
-    private fun legacyWildcardMatch(url: String, pattern: String): Boolean {
-        return when {
-            pattern == "*" -> true
-            pattern.startsWith("*") && pattern.endsWith("*") ->
-                url.contains(pattern.removeSurrounding("*"), ignoreCase = true)
-            pattern.startsWith("*") -> url.endsWith(pattern.removePrefix("*"), ignoreCase = true)
-            pattern.endsWith("*") -> url.startsWith(pattern.removeSuffix("*"), ignoreCase = true)
-            else -> url.contains(pattern, ignoreCase = true)
-        }
+    private fun legacyWildcardMatch(url: String, pattern: String): Boolean = when {
+        pattern == "*" -> true
+        pattern.startsWith("*") && pattern.endsWith("*") ->
+            url.contains(pattern.removeSurrounding("*"), ignoreCase = true)
+        pattern.startsWith("*") -> url.endsWith(pattern.removePrefix("*"), ignoreCase = true)
+        pattern.endsWith("*") -> url.startsWith(pattern.removeSuffix("*"), ignoreCase = true)
+        else -> url.contains(pattern, ignoreCase = true)
     }
 
     private fun wildcardRegex(pattern: String): Regex =
@@ -109,7 +97,8 @@ data class UserScript(
     fun isValid(): Boolean =
         name.isNotBlank() && script.isNotBlank() &&
             script.toByteArray(Charsets.UTF_8).size <= MAX_SCRIPT_SIZE_BYTES &&
-            (matches.ifEmpty { listOf(targetUrl) }).any { it.isNotBlank() }
+            (matches.ifEmpty { listOf(targetUrl) }).any { it.isNotBlank() } &&
+            requires.all { it.startsWith("https://", true) || it.startsWith("http://", true) }
 
     fun parseMetadata(): UserScript {
         val matcher = METADATA_PATTERN.matcher(script)
@@ -117,13 +106,12 @@ data class UserScript(
         val metadataBlock = matcher.group()
         var newName = name
         val newGrants = linkedSetOf<String>()
-        val newRequires = linkedSetOf<String>()
+        val newRequires = mutableListOf<String>()
         val newMatches = mutableListOf<String>()
         val newExcludes = mutableListOf<String>()
         var newRunAt = runAt
         for (line in metadataBlock.split("\\n")) {
-            val trimmed = line.trim()
-            val directive = trimmed
+            val directive = line.trim()
                 .removePrefix("//")
                 .removePrefix("/*")
                 .removeSuffix("*/")
@@ -146,15 +134,13 @@ data class UserScript(
                 }
             }
         }
-        val effectiveMatches = newMatches.distinct().ifEmpty { matches }
-        val effectiveExcludes = newExcludes.distinct().ifEmpty { excludes }
         return copy(
             name = newName,
             grants = newGrants.toList().ifEmpty { grants },
-            requires = newRequires.toList().ifEmpty { requires },
+            requires = newRequires.distinct().ifEmpty { requires },
             runAt = newRunAt,
-            matches = effectiveMatches,
-            excludes = effectiveExcludes
+            matches = newMatches.distinct().ifEmpty { matches },
+            excludes = newExcludes.distinct().ifEmpty { excludes }
         )
     }
 }
