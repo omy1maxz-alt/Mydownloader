@@ -64,6 +64,7 @@ class CustomPlayerActivity : AppCompatActivity() {
     private val cacheProgressHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private var hasNotifiedCacheComplete = false
     private var mediaSession: MediaSession? = null
+    private var requestHeaders = HlsDownloadHelper.RequestHeaders()
 
     private val ACTION_BACKGROUND_PLAY = "com.omymaxz.download.ACTION_BACKGROUND_PLAY"
 
@@ -109,9 +110,10 @@ class CustomPlayerActivity : AppCompatActivity() {
         videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE)
             ?: "Offline_Video_${System.currentTimeMillis()}"
 
-        intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
-        intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
-        intent.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
+        requestHeaders = HlsDownloadHelper.RequestHeaders(intent.getStringExtra(EXTRA_USER_AGENT), intent.getStringExtra(EXTRA_REFERER), intent.getStringExtra(EXTRA_COOKIE))
+        requestHeaders.userAgent?.let { HlsDownloadHelper.currentUserAgent = it }
+        requestHeaders.referer?.let { HlsDownloadHelper.currentReferer = it }
+        requestHeaders.cookie?.let { HlsDownloadHelper.currentCookie = it }
 
         if (videoUrl == null) {
             Toast.makeText(this, "No video URL provided", Toast.LENGTH_SHORT).show(); finish(); return
@@ -444,9 +446,10 @@ class CustomPlayerActivity : AppCompatActivity() {
         val newUrl = intent?.getStringExtra(EXTRA_VIDEO_URL)
         val newTitle = intent?.getStringExtra(EXTRA_VIDEO_TITLE)
 
-        intent?.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
-        intent?.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
-        intent?.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
+        requestHeaders = HlsDownloadHelper.RequestHeaders(intent?.getStringExtra(EXTRA_USER_AGENT), intent?.getStringExtra(EXTRA_REFERER), intent?.getStringExtra(EXTRA_COOKIE))
+        requestHeaders.userAgent?.let { HlsDownloadHelper.currentUserAgent = it }
+        requestHeaders.referer?.let { HlsDownloadHelper.currentReferer = it }
+        requestHeaders.cookie?.let { HlsDownloadHelper.currentCookie = it }
 
         // Always re-initialize the player if a DIFFERENT video URL is requested.
         // If the URL is the same (e.g. adding a subtitle to the currently playing video), we do not reset the player.
@@ -561,11 +564,11 @@ class CustomPlayerActivity : AppCompatActivity() {
         // Seed global headers so any lazy HTTP request the cache makes uses them.
         // HlsDownloadHelper.currentReferer and currentUserAgent might already be set from the Intent.
         // If not, we fall back to defaults or the video URL.
-        HlsDownloadHelper.currentReferer    = HlsDownloadHelper.currentReferer ?: videoUrl
-        HlsDownloadHelper.currentUserAgent  = HlsDownloadHelper.currentUserAgent
-            ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
-
-        val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this)
+        val playbackHeaders = requestHeaders.copy(
+            userAgent = requestHeaders.userAgent ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
+            referer = requestHeaders.referer ?: videoUrl
+        )
+        val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this, requestHeaders = playbackHeaders)
 
         // Aggressive caching setup: ignoring standard 32MB size thresholds
         val loadControl = DefaultLoadControl.Builder()
@@ -731,6 +734,18 @@ class CustomPlayerActivity : AppCompatActivity() {
             ?.build()!!
 
         player?.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                val stateName = when (playbackState) {
+                    Player.STATE_IDLE -> "IDLE"
+                    Player.STATE_BUFFERING -> "BUFFERING"
+                    Player.STATE_READY -> "READY"
+                    Player.STATE_ENDED -> "ENDED"
+                    else -> "UNKNOWN"
+                }
+                val uri = player?.currentMediaItem?.localConfiguration?.uri
+                android.util.Log.d("SUNO_SOURCE_TEST", "state=$stateName isPlaying=${player?.isPlaying == true} host=${uri?.host} path=${uri?.path} queryPresent=${!uri?.encodedQuery.isNullOrBlank()} mimeType=${player?.currentMediaItem?.localConfiguration?.mimeType}")
+            }
+
             override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
                 var videoTracks = 0
                 var audioTracks = 0

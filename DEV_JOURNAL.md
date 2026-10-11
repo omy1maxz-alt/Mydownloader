@@ -200,3 +200,6 @@
 
 
 - 2026-10-11 (Suno userscript PR build follow-up): CI exposed a scope error in the first audio-candidate mapping attempt because classifier-local variables were referenced by `processRequest`. Moved that decision to local URL/content-type checks and pushed a follow-up compile fix. Re-run Android Build to verify the correction before merge.
+
+
+- 2026-10-11 follow-up: Distinct Suno CloudFront `/1/clip/<id>.m4a` URLs use exact clip identity, avoiding deduplication across songs sharing the same parent directory. Custom Player carries a per-playback User-Agent, Referer and Cookie snapshot into the cache-backed Media3 data-source factory while preserving the selected MediaItem URI. Added safe playback-state diagnostics with host/path and query-presence only. The installed userscript source is absent from this repository, so segment conversion and full-track/truncation verification remain blocked. Device verification and CI are pending.

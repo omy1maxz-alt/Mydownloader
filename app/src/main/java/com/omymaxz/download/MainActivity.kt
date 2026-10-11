@@ -258,40 +258,23 @@ class MainActivity : AppCompatActivity() {
 
     private val mediaControlReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            val action = intent?.getStringExtra(EXTRA_COMMAND)
-            if (action != null) {
-                android.util.Log.d("MainActivity", "Received media control broadcast: $action")
-                when (action) {
-                    MediaForegroundService.ACTION_PLAY -> {
-                        binding.webView.evaluateJavascript("window.AndroidMediaController.play();", null)
-                    }
-                    MediaForegroundService.ACTION_PAUSE -> {
-                        binding.webView.evaluateJavascript("window.AndroidMediaController.pause();", null)
-                    }
-                    MediaForegroundService.ACTION_NEXT -> {
-                        binding.webView.evaluateJavascript("window.AndroidMediaController.next();", null)
-                    }
-                    MediaForegroundService.ACTION_PREVIOUS -> {
-                        binding.webView.evaluateJavascript("window.AndroidMediaController.previous();", null)
-                    }
-                    MediaForegroundService.ACTION_STOP_SERVICE -> {
-                        for (tab in tabs) {
-                            if (tab.isMediaPlaying) {
-                                tab.isMediaPlaying = false
-                                if (tab == tabs[currentTabIndex]) {
-                                    binding.webView.evaluateJavascript("window.AndroidMediaController.pause();", null)
-                                }
-                            }
-                        }
-
-                        binding.webView.evaluateJavascript("window.AndroidMediaController.pause();", null)
-                        stopPlaybackService()
-                        isMediaPlaying = false
-                    }
-                }
+            val action = intent?.getStringExtra(EXTRA_COMMAND) ?: return
+            android.util.Log.d("MainActivity", "source=WEB_MEDIA action=$action activeTab=$currentTabIndex")
+            val script = when (action) {
+                MediaForegroundService.ACTION_PLAY -> "window.AndroidMediaController && window.AndroidMediaController.play();"
+                MediaForegroundService.ACTION_PAUSE -> "window.AndroidMediaController && window.AndroidMediaController.pause();"
+                MediaForegroundService.ACTION_NEXT -> "window.AndroidMediaController && window.AndroidMediaController.next && window.AndroidMediaController.next();"
+                MediaForegroundService.ACTION_PREVIOUS -> "window.AndroidMediaController && window.AndroidMediaController.previous && window.AndroidMediaController.previous();"
+                MediaForegroundService.ACTION_STOP_SERVICE -> "window.AndroidMediaController && window.AndroidMediaController.pause();"
+                else -> null
+            }
+            if (script != null && ::webView.isInitialized && !this@MainActivity.isFinishing && !this@MainActivity.isDestroyed) webView.evaluateJavascript(script, null)
+            if (action == MediaForegroundService.ACTION_STOP_SERVICE) {
+                tabs.forEach { it.isMediaPlaying = false }
+                isMediaPlaying = false
+                stopPlaybackService()
             }
         }
-
     }
 
     inner class DoubaoInterface(private val activity: MainActivity) {
@@ -4142,13 +4125,16 @@ private fun showMediaListDialog() {
                 currentMediaListAdapter?.notifyItemChanged(position)
             }
         }, { mediaFile ->
+            val candidate = mediaEngine.getCandidate(mediaFile.url)
             val intent = android.content.Intent(this@MainActivity, CustomPlayerActivity::class.java).apply {
                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
                 val title = if (mediaFile.title.contains("\n")) mediaFile.title.substringBefore("\n") else mediaFile.title
                 putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
-                if (mediaFile.mimeType != null) {
-                    putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
-                }
+                if (mediaFile.mimeType != null) putExtra(CustomPlayerActivity.EXTRA_MIME_TYPE, mediaFile.mimeType)
+                putExtra(CustomPlayerActivity.EXTRA_USER_AGENT, candidate?.userAgent ?: webView.settings.userAgentString)
+                putExtra(CustomPlayerActivity.EXTRA_REFERER, candidate?.referer ?: webView.url)
+                val cookie = candidate?.cookie ?: CookieManager.getInstance().getCookie(mediaFile.url)
+                if (!cookie.isNullOrBlank()) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
                 addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }
             startActivity(intent)

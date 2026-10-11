@@ -66,6 +66,13 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
 
+    private fun isSunoClipUrl(rawUrl: String): Boolean = try {
+        val uri = java.net.URL(rawUrl)
+        uri.host.equals("d2lwuy8qc234o3.cloudfront.net", ignoreCase = true) &&
+            uri.path.startsWith("/1/clip/") &&
+            uri.path.substringAfterLast('/').endsWith(".m4a", ignoreCase = true)
+    } catch (_: Exception) { false }
+
     private fun buildMediaGroupingKey(rawUrl: String): String {
         return try {
             val uri = java.net.URL(rawUrl)
@@ -145,11 +152,19 @@ class MediaDetectionEngine(private val context: Context) {
 
         // Deduplication: If we already have an identical progressive candidate (ignoring noisy query params), ignore this duplicate
         if (isProgressiveFinal) {
-            val groupKey = buildMediaGroupingKey(url)
-            val existing = candidates.values.find { it.isProgressiveFinal && buildMediaGroupingKey(it.url) == groupKey }
+            // Distinct Suno tracks share the same CloudFront host and /1/clip/ directory.
+            // Preserve exact clip identity rather than returning a stale sibling candidate.
+            val existing = if (isSunoClipUrl(url)) candidates[url] else {
+                val groupKey = buildMediaGroupingKey(url)
+                candidates.values.find { it.isProgressiveFinal && buildMediaGroupingKey(it.url) == groupKey }
+            }
             if (existing != null) {
                 existing.requestCount++
                 existing.lastSeenTime = System.currentTimeMillis()
+                if (!referer.isNullOrBlank()) existing.referer = referer
+                if (!userAgent.isNullOrBlank()) existing.userAgent = userAgent
+                if (!contentType.isNullOrBlank()) existing.contentType = contentType
+                existing.cookie = CookieManager.getInstance().getCookie(url) ?: existing.cookie
                 return existing
             }
         }
@@ -228,7 +243,8 @@ class MediaDetectionEngine(private val context: Context) {
             candidate.startedAfterPlayback = true
         }
 
-        Log.d(TAG, "New Candidate Tracking: $url | type=$type | manifest=$isManifest")
+        val safeUri = runCatching { java.net.URL(url) }.getOrNull()
+        Log.d(TAG, "New Candidate Tracking: host=${safeUri?.host} path=${safeUri?.path} queryPresent=${!safeUri?.query.isNullOrBlank()} type=$type manifest=$isManifest")
         return candidate
     }
 
