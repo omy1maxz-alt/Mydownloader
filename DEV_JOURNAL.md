@@ -186,3 +186,4 @@
 - Resolved KAPT Duplicate Class generation exceptions that caused the build failure on `master` due to overlapping `WebAPIPolyfill` declarations inside `MainActivity`.
 
 2026-10-10 Ensure YouTube audio streams are saved with their actual container extension (e.g. .webm) by leveraging NewPipe's MediaFormat instead of blindly defaulting to .m4a, and updated signature validation in ProgressiveAudioDownloadService to accommodate WebM, MP3, and OGG.
+- 2026-10-11 (Urban VPN runtime investigation): the installed prototype requested `/entrypoints/countries` and `/security/tokens/accs-proxy` without the Bearer security token observed in the supplied Chrome extension's request interceptor. The documented extension flow registers an anonymous client, obtains an `accs` security token, and uses that Bearer token for subsequent API calls. Follow-up implementation adds that token bootstrap and authenticated requests; live API/device behavior still requires verification.
