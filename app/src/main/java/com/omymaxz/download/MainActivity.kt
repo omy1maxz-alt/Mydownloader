@@ -500,47 +500,38 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyProxy() {
+        val urbanAddress = UrbanVpnManager.localProxyAddress()
         val sharedPrefs = getSharedPreferences("proxy", Context.MODE_PRIVATE)
-        val host = sharedPrefs.getString("proxy_host", null)?.trim()?.takeIf { it.isNotEmpty() }
-        val port = sharedPrefs.getInt("proxy_port", -1)
-        val proxyEnabled = host != null && port in 1..65535
+        val manualHost = sharedPrefs.getString("proxy_host", null)?.trim()?.takeIf { it.isNotEmpty() }
+        val manualPort = sharedPrefs.getInt("proxy_port", -1)
+        val proxyAddress = urbanAddress ?: if (manualHost != null && manualPort in 1..65535) "$manualHost:$manualPort" else null
+        val proxyEnabled = proxyAddress != null
 
         val proxyConfig = if (proxyEnabled) {
-            ProxyConfig.Builder()
-                .addProxyRule("$host:$port")
-                .build()
+            ProxyConfig.Builder().addProxyRule(proxyAddress!!).build()
         } else {
             ProxyConfig.Builder().addDirect().build()
         }
 
         android.util.Log.i(
             "MyDownloaderProxy",
-            if (proxyEnabled) "Applying WebView proxy override for $host:$port"
-            else "Applying direct WebView connection (proxy disabled or invalid settings)"
+            when {
+                urbanAddress != null -> "Applying Urban VPN local relay to WebView"
+                proxyEnabled -> "Applying manual WebView proxy override for $proxyAddress"
+                else -> "Applying direct WebView connection (proxy disabled or invalid settings)"
+            }
         )
-
         try {
             ProxyController.getInstance().setProxyOverride(
                 proxyConfig,
                 ContextCompat.getMainExecutor(this),
                 Runnable {
-                    android.util.Log.i(
-                        "MyDownloaderProxy",
-                        if (proxyEnabled) "WebView proxy configuration applied; server reachability/authentication not yet verified"
-                        else "Direct WebView configuration applied"
-                    )
-                    if (proxyEnabled) {
-                        Toast.makeText(
-                            this,
-                            "Proxy configuration applied to WebView. Connection is not yet verified.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
+                    android.util.Log.i("MyDownloaderProxy", "WebView proxy override callback completed; this alone does not verify routing")
                 }
             )
         } catch (e: Exception) {
-            android.util.Log.e("MyDownloaderProxy", "Failed to apply WebView proxy configuration", e)
-            Toast.makeText(this, "Could not apply proxy: ${e.message ?: "unknown error"}", Toast.LENGTH_LONG).show()
+            android.util.Log.e("MyDownloaderProxy", "Failed to apply WebView proxy override", e)
+            Toast.makeText(this, "Could not apply WebView proxy: \${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -4968,6 +4959,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 MenuAction(if (isAutoTranslateEnabled) "Auto-Translate: On" else "Auto-Translate: Off", R.drawable.ic_translate) { toggleAutoTranslate() },
                 MenuAction("Ask Gemini About This Page", R.drawable.ic_ai_sparkle) { openGeminiForCurrentPage() },
                 MenuAction("User Scripts", R.drawable.ic_translate) { startActivity(Intent(this, UserScriptManagerActivity::class.java)) },
+                MenuAction("Urban VPN", R.drawable.ic_public) { showUrbanVpnDialog() },
                 MenuAction(getString(R.string.proxy_settings), R.drawable.ic_public) { showProxySettingsDialog() },
                 MenuAction("Block Ads / Traps on This Page", R.drawable.ic_close) { nukeAdsAndTraps() }
             )),
@@ -5946,6 +5938,79 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             }
         } else {
             Toast.makeText(this, "No page loaded to bookmark", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showUrbanVpnDialog() {
+        val connected = UrbanVpnManager.status()
+        if (connected != null) {
+            createThemedDialogBuilder(this)
+                .setTitle("Urban VPN")
+                .setMessage("Connected to \${connected.countryName}\nExit proxy: \${connected.exitProxy}\n\nThis prototype currently routes WebView traffic only.")
+                .setPositiveButton("Disconnect") { _, _ ->
+                    UrbanVpnManager.disconnect()
+                    applyProxy()
+                    Toast.makeText(this, "Urban VPN disconnected", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("Close", null)
+                .show()
+            return
+        }
+
+        val loading = createThemedDialogBuilder(this)
+            .setTitle("Urban VPN")
+            .setMessage("Loading country servers from Urban VPN…")
+            .setNegativeButton("Cancel", null)
+            .show()
+        lifecycleScope.launch {
+            try {
+                val locations = withContext(Dispatchers.IO) { UrbanVpnManager.fetchLocations() }
+                if (isFinishing || isDestroyed) return@launch
+                loading.dismiss()
+                val labels = locations.map { "\${it.countryName} (\${it.countryCode})" }.toTypedArray()
+                createThemedDialogBuilder(this@MainActivity)
+                    .setTitle("Choose Urban VPN country")
+                    .setItems(labels) { _, index ->
+                        val selected = locations[index]
+                        val progress = createThemedDialogBuilder(this@MainActivity)
+                            .setTitle("Connecting to \${selected.countryName}")
+                            .setMessage("Requesting proxy credentials and starting the local relay…")
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                        lifecycleScope.launch {
+                            try {
+                                val info = withContext(Dispatchers.IO) { UrbanVpnManager.connect(selected) }
+                                applyProxy()
+                                progress.dismiss()
+                                createThemedDialogBuilder(this@MainActivity)
+                                    .setTitle("Urban VPN connected")
+                                    .setMessage("Selected: \${info.countryName}\nProxy: \${info.exitProxy}\n\nThe app has applied the local relay to WebView. Exit IP verification and native download/player routing are not implemented yet.")
+                                    .setPositiveButton("OK", null)
+                                    .show()
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.IO) { UrbanVpnManager.disconnect() }
+                                applyProxy()
+                                progress.dismiss()
+                                createThemedDialogBuilder(this@MainActivity)
+                                    .setTitle("Urban VPN connection failed")
+                                    .setMessage(e.message ?: "The Urban VPN backend rejected the request or the local proxy could not start.")
+                                    .setPositiveButton("OK", null)
+                                    .show()
+                            }
+                        }
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            } catch (e: Exception) {
+                loading.dismiss()
+                if (!isFinishing && !isDestroyed) {
+                    createThemedDialogBuilder(this@MainActivity)
+                        .setTitle("Urban VPN unavailable")
+                        .setMessage(e.message ?: "Could not load Urban VPN country servers.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+            }
         }
     }
 
