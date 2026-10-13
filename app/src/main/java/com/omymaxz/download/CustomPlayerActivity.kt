@@ -998,6 +998,11 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
     }
 
+    private fun scheduleCacheProgressCheck(delayMs: Long) {
+        cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
+        cacheProgressHandler.postDelayed(cacheProgressRunnable, delayMs)
+    }
+
     private val cacheProgressRunnable = object : Runnable {
         override fun run() {
             val p = player
@@ -1097,8 +1102,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                         hasNotifiedCacheComplete = false
                     }
                     cacheVerificationInProgress = false
-                    cacheProgressHandler.removeCallbacks(this@CustomPlayerActivity.cacheProgressRunnable)
-                    cacheProgressHandler.postDelayed(this@CustomPlayerActivity.cacheProgressRunnable, 1500)
+                    scheduleCacheProgressCheck(1500L)
                 }
             }
         }
