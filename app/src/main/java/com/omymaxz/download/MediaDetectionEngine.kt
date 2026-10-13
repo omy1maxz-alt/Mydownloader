@@ -222,7 +222,12 @@ class MediaDetectionEngine(private val context: Context) {
             return existing
         }
 
-        val cookie = android.webkit.CookieManager.getInstance().getCookie(url)
+        // Media may be served by a CDN with no cookies of its own. Retain the
+        // current page session cookie as a fallback for the custom player's Referer.
+        val cookieManager = android.webkit.CookieManager.getInstance()
+        val pageCookie = referer?.let { cookieManager.getCookie(it) }
+        val cookie = cookieManager.getCookie(url)?.takeIf { it.isNotBlank() }
+            ?: pageCookie?.takeIf { it.isNotBlank() }
         val candidate = MediaCandidate(
             url = url,
             type = type,
