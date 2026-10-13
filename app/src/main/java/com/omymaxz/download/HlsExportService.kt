@@ -974,12 +974,24 @@ if (!success) {
             val returnCode = session.returnCode
 
             if (returnCode.isValueSuccess) {
+                // FFmpeg exit status and file size do not prove video exists. Require both video and
+                // audio stream types before telling the user that the offline export completed.
+                val probeSession = FFmpegKit.executeWithArguments(
+                    arrayOf("-v", "error", "-i", out.absolutePath, "-show_entries", "stream=codec_type", "-of", "default=noprint_wrappers=1", "-f", "null", "-")
+                )
+                val probeOutput = probeSession.allLogsAsString
+                val hasVideo = probeOutput.contains("video", ignoreCase = true)
+                val hasAudio = probeOutput.contains("audio", ignoreCase = true)
+                if (!hasVideo || !hasAudio) {
+                    writeExportLog("HLS_EXPORT_INVALID_OUTPUT hasVideo=$hasVideo hasAudio=$hasAudio probeExit=${probeSession.returnCode.value}")
+                    throw Exception("Export validation failed: output is missing ${if (!hasVideo) "video" else "audio"} track")
+                }
                 val fileSize = out.length()
                 if (fileSize <= 0L) {
                     writeExportLog("HLS_EXPORT_INVALID_OUTPUT reason=empty_file sizeBytes=$fileSize")
                     throw Exception("HLS export produced an empty MP4")
                 }
-                writeExportLog("HLS_EXPORT_FILE_COMPLETE sizeBytes=$fileSize separateAudio=${audioPlaylistFile != null}")
+                writeExportLog("HLS_EXPORT_FILE_COMPLETE sizeBytes=$fileSize hasVideo=$hasVideo hasAudio=$hasAudio separateAudio=${audioPlaylistFile != null}")
                 withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show() }
                 writeExportLog("FFmpeg muxing complete: $title")
             } else {
