@@ -500,26 +500,28 @@ object HlsDownloadHelper {
                 var videoVariantUrl = mainUri.toString()
                 var audioVariantUrl: String? = null
 
-                if (streamKeys.isNotEmpty()) {
-                    try {
-                        val parser = androidx.media3.exoplayer.hls.playlist.HlsPlaylistParser()
-                        val parsedPlaylist = parser.parse(mainUri, masterText.byteInputStream(Charsets.UTF_8))
-                        if (parsedPlaylist is androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist) {
-                            val filteredPlaylist = parsedPlaylist.copy(streamKeys) as androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist
-                            videoVariantUrl = filteredPlaylist.variants.firstOrNull()?.url?.toString() ?: mainUri.toString()
-                            audioVariantUrl = filteredPlaylist.audios.firstOrNull()?.url?.toString()
+                try {
+                    val parser = androidx.media3.exoplayer.hls.playlist.HlsPlaylistParser()
+                    val parsedPlaylist = parser.parse(mainUri, masterText.byteInputStream(Charsets.UTF_8))
+                    if (parsedPlaylist is androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist) {
+                        val videoKey = streamKeys.firstOrNull { it.groupIndex == 0 }
+                        videoVariantUrl = if (videoKey != null && videoKey.streamIndex in parsedPlaylist.variants.indices) {
+                            parsedPlaylist.variants[videoKey.streamIndex].url.toString()
+                        } else {
+                            parsedPlaylist.variants.firstOrNull()?.url?.toString() ?: mainUri.toString()
                         }
-                    } catch (e: Exception) {}
-                } else {
-                    // Try to pick the first variant if it's a master playlist
-                    try {
-                        val parser = androidx.media3.exoplayer.hls.playlist.HlsPlaylistParser()
-                        val parsedPlaylist = parser.parse(mainUri, masterText.byteInputStream(Charsets.UTF_8))
-                        if (parsedPlaylist is androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist) {
-                            videoVariantUrl = parsedPlaylist.variants.firstOrNull()?.url?.toString() ?: mainUri.toString()
-                            audioVariantUrl = parsedPlaylist.audios.firstOrNull()?.url?.toString()
+
+                        // Only require an external audio playlist when the currently selected
+                        // playlist refers to a separate rendition. Inline audio stays in video segments.
+                        val selectedAudioKey = streamKeys.firstOrNull { it.groupIndex == 1 }
+                        audioVariantUrl = if (selectedAudioKey != null && selectedAudioKey.streamIndex in parsedPlaylist.audios.indices) {
+                            parsedPlaylist.audios[selectedAudioKey.streamIndex].url.toString()
+                        } else {
+                            parsedPlaylist.audios.firstOrNull()?.url?.toString()
                         }
-                    } catch (e: Exception) {}
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.w("CACHE_COMPLETE_CHECK", "Could not resolve HLS variants; using master playlist fallback", e)
                 }
 
                 suspend fun isPlaylistFullyCached(playlistUrl: String): Boolean {
@@ -573,21 +575,27 @@ object HlsDownloadHelper {
                                 }
 
                                 if (!hasGap) {
-                                    // Verify Signature
-                                    var isValidSignature = true
+                                    // A completed read must be media data, not an image fallback (KissKH uses .png URL suffixes).
+                                    var isValidMediaPayload = true
                                     try {
                                         java.io.FileInputStream(segSpans[0].file).use { sigInput ->
-                                            val header = ByteArray(8)
-                                            if (sigInput.read(header) >= 8) {
-                                                if ((header[0] == 0x89.toByte() && header[1] == 0x50.toByte()) ||
-                                                    (header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte()) ||
-                                                    (header[0] == 'G'.code.toByte() && header[1] == 'I'.code.toByte())) {
-                                                    isValidSignature = false
-                                                }
+                                            val header = ByteArray(12)
+                                            val read = sigInput.read(header)
+                                            if (read >= 8) {
+                                                val isPng = header[0] == 0x89.toByte() && header[1] == 0x50.toByte() &&
+                                                    header[2] == 0x4E.toByte() && header[3] == 0x47.toByte()
+                                                val isJpeg = header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte() && header[2] == 0xFF.toByte()
+                                                val isGif = header[0] == 'G'.code.toByte() && header[1] == 'I'.code.toByte() &&
+                                                    header[2] == 'F'.code.toByte() && header[3] == '8'.code.toByte()
+                                                if (isPng || isJpeg || isGif) isValidMediaPayload = false
+                                            } else {
+                                                isValidMediaPayload = false
                                             }
                                         }
-                                    } catch (e: Exception) {}
-                                    if (isValidSignature) isSegCached = true
+                                    } catch (e: Exception) {
+                                        isValidMediaPayload = false
+                                    }
+                                    if (isValidMediaPayload) isSegCached = true
                                 }
                             }
 
