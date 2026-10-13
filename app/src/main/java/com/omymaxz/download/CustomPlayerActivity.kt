@@ -570,14 +570,17 @@ class CustomPlayerActivity : AppCompatActivity() {
         )
         // Use Media3's normal bounded defaults. An enormous uncapped buffer does not
         // speed up a slow CDN and can waste memory / make buffering behavior unpredictable.
+        // Allow long cache-backed playback to continue buffering well ahead when
+        // the source permits it. Keep allocation bounded to avoid unbounded RAM growth.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
                 50_000, // minBufferMs
-                120_000, // maxBufferMs: 2 minutes
+                1_800_000, // maxBufferMs: 30 minutes
                 2_500, // bufferForPlaybackMs
                 5_000 // bufferForPlaybackAfterRebufferMs
             )
             .setPrioritizeTimeOverSizeThresholds(true)
+            .setTargetBufferBytes(256 * 1024 * 1024) // bounded 256 MiB target
             .build()
 
         // Temporary A/B diagnostic: enable via Settings shared preferences for one test.
@@ -1002,80 +1005,102 @@ class CustomPlayerActivity : AppCompatActivity() {
                 cacheProgressHandler.postDelayed(this, 1000)
                 return
             }
+
             val currentMediaItem = p.currentMediaItem
-            if (currentMediaItem != null) {
-                val duration = p.duration
-                val buffered = p.bufferedPosition
+            if (currentMediaItem == null) {
+                cacheProgressHandler.postDelayed(this, 1000)
+                return
+            }
 
-                // 2. If duration is unknown/unavailable, DO NOT declare cache complete.
-                if (duration <= 0 || duration == androidx.media3.common.C.TIME_UNSET) {
-                    cacheProgressHandler.postDelayed(this, 1000)
-                    return
-                }
+            val duration = p.duration
+            val bufferedPosition = p.bufferedPosition
+            val playbackState = p.playbackState
+            // Use a durable buffer-end trigger, but do not equate "played to end" with
+            // "all required cache spans exist". The physical cache check remains authoritative.
+            val durationKnown = duration > 0 && duration != androidx.media3.common.C.TIME_UNSET
+            val nearBufferEnd = durationKnown && bufferedPosition >= duration - 1_000
+            val ended = playbackState == androidx.media3.common.Player.STATE_ENDED
+            if (!nearBufferEnd && !ended) {
+                cacheProgressHandler.postDelayed(this, 1000)
+                return
+            }
 
-                // 3. If bufferedPosition has NOT reached the end, DO NOT call expensive cache verification
-                if (buffered < duration - 1000) {
-                    cacheProgressHandler.postDelayed(this, 1000)
-                    return
-                }
+            val uri = currentMediaItem.localConfiguration?.uri
+            if (uri == null) {
+                cacheProgressHandler.postDelayed(this, 1000)
+                return
+            }
 
-                // 4. Buffer reached end. Verify physical cache.
-                cacheVerificationInProgress = true
-                val uri = currentMediaItem.localConfiguration?.uri
-                val mimeType = currentMediaItem.localConfiguration?.mimeType ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
-
-                if (uri != null) {
-                    val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
-                    val tracks = p.currentTracks
-
-                    var selectedVideoTracksLog = ""
-                    var selectedAudioTracksLog = ""
-
-                    tracks.groups.forEachIndexed { groupIndex, group ->
-                        for (i in 0 until group.length) {
-                            if (group.isTrackSelected(i)) {
-                                streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
-                                val format = group.getTrackFormat(i)
-                                if (format.sampleMimeType?.startsWith("video/") == true) {
-                                    selectedVideoTracksLog += "[Video ${format.width}x${format.height} ${format.bitrate}bps]"
-                                } else if (format.sampleMimeType?.startsWith("audio/") == true) {
-                                    selectedAudioTracksLog += "[Audio ${format.sampleMimeType} ${format.bitrate}bps]"
-                                }
-                            }
+            cacheVerificationInProgress = true
+            val mimeType = currentMediaItem.localConfiguration?.mimeType
+                ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
+            val streamKeys = mutableListOf<androidx.media3.common.StreamKey>()
+            val tracks = p.currentTracks
+            val selectedVideoTracksLog = StringBuilder()
+            val selectedAudioTracksLog = StringBuilder()
+            tracks.groups.forEachIndexed { groupIndex, group ->
+                for (i in 0 until group.length) {
+                    if (group.isTrackSelected(i)) {
+                        streamKeys.add(androidx.media3.common.StreamKey(groupIndex, i))
+                        val format = group.getTrackFormat(i)
+                        if (format.sampleMimeType?.startsWith("video/") == true) {
+                            selectedVideoTracksLog.append("[Video ${format.width}x${format.height} ${format.bitrate}bps]")
+                        } else if (format.sampleMimeType?.startsWith("audio/") == true) {
+                            selectedAudioTracksLog.append("[Audio ${format.sampleMimeType} ${format.bitrate}bps]")
                         }
                     }
-
-                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                        var cacheCheckMethod = ""
-                        var reason = ""
-
-                        val isFullyCached = if (mimeType == androidx.media3.common.MimeTypes.APPLICATION_MPD) {
-                            cacheCheckMethod = "ExoPlayer_Buffer_MPD"
-                            val cached = false // DASH physical span checking not yet supported, skipping false positive
-                            reason = "DASH physical span checking not yet supported, skipping false positive."
-                            cached
-                        } else {
-                            cacheCheckMethod = "HlsDownloadHelper.checkIsFullyCached"
-                            val splitAudioUrl = intent.getStringExtra("com.omymaxz.download.extra.AUDIO_URL") ?: intent.getStringExtra(YouTubeDownloadService.EXTRA_AUDIO_URL)
-                            val cached = HlsDownloadHelper.checkIsFullyCached(this@CustomPlayerActivity, uri, mimeType, streamKeys, splitAudioUrl)
-                            reason = if (cached) "Logical cache spans complete" else "Missing logical spans or playlist"
-                            cached
-                        }
-
-                        android.util.Log.i("CACHE_DIAGNOSTIC", "CACHE VERIFICATION | Method: $cacheCheckMethod | Reason: $reason | URI: $uri | MIME: $mimeType | Duration: $duration | Buf: $buffered | Video: $selectedVideoTracksLog | Audio: $selectedAudioTracksLog | StreamKeys: $streamKeys | Result: $isFullyCached")
-
-                        if (isFullyCached && !hasNotifiedCacheComplete) {
-                            hasNotifiedCacheComplete = true
-                            updateCacheCompleteUi(true)
-                            Toast.makeText(this@CustomPlayerActivity, "Video fully cached! Safe to Save Offline.", Toast.LENGTH_LONG).show()
-                        }
-                        cacheVerificationInProgress = false
-                    }
-                } else {
-                    cacheVerificationInProgress = false
                 }
             }
-            cacheProgressHandler.postDelayed(this, 1000)
+
+            val uriForCheck = uri
+            val mimeForCheck = mimeType
+            val keysForCheck = streamKeys.toList()
+            val splitAudioUrl = intent.getStringExtra("com.omymaxz.download.extra.AUDIO_URL")
+                ?: intent.getStringExtra(YouTubeDownloadService.EXTRA_AUDIO_URL)
+
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                var cacheCheckMethod = ""
+                var reason = ""
+                var isFullyCached = false
+                try {
+                    if (mimeForCheck == androidx.media3.common.MimeTypes.APPLICATION_MPD) {
+                        cacheCheckMethod = "ExoPlayer_Buffer_MPD"
+                        reason = "DASH physical span checking not yet supported"
+                    } else {
+                        cacheCheckMethod = "HlsDownloadHelper.checkIsFullyCached"
+                        isFullyCached = HlsDownloadHelper.checkIsFullyCached(
+                            this@CustomPlayerActivity, uriForCheck, mimeForCheck, keysForCheck, splitAudioUrl
+                        )
+                        reason = if (isFullyCached) "Logical cache spans complete" else "Missing logical spans or playlist"
+                    }
+                } catch (t: Throwable) {
+                    reason = "Cache verification failed: ${t.javaClass.simpleName}"
+                    Log.w("CACHE_DIAGNOSTIC", reason, t)
+                }
+
+                withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    android.util.Log.i(
+                        "CACHE_DIAGNOSTIC",
+                        "CACHE VERIFICATION | Method: $cacheCheckMethod | Reason: $reason | URI: ${uriForCheck.scheme}://${uriForCheck.host}${uriForCheck.path?.substringBeforeLast("/")}/… | MIME: $mimeForCheck | Duration: $duration | Buffered: $bufferedPosition | State: $playbackState | Video: $selectedVideoTracksLog | Audio: $selectedAudioTracksLog | StreamKeys: $keysForCheck | Result: $isFullyCached"
+                    )
+                    if (isFullyCached) {
+                        hasNotifiedCacheComplete = true
+                        updateCacheCompleteUi(true)
+                        Toast.makeText(
+                            this@CustomPlayerActivity,
+                            "Video fully cached! Safe to Save Offline.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        // Keep polling: cache jobs can finish after the player buffer reaches the end.
+                        // A later pass can update the button without requiring a close/reopen cycle.
+                        hasNotifiedCacheComplete = false
+                    }
+                    cacheVerificationInProgress = false
+                    cacheProgressHandler.removeCallbacks(this@CustomPlayerActivity.cacheProgressRunnable)
+                    cacheProgressHandler.postDelayed(this@CustomPlayerActivity.cacheProgressRunnable, 1500)
+                }
+            }
         }
     }
     private fun attachPlayerView() {
