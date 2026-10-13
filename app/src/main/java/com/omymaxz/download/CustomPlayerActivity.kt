@@ -584,6 +584,9 @@ class CustomPlayerActivity : AppCompatActivity() {
         // Default remains cache-backed playback so offline-save/cache behavior is preserved.
         val diagnosticPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val bypassCacheForPlayback = diagnosticPrefs.getBoolean("custom_player_diagnostic_bypass_cache", false)
+        // Keep subtitle fetch/hot-swap on the established cache-backed factory.
+        // Only the primary video playback data source is switched for the A/B test.
+        val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this, requestHeaders = playbackHeaders)
         val playbackDataSourceFactory = if (bypassCacheForPlayback) {
             Log.w(
                 "PLAYER_CACHE_DIAGNOSTIC",
