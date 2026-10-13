@@ -568,19 +568,35 @@ class CustomPlayerActivity : AppCompatActivity() {
             userAgent = requestHeaders.userAgent ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
             referer = requestHeaders.referer ?: videoUrl
         )
-        val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this, requestHeaders = playbackHeaders)
-
-        // Aggressive caching setup: ignoring standard 32MB size thresholds
+        // Use Media3's normal bounded defaults. An enormous uncapped buffer does not
+        // speed up a slow CDN and can waste memory / make buffering behavior unpredictable.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                50_000,             // minBufferMs
-                12_000_000,         // maxBufferMs (approx 3.3 hours)
-                2_500,              // bufferForPlaybackMs
-                5_000               // bufferForPlaybackAfterRebufferMs
+                50_000, // minBufferMs
+                120_000, // maxBufferMs: 2 minutes
+                2_500, // bufferForPlaybackMs
+                5_000 // bufferForPlaybackAfterRebufferMs
             )
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setTargetBufferBytes(androidx.media3.common.C.LENGTH_UNSET) // Uncapped RAM usage
             .build()
+
+        // Temporary A/B diagnostic: enable via Settings shared preferences for one test.
+        // Default remains cache-backed playback so offline-save/cache behavior is preserved.
+        val diagnosticPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val bypassCacheForPlayback = diagnosticPrefs.getBoolean("custom_player_diagnostic_bypass_cache", false)
+        // Keep subtitle fetch/hot-swap on the established cache-backed factory.
+        // Only the primary video playback data source is switched for the A/B test.
+        val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this, requestHeaders = playbackHeaders)
+        val playbackDataSourceFactory = if (bypassCacheForPlayback) {
+            Log.w(
+                "PLAYER_CACHE_DIAGNOSTIC",
+                "mode=UPSTREAM_ONLY cacheBypass=true host=${Uri.parse(videoUrl!!).host ?: "unknown"}"
+            )
+            HlsDownloadHelper.getDataSourceFactory(this, playbackHeaders)
+        } else {
+            Log.d("PLAYER_CACHE_DIAGNOSTIC", "mode=CACHE_BACKED cacheBypass=false")
+            HlsDownloadHelper.getCacheDataSourceFactory(this, requestHeaders = playbackHeaders)
+        }
 
         // We MUST use cacheFactory for all media (including direct progressive like MP4)
         // to actually populate the cache spans. If we don't, cache_count will be 0 when saving.
@@ -598,7 +614,13 @@ class CustomPlayerActivity : AppCompatActivity() {
                           videoUrl?.contains(".mpd", ignoreCase = true) == true ||
                           videoUrl?.contains("manifest", ignoreCase = true) == true
 
-        val dataSourceFactory = cacheFactory
+        val dataSourceFactory = playbackDataSourceFactory
+
+        Log.i(
+            "PLAYER_CACHE_DIAGNOSTIC",
+            "sourceType=${if (isHlsOrDash) "manifest" else if (isDirectProgressiveUrl || isExplicitProgressiveMime) "progressive" else "auto"} " +
+                "cacheBypass=$bypassCacheForPlayback retryPolicy=CustomRetryPolicy"
+        )
 
         val trackSelector = androidx.media3.exoplayer.trackselection.DefaultTrackSelector(this)
         trackSelector.setParameters(trackSelector.buildUponParameters()) // Set some default if we want, or just leave it
