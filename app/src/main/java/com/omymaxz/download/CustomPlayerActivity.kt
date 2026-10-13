@@ -568,8 +568,6 @@ class CustomPlayerActivity : AppCompatActivity() {
             userAgent = requestHeaders.userAgent ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
             referer = requestHeaders.referer ?: videoUrl
         )
-        val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this, requestHeaders = playbackHeaders)
-
         // Use Media3's normal bounded defaults. An enormous uncapped buffer does not
         // speed up a slow CDN and can waste memory / make buffering behavior unpredictable.
         val loadControl = DefaultLoadControl.Builder()
