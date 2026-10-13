@@ -148,7 +148,11 @@ class HlsExportService : Service() {
                         writeExportLog("source=PATH_A_CACHE\ndownload_id=null\nhas_media_item_bundle=true\nhas_video_url=" + (videoUrl != null) + "\ninput_uri=" + videoUrl + "\nmimeType=" + mimeType + "\nexport_method=" + selectedExportMethod + "\ncache_export=true\nforceTransformer=" + forceTransformer + "\nselectedAudioLanguage=" + selectedAudioLanguage + "\nselectedAudioLabel=" + selectedAudioLabel + "\nselectedAudioId=" + selectedAudioId)
 
                         try {
-                            val isSplitHls = videoUrl != null && (videoUrl.contains("manifest/hls_variant") || videoUrl.contains("googlevideo.com")) && videoUrl.contains(".m3u8", ignoreCase = true)
+                            val isHlsManifest = videoUrl?.contains(".m3u8", ignoreCase = true) == true ||
+                                mimeType == MimeTypes.APPLICATION_M3U8
+                            val isSplitHls = videoUrl != null &&
+                                (videoUrl.contains("manifest/hls_variant") || videoUrl.contains("googlevideo.com")) &&
+                                videoUrl.contains(".m3u8", ignoreCase = true)
                             val hasSplitStreamKeys = !streamKeyStrings.isNullOrEmpty() && streamKeyStrings.size > 1
 
                             // A direct MP4 already in the unified cache should be copied from cache.
@@ -156,13 +160,13 @@ class HlsExportService : Service() {
                             // reopen the original URI and fetch missing bytes, defeating cache-only save.
                             if (isDirectMp4) {
                                 writeExportLog("Direct MP4 detected; bypassing Transformer and exporting from cache.")
-                            } else if (forceTransformer && splitAudioUrl.isNullOrEmpty() && !(isSplitHls && hasSplitStreamKeys)) {
-                                writeExportLog("User forced Transformer (Save to device), executing Transformer path directly.")
+                            } else if (forceTransformer && !isHlsManifest && splitAudioUrl.isNullOrEmpty()) {
+                                writeExportLog("User forced Transformer for progressive/non-HLS source; executing Transformer path.")
                                 muxToMp4WithTransformer(bundledMediaItem, title)
                                 return@launch
                             }
-                            if (forceTransformer && (isSplitHls && hasSplitStreamKeys)) {
-                                writeExportLog("Transformer forced but source is split YouTube HLS. Falling back to FFmpeg cache export to preserve video+audio muxing.")
+                            if (forceTransformer && isHlsManifest) {
+                                writeExportLog("HLS source uses FFmpeg cache muxing to preserve selected video and audio renditions; Transformer path skipped.")
                             }
                             if (videoUrl != null) {
                                 if (videoUrl.contains(".mp4", ignoreCase = true) && !videoUrl.contains(".m3u8", ignoreCase = true)) {
@@ -961,6 +965,11 @@ if (!success) {
                 return localPlaylist
             }
 
+            writeExportLog(
+                "HLS_EXPORT_VARIANTS videoHost=${android.net.Uri.parse(videoVariantUrl).host ?: "unknown"} " +
+                    "videoPath=${android.net.Uri.parse(videoVariantUrl).path.orEmpty().substringBeforeLast("/")}/REDACTED.m3u8 " +
+                    "separateAudio=${audioVariantUrl != null} selectedKeys=${streamKeyStrings.orEmpty().joinToString(",")}"
+            )
             val videoPlaylistFile = processPlaylist(videoVariantUrl, "video_playlist.m3u8")
             var audioPlaylistFile: File? = null
             if (audioVariantUrl != null) {
@@ -985,6 +994,12 @@ if (!success) {
             val returnCode = session.returnCode
 
             if (returnCode.isValueSuccess) {
+                val fileSize = out.length()
+                if (fileSize <= 0L) {
+                    writeExportLog("HLS_EXPORT_INVALID_OUTPUT reason=empty_file sizeBytes=$fileSize")
+                    throw Exception("HLS export produced an empty MP4")
+                }
+                writeExportLog("HLS_EXPORT_FILE_COMPLETE sizeBytes=$fileSize separateAudio=${audioPlaylistFile != null}")
                 withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show() }
                 writeExportLog("FFmpeg muxing complete: $title")
             } else {
