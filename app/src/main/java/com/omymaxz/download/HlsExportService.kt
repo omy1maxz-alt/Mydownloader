@@ -974,18 +974,29 @@ if (!success) {
             val returnCode = session.returnCode
 
             if (returnCode.isValueSuccess) {
-                // FFmpeg exit status and file size do not prove video exists. Require both video and
-                // audio stream types before telling the user that the offline export completed.
+                // Require FFmpeg to map a video and audio stream from the produced file.
+                // "-show_entries" and "-of" are ffprobe-only flags, not FFmpeg flags.
                 val probeSession = FFmpegKit.executeWithArguments(
-                    arrayOf("-v", "error", "-i", out.absolutePath, "-show_entries", "stream=codec_type", "-of", "default=noprint_wrappers=1", "-f", "null", "-")
+                    arrayOf(
+                        "-v", "error",
+                        "-i", out.absolutePath,
+                        "-map", "0:v:0",
+                        "-map", "0:a:0",
+                        "-c", "copy",
+                        "-f", "null",
+                        "-"
+                    )
                 )
                 val probeOutput = probeSession.allLogsAsString
-                val hasVideo = probeOutput.contains("video", ignoreCase = true)
-                val hasAudio = probeOutput.contains("audio", ignoreCase = true)
-                if (!hasVideo || !hasAudio) {
-                    writeExportLog("HLS_EXPORT_INVALID_OUTPUT hasVideo=$hasVideo hasAudio=$hasAudio probeExit=${probeSession.returnCode.value}")
-                    throw Exception("Export validation failed: output is missing ${if (!hasVideo) "video" else "audio"} track")
+                if (!probeSession.returnCode.isValueSuccess) {
+                    writeExportLog(
+                        "HLS_EXPORT_INVALID_OUTPUT reason=missing_video_or_audio_stream " +
+                            "probeExit=${probeSession.returnCode.value} probeLog=${probeOutput.lines().takeLast(12).joinToString(" | ")}"
+                    )
+                    throw Exception("Export validation failed: output must contain both video and audio tracks")
                 }
+                val hasVideo = true
+                val hasAudio = true
                 val fileSize = out.length()
                 if (fileSize <= 0L) {
                     writeExportLog("HLS_EXPORT_INVALID_OUTPUT reason=empty_file sizeBytes=$fileSize")

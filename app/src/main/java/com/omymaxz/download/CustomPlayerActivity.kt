@@ -575,7 +575,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
                 50_000, // minBufferMs
-                1_800_000, // maxBufferMs: 30 minutes
+                12_000_000, // maxBufferMs: up to 3h 20m, enough to buffer through long episodes
                 2_500, // bufferForPlaybackMs
                 5_000 // bufferForPlaybackAfterRebufferMs
             )
@@ -998,6 +998,11 @@ class CustomPlayerActivity : AppCompatActivity() {
         }
     }
 
+    private fun scheduleCacheProgressCheck(delayMs: Long) {
+        cacheProgressHandler.removeCallbacks(cacheProgressRunnable)
+        cacheProgressHandler.postDelayed(cacheProgressRunnable, delayMs)
+    }
+
     private val cacheProgressRunnable = object : Runnable {
         override fun run() {
             val p = player
@@ -1097,8 +1102,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                         hasNotifiedCacheComplete = false
                     }
                     cacheVerificationInProgress = false
-                    cacheProgressHandler.removeCallbacks(this@CustomPlayerActivity.cacheProgressRunnable)
-                    cacheProgressHandler.postDelayed(this@CustomPlayerActivity.cacheProgressRunnable, 1500)
+                    scheduleCacheProgressCheck(1500L)
                 }
             }
         }

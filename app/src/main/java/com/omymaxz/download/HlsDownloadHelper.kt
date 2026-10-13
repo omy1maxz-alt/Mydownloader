@@ -248,7 +248,10 @@ object HlsDownloadHelper {
                 if (readOnly) {
                     androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR
                 } else {
-                    androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_FOR_UNSET_LENGTH_REQUESTS
+                    // Do not bypass the cache for HLS requests with unknown content length.
+                    // Many HLS segments arrive with LENGTH_UNSET; ignoring cache here means they
+                    // are streamed upstream without being stored, leaving "Save offline" incomplete.
+                    androidx.media3.datasource.cache.CacheDataSource.FLAG_BLOCK_ON_CACHE
                 }
             )
         if (readOnly) f.setCacheWriteDataSinkFactory(null)
