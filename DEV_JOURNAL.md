@@ -203,3 +203,4 @@
 
 
 - 2026-10-11 follow-up: Distinct Suno CloudFront `/1/clip/<id>.m4a` URLs use exact clip identity, avoiding deduplication across songs sharing the same parent directory. Custom Player carries a per-playback User-Agent, Referer and Cookie snapshot into the cache-backed Media3 data-source factory while preserving the selected MediaItem URI. Added safe playback-state diagnostics with host/path and query-presence only. The installed userscript source is absent from this repository, so segment conversion and full-track/truncation verification remain blocked. Device verification and CI are pending.
+- 2026-10-13 Fixed KissKH custom-player cookie fallback: detected CDN media candidates now retain the current page's WebView cookie when the media URL has none, and the custom-player handoff falls back to the active page cookie. Cookie values are not logged. Build and device playback still require verification.

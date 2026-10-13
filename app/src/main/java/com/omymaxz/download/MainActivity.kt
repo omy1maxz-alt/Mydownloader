@@ -4383,8 +4383,18 @@ private fun showMediaListDialog() {
             val refererToUse = candidate.referer ?: fallbackReferer ?: webView.url
             putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
 
-            val cookie = candidate.cookie ?: CookieManager.getInstance().getCookie(candidate.url) ?: CookieManager.getInstance().getCookie(refererToUse)
-            if (cookie != null) {
+            // KissKH media URLs often live on a separate CDN host, so their own URL may
+            // have no cookies even while the main KissKH page has an active session.
+            // Prefer the candidate's captured cookie, then check the media host and page
+            // origins. Never log the cookie value.
+            val cookieManager = CookieManager.getInstance()
+            val mediaUrl = candidate.url
+            val pageUrl = webView.url
+            val cookie = candidate.cookie?.takeIf { it.isNotBlank() }
+                ?: cookieManager.getCookie(mediaUrl)?.takeIf { it.isNotBlank() }
+                ?: pageUrl?.let { cookieManager.getCookie(it) }?.takeIf { it.isNotBlank() }
+                ?: refererToUse?.let { cookieManager.getCookie(it) }?.takeIf { it.isNotBlank() }
+            if (!cookie.isNullOrBlank()) {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
             }
 
