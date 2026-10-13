@@ -58,6 +58,31 @@ class HlsExportService : Service() {
     }
 
 
+    private fun isValidMediaSegment(file: File, isFmp4: Boolean): Boolean {
+        return try {
+            java.io.FileInputStream(file).use { input ->
+                val header = ByteArray(12)
+                val read = input.read(header)
+                if (read < 8) return@use false
+                val isPng = header[0] == 0x89.toByte() && header[1] == 0x50.toByte() &&
+                    header[2] == 0x4E.toByte() && header[3] == 0x47.toByte()
+                val isJpeg = header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte() && header[2] == 0xFF.toByte()
+                val isGif = header[0] == 'G'.code.toByte() && header[1] == 'I'.code.toByte() &&
+                    header[2] == 'F'.code.toByte() && header[3] == '8'.code.toByte()
+                if (isPng || isJpeg || isGif) return@use false
+                if (isFmp4) {
+                    val boxType = String(header, 4, 4, Charsets.US_ASCII)
+                    boxType in setOf("ftyp", "styp", "moof", "mdat", "sidx", "free", "emsg", "prft", "moov")
+                } else {
+                    header[0] == 0x47.toByte() ||
+                        (header[0] == 'I'.code.toByte() && header[1] == 'D'.code.toByte() && header[2] == '3'.code.toByte())
+                }
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     private fun writeExportLog(message: String) {
         try {
             val logFile = java.io.File(applicationContext.filesDir, "export_logs.txt")
@@ -857,43 +882,12 @@ class HlsExportService : Service() {
                             try { cacheOnlyFactory.close() } catch (ex: Exception) {}
                         }
 
-                        // --- DEFENSIVE SIGNATURE CHECK on the completed local file ---
+                                                // Validate bytes instead of trusting URL suffix. KissKH names media chunks .png.
                         if (localSegmentWritten) {
-                            var isValidSignature = true
-                            try {
-                                java.io.FileInputStream(localSegment).use { sigInput ->
-                                    val header = ByteArray(12)
-                                    val bytesRead = sigInput.read(header)
-                                    if (bytesRead >= 8) {
-                                        // Check for PNG: 89 50 4E 47 0D 0A 1A 0A
-                                        if (header[0] == 0x89.toByte() && header[1] == 0x50.toByte() && header[2] == 0x4E.toByte() && header[3] == 0x47.toByte()) {
-                                            isValidSignature = false
-                                            writeExportLog("SIGNATURE REJECTION: File contains PNG image data instead of media. URL: $segmentUrl")
-                                        }
-                                        // Check for JPEG: FF D8 FF
-                                        else if (header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte() && header[2] == 0xFF.toByte()) {
-                                            isValidSignature = false
-                                            writeExportLog("SIGNATURE REJECTION: File contains JPEG image data instead of media. URL: $segmentUrl")
-                                        }
-                                        // Check for GIF: GIF8
-                                        else if (header[0] == 'G'.code.toByte() && header[1] == 'I'.code.toByte() && header[2] == 'F'.code.toByte() && header[3] == '8'.code.toByte()) {
-                                            isValidSignature = false
-                                            writeExportLog("SIGNATURE REJECTION: File contains GIF image data instead of media. URL: $segmentUrl")
-                                        }
-                                        // Additional heuristic container checking
-                                        else if (!isFmp4 && header[0] != 0x47.toByte() && header[0] != 'I'.code.toByte() && header[0] != 'R'.code.toByte()) {
-                                            // 0x47 is MPEG-TS sync byte. ID3 tags often start with 'ID3'. RIFF (wav/avi) with 'RIFF'.
-                                            writeExportLog("WARNING: MPEG-TS segment does not start with 0x47 sync byte or ID3 tag. Header: ${header.take(4).joinToString("") { String.format("%02X", it) }}")
-                                        }
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                writeExportLog("WARNING: Failed to read signature for $localSegment: ${e.message}")
-                            }
-
-                            if (isValidSignature) {
+                            if (isValidMediaSegment(localSegment, isFmp4)) {
                                 success = true
                             } else {
+                                writeExportLog("SIGNATURE REJECTION: Cached payload is not a recognized media segment; checking network recovery.")
                                 localSegment.delete()
                                 localSegmentWritten = false
                             }
@@ -912,26 +906,12 @@ class HlsExportService : Service() {
                                 }
                                 fos.close()
 
-                                // One final sanity check on the downloaded network file to prevent embedding bad ads!
-                                var isNetworkValid = true
-                                try {
-                                    java.io.FileInputStream(localSegment).use { sigInput ->
-                                        val header = ByteArray(8)
-                                        if (sigInput.read(header) >= 8) {
-                                            if ((header[0] == 0x89.toByte() && header[1] == 0x50.toByte()) ||
-                                                (header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte()) ||
-                                                (header[0] == 'G'.code.toByte() && header[1] == 'I'.code.toByte())) {
-                                                isNetworkValid = false
-                                                writeExportLog("NETWORK REJECTION: Network fallback returned an image/ad file. Skipping. URL: $segmentUrl")
-                                            }
-                                        }
-                                    }
-                                } catch (e: Exception) {}
-
+                                val isNetworkValid = isValidMediaSegment(localSegment, isFmp4)
                                 if (isNetworkValid) {
                                     success = true
-                                    writeExportLog("Successfully recovered segment from network: $segmentUrl")
+                                    writeExportLog("Successfully recovered validated media segment from network (host=${android.net.Uri.parse(segmentUrl).host ?: "unknown"}).")
                                 } else {
+                                    writeExportLog("NETWORK REJECTION: Fallback response is not a recognized media segment; rejecting it.")
                                     localSegment.delete()
                                     success = false
                                 }
