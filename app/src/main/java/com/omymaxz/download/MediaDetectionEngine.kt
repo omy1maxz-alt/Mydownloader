@@ -596,6 +596,10 @@ class MediaDetectionEngine(private val context: Context) {
         if (connection.responseCode in 200..299) {
             val content = connection.inputStream.bufferedReader().use { it.readText() }
 
+            // Mark multi-quality only when the fetched playlist contains at least two
+            // selectable variant streams. A single HLS playlist is not enough.
+            candidate.hasMultipleQualities = MediaQualityUtils.hasMultipleHlsVariants(content)
+
             // Check if master playlist
             if (content.contains("#EXT-X-STREAM-INF")) {
                 val resolutionMatch = Regex("RESOLUTION=(\\d+x\\d+)").find(content)
