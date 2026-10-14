@@ -11,6 +11,8 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="media_video_main_bg">#C8E6C9</color>
+    <!-- Soft muted red highlight for video sources with multiple quality options -->
+    <color name="media_video_multi_quality_bg">#E8B4B4</color>
     <color name="media_video_clip_bg">#E8F5E9</color>
     <color name="media_subtitle_bg">#FFF3E0</color>
     <color name="media_ad_bg">#FFCDD2</color>
