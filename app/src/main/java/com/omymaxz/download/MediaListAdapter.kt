@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.*
+import android.net.Uri
 class MediaListAdapter(
     var mediaFiles: MutableList<MediaFile>,
     private val onItemClicked: (MediaFile) -> Unit,
