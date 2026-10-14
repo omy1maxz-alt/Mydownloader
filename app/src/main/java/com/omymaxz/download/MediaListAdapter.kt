@@ -9,8 +9,6 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.*
-import android.net.Uri
-
 class MediaListAdapter(
     var mediaFiles: MutableList<MediaFile>,
     private val onItemClicked: (MediaFile) -> Unit,
@@ -36,19 +34,12 @@ class MediaListAdapter(
             true
         }
 
-        // Use the analyzer's explicit result plus manifest URL/quality hints. Subtitle
-        // availability alone does not mean that a video has multiple quality variants.
+        // Red highlighting is reserved for confirmed alternative quality variants.
+        // A manifest URL or an HLS/DASH label alone does not prove that alternatives exist.
         val context = holder.itemView.context
         when (mediaFile.category) {
             MediaCategory.VIDEO -> {
-                val path = Uri.parse(mediaFile.url).path.orEmpty().lowercase()
-                val hasAdaptiveManifest = path.endsWith(".m3u8") || path.endsWith(".mpd") ||
-                    mediaFile.mimeType.contains("mpegurl", ignoreCase = true) ||
-                    mediaFile.mimeType.contains("dash+xml", ignoreCase = true)
-                val hasMultipleQualities = mediaFile.hasMultipleQualities || hasAdaptiveManifest ||
-                    mediaFile.quality.contains("adaptive", ignoreCase = true) ||
-                    mediaFile.quality.contains("dash", ignoreCase = true) ||
-                    mediaFile.quality.contains("hls", ignoreCase = true)
+                val hasMultipleQualities = mediaFile.hasMultipleQualities
                 val colorRes = when {
                     hasMultipleQualities -> R.color.media_video_multi_quality_bg
                     mediaFile.isMainContent -> R.color.media_video_main_bg
@@ -109,10 +100,7 @@ class MediaListAdapter(
             val sizeInfo = if (mediaFile.fileSize != "Unknown") " • ${mediaFile.fileSize}" else ""
             val mainContentIndicator = if (mediaFile.isMainContent && mediaFile.category == MediaCategory.VIDEO) " • ⭐ RECOMMENDED" else ""
 
-            val multiQualityIndicator = if (mediaFile.hasMultipleQualities ||
-                mediaFile.url.contains(".m3u8", true) || mediaFile.url.contains(".mpd", true) ||
-                mediaFile.quality.contains("adaptive", true) || mediaFile.quality.contains("dash", true) ||
-                mediaFile.quality.contains("hls", true)) " • MULTI-QUALITY" else ""
+            val multiQualityIndicator = if (mediaFile.hasMultipleQualities) " • MULTI-QUALITY" else ""
             val typeText = "${sourceInfo.source} • ${mediaFile.quality} • ${sourceInfo.format}${sizeInfo}${mainContentIndicator}${multiQualityIndicator}"
             typeTextView.text = typeText
 
