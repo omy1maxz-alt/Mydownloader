@@ -3432,7 +3432,9 @@ private fun injectMediaStateDetector() {
                     }
                     val detectedFormat = activity.detectVideoFormat(finalUrl)
                     val quality = activity.extractQualityFromUrl(finalUrl)
-                    val subtitle = activity.isSubtitleMediaUrl(finalUrl, type)\n                    val ext = if (subtitle) ".vtt" else detectedFormat.extension\n                    val enhancedTitle = activity.generateSmartFileName(finalUrl, ext, quality, category)
+                    val subtitle = isSubtitleMediaUrl(finalUrl, type)
+                    val ext = if (subtitle) ".vtt" else detectedFormat.extension
+                    val enhancedTitle = activity.generateSmartFileName(finalUrl, ext, quality, category)
                     val mediaFile = MediaFile(
                         url = finalUrl,
                         title = enhancedTitle,
