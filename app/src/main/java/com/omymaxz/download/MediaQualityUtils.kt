@@ -18,20 +18,20 @@ internal object MediaQualityUtils {
      * rendition plus separate audio representations is not mislabeled multi-quality.
      */
     fun hasMultipleDashVideoRepresentations(mpd: String): Boolean {
-        val adaptationSets = Regex("""(?is)<AdaptationSet\\b([^>]*)>(.*?)</AdaptationSet\\s*>""")
+        val adaptationSets = Regex("""(?is)<AdaptationSet\b([^>]*)>(.*?)</AdaptationSet\s*>""")
         var videoRepresentationCount = 0
 
         for (match in adaptationSets.findAll(mpd)) {
             val attributes = match.groupValues[1]
             val body = match.groupValues[2]
             val isVideoAdaptation =
-                Regex("""(?i)\\bcontentType\\s*=\\s*["']video["']""").containsMatchIn(attributes) ||
-                Regex("""(?i)\\bmimeType\\s*=\\s*["']video/[^"']+["']""").containsMatchIn(attributes) ||
-                Regex("""(?i)<Representation\\b[^>]*\\bmimeType\\s*=\\s*["']video/[^"']+["']""")
+                Regex("""(?i)\bcontentType\s*=\s*["']video["']""").containsMatchIn(attributes) ||
+                Regex("""(?i)\bmimeType\s*=\s*["']video/[^"']+["']""").containsMatchIn(attributes) ||
+                Regex("""(?i)<Representation\b[^>]*\bmimeType\s*=\s*["']video/[^"']+["']""")
                     .containsMatchIn(body)
 
             if (isVideoAdaptation) {
-                videoRepresentationCount += Regex("""(?i)<Representation\\b""")
+                videoRepresentationCount += Regex("""(?i)<Representation\b""")
                     .findAll(body)
                     .take(2)
                     .count()
