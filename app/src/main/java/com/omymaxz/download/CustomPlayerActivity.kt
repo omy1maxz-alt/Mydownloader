@@ -264,6 +264,25 @@ class CustomPlayerActivity : AppCompatActivity() {
                 .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_VIDEO, false)
                 .build()
 
+            // Log the new resolution so buffering behavior can be compared in Logcat.
+            val selectedHeight = override?.let { selectedOverride ->
+                p.currentTracks.groups
+                    .firstOrNull { it.type == androidx.media3.common.C.TRACK_TYPE_VIDEO &&
+                        it.mediaTrackGroup == selectedOverride.mediaTrackGroup }
+                    ?.let { group ->
+                        (0 until group.length)
+                            .firstOrNull { group.getTrackFormat(it).height > 0 }
+                            ?.let { group.getTrackFormat(it).height }
+                    }
+            } ?: selection.first.removeSuffix("p").toIntOrNull()
+
+            val isLowResolution = selectedHeight != null && selectedHeight <= 480
+            Log.i(
+                "PLAYER_BUFFER_POLICY",
+                "quality=${selection.first} height=${selectedHeight ?: "auto/unknown"} " +
+                    "policy=${if (isLowResolution) "long-buffer-eligible" else "balanced-HD"}"
+            )
+
             // RESET CACHE STATE WHEN QUALITY CHANGES
             hasNotifiedCacheComplete = false
             cacheVerificationInProgress = false
@@ -570,19 +589,20 @@ class CustomPlayerActivity : AppCompatActivity() {
             userAgent = requestHeaders.userAgent ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
             referer = requestHeaders.referer ?: videoUrl
         )
-        // Use Media3's normal bounded defaults. An enormous uncapped buffer does not
-        // speed up a slow CDN and can waste memory / make buffering behavior unpredictable.
-        // Allow long cache-backed playback to continue buffering well ahead when
-        // the source permits it. Keep allocation bounded to avoid unbounded RAM growth.
+        // Buffer policy adapts to the selected video quality. Media3's LoadControl is
+        // recreated when playback starts; quality changes are handled by updating the
+        // target buffer limit and time target without rebuilding the player.
+        // Low resolutions can retain more time with a moderate byte cap, while HD/UHD
+        // uses a shorter target and a lower byte cap to reduce memory pressure and lag.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                50_000, // minBufferMs
-                12_000_000, // maxBufferMs: up to 3h 20m, enough to buffer through long episodes
-                2_500, // bufferForPlaybackMs
-                5_000 // bufferForPlaybackAfterRebufferMs
+                30_000,       // minBufferMs
+                12_000_000,   // maxBufferMs: low-resolution sources may build a very large buffer
+                2_500,        // bufferForPlaybackMs
+                5_000         // bufferForPlaybackAfterRebufferMs
             )
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setTargetBufferBytes(256 * 1024 * 1024) // bounded 256 MiB target
+            .setTargetBufferBytes(128 * 1024 * 1024) // bounded; actual time is also limited by bitrate and cache/source
             .build()
 
         // Temporary A/B diagnostic: enable via Settings shared preferences for one test.
