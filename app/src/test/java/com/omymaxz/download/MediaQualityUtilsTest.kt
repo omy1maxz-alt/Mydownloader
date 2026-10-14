@@ -35,4 +35,32 @@ segment002.ts
 """
         assertFalse(MediaQualityUtils.hasMultipleHlsVariants(playlist))
     }
+
+    @Test
+    fun oneDashVideoRepresentationPlusAudioIsNotMultiQuality() {
+        val mpd = """<MPD><Period>
+          <AdaptationSet contentType="video" mimeType="video/mp4">
+            <Representation id="v1" bandwidth="1000" />
+          </AdaptationSet>
+          <AdaptationSet contentType="audio" mimeType="audio/mp4">
+            <Representation id="a1" bandwidth="128" />
+            <Representation id="a2" bandwidth="96" />
+          </AdaptationSet>
+        </Period></MPD>"""
+        assertFalse(MediaQualityUtils.hasMultipleDashVideoRepresentations(mpd))
+    }
+
+    @Test
+    fun multipleDashVideoRepresentationsAreMultiQuality() {
+        val mpd = """<MPD><Period>
+          <AdaptationSet contentType="video" mimeType="video/mp4">
+            <Representation id="v360" bandwidth="500000" />
+            <Representation id="v720" bandwidth="1500000" />
+          </AdaptationSet>
+          <AdaptationSet contentType="audio" mimeType="audio/mp4">
+            <Representation id="a1" bandwidth="128" />
+          </AdaptationSet>
+        </Period></MPD>"""
+        assertTrue(MediaQualityUtils.hasMultipleDashVideoRepresentations(mpd))
+    }
 }
