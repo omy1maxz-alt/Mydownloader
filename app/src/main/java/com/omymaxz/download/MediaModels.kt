@@ -31,7 +31,11 @@ enum class MediaCategory(val displayName: String, val priority: Int) {
                     lowerUrl.substringBefore("?").endsWith(".m4a") || lowerUrl.substringBefore("?").endsWith(".ogg") ||
                     lowerUrl.substringBefore("?").endsWith(".opus") || lowerUrl.substringBefore("?").endsWith(".wav") ||
                     lowerUrl.contains("d2lwuy8qc234o3.cloudfront.net/1/clip/") -> AUDIO
-                lowerUrl.contains(".vtt") || lowerUrl.contains(".srt") -> SUBTITLE
+                lowerUrl.substringBefore("?").substringBefore("#").let { path ->
+                    path.endsWith(".vtt") || path.endsWith(".srt") ||
+                        path.endsWith(".ttml") || path.endsWith(".dfxp") ||
+                        path.endsWith(".srv1") || path.endsWith(".srv2") || path.endsWith(".srv3")
+                } -> SUBTITLE
                 lowerUrl.contains("thumbnail") || lowerUrl.contains("preview") -> THUMBNAIL
                 lowerUrl.contains("googleads") || lowerUrl.contains("doubleclick") -> AD
                 else -> UNKNOWN
