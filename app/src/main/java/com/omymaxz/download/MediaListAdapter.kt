@@ -35,8 +35,8 @@ class MediaListAdapter(
             true
         }
 
-        // Use the analyzer's explicit result plus manifest URL/quality hints. Subtitle
-        // availability alone does not mean that a video has multiple quality variants.
+        // Use the analyzer's explicit variant-count result; a manifest URL alone does not
+        // prove that the stream offers multiple selectable qualities.
         val context = holder.itemView.context
         when (mediaFile.category) {
             MediaCategory.VIDEO -> {
