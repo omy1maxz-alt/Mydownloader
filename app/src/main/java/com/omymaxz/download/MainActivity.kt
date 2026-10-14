@@ -4820,21 +4820,29 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                     path.endsWith(".srv1", true) || path.endsWith(".srv2", true) || path.endsWith(".srv3", true)
             }
         if (isSubtitleDownload) {
+            // Capture WebView/session state on the main thread before doing network I/O.
+            val requestUserAgent = webView.settings.userAgentString
+            val requestCookie = CookieManager.getInstance().getCookie(mediaFile.url)
+            val requestReferer = mediaFile.referer ?: webView.url ?: "https://www.youtube.com"
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
-                    val connection = java.net.URL(mediaFile.url).openConnection() as java.net.HttpURLConnection
+                    val connection = java.net.URL(mediaFile.url).openConnection() as? java.net.HttpURLConnection
+                        ?: throw java.io.IOException("Subtitle URL must use HTTP or HTTPS")
                     connection.connectTimeout = 15000
                     connection.readTimeout = 20000
                     connection.instanceFollowRedirects = true
-                    connection.setRequestProperty("User-Agent", webView.settings.userAgentString)
+                    connection.setRequestProperty("User-Agent", requestUserAgent)
                     connection.setRequestProperty("Accept", "text/vtt, application/ttml+xml, application/xml, text/plain, */*")
-                    CookieManager.getInstance().getCookie(mediaFile.url)?.let {
-                        connection.setRequestProperty("Cookie", it)
-                    }
-                    (mediaFile.referer ?: webView.url)?.let { connection.setRequestProperty("Referer", it) }
+                    if (!requestCookie.isNullOrBlank()) connection.setRequestProperty("Cookie", requestCookie)
+                    if (requestReferer.isNotBlank()) connection.setRequestProperty("Referer", requestReferer)
                     val raw = try {
-                        if (connection.responseCode !in 200..299) {
-                            throw java.io.IOException("Subtitle server returned HTTP ${connection.responseCode}")
+                        val status = connection.responseCode
+                        if (status !in 200..299) {
+                            val detail = runCatching {
+                                connection.errorStream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }?.take(300)
+                            }.getOrNull().orEmpty()
+                            throw java.io.IOException("Subtitle server returned HTTP $status" +
+                                if (detail.isNotBlank()) ": $detail" else "")
                         }
                         connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                     } finally {
@@ -4845,15 +4853,19 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                     val isSrt = Regex("""(?s).*\d{2}:\d{2}:\d{2},\d{3}\s*-->\s*\d{2}:\d{2}:\d{2},\d{3}.*""")
                         .matches(normalized.trim())
                     if (!isVtt && !isSrt) {
-                        throw java.io.IOException("The server did not return a readable subtitle track")
+                        val preview = raw.trimStart().take(160).replace(Regex("""\s+"""), " ")
+                        throw java.io.IOException("Response is not a recognized subtitle format. Server returned: $preview")
                     }
                     val baseName = mediaFile.title.substringBeforeLast('.', mediaFile.title)
                     val outputName = if (isVtt) "$baseName.vtt" else "$baseName.srt"
                     val outputMime = if (isVtt) "text/vtt" else "application/x-subrip"
-                    saveToDownloads(normalized.toByteArray(Charsets.UTF_8), outputName, outputMime)
+                    withContext(Dispatchers.Main) {
+                        saveToDownloads(normalized.toByteArray(Charsets.UTF_8), outputName, outputMime)
+                    }
                 } catch (e: Exception) {
-                    runOnUiThread {
-                        Toast.makeText(this@MainActivity, "Subtitle download failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    android.util.Log.e("SubtitleDownload", "Subtitle download/conversion failed for ${mediaFile.url}", e)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Subtitle download failed: ${e.javaClass.simpleName}: ${e.message ?: "unknown error"}", Toast.LENGTH_LONG).show()
                     }
                 }
             }
