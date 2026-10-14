@@ -53,6 +53,7 @@ data class MediaCandidate(
     var bandwidth: Long = 0L,
     var estimatedSize: Long? = null,
     var segmentCount: Int = 0,
+    var qualityVariantCount: Int = 0,
     var isMetadataParsed: Boolean = false,
     var isExplicitAd: Boolean = false
 ) {
