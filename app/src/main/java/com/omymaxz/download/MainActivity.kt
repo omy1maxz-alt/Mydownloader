@@ -1311,7 +1311,7 @@ class MainActivity : AppCompatActivity() {
                         userscriptPageUrl = url
                         injectedUserscriptIdsForPage.clear()
                     }
-                    val isYt = url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))
+                    val isYt = isYouTubeVideoUrl(url)
                     // YouTube SPA video changes are cleared by checkForYouTube using the
                     // canonical video ID; leaving YouTube invalidates in-flight extraction results.
                     if (!isYt) {
@@ -1383,7 +1383,7 @@ class MainActivity : AppCompatActivity() {
                     super.onPageStarted(view, url, favicon)
                     isPageLoading = true
 
-                    val isYt2 = url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))
+                    val isYt2 = isYouTubeVideoUrl(url)
                     if (!isYt2) {
                         synchronized(detectedMediaFiles) {
                             detectedMediaFiles.clear()
@@ -1423,7 +1423,7 @@ class MainActivity : AppCompatActivity() {
                     // Auto-clear detected media on SPA navigation or in-page history push
                     // EXCEPT for YouTube, because YouTube is an SPA that immediately fires this
                     // and wipes our extracted video from the list right after finding it.
-                    val isYt = url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))
+                    val isYt = isYouTubeVideoUrl(url)
                     if (!isYt) {
                         resetYouTubeDetectionContext()
                         synchronized(detectedMediaFiles) {
@@ -7542,6 +7542,19 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
     private var lastYoutubeUrl: String? = null
     private var pendingYouTubeAutoPlay = false
 
+    private fun isYouTubeVideoUrl(url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        val uri = Uri.parse(url)
+        val host = uri.host?.lowercase() ?: return false
+        val isYouTubeHost = host == "youtube.com" || host.endsWith(".youtube.com") ||
+            host == "youtu.be" || host.endsWith(".youtu.be")
+        if (!isYouTubeHost) return false
+        val firstSegment = uri.pathSegments.firstOrNull()?.lowercase()
+        return host == "youtu.be" || host.endsWith(".youtu.be") ||
+            firstSegment == "watch" ||
+            (firstSegment != null && firstSegment in setOf("shorts", "embed", "live", "v"))
+    }
+
     /**
      * YouTube is an SPA, so multiple callbacks can report the same video with different
      * query parameters. Key by video ID so its detection results are replaced only when
@@ -7578,8 +7591,8 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
     private fun checkForYouTube(url: String?, force: Boolean = false, autoPlay: Boolean = false) {
         if (url == null) return
 
-        // Ensure we are passing a valid YouTube URL to NewPipe extractor.
-        if (!url.contains("youtube.com") && !url.contains("youtu.be")) return
+        // Only extract page URLs that identify a YouTube video, not arbitrary YouTube pages.
+        if (!isYouTubeVideoUrl(url)) return
         if (url.contains("googlevideo.com/videoplayback")) return
 
         val videoKey = youtubeVideoKey(url)
