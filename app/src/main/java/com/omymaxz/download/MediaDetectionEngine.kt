@@ -1,5 +1,8 @@
 package com.omymaxz.download
 
+internal fun countHlsQualityVariants(playlistContent: String): Int =
+    Regex("(?m)^\\s*#EXT-X-STREAM-INF\\s*:").findAll(playlistContent).count()
+
 import android.content.Context
 import android.util.Log
 import android.webkit.CookieManager
@@ -596,8 +599,10 @@ class MediaDetectionEngine(private val context: Context) {
         if (connection.responseCode in 200..299) {
             val content = connection.inputStream.bufferedReader().use { it.readText() }
 
-            // Check if master playlist
-            if (content.contains("#EXT-X-STREAM-INF")) {
+            // Count actual master-playlist renditions. A manifest URL alone does not
+            // prove that alternate qualities exist.
+            candidate.qualityVariantCount = countHlsQualityVariants(content)
+            if (candidate.qualityVariantCount > 0) {
                 val resolutionMatch = Regex("RESOLUTION=(\\d+x\\d+)").find(content)
                 if (resolutionMatch != null) candidate.resolution = resolutionMatch.groupValues[1]
 
