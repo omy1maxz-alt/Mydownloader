@@ -22,9 +22,37 @@ class MediaDetectionEngine(private val context: Context) {
     private fun ctypeIsAudio(contentType: String?): Boolean =
         contentType?.substringBefore(";")?.trim()?.lowercase()?.startsWith("audio/") == true
 
+    private fun isSubtitleResource(rawUrl: String, contentType: String?): Boolean {
+        val url = rawUrl.substringBefore('#').lowercase()
+        val mime = contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
+        val path = runCatching { URL(rawUrl).path.lowercase() }.getOrDefault(url.substringBefore('?'))
+
+        // YouTube caption URLs can include a video basename (e.g. "episode.mp4_en.vtt")
+        // and can serve TTML/XML. Reject these before video extensions or MIME are checked.
+        val subtitleExtension = Regex(""".*\.(vtt|srt|ttml|dfxp|srv[1-3])$""").matches(path)
+        val youtubeCaptionUrl = runCatching {
+            val uri = URL(rawUrl)
+            val host = uri.host.lowercase()
+            (host == "youtube.com" || host.endsWith(".youtube.com") ||
+                host == "youtube-nocookie.com" || host.endsWith(".youtube-nocookie.com") ||
+                host == "googlevideo.com" || host.endsWith(".googlevideo.com")) &&
+                (uri.path.contains("/api/timedtext", ignoreCase = true) ||
+                    uri.query?.split("&")?.any {
+                        it.substringBefore("=").lowercase() in setOf("kind", "lang", "tlang", "fmt", "name") && it.contains("=")
+                    } == true)
+        }.getOrDefault(false)
+
+        return subtitleExtension || youtubeCaptionUrl ||
+            mime == "text/vtt" || mime == "application/x-subrip" ||
+            mime == "application/ttml+xml" || mime == "application/dfxp+xml"
+    }
+
     private fun classifyMedia(rawUrl: String, contentType: String?): MediaKind {
         val lowerUrl = rawUrl.lowercase()
         val mime = contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
+
+        // Subtitle resources must be rejected before generic video MIME or ".mp4" checks.
+        if (isSubtitleResource(rawUrl, contentType)) return MediaKind.UNKNOWN
 
         // Exclude trackers and images masquerading as manifests
         if (lowerUrl.contains(".gif") || lowerUrl.contains(".png") || lowerUrl.contains("/ping") ||
@@ -116,6 +144,11 @@ class MediaDetectionEngine(private val context: Context) {
     }
 
     fun processRequest(url: String, referer: String?, userAgent: String?, contentType: String? = null): MediaCandidate? {
+
+        if (isSubtitleResource(url, contentType)) {
+            Log.d(TAG, "Ignoring subtitle/caption resource: ${runCatching { URL(url).path }.getOrDefault(url.substringBefore('?'))}")
+            return null
+        }
 
         val mediaKind = classifyMedia(url, contentType)
 
