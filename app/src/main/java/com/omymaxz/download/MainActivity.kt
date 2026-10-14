@@ -124,7 +124,13 @@ class MainActivity : AppCompatActivity() {
         "outbrain.com", "taboola.com", "popads.net", "adnxs.com",
         "adsymptotic.com", "advertising.com", "adsystem.com",
         "profitableratecpm.com", "popunder.net", "pop-ads.com", "adcash.com",
-        "propellerads.com", "revcontent.com", "mgid.com"
+        "propellerads.com", "revcontent.com", "mgid.com",
+
+        // YouTube/Google ad delivery endpoints that are separate from normal video chunks.
+        // Do not block googlevideo.com globally: it also serves the actual video.
+        "www.googleadservices.com", "googleadservices.com",
+        "pagead2.googlesyndication.com", "tpc.googlesyndication.com",
+        "www.youtube.com/pagead", "youtube.com/pagead"
     )
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private val fileChooserLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { result ->
