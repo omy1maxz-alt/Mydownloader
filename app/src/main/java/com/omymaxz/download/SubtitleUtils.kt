@@ -105,15 +105,13 @@ object SubtitleUtils {
 
         fun timeToVtt(value: String): String? {
             val time = value.trim()
-            val clock = Regex("""^(\\d{2}):(\\d{2}):(\\d{2})(?:[.,](\\d+))?$""").matchEntire(time)
+            val clock = Regex("""^(\d{2}):(\d{2}):(\d{2})(?:[.,](\d+))?$""").matchEntire(time)
             if (clock != null) {
                 val (hh, mm, ss, fraction) = clock.destructured
                 val millis = fraction.padEnd(3, '0').take(3).ifEmpty { "000" }
-                return "%02d:%02d:%02d.%s".format(
-                    hh.toInt(), mm.toInt(), ss.toInt(), millis
-                )
+                return "%02d:%02d:%02d.%s".format(hh.toInt(), mm.toInt(), ss.toInt(), millis)
             }
-            val seconds = Regex("""^(\\d+(?:\\.\\d+)?)(ms|s|m|h)$""").matchEntire(time) ?: return null
+            val seconds = Regex("""^(\d+(?:\.\d+)?)(ms|s|m|h)$""").matchEntire(time) ?: return null
             val amount = seconds.groupValues[1].toDouble()
             val factor = when (seconds.groupValues[2]) { "ms" -> 0.001; "m" -> 60.0; "h" -> 3600.0; else -> 1.0 }
             val totalMs = (amount * factor * 1000).toLong().coerceAtLeast(0)
@@ -124,27 +122,27 @@ object SubtitleUtils {
         }
 
         val cues = Regex(
-            """<p\\b([^>]*)>(.*?)</p>""",
+            """<p\b([^>]*)>(.*?)</p>""",
             setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
         ).findAll(trimmed).mapNotNull { match ->
             val attrs = match.groupValues[1]
-            val begin = Regex("""\\bbegin=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+            val begin = Regex("""\bbegin=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
                 .find(attrs)?.groupValues?.get(1) ?: return@mapNotNull null
-            val end = Regex("""\\bend=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+            val end = Regex("""\bend=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
                 .find(attrs)?.groupValues?.get(1) ?: return@mapNotNull null
             val startTime = timeToVtt(begin) ?: return@mapNotNull null
             val endTime = timeToVtt(end) ?: return@mapNotNull null
             val text = match.groupValues[2]
-                .replace(Regex("""<br\\s*/?>""", RegexOption.IGNORE_CASE), "\\n")
+                .replace(Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE), "\n")
                 .replace(Regex("""<[^>]+>"""), "")
                 .replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
                 .replace("&apos;", "'").replace("&quot;", "\"").replace("&#39;", "'")
                 .trim()
-            if (text.isBlank()) null else "$startTime --> $endTime\\n$text"
+            if (text.isBlank()) null else startTime + " --> " + endTime + "\n" + text
         }.toList()
 
         if (cues.isEmpty()) return content
-        return "WEBVTT\\n\\n" + cues.joinToString("\\n\\n") + "\\n"
+        return "WEBVTT\n\n" + cues.joinToString("\n\n") + "\n"
     }
 
     fun extractSnippet(content: String): SubtitleResult {
