@@ -36,11 +36,20 @@ class MediaListAdapter(
             true
         }
 
-        // --- FIXED: Visual styling using our custom colors ---
+        // Multiple-quality videos (such as YouTube DASH/HLS sources) get a soft muted-red
+        // background. Keep the existing soft-green backgrounds for normal video links.
         val context = holder.itemView.context
         when (mediaFile.category) {
             MediaCategory.VIDEO -> {
-                                val colorRes = if (mediaFile.isMainContent) R.color.media_video_main_bg else R.color.media_video_clip_bg
+                val hasMultipleQualities = !mediaFile.subtitleUrls.isNullOrEmpty() ||
+                    mediaFile.quality.contains("adaptive", ignoreCase = true) ||
+                    mediaFile.quality.contains("dash", ignoreCase = true) ||
+                    mediaFile.quality.contains("hls", ignoreCase = true)
+                val colorRes = when {
+                    hasMultipleQualities -> R.color.media_video_multi_quality_bg
+                    mediaFile.isMainContent -> R.color.media_video_main_bg
+                    else -> R.color.media_video_clip_bg
+                }
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(context, colorRes))
             }
             MediaCategory.SUBTITLE -> {
