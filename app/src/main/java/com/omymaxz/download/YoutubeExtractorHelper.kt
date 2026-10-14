@@ -63,21 +63,32 @@ object YoutubeExtractorHelper {
 
             val subtitleList = mutableListOf<String>()
             try {
-                if (extractor.subtitlesDefault.isNotEmpty()) {
-                    extractor.subtitlesDefault.forEach { sub ->
-                        if (!sub.content.isNullOrEmpty()) {
-                            // Preserve the language metadata from NewPipe in the URL query string format
-                            // or pass it along, but right now MainActivity extracts language directly from the url or snippet.
-                            // We can append a mock language tag to the URL so `extractLanguageFromUrl` catches it or it gets saved natively.
-                            // Actually, let's just pass the content since it's a direct SRT/VTT link, but we can append `?lang=${sub.locale}` if safe.
-                            val langCode = sub.locale?.language ?: ""
-                            val separator = if (sub.content!!.contains("?")) "&" else "?"
-                            val taggedUrl = if (langCode.isNotBlank()) "${sub.content}${separator}lang=$langCode" else sub.content!!
-                            subtitleList.add(taggedUrl)
+                // NewPipe's default list is TTML-only on YouTube, but getSubtitles(format)
+                // exposes all caption tracks including YouTube's auto-generated tracks.
+                val subtitleFormats = listOf(MediaFormat.VTT, MediaFormat.TTML, MediaFormat.SRT)
+                subtitleFormats.forEach { format ->
+                    runCatching {
+                        extractor.getSubtitles(format).forEach { sub ->
+                            val contentUrl = sub.content
+                            if (!contentUrl.isNullOrBlank()) {
+                                val langCode = sub.locale?.language.orEmpty()
+                                val separator = if (contentUrl.contains("?")) "&" else "?"
+                                val taggedUrl = if (langCode.isNotBlank() && !contentUrl.contains(Regex("[?&]lang="))) {
+                                    "${contentUrl}${separator}lang=$langCode"
+                                } else contentUrl
+                                if (subtitleList.none { it.substringBefore("&lang=") == taggedUrl.substringBefore("&lang=") }) {
+                                    subtitleList.add(taggedUrl)
+                                }
+                            }
                         }
+                    }.onFailure { error ->
+                        Log.d(TAG, "Subtitle format $format unavailable: ${error.message}")
                     }
                 }
-            } catch(e: Exception) {}
+                Log.d(TAG, "Extracted ${subtitleList.size} subtitle tracks (including auto-generated when provided by YouTube).")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to extract YouTube subtitle tracks: ${e.message}", e)
+            }
 
             var bestAudioUrl: String? = null
             var bestAudioExtension = "m4a"
