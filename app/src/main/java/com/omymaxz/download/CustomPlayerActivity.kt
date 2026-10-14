@@ -517,11 +517,13 @@ class CustomPlayerActivity : AppCompatActivity() {
 
                             if (!outFile.exists()) {
                                 java.io.FileOutputStream(outFile).use {
-                                    // Fix ExoPlayer parse failure for VTT without header
-                                    if (ext == ".vtt" && !contentString.trimStart().startsWith("WEBVTT", ignoreCase = true)) {
+                                    // Normalize YouTube speaker markers and TTML/XML cues before saving.
+                                    val normalizedSubtitle = SubtitleUtils.normalizeForDownload(contentString)
+                                    val normalizedBytes = normalizedSubtitle.toByteArray(Charsets.UTF_8)
+                                    if (ext == ".vtt" && !normalizedSubtitle.trimStart().startsWith("WEBVTT", ignoreCase = true)) {
                                         it.write("WEBVTT\n\n".toByteArray(Charsets.UTF_8))
                                     }
-                                    it.write(bytes)
+                                    it.write(normalizedBytes)
                                 }
                             }
                             downloadedAny = true
@@ -861,11 +863,13 @@ class CustomPlayerActivity : AppCompatActivity() {
 
                             if (!outFile.exists()) {
                                 java.io.FileOutputStream(outFile).use {
-                                    // Fix ExoPlayer parse failure for VTT without header
-                                    if (ext == ".vtt" && !contentString.trimStart().startsWith("WEBVTT", ignoreCase = true)) {
+                                    // Normalize YouTube speaker markers and TTML/XML cues before saving.
+                                    val normalizedSubtitle = SubtitleUtils.normalizeForDownload(contentString)
+                                    val normalizedBytes = normalizedSubtitle.toByteArray(Charsets.UTF_8)
+                                    if (ext == ".vtt" && !normalizedSubtitle.trimStart().startsWith("WEBVTT", ignoreCase = true)) {
                                         it.write("WEBVTT\n\n".toByteArray(Charsets.UTF_8))
                                     }
-                                    it.write(bytes)
+                                    it.write(normalizedBytes)
                                 }
                             }
                         }
