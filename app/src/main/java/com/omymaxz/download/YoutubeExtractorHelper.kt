@@ -63,29 +63,72 @@ object YoutubeExtractorHelper {
 
             val subtitleList = mutableListOf<String>()
             try {
-                // NewPipe's default list is TTML-only on YouTube, but getSubtitles(format)
-                // exposes all caption tracks including YouTube's auto-generated tracks.
-                val subtitleFormats = listOf(MediaFormat.VTT, MediaFormat.TTML, MediaFormat.SRT)
+                // Query every caption format NewPipe exposes. YouTube can expose some
+                // languages only through its legacy transcript formats (srv1/srv2/srv3),
+                // so checking only VTT/TTML/SRT can leave the detected-media list incomplete.
+                val subtitleFormats = listOf(
+                    MediaFormat.VTT,
+                    MediaFormat.TTML,
+                    MediaFormat.SRT,
+                    MediaFormat.TRANSCRIPT1,
+                    MediaFormat.TRANSCRIPT2,
+                    MediaFormat.TRANSCRIPT3
+                )
+                val subtitlesByTrack = linkedMapOf<String, String>()
                 subtitleFormats.forEach { format ->
                     runCatching {
                         extractor.getSubtitles(format).forEach { sub ->
                             val contentUrl = sub.content
-                            if (!contentUrl.isNullOrBlank()) {
-                                val langCode = sub.locale?.language.orEmpty()
-                                val separator = if (contentUrl.contains("?")) "&" else "?"
-                                val taggedUrl = if (langCode.isNotBlank() && !contentUrl.contains(Regex("[?&]lang="))) {
-                                    "${contentUrl}${separator}lang=$langCode"
-                                } else contentUrl
-                                if (subtitleList.none { it.substringBefore("&lang=") == taggedUrl.substringBefore("&lang=") }) {
-                                    subtitleList.add(taggedUrl)
-                                }
+                            if (contentUrl.isNullOrBlank()) return@forEach
+
+                            val uri = android.net.Uri.parse(contentUrl)
+                            val language = sub.locale?.language
+                                ?.takeIf { it.isNotBlank() }
+                                ?: uri.getQueryParameter("lang").orEmpty()
+                            val trackName = uri.getQueryParameter("name").orEmpty()
+                            val trackKind = uri.getQueryParameter("kind").orEmpty()
+                            val translatedLanguage = uri.getQueryParameter("tlang").orEmpty()
+
+                            // The same caption track is often returned once per format.
+                            // Ignore fmt when deduplicating, but retain separate manual,
+                            // auto-generated (kind=asr), named, and translated tracks.
+                            val canonicalUrl = contentUrl
+                                .replace(Regex("([?&])fmt=[^&]*"), "$1")
+                                .trimEnd('?', '&')
+                            val trackKey = if (
+                                language.isNotBlank() || trackName.isNotBlank() ||
+                                trackKind.isNotBlank() || translatedLanguage.isNotBlank()
+                            ) {
+                                listOf(
+                                    language.lowercase(),
+                                    trackName.lowercase(),
+                                    trackKind.lowercase(),
+                                    translatedLanguage.lowercase()
+                                ).joinToString("|")
+                            } else {
+                                canonicalUrl
+                            }
+
+                            val separator = if (contentUrl.contains("?")) "&" else "?"
+                            val taggedUrl = if (language.isNotBlank() && uri.getQueryParameter("lang").isNullOrBlank()) {
+                                "$contentUrl${separator}lang=${language}"
+                            } else contentUrl
+
+                            // Formats are ordered by preference, so the first playable
+                            // representation for each actual language track is retained.
+                            if (!subtitlesByTrack.containsKey(trackKey)) {
+                                subtitlesByTrack[trackKey] = taggedUrl
                             }
                         }
                     }.onFailure { error ->
                         Log.d(TAG, "Subtitle format $format unavailable: ${error.message}")
                     }
                 }
-                Log.d(TAG, "Extracted ${subtitleList.size} subtitle tracks (including auto-generated when provided by YouTube).")
+                subtitleList.addAll(subtitlesByTrack.values)
+                Log.d(
+                    TAG,
+                    "Extracted ${subtitleList.size} unique YouTube subtitle tracks from ${subtitleFormats.size} formats."
+                )
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to extract YouTube subtitle tracks: ${e.message}", e)
             }
