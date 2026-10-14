@@ -4133,6 +4133,14 @@ private fun showMediaListDialog() {
             val cand = mediaEngine.getCandidate(mediaFile.url)
             if (cand != null) {
                 mediaEngine.parseMetadataAsync(cand, isManual = true) { updatedCand ->
+                    // Store manifest/variant evidence explicitly so the media list can
+                    // recolor the row after analysis instead of guessing from subtitle presence.
+                    mediaFile.hasMultipleQualities =
+                        updatedCand.isManifest ||
+                        updatedCand.mediaKind == MediaKind.HLS_MANIFEST ||
+                        updatedCand.mediaKind == MediaKind.DASH_MANIFEST ||
+                        mediaFile.url.contains(".m3u8", ignoreCase = true) ||
+                        mediaFile.url.contains(".mpd", ignoreCase = true)
                     // Update MediaFile info from Candidate
                     if (updatedCand.durationSec > 0) {
                         val hours = updatedCand.durationSec / 3600
@@ -4887,35 +4895,28 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             return
         }
 
-        // Check for HLS (.m3u8)
-        val isHls = mediaFile.url.contains(".m3u8", ignoreCase = true) ||
-                    mediaFile.mimeType == "application/vnd.apple.mpegurl" ||
-                    mediaFile.mimeType == "application/x-mpegURL"
+        // Adaptive HLS/DASH masters can contain several video resolutions. Ask for
+        // an explicit quality before downloading rather than silently accepting the default.
+        val path = Uri.parse(mediaFile.url).path.orEmpty().lowercase()
+        val isHls = path.endsWith(".m3u8") ||
+            mediaFile.mimeType.contains("mpegurl", ignoreCase = true)
+        val isDash = path.endsWith(".mpd") ||
+            mediaFile.mimeType.contains("dash+xml", ignoreCase = true) ||
+            mediaFile.quality.contains("dash", ignoreCase = true)
 
-        if (isHls) {
-            val options = arrayOf("Normal Download (Media3)", "FFmpeg Download")
-            createThemedDialogBuilder(this)
-                .setTitle("HLS Download Method")
-                .setItems(options) { _, which ->
-                    val userAgent = webView.settings.userAgentString
-                    val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
-                    if (which == 0) {
-                        HlsDownloadHelper.downloadHls(this, mediaFile.url, mediaFile.title, userAgent, cookie)
-                    } else {
-                        val intent = Intent(this, HlsExportService::class.java).apply {
-                            putExtra(HlsExportService.EXTRA_VIDEO_URL, mediaFile.url)
-                            putExtra(HlsExportService.EXTRA_TITLE, mediaFile.title)
-                            if (mediaFile.mimeType != null) {
-                                putExtra(HlsExportService.EXTRA_MIME_TYPE, mediaFile.mimeType)
-                            }
-                            putExtra(HlsExportService.EXTRA_USER_AGENT, userAgent)
-                            putExtra(HlsExportService.EXTRA_REFERER, mediaFile.referer ?: webView.url)
-                            putExtra(HlsExportService.EXTRA_COOKIE, cookie)
-                        }
-                        startService(intent)
-                    }
-                }
-                .show()
+        if (isHls || isDash) {
+            val userAgent = webView.settings.userAgentString
+            val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
+            HlsDownloadHelper.downloadAdaptive(
+                context = this,
+                url = mediaFile.url,
+                title = mediaFile.title,
+                userAgent = userAgent,
+                referer = mediaFile.referer ?: webView.url,
+                cookie = cookie,
+                mimeType = if (isHls) androidx.media3.common.MimeTypes.APPLICATION_M3U8
+                    else androidx.media3.common.MimeTypes.APPLICATION_MPD
+            )
             return
         }
 
