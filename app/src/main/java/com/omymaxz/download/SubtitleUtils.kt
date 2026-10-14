@@ -99,54 +99,106 @@ object SubtitleUtils {
      */
     fun normalizeForDownload(content: String): String {
         val trimmed = content.trimStart().removePrefix("\uFEFF").trimStart()
-        val isTtml = trimmed.startsWith("<tt", ignoreCase = true) ||
-            (trimmed.startsWith("<?xml", ignoreCase = true) && trimmed.contains("<p", ignoreCase = true))
-        // Strip YouTube's speaker marker (">>") from cue text, not from the timestamps/header.
-        // Handle both actual WebVTT input and TTML converted below.
-        if (!isTtml) {
+        val lower = trimmed.lowercase()
+
+        // YouTube may return WebVTT, TTML, or its older <transcript><text start dur>
+        // XML format even when the URL ends in .vtt. Do not save XML as if it were VTT:
+        // players can show a few cues and then stop, or reject the track entirely.
+        val isCaptionXml = lower.startsWith("<tt") ||
+            lower.startsWith("<?xml") ||
+            lower.startsWith("<transcript") ||
+            Regex("""<(?:text|p)\b[^>]*(?:\bstart=|\bbegin=|\bt=)""", RegexOption.IGNORE_CASE)
+                .containsMatchIn(trimmed)
+
+        if (!isCaptionXml) {
             if (!trimmed.startsWith("WEBVTT", ignoreCase = true)) return content
             return normalizeSpeakerMarkersInVtt(content)
         }
 
-        fun timeToVtt(value: String): String? {
+        fun timeToMillis(value: String, numericUnit: String): Long? {
             val time = value.trim()
-            val clock = Regex("""^(\d{2}):(\d{2}):(\d{2})(?:[.,](\d+))?$""").matchEntire(time)
+            val clock = Regex("""^(\d{2,}):(\d{2}):(\d{2})(?:[.,](\d+))?$""").matchEntire(time)
             if (clock != null) {
                 val (hh, mm, ss, fraction) = clock.destructured
-                val millis = fraction.padEnd(3, '0').take(3).ifEmpty { "000" }
-                return "%02d:%02d:%02d.%s".format(hh.toInt(), mm.toInt(), ss.toInt(), millis)
+                val millis = fraction.padEnd(3, '0').take(3).ifEmpty { "000" }.toLong()
+                return (((hh.toLong() * 60 + mm.toLong()) * 60 + ss.toLong()) * 1000 + millis)
             }
-            val seconds = Regex("""^(\d+(?:\.\d+)?)(ms|s|m|h)$""").matchEntire(time) ?: return null
-            val amount = seconds.groupValues[1].toDouble()
-            val factor = when (seconds.groupValues[2]) { "ms" -> 0.001; "m" -> 60.0; "h" -> 3600.0; else -> 1.0 }
-            val totalMs = (amount * factor * 1000).toLong().coerceAtLeast(0)
+
+            val withUnit = Regex("""^(\d+(?:\.\d+)?)(ms|s|m|h)$""", RegexOption.IGNORE_CASE)
+                .matchEntire(time)
+            val amount: Double
+            val factor: Double
+            if (withUnit != null) {
+                amount = withUnit.groupValues[1].toDoubleOrNull() ?: return null
+                factor = when (withUnit.groupValues[2].lowercase()) {
+                    "ms" -> 1.0
+                    "m" -> 60_000.0
+                    "h" -> 3_600_000.0
+                    else -> 1_000.0
+                }
+            } else {
+                amount = time.toDoubleOrNull() ?: return null
+                factor = if (numericUnit == "milliseconds") 1.0 else 1_000.0
+            }
+            val result = amount * factor
+            if (!result.isFinite() || result < 0 || result > Long.MAX_VALUE.toDouble()) return null
+            return result.toLong()
+        }
+
+        fun formatMillis(value: Long): String {
+            val total = value.coerceAtLeast(0)
             return "%02d:%02d:%02d.%03d".format(
-                totalMs / 3_600_000, (totalMs / 60_000) % 60,
-                (totalMs / 1_000) % 60, totalMs % 1_000
+                total / 3_600_000, (total / 60_000) % 60,
+                (total / 1_000) % 60, total % 1_000
             )
         }
 
+        fun attr(attrs: String, name: String): String? =
+            Regex("""\b\${Regex.escape(name)}=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+                .find(attrs)?.groupValues?.get(1)
+
         val cues = Regex(
-            """<p\b([^>]*)>(.*?)</p>""",
+            """<(p|text)\b([^>]*)>(.*?)</\1\s*>""",
             setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
         ).findAll(trimmed).mapNotNull { match ->
-            val attrs = match.groupValues[1]
-            val begin = Regex("""\bbegin=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
-                .find(attrs)?.groupValues?.get(1) ?: return@mapNotNull null
-            val end = Regex("""\bend=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
-                .find(attrs)?.groupValues?.get(1) ?: return@mapNotNull null
-            val startTime = timeToVtt(begin) ?: return@mapNotNull null
-            val endTime = timeToVtt(end) ?: return@mapNotNull null
-            val text = match.groupValues[2]
+            val attrs = match.groupValues[2]
+            val begin = attr(attrs, "begin")
+            val startSeconds = attr(attrs, "start")
+            val startTicks = attr(attrs, "t")
+            val startValue = begin ?: startSeconds ?: startTicks
+                ?: return@mapNotNull null
+            val startMillis = timeToMillis(
+                startValue,
+                if (startTicks != null && begin == null && startSeconds == null) "milliseconds" else "seconds"
+            ) ?: return@mapNotNull null
+
+            val explicitEnd = attr(attrs, "end")
+            val durationSeconds = attr(attrs, "dur")
+            val durationTicks = attr(attrs, "d")
+            val endMillis = when {
+                explicitEnd != null -> timeToMillis(explicitEnd, "seconds")
+                durationSeconds != null -> timeToMillis(durationSeconds, "seconds")?.let { startMillis + it }
+                durationTicks != null -> timeToMillis(durationTicks, "milliseconds")?.let { startMillis + it }
+                else -> null
+            } ?: return@mapNotNull null
+            if (endMillis <= startMillis) return@mapNotNull null
+
+            val text = match.groupValues[3]
                 .replace(Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE), "\n")
                 .replace(Regex("""<[^>]+>"""), "")
                 .replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
                 .replace("&apos;", "'").replace("&quot;", "\"").replace("&#39;", "'")
+                .replace("&nbsp;", " ").replace("&#160;", " ")
                 .trim()
-            if (text.isBlank()) null else startTime + " --> " + endTime + "\n" + text
+            if (text.isBlank()) null
+            else "\${formatMillis(startMillis)} --> \${formatMillis(endMillis)}\n$text"
         }.toList()
 
-        if (cues.isEmpty()) return content
+        if (cues.isEmpty()) {
+            // Never prepend a WEBVTT header to unconverted XML. That creates a corrupt
+            // subtitle file that may appear to work only until the player hits bad data.
+            return content
+        }
         return normalizeSpeakerMarkersInVtt("WEBVTT\n\n" + cues.joinToString("\n\n") + "\n")
     }
 
