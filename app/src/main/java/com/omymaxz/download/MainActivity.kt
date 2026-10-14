@@ -4898,11 +4898,19 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         // Adaptive HLS/DASH masters can contain several video resolutions. Ask for
         // an explicit quality before downloading rather than silently accepting the default.
         val path = Uri.parse(mediaFile.url).path.orEmpty().lowercase()
+        val candidateForDownload = mediaEngine.getCandidate(mediaFile.url)
         val isHls = path.endsWith(".m3u8") ||
-            mediaFile.mimeType.contains("mpegurl", ignoreCase = true)
+            mediaFile.url.contains("format=m3u8", ignoreCase = true) ||
+            mediaFile.url.contains("type=hls", ignoreCase = true) ||
+            path.endsWith("/master.txt") || path.contains("/hls/") ||
+            mediaFile.mimeType.contains("mpegurl", ignoreCase = true) ||
+            candidateForDownload?.mediaKind == MediaKind.HLS_MANIFEST
         val isDash = path.endsWith(".mpd") ||
+            mediaFile.url.contains("format=dash", ignoreCase = true) ||
+            mediaFile.url.contains("type=dash", ignoreCase = true) ||
             mediaFile.mimeType.contains("dash+xml", ignoreCase = true) ||
-            mediaFile.quality.contains("dash", ignoreCase = true)
+            mediaFile.quality.contains("dash", ignoreCase = true) ||
+            candidateForDownload?.mediaKind == MediaKind.DASH_MANIFEST
 
         if (isHls || isDash) {
             val userAgent = webView.settings.userAgentString
