@@ -567,7 +567,14 @@ class MediaDetectionEngine(private val context: Context) {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                if (candidate.isManifest || candidate.url.lowercase().contains(".m3u8")) {
+                if (candidate.mediaKind == MediaKind.DASH_MANIFEST ||
+                    candidate.url.lowercase().contains(".mpd")
+                ) {
+                    parseDashMetadata(candidate)
+                } else if (candidate.mediaKind == MediaKind.HLS_MANIFEST ||
+                    candidate.isManifest ||
+                    candidate.url.lowercase().contains(".m3u8")
+                ) {
                     parseHlsMetadata(candidate)
                 } else if (candidate.type == "video/mp4" || candidate.isProgressiveFinal) {
                     parseProgressiveMetadata(candidate)
@@ -582,6 +589,24 @@ class MediaDetectionEngine(private val context: Context) {
                     }
                 }
             }
+        }
+    }
+
+    private fun parseDashMetadata(candidate: MediaCandidate) {
+        val connection = URL(candidate.url).openConnection() as java.net.HttpURLConnection
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+        candidate.userAgent?.let { connection.setRequestProperty("User-Agent", it) }
+        candidate.referer?.let { connection.setRequestProperty("Referer", it) }
+        candidate.cookie?.let { connection.setRequestProperty("Cookie", it) }
+
+        try {
+            if (connection.responseCode in 200..299) {
+                val mpd = connection.inputStream.bufferedReader().use { it.readText() }
+                candidate.hasMultipleQualities = MediaQualityUtils.hasMultipleDashVideoRepresentations(mpd)
+            }
+        } finally {
+            connection.disconnect()
         }
     }
 
