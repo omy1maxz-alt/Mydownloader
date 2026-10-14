@@ -9,6 +9,7 @@ data class MediaFile(
     var fileSize: String,
     val language: String?,
     var isMainContent: Boolean,
+    var hasMultipleQualities: Boolean = false,
     var referer: String? = null,
     var audioUrl: String? = null,
     var subtitleUrls: List<String>? = null
