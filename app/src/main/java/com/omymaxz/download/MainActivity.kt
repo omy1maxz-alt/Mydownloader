@@ -7555,7 +7555,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
         val id = when {
             host == "youtu.be" || host.endsWith(".youtu.be") -> segments.firstOrNull()
             firstSegment == "watch" -> uri.getQueryParameter("v")
-            firstSegment in setOf("shorts", "embed", "live", "v") -> segments.getOrNull(1)
+            firstSegment != null && firstSegment in setOf("shorts", "embed", "live", "v") -> segments.getOrNull(1)
             else -> null
         }?.trim()
 
