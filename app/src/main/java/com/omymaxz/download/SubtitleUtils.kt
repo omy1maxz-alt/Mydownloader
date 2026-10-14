@@ -157,7 +157,7 @@ object SubtitleUtils {
     fun normalizeSpeakerMarkersInVtt(content: String): String {
         val lines = content.replace("\r\n", "\n").replace('\r', '\n').lines()
         var inCueText = false
-        return lines.joinToString("\\n") { raw ->
+        return lines.joinToString("\n") { raw ->
             val line = raw
             when {
                 line.trimStart().startsWith("WEBVTT", ignoreCase = true) -> {
