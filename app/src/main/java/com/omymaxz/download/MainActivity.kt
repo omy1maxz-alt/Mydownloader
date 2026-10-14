@@ -3289,7 +3289,7 @@ private fun injectMediaStateDetector() {
         @JavascriptInterface
         fun onMediaDetectedWithHeaders(url: String, type: String, contentType: String?) {
             if (url.startsWith("blob:")) return
-            if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
+            if (isSubtitleMediaUrl(url, type, contentType)) {
                 lastSubtitleUrl = url
             }
             activity.runOnUiThread {
@@ -3305,7 +3305,25 @@ private fun injectMediaStateDetector() {
 
 
 
-    private fun handleIncomingMediaDetection(url: String, type: String, contentType: String? = null) {
+    private fun isSubtitleMediaUrl(url: String, type: String, contentType: String? = null): Boolean {
+            if (type.contains("subtitle", ignoreCase = true)) return true
+            val clean = url.substringBefore("#")
+            val path = runCatching { java.net.URL(clean).path.lowercase() }.getOrDefault(clean.substringBefore("?").lowercase())
+            if (listOf(".vtt", ".srt", ".ttml", ".dfxp", ".srv1", ".srv2", ".srv3").any { path.endsWith(it) }) return true
+            val mime = contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
+            if (mime in setOf("text/vtt", "application/x-subrip", "application/ttml+xml", "application/dfxp+xml")) return true
+            return runCatching {
+                val uri = java.net.URL(clean)
+                val host = uri.host.lowercase()
+                val isYouTubeHost = host == "youtube.com" || host.endsWith(".youtube.com") ||
+                    host == "youtube-nocookie.com" || host.endsWith(".youtube-nocookie.com") ||
+                    host == "googlevideo.com" || host.endsWith(".googlevideo.com")
+                isYouTubeHost && (uri.path.contains("/api/timedtext", ignoreCase = true) ||
+                    uri.query.orEmpty().split("&").any { it.substringBefore("=").lowercase() == "fmt" })
+            }.getOrDefault(false)
+        }
+
+        private fun handleIncomingMediaDetection(url: String, type: String, contentType: String? = null) {
             if (url.startsWith("blob:")) return
             if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
                 lastSubtitleUrl = url
@@ -3331,7 +3349,7 @@ private fun injectMediaStateDetector() {
                          }
 
                          if (!existsAlready) {
-                             val category = if (type.contains("subtitle", true) || url.endsWith(".vtt") || url.endsWith(".srt") || url.contains(".vtt?") || url.contains(".srt?")) {
+                             val category = if (isSubtitleMediaUrl(url, type, contentType)) {
                                  MediaCategory.SUBTITLE
                              } else if (type.contains("audio", true)) {
                                  MediaCategory.AUDIO
@@ -3349,9 +3367,9 @@ private fun injectMediaStateDetector() {
                                  else if (url.contains(".ogg", ignoreCase = true)) ".ogg"
                                  else if (url.contains(".wav", ignoreCase = true)) ".wav"
                                  else ".m4a"
-                             } else detectedFormat.extension
+                             } else if (category == MediaCategory.SUBTITLE) ".vtt" else detectedFormat.extension
 
-                             val finalMime = if (category == MediaCategory.AUDIO) "audio/*" else detectedFormat.mimeType
+                             val finalMime = if (category == MediaCategory.AUDIO) "audio/*" else if (category == MediaCategory.SUBTITLE) "text/vtt" else detectedFormat.mimeType
 
                              val enhancedTitle = activity.generateSmartFileName(url, ext, quality, category)
 
@@ -3414,7 +3432,7 @@ private fun injectMediaStateDetector() {
                     }
                     val detectedFormat = activity.detectVideoFormat(finalUrl)
                     val quality = activity.extractQualityFromUrl(finalUrl)
-                    val enhancedTitle = activity.generateSmartFileName(finalUrl, detectedFormat.extension, quality, category)
+                    val subtitle = activity.isSubtitleMediaUrl(finalUrl, type)\n                    val ext = if (subtitle) ".vtt" else detectedFormat.extension\n                    val enhancedTitle = activity.generateSmartFileName(finalUrl, ext, quality, category)
                     val mediaFile = MediaFile(
                         url = finalUrl,
                         title = enhancedTitle,
