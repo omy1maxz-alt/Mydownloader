@@ -16,7 +16,12 @@ class SubtitleUtilsTtmlTest {
             </tt>"""
 
         val result = SubtitleUtils.extractSnippet(ttml)
+        val normalized = SubtitleUtils.normalizeForDownload(ttml)
 
+        assertEquals(
+            "WEBVTT\\n\\n00:00:11.063 --> 00:00:13.263\\nTwo Three H2H!\\n\\n00:00:14.981 --> 00:00:17.059\\nGeneral audiences\\nwelcome\\n",
+            normalized
+        )
         assertEquals("en", result.language)
         assertNotNull(result.snippet)
         assertEquals("Two Three H2H! General audiences welcome", result.snippet)
