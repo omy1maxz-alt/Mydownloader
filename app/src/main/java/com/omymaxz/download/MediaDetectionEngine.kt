@@ -1,8 +1,5 @@
 package com.omymaxz.download
 
-internal fun countHlsQualityVariants(playlistContent: String): Int =
-    Regex("(?m)^\\s*#EXT-X-STREAM-INF\\s*:").findAll(playlistContent).count()
-
 import android.content.Context
 import android.util.Log
 import android.webkit.CookieManager
@@ -11,6 +8,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
+
+internal fun countHlsQualityVariants(playlistContent: String): Int =
+    Regex("(?m)^\\s*#EXT-X-STREAM-INF\\s*:").findAll(playlistContent).count()
 
 class MediaDetectionEngine(private val context: Context) {
     companion object {
