@@ -155,7 +155,7 @@ object SubtitleUtils {
      * later in a cue or the WebVTT timing lines.
      */
     fun normalizeSpeakerMarkersInVtt(content: String): String {
-        val lines = content.replace("\\r\\n", "\\n").replace('\\r', '\\n').lines()
+        val lines = content.replace("\r\n", "\n").replace('\r', '\n').lines()
         var inCueText = false
         return lines.joinToString("\\n") { raw ->
             val line = raw
@@ -164,8 +164,8 @@ object SubtitleUtils {
                     inCueText = false
                     line
                 }
-                Regex("^\\\\s*\\\\d{2}:\\\\d{2}:\\\\d{2}[.,]\\\\d{3}\\\\s*-->").containsMatchIn(line) ||
-                    Regex("^\\\\s*\\\\d{2}:\\\\d{2}\\\\.\\\\d{3}\\\\s*-->").containsMatchIn(line) -> {
+                Regex("""^\s*\d{2}:\d{2}:\d{2}[.,]\d{3}\s*-->""").containsMatchIn(line) ||
+                    Regex("""^\s*\d{2}:\d{2}\.\d{3}\s*-->""").containsMatchIn(line) -> {
                     inCueText = true
                     line
                 }
@@ -173,7 +173,7 @@ object SubtitleUtils {
                     inCueText = false
                     line
                 }
-                inCueText -> line.replace(Regex("^\\\\s*>>\\\\s*"), "")
+                inCueText -> line.replace(Regex("""^\s*>>\s*"""), "")
                 else -> line
             }
         }
