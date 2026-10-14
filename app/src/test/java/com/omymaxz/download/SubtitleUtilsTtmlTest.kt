@@ -26,4 +26,41 @@ class SubtitleUtilsTtmlTest {
         assertNotNull(result.snippet)
         assertEquals("Two Three H2H! General audiences welcome", result.snippet)
     }
+
+    @Test
+    fun removesYoutubeSpeakerPrefixFromVttCuesOnly() {
+        val vtt = """WEBVTT
+
+00:00:00.000 --> 00:00:02.000
+>> Hello there.
+
+00:00:02.000 --> 00:00:04.000
+>> Yes, that's right.
+A line with >> in the middle.
+"""
+        assertEquals(
+            """WEBVTT
+
+00:00:00.000 --> 00:00:02.000
+Hello there.
+
+00:00:02.000 --> 00:00:04.000
+Yes, that's right.
+A line with >> in the middle.
+""",
+            SubtitleUtils.normalizeForDownload(vtt)
+        )
+    }
+
+    @Test
+    fun removesYoutubeSpeakerPrefixFromConvertedTtml() {
+        val ttml = """<tt xml:lang="en"><body><div>
+            <p begin="00:00:00.000" end="00:00:02.000">&gt;&gt; Hello there.</p>
+            <p begin="00:00:02.000" end="00:00:04.000">>> Yes!</p>
+        </div></body></tt>"""
+        assertEquals(
+            "WEBVTT\n\n00:00:00.000 --> 00:00:02.000\nHello there.\n\n00:00:02.000 --> 00:00:04.000\nYes!\n",
+            SubtitleUtils.normalizeForDownload(ttml)
+        )
+    }
 }
