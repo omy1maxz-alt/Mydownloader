@@ -325,46 +325,120 @@ object HlsDownloadHelper {
             .sortedBy { it.name }
     }
 
-    // ---- Download entry point ----
+    // ---- Adaptive download entry point (HLS and DASH) ----
     fun downloadHls(context: Context, url: String, title: String, userAgent: String?, cookie: String?) {
-        // Snapshot headers into the global factory so the DownloadManager's segments see them too.
+        downloadAdaptive(context, url, title, userAgent, currentReferer, cookie, MimeTypes.APPLICATION_M3U8)
+    }
+
+    fun downloadAdaptive(
+        context: Context,
+        url: String,
+        title: String,
+        userAgent: String?,
+        referer: String?,
+        cookie: String?,
+        mimeType: String
+    ) {
         currentUserAgent = userAgent
+        currentReferer = referer ?: currentReferer
         currentCookie = cookie
 
         val mediaItem = MediaItem.Builder()
             .setUri(Uri.parse(url))
-            .setMimeType(MimeTypes.APPLICATION_M3U8)
+            .setMimeType(mimeType)
             .setTag(title)
             .build()
 
-        // Per-request factory for the *preparation* phase (manifest fetch).
         val prepFactory = DefaultHttpDataSource.Factory()
             .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(15_000)
+            .setReadTimeoutMs(20_000)
         userAgent?.let { prepFactory.setUserAgent(it) }
-
         val props = mutableMapOf<String, String>()
         cookie?.let { props["Cookie"] = it }
         currentReferer?.let { props["Referer"] = it }
         props["Accept"] = "*/*"
-        if (props.isNotEmpty()) prepFactory.setDefaultRequestProperties(props)
+        prepFactory.setDefaultRequestProperties(props)
 
         val helper = DownloadHelper.forMediaItem(context, mediaItem, null, prepFactory)
         helper.prepare(object : DownloadHelper.Callback {
             override fun onPrepared(h: DownloadHelper) {
-                // 1) Parse master playlist & download subtitles in parallel.
-                CoroutineScope(Dispatchers.IO).launch {
-                    try { fetchAndSaveSubtitles(context, url, title, userAgent, cookie) }
-                    catch (t: Throwable) { t.printStackTrace() }
+                if (mimeType == MimeTypes.APPLICATION_M3U8) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try { fetchAndSaveSubtitles(context, url, title, userAgent, cookie) }
+                        catch (t: Throwable) { android.util.Log.w("AdaptiveDownload", "Subtitle fetch failed", t) }
+                    }
                 }
-                // 2) Hand the actual segment download to the service (uses unified cache).
-                val req = h.getDownloadRequest(Util.getUtf8Bytes(title))
-                DownloadService.sendAddDownload(context, HlsDownloadService::class.java, req, true)
-                Toast.makeText(context, "HLS Download started: $title", Toast.LENGTH_SHORT).show()
-                h.release()
+
+                val qualityChoices = mutableListOf<Pair<String, androidx.media3.common.TrackSelectionOverride?>>()
+                qualityChoices.add("Auto / Best available" to null)
+                if (h.periodCount > 0) {
+                    val groups = h.getTrackGroups(0)
+                    for (groupIndex in 0 until groups.length) {
+                        val group = groups[groupIndex]
+                        for (trackIndex in 0 until group.length) {
+                            val format = group.getFormat(trackIndex)
+                            val isVideo = format.height > 0 ||
+                                format.sampleMimeType?.startsWith("video/", ignoreCase = true) == true
+                            if (!isVideo) continue
+                            val height = format.height
+                            val bitrate = format.bitrate
+                            val label = when {
+                                height > 0 && bitrate > 0 -> "${height}p • ${"%.1f".format(java.util.Locale.US, bitrate / 1_000_000.0)} Mbps"
+                                height > 0 -> "${height}p"
+                                bitrate > 0 -> "${bitrate / 1000} kbps"
+                                else -> "Video track ${trackIndex + 1}"
+                            }
+                            qualityChoices.add(label to androidx.media3.common.TrackSelectionOverride(group, trackIndex))
+                        }
+                    }
+                }
+                val uniqueChoices = qualityChoices.distinctBy { it.first }
+                val videoChoiceCount = uniqueChoices.count { it.second != null }
+
+                val enqueue: (androidx.media3.common.TrackSelectionOverride?) -> Unit = { selectedOverride ->
+                    try {
+                        if (selectedOverride != null) {
+                            h.clearTrackSelections(0)
+                            val parameters = androidx.media3.common.TrackSelectionParameters.DEFAULT_WITHOUT_CONTEXT
+                                .buildUpon()
+                                .setOverrideForType(selectedOverride)
+                                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_AUDIO, false)
+                                .build()
+                            // The override fixes video resolution; audio remains automatically selected.
+                            h.addTrackSelection(0, parameters)
+                        }
+                        val request = h.getDownloadRequest(Util.getUtf8Bytes(title))
+                        DownloadService.sendAddDownload(context, HlsDownloadService::class.java, request, true)
+                        Toast.makeText(context, "Download started: $title", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Could not start adaptive download: ${e.message}", Toast.LENGTH_LONG).show()
+                        android.util.Log.e("AdaptiveDownload", "Failed to create adaptive download request", e)
+                    } finally {
+                        h.release()
+                    }
+                }
+
+                if (videoChoiceCount > 1) {
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        val labels = uniqueChoices.map { it.first }.toTypedArray()
+                        androidx.appcompat.app.AlertDialog.Builder(context)
+                            .setTitle("Choose video quality")
+                            .setMessage("Audio will be selected automatically.")
+                            .setItems(labels) { _, which ->
+                                enqueue(uniqueChoices[which].second)
+                            }
+                            .setOnCancelListener { h.release() }
+                            .show()
+                    }
+                } else {
+                    enqueue(null)
+                }
             }
 
             override fun onPrepareError(h: DownloadHelper, e: IOException) {
                 Toast.makeText(context, "Failed to prepare download: ${e.message}", Toast.LENGTH_LONG).show()
+                android.util.Log.e("AdaptiveDownload", "Failed to prepare $mimeType source", e)
                 h.release()
             }
         })
