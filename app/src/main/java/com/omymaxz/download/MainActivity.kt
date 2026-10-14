@@ -4762,6 +4762,57 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             return
         }
 
+        // Download subtitle responses ourselves: YouTube may return TTML/XML behind a .vtt URL.
+        val isSubtitleDownload = mediaFile.category == MediaCategory.SUBTITLE ||
+            mediaFile.title.endsWith(".vtt", ignoreCase = true) ||
+            mediaFile.title.endsWith(".srt", ignoreCase = true) ||
+            mediaFile.url.substringBefore("?").substringBefore("#").let { path ->
+                path.endsWith(".vtt", true) || path.endsWith(".srt", true) ||
+                    path.endsWith(".ttml", true) || path.endsWith(".dfxp", true) ||
+                    path.endsWith(".srv1", true) || path.endsWith(".srv2", true) || path.endsWith(".srv3", true)
+            }
+        if (isSubtitleDownload) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val connection = java.net.URL(mediaFile.url).openConnection() as java.net.HttpURLConnection
+                    connection.connectTimeout = 15000
+                    connection.readTimeout = 20000
+                    connection.instanceFollowRedirects = true
+                    connection.setRequestProperty("User-Agent", webView.settings.userAgentString)
+                    connection.setRequestProperty("Accept", "text/vtt, application/ttml+xml, application/xml, text/plain, */*")
+                    CookieManager.getInstance().getCookie(mediaFile.url)?.let {
+                        connection.setRequestProperty("Cookie", it)
+                    }
+                    (mediaFile.referer ?: webView.url)?.let { connection.setRequestProperty("Referer", it) }
+                    val raw = try {
+                        if (connection.responseCode !in 200..299) {
+                            throw java.io.IOException("Subtitle server returned HTTP ${connection.responseCode}")
+                        }
+                        connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                    } finally {
+                        connection.disconnect()
+                    }
+                    val normalized = SubtitleUtils.normalizeForDownload(raw)
+                    val isVtt = normalized.trimStart().startsWith("WEBVTT", ignoreCase = true)
+                    val isSrt = Regex("""(?s).*\\d{2}:\\d{2}:\\d{2},\\d{3}\\s*-->\\s*\\d{2}:\\d{2}:\\d{2},\\d{3}.*""")
+                        .matches(normalized.trim())
+                    if (!isVtt && !isSrt) {
+                        throw java.io.IOException("The server did not return a readable subtitle track")
+                    }
+                    val baseName = mediaFile.title.substringBeforeLast('.', mediaFile.title)
+                    val outputName = if (isVtt) "$baseName.vtt" else "$baseName.srt"
+                    val outputMime = if (isVtt) "text/vtt" else "application/x-subrip"
+                    saveToDownloads(normalized.toByteArray(Charsets.UTF_8), outputName, outputMime)
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "Subtitle download failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+            Toast.makeText(this, "Downloading and converting subtitle…", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         // Check for HLS (.m3u8)
         val isHls = mediaFile.url.contains(".m3u8", ignoreCase = true) ||
                     mediaFile.mimeType == "application/vnd.apple.mpegurl" ||
