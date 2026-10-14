@@ -589,20 +589,18 @@ class CustomPlayerActivity : AppCompatActivity() {
             userAgent = requestHeaders.userAgent ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
             referer = requestHeaders.referer ?: videoUrl
         )
-        // Buffer policy adapts to the selected video quality. Media3's LoadControl is
-        // recreated when playback starts; quality changes are handled by updating the
-        // target buffer limit and time target without rebuilding the player.
-        // Low resolutions can retain more time with a moderate byte cap, while HD/UHD
-        // uses a shorter target and a lower byte cap to reduce memory pressure and lag.
+        // Test time-based buffering without an explicit target byte limit.
+        // This lets Media3 decide loading primarily from buffered duration instead of
+        // stopping at a fixed memory target. Actual buffered time still depends on bitrate,
+        // source/cache throughput, and device memory; monitor high-resolution playback.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                30_000,       // minBufferMs
-                12_000_000,   // maxBufferMs: low-resolution sources may build a very large buffer
+                50_000,       // minBufferMs
+                12_000_000,   // maxBufferMs: 200 minutes
                 2_500,        // bufferForPlaybackMs
                 5_000         // bufferForPlaybackAfterRebufferMs
             )
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setTargetBufferBytes(128 * 1024 * 1024) // bounded; actual time is also limited by bitrate and cache/source
             .build()
 
         // Temporary A/B diagnostic: enable via Settings shared preferences for one test.
