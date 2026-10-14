@@ -4794,7 +4794,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                     }
                     val normalized = SubtitleUtils.normalizeForDownload(raw)
                     val isVtt = normalized.trimStart().startsWith("WEBVTT", ignoreCase = true)
-                    val isSrt = Regex("""(?s).*\\d{2}:\\d{2}:\\d{2},\\d{3}\\s*-->\\s*\\d{2}:\\d{2}:\\d{2},\\d{3}.*""")
+                    val isSrt = Regex("""(?s).*\d{2}:\d{2}:\d{2},\d{3}\s*-->\s*\d{2}:\d{2}:\d{2},\d{3}.*""")
                         .matches(normalized.trim())
                     if (!isVtt && !isSrt) {
                         throw java.io.IOException("The server did not return a readable subtitle track")
