@@ -63,4 +63,34 @@ A line with >> in the middle.
             SubtitleUtils.normalizeForDownload(ttml)
         )
     }
+
+    @Test
+    fun convertsLegacyYoutubeTranscriptXmlForTheEntireTimeline() {
+        val xml = """<transcript>
+            <text start="1.25" dur="2.5">First caption</text>
+            <text start="372.5" dur="3.0">Caption after six minutes</text>
+        </transcript>"""
+
+        val normalized = SubtitleUtils.normalizeForDownload(xml)
+
+        assertEquals(true, normalized.startsWith("WEBVTT\n\n"))
+        assertEquals(true, normalized.contains("00:00:01.250 --> 00:00:03.750\nFirst caption"))
+        assertEquals(true, normalized.contains("00:06:12.500 --> 00:06:15.500\nCaption after six minutes"))
+        assertEquals(2, Regex("-->").findAll(normalized).count())
+    }
+
+    @Test
+    fun convertsYoutubeTtmlMillisecondTickAttributes() {
+        val xml = """<tt><body><div>
+            <p t="1000" d="2500">First</p>
+            <p t="360500" d="1500">Later</p>
+        </div></body></tt>"""
+
+        val normalized = SubtitleUtils.normalizeForDownload(xml)
+
+        assertEquals(true, normalized.contains("00:00:01.000 --> 00:00:03.500\nFirst"))
+        assertEquals(true, normalized.contains("00:06:00.500 --> 00:06:02.000\nLater"))
+        assertEquals(2, Regex("-->").findAll(normalized).count())
+    }
+
 }
