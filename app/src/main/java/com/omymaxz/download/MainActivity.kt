@@ -3830,8 +3830,16 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     }
     private fun isAdDomain(url: String): Boolean {
         if (isUrlWhitelisted(url)) return false
-        val host = Uri.parse(url).host?.lowercase() ?: return false
-        return suspiciousDomains.any { host.contains(it) }
+        val uri = Uri.parse(url)
+        val host = uri.host?.lowercase() ?: return false
+        val path = uri.encodedPath?.lowercase().orEmpty()
+
+        // Host matching cannot detect path-based endpoints such as youtube.com/pagead.
+        val isKnownAdPath = (
+            (host == "youtube.com" || host.endsWith(".youtube.com")) &&
+                (path == "/pagead" || path.startsWith("/pagead/"))
+        )
+        return isKnownAdPath || suspiciousDomains.any { !it.contains("/") && host.contains(it) }
     }
     private fun isInBlockedList(url: String): Boolean {
         val host = Uri.parse(url).host?.lowercase() ?: return false
