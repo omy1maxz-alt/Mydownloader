@@ -1311,7 +1311,7 @@ class MainActivity : AppCompatActivity() {
                         userscriptPageUrl = url
                         injectedUserscriptIdsForPage.clear()
                     }
-                    val isYt = extractYouTubeVideoId(url) != null
+                    val isYt = youtubeVideoIdFromNavigationUrl(url) != null
                     // Preserve the list for repeated callbacks on the same YouTube video, but clear
                     // it when navigation changes to a different video ID or leaves YouTube.
                     handleMediaListNavigation(url)
@@ -1399,7 +1399,7 @@ class MainActivity : AppCompatActivity() {
                     // Compare YouTube video IDs: repeated SPA history callbacks for one video
                     // should preserve its media, while a new video clears stale entries.
                     handleMediaListNavigation(url)
-                    if (extractYouTubeVideoId(url) != null) checkForYouTube(url)
+                    if (youtubeVideoIdFromNavigationUrl(url) != null) checkForYouTube(url)
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
@@ -7501,7 +7501,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
     @Volatile private var activeYouTubeVideoId: String? = null
     @Volatile private var youtubeNavigationGeneration: Long = 0L
 
-    private fun extractYouTubeVideoId(url: String?): String? {
+    private fun youtubeVideoIdFromNavigationUrl(url: String?): String? {
         if (url.isNullOrBlank()) return null
         val uri = android.net.Uri.parse(url)
         val host = uri.host?.lowercase().orEmpty()
@@ -7531,7 +7531,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
     }
 
     private fun handleMediaListNavigation(url: String?) {
-        val videoId = extractYouTubeVideoId(url)
+        val videoId = youtubeVideoIdFromNavigationUrl(url)
         if (videoId != null) {
             if (videoId == activeYouTubeVideoId) return
             activeYouTubeVideoId = videoId
@@ -7550,7 +7550,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
     }
 
     private fun checkForYouTube(url: String?, force: Boolean = false, autoPlay: Boolean = false) {
-        val videoId = extractYouTubeVideoId(url) ?: return
+        val videoId = youtubeVideoIdFromNavigationUrl(url) ?: return
         if (activeYouTubeVideoId != videoId) handleMediaListNavigation(url)
 
         if (autoPlay) pendingYouTubeAutoPlay = true
