@@ -589,10 +589,9 @@ class CustomPlayerActivity : AppCompatActivity() {
             userAgent = requestHeaders.userAgent ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
             referer = requestHeaders.referer ?: videoUrl
         )
-        // Test time-based buffering without an explicit target byte limit.
-        // This lets Media3 decide loading primarily from buffered duration instead of
-        // stopping at a fixed memory target. Actual buffered time still depends on bitrate,
-        // source/cache throughput, and device memory; monitor high-resolution playback.
+        // Test a larger explicit buffer target to see whether buffering ahead improves.
+        // This is a target, not a strict RAM ceiling or a guarantee of minutes buffered.
+        // Monitor high-resolution playback for memory pressure or stuttering.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
                 50_000,       // minBufferMs
@@ -601,6 +600,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 5_000         // bufferForPlaybackAfterRebufferMs
             )
             .setPrioritizeTimeOverSizeThresholds(true)
+            .setTargetBufferBytes(512 * 1024 * 1024) // 512 MiB target
             .build()
 
         // Temporary A/B diagnostic: enable via Settings shared preferences for one test.
