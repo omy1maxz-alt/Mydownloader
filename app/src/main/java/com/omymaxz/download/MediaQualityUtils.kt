@@ -6,7 +6,7 @@ package com.omymaxz.download
  */
 internal object MediaQualityUtils {
     fun hasMultipleHlsVariants(playlist: String): Boolean {
-        val variantCount = Regex("""(?im)^[ \\t]*#EXT-X-STREAM-INF\\s*:""")
+        val variantCount = Regex("""(?im)^[ \t]*#EXT-X-STREAM-INF\s*:""")
             .findAll(playlist)
             .take(2)
             .count()
