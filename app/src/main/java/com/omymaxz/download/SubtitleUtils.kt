@@ -94,6 +94,29 @@ object SubtitleUtils {
     }
 
     fun extractSnippet(content: String): SubtitleResult {
+        // YouTube timed-text captions often arrive as TTML/XML rather than WebVTT.
+        if (content.trimStart().startsWith("<tt", ignoreCase = true) ||
+            content.contains("<tt ", ignoreCase = true) ||
+            content.contains("<p begin=", ignoreCase = true)) {
+            val language = Regex("""xml:lang=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+                .find(content)?.groupValues?.getOrNull(1)
+            val cues = Regex(
+                """<p\b[^>]*>(.*?)</p>""",
+                setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
+            ).findAll(content).mapNotNull { match ->
+                val cue = match.groupValues[1]
+                    .replace(Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE), " ")
+                    .replace(Regex("""<[^>]+>"""), " ")
+                    .replace("&amp;", "&").replace("&lt;", "<")
+                    .replace("&gt;", ">").replace("&apos;", "'")
+                    .replace("&quot;", "\"").replace("&#39;", "'")
+                    .replace(Regex("""\s+"""), " ").trim()
+                cue.takeIf { it.isNotEmpty() }
+            }.take(12).toList()
+            val snippet = cues.joinToString(" ").take(120).trim()
+            return SubtitleResult(snippet.takeIf { it.isNotEmpty() }, language)
+        }
+
         val lines = content.lines()
         var language: String? = null
         val accumulatedSnippet = java.lang.StringBuilder()
