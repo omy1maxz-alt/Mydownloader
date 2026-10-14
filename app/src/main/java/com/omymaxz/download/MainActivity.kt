@@ -3423,7 +3423,7 @@ private fun injectMediaStateDetector() {
                 }
 
                 if (finalUrl.isNotEmpty() && finalUrl != "about:blank" && !finalUrl.startsWith("data:") && !finalUrl.startsWith("blob:")) {
-                    val category = if (type.contains("subtitle", true) || finalUrl.endsWith(".vtt") || finalUrl.endsWith(".srt") || finalUrl.contains(".vtt?") || finalUrl.contains(".srt?")) {
+                    val category = if (isSubtitleMediaUrl(finalUrl, type)) {
                         MediaCategory.SUBTITLE
                     } else if (type.contains("audio", true)) {
                         MediaCategory.AUDIO
