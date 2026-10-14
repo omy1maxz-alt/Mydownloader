@@ -54,7 +54,9 @@ data class MediaCandidate(
     var estimatedSize: Long? = null,
     var segmentCount: Int = 0,
     var isMetadataParsed: Boolean = false,
-    var isExplicitAd: Boolean = false
+    var isExplicitAd: Boolean = false,
+    // Set only when manifest contents confirm more than one selectable video rendition.
+    var hasMultipleQualities: Boolean = false
 ) {
     val finalScore: Int
         get() {
