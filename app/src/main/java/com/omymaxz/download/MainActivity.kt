@@ -85,6 +85,7 @@ class MainActivity : AppCompatActivity() {
     var isManualScanPending = false
     private lateinit var binding: ActivityMainBinding
     private lateinit var webView: WebView
+    @Volatile private var currentPageTitleSnapshot: String = ""
     private lateinit var userscriptInterface: UserscriptInterface
     private lateinit var gmApi: GMApi
 
@@ -1439,6 +1440,7 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
+                    view?.title?.takeIf { it.isNotBlank() }?.let { currentPageTitleSnapshot = it }
                         // No longer injecting transparent toolbar CSS padding. Layout is now structurally vertical.
 
                     isPageLoading = false
@@ -1706,12 +1708,17 @@ class MainActivity : AppCompatActivity() {
                 }
                 override fun onReceivedTitle(view: WebView?, title: String?) {
                     super.onReceivedTitle(view, title)
+                    if (!title.isNullOrBlank()) {
+                        currentPageTitleSnapshot = title
+                    }
                     if (currentTabIndex in tabs.indices && !title.isNullOrBlank()) {
                         tabs[currentTabIndex].title = title
                     }
                 }
                 override fun onPermissionRequest(request: PermissionRequest?) {
-                    request?.grant(request.resources)
+                    // No camera/microphone permissions are declared or runtime-granted by this app.
+                    // Deny website requests by default instead of granting arbitrary WebView resources.
+                    request?.deny()
                 }
                 override fun onShowFileChooser(
                     webView: WebView?,
@@ -2293,7 +2300,6 @@ class MainActivity : AppCompatActivity() {
         if (!prefs.getBoolean("block_popups_redirects", true)) return
 
         val url = view?.url ?: ""
-        val host = android.net.Uri.parse(url).host?.lowercase() ?: ""
         // Do not inject anti-hijacking script on whitelisted domains
         if (isUrlWhitelisted(url)) {
             return
@@ -2304,43 +2310,8 @@ class MainActivity : AppCompatActivity() {
             // Override window.open to do nothing
             window.open = function() { return null; };
 
-            // Override EventTarget.addEventListener to block suspicious click bindings on links
-            var originalAddEventListener = EventTarget.prototype.addEventListener;
-            EventTarget.prototype.addEventListener = function(type, listener, options) {
-                if (type === 'click') {
-                    // Try to guess if this element is an episode link or button
-                    var isLink = this.tagName === 'A' || (this.className && typeof this.className === 'string' && this.className.indexOf('episode') !== -1);
-                    if (isLink) {
-                        return; // Drop the listener to prevent hijacking
-                    }
-                }
-                return originalAddEventListener.call(this, type, listener, options);
-            };
-
-            // Aggressive continuous sweep to clean up links
-            setInterval(function() {
-                var links = document.querySelectorAll('a');
-                for (var i = 0; i < links.length; i++) {
-                    var link = links[i];
-                    if (link.getAttribute('data-cleaned') === 'true') continue;
-
-                    // Remove inline onclick
-                    if (link.hasAttribute('onclick')) {
-                        link.removeAttribute('onclick');
-                    }
-
-                    // Clone and replace to strip existing invisible event listeners (like jQuery/React)
-                    if (link.href && link.href.startsWith('http')) {
-                        var clone = link.cloneNode(true);
-                        clone.setAttribute('data-cleaned', 'true');
-                        if (link.parentNode) {
-                            link.parentNode.replaceChild(clone, link);
-                        }
-                    } else {
-                         link.setAttribute('data-cleaned', 'true');
-                    }
-                }
-            }, 1500);
+            // Keep ordinary site click handlers and links intact. Blocking popups via
+            // window.open is less disruptive than rewriting page-owned DOM nodes.
 
             // Intercept and prevent click-jacking overlays
             document.addEventListener('click', function(e) {
@@ -3012,7 +2983,7 @@ private fun injectMediaStateDetector() {
                 url
             }
 
-            val logEntry = "[\\$type] \\$fullUrl"
+            val logEntry = "[$type] $fullUrl"
             if (!activity.sniffedApiLogs.contains(logEntry)) {
                 activity.sniffedApiLogs.add(0, logEntry) // add to top
             }
@@ -3710,20 +3681,13 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         else -> "${category.displayName}_"
     }
 
-    // Capture the webpage title at the time of detection safely
-    var titleSnapshot: String? = null
-    val latch = java.util.concurrent.CountDownLatch(1)
-    runOnUiThread {
-        titleSnapshot = webView.title?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(50)
-        latch.countDown()
-    }
-    try {
-        latch.await(500, java.util.concurrent.TimeUnit.MILLISECONDS)
-    } catch (e: Exception) {
-        // Ignore timeout
-    }
-
-    val finalPageTitle = titleSnapshot
+    // Use the title snapshot maintained by WebChromeClient; never block a
+    // download/detection thread waiting for the UI thread.
+    val finalPageTitle = currentPageTitleSnapshot
+        .replace(Regex("[^a-zA-Z0-9 -]"), "")
+        .trim()
+        .take(50)
+        .takeIf { it.isNotBlank() }
 
     val fileNameFromUrl = uri.lastPathSegment?.substringBeforeLast("?")
 
