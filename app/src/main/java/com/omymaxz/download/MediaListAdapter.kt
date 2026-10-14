@@ -36,12 +36,16 @@ class MediaListAdapter(
             true
         }
 
-        // Multiple-quality videos (such as YouTube DASH/HLS sources) get a soft muted-red
-        // background. Keep the existing soft-green backgrounds for normal video links.
+        // Use the analyzer's explicit result plus manifest URL/quality hints. Subtitle
+        // availability alone does not mean that a video has multiple quality variants.
         val context = holder.itemView.context
         when (mediaFile.category) {
             MediaCategory.VIDEO -> {
-                val hasMultipleQualities = !mediaFile.subtitleUrls.isNullOrEmpty() ||
+                val path = Uri.parse(mediaFile.url).path.orEmpty().lowercase()
+                val hasAdaptiveManifest = path.endsWith(".m3u8") || path.endsWith(".mpd") ||
+                    mediaFile.mimeType.contains("mpegurl", ignoreCase = true) ||
+                    mediaFile.mimeType.contains("dash+xml", ignoreCase = true)
+                val hasMultipleQualities = mediaFile.hasMultipleQualities || hasAdaptiveManifest ||
                     mediaFile.quality.contains("adaptive", ignoreCase = true) ||
                     mediaFile.quality.contains("dash", ignoreCase = true) ||
                     mediaFile.quality.contains("hls", ignoreCase = true)
@@ -50,7 +54,9 @@ class MediaListAdapter(
                     mediaFile.isMainContent -> R.color.media_video_main_bg
                     else -> R.color.media_video_clip_bg
                 }
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, colorRes))
+                holder.itemView.background = android.graphics.drawable.ColorDrawable(
+                    ContextCompat.getColor(context, colorRes)
+                )
             }
             MediaCategory.SUBTITLE -> {
                                 holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.media_subtitle_bg))
@@ -103,7 +109,11 @@ class MediaListAdapter(
             val sizeInfo = if (mediaFile.fileSize != "Unknown") " • ${mediaFile.fileSize}" else ""
             val mainContentIndicator = if (mediaFile.isMainContent && mediaFile.category == MediaCategory.VIDEO) " • ⭐ RECOMMENDED" else ""
 
-            val typeText = "${sourceInfo.source} • ${mediaFile.quality} • ${sourceInfo.format}${sizeInfo}${mainContentIndicator}"
+            val multiQualityIndicator = if (mediaFile.hasMultipleQualities ||
+                mediaFile.url.contains(".m3u8", true) || mediaFile.url.contains(".mpd", true) ||
+                mediaFile.quality.contains("adaptive", true) || mediaFile.quality.contains("dash", true) ||
+                mediaFile.quality.contains("hls", true)) " • MULTI-QUALITY" else ""
+            val typeText = "${sourceInfo.source} • ${mediaFile.quality} • ${sourceInfo.format}${sizeInfo}${mainContentIndicator}${multiQualityIndicator}"
             typeTextView.text = typeText
 
             val iconRes = when(mediaFile.category) {
