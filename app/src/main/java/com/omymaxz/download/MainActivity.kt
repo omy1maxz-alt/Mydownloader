@@ -4602,6 +4602,19 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
         val isSubtitle = mediaFile.category == MediaCategory.SUBTITLE || mediaFile.title.endsWith(".vtt") || mediaFile.title.endsWith(".srt")
 
+        // YouTube caption responses can be XML/TTML despite having a misleading media filename.
+        // Offer an explicit conversion action that runs the normal subtitle fetch/normalization path.
+        if (isYoutubeCaptionMedia(mediaFile)) {
+            builder.setNeutralButton("Convert to VTT") { _, _ ->
+                val baseName = mediaFile.title.substringBeforeLast('.', mediaFile.title)
+                downloadMediaFile(mediaFile.copy(
+                    title = "$baseName.vtt",
+                    mimeType = "text/vtt",
+                    category = MediaCategory.SUBTITLE
+                ))
+            }
+        }
+
         if (isSubtitle) {
             builder.setNegativeButton("Add to Player") { _, _ ->
                 if (CustomPlayerActivity.activePlayer != null) {
@@ -4765,6 +4778,21 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 Toast.makeText(this, "Save failed: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun isYoutubeCaptionMedia(mediaFile: MediaFile): Boolean {
+        val url = mediaFile.url
+        val path = runCatching { java.net.URL(url).path.lowercase() }.getOrDefault(url.substringBefore("?").lowercase())
+        if (path.contains("/api/timedtext") ||
+            listOf(".vtt", ".srt", ".ttml", ".dfxp", ".srv1", ".srv2", ".srv3").any { path.endsWith(it) }) return true
+        val host = runCatching { java.net.URL(url).host.lowercase() }.getOrDefault("")
+        val youtubeHost = host == "youtube.com" || host.endsWith(".youtube.com") ||
+            host == "youtube-nocookie.com" || host.endsWith(".youtube-nocookie.com") ||
+            host == "googlevideo.com" || host.endsWith(".googlevideo.com")
+        return youtubeHost && (url.contains("fmt=", ignoreCase = true) ||
+            mediaFile.title.endsWith(".xml", ignoreCase = true) ||
+            mediaFile.mimeType.contains("xml", ignoreCase = true) ||
+            mediaFile.mimeType.contains("ttml", ignoreCase = true))
     }
 
     private fun downloadMediaFile(mediaFile: MediaFile) {
