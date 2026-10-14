@@ -154,7 +154,7 @@ object SubtitleUtils {
         }
 
         fun attr(attrs: String, name: String): String? =
-            Regex("""\b\${Regex.escape(name)}=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+            Regex("""\b${Regex.escape(name)}=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
                 .find(attrs)?.groupValues?.get(1)
 
         val cues = Regex(
@@ -191,7 +191,7 @@ object SubtitleUtils {
                 .replace("&nbsp;", " ").replace("&#160;", " ")
                 .trim()
             if (text.isBlank()) null
-            else "\${formatMillis(startMillis)} --> \${formatMillis(endMillis)}\n$text"
+            else "${formatMillis(startMillis)} --> ${formatMillis(endMillis)}\n$text"
         }.toList()
 
         if (cues.isEmpty()) {
