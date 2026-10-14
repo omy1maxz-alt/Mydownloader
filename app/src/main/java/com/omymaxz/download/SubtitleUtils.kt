@@ -101,7 +101,12 @@ object SubtitleUtils {
         val trimmed = content.trimStart().removePrefix("\uFEFF").trimStart()
         val isTtml = trimmed.startsWith("<tt", ignoreCase = true) ||
             (trimmed.startsWith("<?xml", ignoreCase = true) && trimmed.contains("<p", ignoreCase = true))
-        if (!isTtml) return content
+        // Strip YouTube's speaker marker (">>") from cue text, not from the timestamps/header.
+        // Handle both actual WebVTT input and TTML converted below.
+        if (!isTtml) {
+            if (!trimmed.startsWith("WEBVTT", ignoreCase = true)) return content
+            return normalizeSpeakerMarkersInVtt(content)
+        }
 
         fun timeToVtt(value: String): String? {
             val time = value.trim()
@@ -142,7 +147,36 @@ object SubtitleUtils {
         }.toList()
 
         if (cues.isEmpty()) return content
-        return "WEBVTT\n\n" + cues.joinToString("\n\n") + "\n"
+        return normalizeSpeakerMarkersInVtt("WEBVTT\n\n" + cues.joinToString("\n\n") + "\n")
+    }
+
+    /**
+     * Removes leading YouTube dialogue speaker markers without altering arrow-like text
+     * later in a cue or the WebVTT timing lines.
+     */
+    fun normalizeSpeakerMarkersInVtt(content: String): String {
+        val lines = content.replace("\\r\\n", "\\n").replace('\\r', '\\n').lines()
+        var inCueText = false
+        return lines.joinToString("\\n") { raw ->
+            val line = raw
+            when {
+                line.trimStart().startsWith("WEBVTT", ignoreCase = true) -> {
+                    inCueText = false
+                    line
+                }
+                Regex("^\\\\s*\\\\d{2}:\\\\d{2}:\\\\d{2}[.,]\\\\d{3}\\\\s*-->").containsMatchIn(line) ||
+                    Regex("^\\\\s*\\\\d{2}:\\\\d{2}\\\\.\\\\d{3}\\\\s*-->").containsMatchIn(line) -> {
+                    inCueText = true
+                    line
+                }
+                line.isBlank() -> {
+                    inCueText = false
+                    line
+                }
+                inCueText -> line.replace(Regex("^\\\\s*>>\\\\s*"), "")
+                else -> line
+            }
+        }
     }
 
     fun extractSnippet(content: String): SubtitleResult {
