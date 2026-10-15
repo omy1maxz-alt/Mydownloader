@@ -4014,89 +4014,80 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val lower = url.lowercase()
         return lower.contains("videoplayback") || lower.contains("manifest")
     }
-    private fun fetchSubtitleSnippet(mediaFile: MediaFile) {
+        private fun fetchSubtitleSnippet(mediaFile: MediaFile) {
+        val canonicalUrl = SubtitleUtils.canonicalMediaUrl(mediaFile.url)
+        if (!subtitleAnalysisInFlight.add(canonicalUrl)) return
+
         lifecycleScope.launch(Dispatchers.IO) {
+            var connection: java.net.URLConnection? = null
             try {
-                val connection = java.net.URL(mediaFile.url).openConnection() as java.net.HttpURLConnection
-                val userAgent = withContext(Dispatchers.Main) { webView.settings.userAgentString }
-                val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
-                connection.setRequestProperty("User-Agent", userAgent)
-                if (cookie != null) {
-                    connection.setRequestProperty("Cookie", cookie)
+                connection = java.net.URL(mediaFile.url).openConnection().apply {
+                    connectTimeout = 12_000
+                    readTimeout = 12_000
                 }
-                // Try to get just the beginning of the file to save bandwidth
-                // Most servers support range requests
-                connection.setRequestProperty("Range", "bytes=0-4096")
+                val http = connection as? java.net.HttpURLConnection
+                if (http != null) {
+                    val userAgent = withContext(Dispatchers.Main) { webView.settings.userAgentString }
+                    val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
+                    http.setRequestProperty("User-Agent", userAgent)
+                    if (!cookie.isNullOrBlank()) http.setRequestProperty("Cookie", cookie)
+                    http.setRequestProperty("Range", "bytes=0-16383")
+                    http.connect()
+                    if (http.responseCode !in 200..299) {
+                        throw java.io.IOException("Subtitle request returned HTTP ${http.responseCode}")
+                    }
+                }
 
-                connection.connect()
-
-                val text = connection.inputStream.bufferedReader().use { it.readText() }
+                val text = connection.getInputStream().bufferedReader().use { it.readText() }
                 val result = SubtitleUtils.extractSnippet(text)
+                val snippet = result.snippet.orEmpty()
+                val valid = SubtitleUtils.isValidSubtitleContent(text) && snippet.isNotBlank() &&
+                    !snippet.contains("<script", true) && !snippet.contains("<iframe", true) &&
+                    !snippet.contains("<!DOCTYPE", true)
 
-                val snippet = result.snippet ?: ""
-                if (snippet.isBlank() ||
-                    snippet.length < 15 ||
-                    snippet.contains("<script", ignoreCase = true) ||
-                    snippet.contains("<iframe", ignoreCase = true) ||
-                    snippet.contains("<!DOCTYPE", ignoreCase = true)) {
-
-                    android.util.Log.d("SubtitleUtils", "Discarding fake/invalid subtitle: ${mediaFile.url}")
+                if (!valid) {
                     synchronized(detectedMediaFiles) {
-                        detectedMediaFiles.removeAll { it.url == mediaFile.url }
+                        detectedMediaFiles.removeAll { SubtitleUtils.canonicalMediaUrl(it.url) == canonicalUrl }
                     }
                     withContext(Dispatchers.Main) {
                         updateFabVisibility()
+                        refreshDetectedMediaSheet?.invoke()
                         currentMediaListAdapter?.notifyDataSetChanged()
                     }
                     return@launch
                 }
 
-                val detectedFormat = detectVideoFormat(mediaFile.url)
-                // Prioritize explicit language from URL or Extractor if available, otherwise use inferred from text
-                val targetLang = mediaFile.language ?: result.language
-
-                if (!result.snippet.isNullOrBlank()) {
-                     val prefix = if (!targetLang.isNullOrBlank()) "[$targetLang] " else ""
-                     val newTitle = "$prefix${result.snippet}${detectedFormat.extension}"
-                     synchronized(detectedMediaFiles) {
-                         val index = detectedMediaFiles.indexOfFirst { it.url == mediaFile.url }
-                         if (index != -1) {
-                             val f = detectedMediaFiles[index]
-                             detectedMediaFiles[index] = f.copy(title = newTitle, language = targetLang)
-                         }
-                     }
-                     withContext(Dispatchers.Main) {
-                         currentMediaListAdapter?.notifyDataSetChanged()
-                     }
-                } else {
-                     // Fallback if extraction fails but we know it's a subtitle
-                     val pageTitle = withContext(Dispatchers.Main) { webView.title }?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(30) ?: "Track"
-                     val fileExtract = android.net.Uri.parse(mediaFile.url).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
-                     val prefix = if (!targetLang.isNullOrBlank()) "[$targetLang] " else "[Subtitle] "
-                     val fallbackTitle = "$prefix$pageTitle - $fileExtract" + detectedFormat.extension
-                     synchronized(detectedMediaFiles) {
-                         val index = detectedMediaFiles.indexOfFirst { it.url == mediaFile.url }
-                         if (index != -1) {
-                             val f = detectedMediaFiles[index]
-                             detectedMediaFiles[index] = f.copy(title = fallbackTitle, language = targetLang)
-                         }
-                     }
-                     withContext(Dispatchers.Main) {
-                         currentMediaListAdapter?.notifyDataSetChanged()
-                     }
+                val changed = synchronized(detectedMediaFiles) {
+                    val index = detectedMediaFiles.indexOfFirst { SubtitleUtils.canonicalMediaUrl(it.url) == canonicalUrl }
+                    if (index < 0) false else {
+                        val file = detectedMediaFiles[index]
+                        val language = file.language?.let { SubtitleUtils.languageDisplayName(it) }
+                            ?: SubtitleUtils.languageDisplayName(result.language)
+                        val originalName = SubtitleUtils.originalSubtitleFilename(file.url)
+                            ?: file.title.substringBefore('\n').takeIf {
+                                it.substringAfterLast('.', "").lowercase() in setOf("vtt", "srt", "ass", "ssa", "ttml", "dfxp", "srv1", "srv2", "srv3")
+                            } ?: "subtitle.vtt"
+                        detectedMediaFiles[index] = file.copy(title = originalName, language = language)
+                        true
+                    }
+                }
+                if (changed) withContext(Dispatchers.Main) {
+                    updateFabVisibility()
+                    refreshDetectedMediaSheet?.invoke()
+                    currentMediaListAdapter?.notifyDataSetChanged()
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Failed to fetch subtitle snippet: ${e.message}")
-                val detectedFormat = detectVideoFormat(mediaFile.url)
-                val pageTitle = withContext(Dispatchers.Main) { webView.title }?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(30) ?: "Track"
-                val fileExtract = android.net.Uri.parse(mediaFile.url).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
-                val fallbackTitle = "[Subtitle] $pageTitle - $fileExtract" + detectedFormat.extension
-                updateMediaTitle(mediaFile.url, fallbackTitle)
+                android.util.Log.e("MainActivity", "Subtitle analysis failed: ${e.javaClass.simpleName}")
+                // Preserve the original filename and the working URL on transient errors.
+                withContext(Dispatchers.Main) { refreshDetectedMediaSheet?.invoke() }
+            } finally {
+                (connection as? java.net.HttpURLConnection)?.disconnect()
+                subtitleAnalysisInFlight.remove(canonicalUrl)
             }
         }
     }
 
-    inner class YouTubeInterface(private val activity: MainActivity) {
+inner class YouTubeInterface(private val activity: MainActivity) {
         @JavascriptInterface
         fun onVideoData(json: String) {
             val video = YouTubeHelper.parseVideoData(json)
