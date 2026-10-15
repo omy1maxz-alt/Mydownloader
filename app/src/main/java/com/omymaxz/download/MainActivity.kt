@@ -625,6 +625,84 @@ class MainActivity : AppCompatActivity() {
         return builder.build()
     }
 
+    /**
+     * PiP snapshots the Activity, not just the HTML video. Temporarily isolate the
+     * active video in the page so the PiP window contains video rather than site chrome.
+     * Original inline styles are saved and restored when leaving PiP.
+     */
+    private fun applyWebVideoPipLayout(enabled: Boolean) {
+        if (!::webView.isInitialized) return
+        val script = if (enabled) """
+            (function() {
+              var v = Array.from(document.querySelectorAll('video')).filter(function(x) {
+                return !x.paused && !x.ended && x.readyState >= 2;
+              }).sort(function(a,b) {
+                return (b.videoWidth*b.videoHeight)-(a.videoWidth*a.videoHeight);
+              })[0];
+              if (!v) return 'no-active-video';
+              if (window.__myDownloaderPipVideo && window.__myDownloaderPipVideo !== v) {
+                window.__myDownloaderRestorePip && window.__myDownloaderRestorePip();
+              }
+              if (window.__myDownloaderPipVideo === v) return 'already-applied';
+              var saved = [];
+              function remember(el) {
+                if (!el || saved.some(function(x){return x.el===el;})) return;
+                saved.push({el:el, style:el.getAttribute('style'), hidden:el.getAttribute('hidden')});
+              }
+              remember(document.documentElement);
+              remember(document.body);
+              var node = v;
+              while (node && node !== document.body) {
+                var parent = node.parentElement;
+                if (!parent) break;
+                Array.from(parent.children).forEach(function(sibling) {
+                  if (sibling !== node) {
+                    remember(sibling);
+                    sibling.style.setProperty('visibility','hidden','important');
+                    sibling.style.setProperty('pointer-events','none','important');
+                  }
+                });
+                node = parent;
+              }
+              remember(v);
+              document.documentElement.style.setProperty('background','#000','important');
+              document.documentElement.style.setProperty('overflow','hidden','important');
+              document.body.style.setProperty('background','#000','important');
+              document.body.style.setProperty('overflow','hidden','important');
+              v.style.setProperty('position','fixed','important');
+              v.style.setProperty('inset','0','important');
+              v.style.setProperty('width','100vw','important');
+              v.style.setProperty('height','100vh','important');
+              v.style.setProperty('max-width','none','important');
+              v.style.setProperty('max-height','none','important');
+              v.style.setProperty('margin','0','important');
+              v.style.setProperty('z-index','2147483647','important');
+              v.style.setProperty('object-fit','contain','important');
+              v.style.setProperty('background','#000','important');
+              window.__myDownloaderPipVideo = v;
+              window.__myDownloaderPipSaved = saved;
+              window.__myDownloaderRestorePip = function() {
+                (window.__myDownloaderPipSaved || []).reverse().forEach(function(x) {
+                  if (x.style === null) x.el.removeAttribute('style');
+                  else x.el.setAttribute('style', x.style);
+                  if (x.hidden === null) x.el.removeAttribute('hidden');
+                  else x.el.setAttribute('hidden', x.hidden);
+                });
+                window.__myDownloaderPipVideo = null;
+                window.__myDownloaderPipSaved = null;
+                window.__myDownloaderRestorePip = null;
+              };
+              return 'applied';
+            })();
+        """.trimIndent() else """
+            (function() {
+              if (window.__myDownloaderRestorePip) window.__myDownloaderRestorePip();
+              return 'restored';
+            })();
+        """.trimIndent()
+        webView.evaluateJavascript(script, null)
+    }
+
     private fun updateWebMediaPipParams() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || isFinishing || isDestroyed) return
         try {
@@ -652,6 +730,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         if (isInPictureInPictureMode) {
+            applyWebVideoPipLayout(true)
             pipToolbarVisibility = binding.toolbar.visibility
             pipFabVisibility = binding.fabShowMedia.visibility
             pipProgressVisibility = binding.progressBar.visibility
@@ -662,6 +741,7 @@ class MainActivity : AppCompatActivity() {
             binding.progressBar.visibility = View.GONE
             findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = View.GONE
         } else {
+            applyWebVideoPipLayout(false)
             binding.toolbar.visibility = pipToolbarVisibility
             binding.fabShowMedia.visibility = pipFabVisibility
             binding.progressBar.visibility = pipProgressVisibility
