@@ -464,26 +464,31 @@ class HlsExportService : Service() {
 
         val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
 
+        fun cachedLength(targetUrl: String): Long {
+            val uri = android.net.Uri.parse(targetUrl)
+            val spec = androidx.media3.datasource.DataSpec.Builder().setUri(uri).build()
+            val key = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(spec)
+            return androidx.media3.datasource.cache.ContentMetadata.getContentLength(cache.getContentMetadata(key))
+        }
+
         fun extractSpansToFile(targetUrl: String, destFile: File) {
             val uri = android.net.Uri.parse(targetUrl)
-            val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(androidx.media3.datasource.DataSpec.Builder().setUri(uri).build())
+            val spec = androidx.media3.datasource.DataSpec.Builder().setUri(uri).build()
+            val cacheKey = HlsDownloadHelper.customCacheKeyFactory.buildCacheKey(spec)
             val spans = cache.getCachedSpans(cacheKey).sortedBy { it.position }
             val metadata = cache.getContentMetadata(cacheKey)
             val expectedLength = androidx.media3.datasource.cache.ContentMetadata.getContentLength(metadata)
 
-            if (spans.isEmpty() || expectedLength <= 0) throw Exception("CACHE_MP4_INCOMPLETE: $targetUrl")
-
+            if (spans.isEmpty() || expectedLength <= 0) throw Exception("CACHE_MP4_INCOMPLETE")
             destFile.outputStream().use { fos ->
                 var expectedPos = 0L
                 for (span in spans) {
                     if (span.position != expectedPos) throw Exception("CACHE_GAP: Unexpected span position")
-                    if (span.file != null && span.file!!.exists()) {
-                        span.file!!.inputStream().use { fis ->
-                            val bytesCopied = fis.copyTo(fos)
-                            if (bytesCopied != span.length) throw Exception("CACHE_GAP: Copied length mismatch")
-                        }
-                    } else {
-                        throw Exception("CACHE_GAP: Missing physical span file")
+                    val spanFile = span.file
+                    if (spanFile == null || !spanFile.exists()) throw Exception("CACHE_GAP: Missing physical span file")
+                    spanFile.inputStream().use { fis ->
+                        val bytesCopied = fis.copyTo(fos)
+                        if (bytesCopied != span.length) throw Exception("CACHE_GAP: Copied length mismatch")
                     }
                     expectedPos += span.length
                 }
@@ -491,34 +496,125 @@ class HlsExportService : Service() {
             }
         }
 
-        if (splitAudioUrl.isNullOrEmpty()) {
-            // Direct copy for single streams
+        suspend fun rangeDownloadToFile(targetUrl: String, destFile: File) {
+            val existingLength = cachedLength(targetUrl)
+            if (existingLength > 0L) {
+                // If metadata says a length is known, first attempt the exact cache-span copy.
+                try {
+                    extractSpansToFile(targetUrl, destFile)
+                    return
+                } catch (_: Exception) {
+                    // Continue only through an explicit byte-range response below.
+                }
+            }
+            val uri = android.net.Uri.parse(targetUrl)
+            if (uri.scheme != "https" && uri.scheme != "http") {
+                throw Exception("MP4_RANGE_UNSUPPORTED_SCHEME")
+            }
+
+            val connection = (java.net.URL(targetUrl).openConnection() as java.net.HttpURLConnection).apply {
+                connectTimeout = 15_000
+                readTimeout = 20_000
+                instanceFollowRedirects = true
+                requestHeaders.userAgent?.takeIf { it.isNotBlank() }?.let { setRequestProperty("User-Agent", it) }
+                requestHeaders.referer?.takeIf { it.isNotBlank() }?.let { setRequestProperty("Referer", it) }
+                requestHeaders.cookie?.takeIf { it.isNotBlank() }?.let { setRequestProperty("Cookie", it) }
+                setRequestProperty("Accept-Encoding", "identity")
+                setRequestProperty("Range", "bytes=0-")
+            }
+
             try {
-                extractSpansToFile(url, out)
+                val code = connection.responseCode
+                if (code != java.net.HttpURLConnection.HTTP_PARTIAL) {
+                    throw Exception("MP4_RANGE_NOT_SUPPORTED: HTTP $code")
+                }
+                val contentRange = connection.getHeaderField("Content-Range")
+                    ?: throw Exception("MP4_RANGE_INVALID_RESPONSE: Content-Range missing")
+                val match = Regex("""(?i)^bytes\s+(\d+)-(\d+)/(\d+)$""").matchEntire(contentRange.trim())
+                    ?: throw Exception("MP4_RANGE_INVALID_RESPONSE: Invalid Content-Range")
+                val rangeStart = match.groupValues[1].toLongOrNull()
+                    ?: throw Exception("MP4_RANGE_INVALID_RESPONSE: Invalid start")
+                val rangeEnd = match.groupValues[2].toLongOrNull()
+                    ?: throw Exception("MP4_RANGE_INVALID_RESPONSE: Invalid end")
+                val totalLength = match.groupValues[3].toLongOrNull()
+                    ?: throw Exception("MP4_RANGE_INVALID_RESPONSE: Invalid total")
+                if (rangeStart != 0L || rangeEnd < rangeStart || totalLength <= rangeEnd) {
+                    throw Exception("MP4_RANGE_INVALID_RESPONSE: Inconsistent range")
+                }
+                val maxFullDownloadBytes = 512L * 1024L * 1024L
+                if (totalLength > maxFullDownloadBytes) {
+                    throw Exception("MP4_RANGE_TOO_LARGE: Refusing fallback above configured size limit")
+                }
+                val expectedBytes = rangeEnd - rangeStart + 1L
+                if (expectedBytes != totalLength) {
+                    throw Exception("MP4_RANGE_INCOMPLETE: Server only returned an initial slice")
+                }
+                val tmp = File(destFile.parentFile, destFile.name + ".range.tmp")
+                try {
+                    connection.inputStream.use { input ->
+                        tmp.outputStream().use { output ->
+                            val copied = input.copyTo(output)
+                            if (copied.toLong() != totalLength) {
+                                throw Exception("MP4_RANGE_INCOMPLETE: received $copied of $totalLength bytes")
+                            }
+                        }
+                    }
+                    // Sanity check a common ISO BMFF container marker before publishing.
+                    if (tmp.length() < 12L) throw Exception("MP4_RANGE_INVALID_FILE: too short")
+                    java.io.RandomAccessFile(tmp, "r").use { raf ->
+                        raf.seek(4L)
+                        val boxType = ByteArray(4)
+                        raf.readFully(boxType)
+                        if (String(boxType, Charsets.US_ASCII) != "ftyp") {
+                            throw Exception("MP4_RANGE_INVALID_FILE: missing ftyp header")
+                        }
+                    }
+                    if (!tmp.renameTo(destFile)) {
+                        tmp.copyTo(destFile, overwrite = true)
+                        tmp.delete()
+                    }
+                    writeExportLog("MP4_RANGE_FALLBACK_COMPLETE bytes=$totalLength host=${uri.host}")
+                } finally {
+                    if (tmp.exists()) tmp.delete()
+                }
+            } finally {
+                connection.disconnect()
+            }
+        }
+
+        suspend fun exportOne(targetUrl: String, destFile: File) {
+            try {
+                extractSpansToFile(targetUrl, destFile)
+            } catch (cacheError: Exception) {
+                if (destFile.exists()) destFile.delete()
+                writeExportLog("MP4 cache span incomplete; attempting bounded HTTP Range fallback. reason=${cacheError.message}")
+                rangeDownloadToFile(targetUrl, destFile)
+            }
+        }
+
+        if (splitAudioUrl.isNullOrEmpty()) {
+            try {
+                exportOne(url, out)
                 notifyMediaStore(out, "video/mp4")
-                writeExportLog("MP4 cache copy complete: $title")
+                writeExportLog("MP4 cache/Range copy complete: $title")
                 withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show() }
             } catch (e: Exception) {
                 if (out.exists()) out.delete()
                 throw e
             }
         } else {
-            // Extract both to temp dir and mux with FFmpeg
             val tmpDir = File(applicationContext.filesDir, "tmp_export_${System.currentTimeMillis()}")
             tmpDir.mkdirs()
             val videoTmp = File(tmpDir, "video.mp4")
             val audioTmp = File(tmpDir, "audio.m4a")
-
             try {
-                writeExportLog("Extracting split cached MP4s for muxing...")
-                extractSpansToFile(url, videoTmp)
-                extractSpansToFile(splitAudioUrl, audioTmp)
-
+                exportOne(url, videoTmp)
+                exportOne(splitAudioUrl, audioTmp)
                 val ffmpegArgs = listOf("-y", "-i", videoTmp.absolutePath, "-i", audioTmp.absolutePath, "-map", "0:v:0", "-map", "1:a:0", "-c", "copy", "-movflags", "+faststart", out.absolutePath)
                 val session = FFmpegKit.executeWithArguments(ffmpegArgs.toTypedArray())
                 if (com.arthenica.ffmpegkit.ReturnCode.isSuccess(session.returnCode)) {
                     notifyMediaStore(out, "video/mp4")
-                    writeExportLog("Split MP4 cache muxing complete: $title")
+                    writeExportLog("Split MP4 cache/Range mux complete: $title")
                     withContext(Dispatchers.Main) { Toast.makeText(applicationContext, "Export complete: $title", Toast.LENGTH_LONG).show() }
                 } else {
                     if (out.exists()) out.delete()
