@@ -573,7 +573,7 @@ class HlsExportService : Service() {
         tmpDir.mkdirs()
 
         try {
-            val cacheOnlyFactory = cacheOnlyDataSource(requestHeaders)
+            val cacheOnlyFactory = cacheOnlyDataSource()
             val networkFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = false, requestHeaders = requestHeaders).createDataSource()
 
             var masterText = ""
