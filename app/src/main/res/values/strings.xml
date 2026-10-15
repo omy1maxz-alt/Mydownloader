@@ -8,6 +8,17 @@
     <string name="cancel">Cancel</string>
     <string name="close">Close</string>
     <string name="media_detected">Media files detected</string>
+    <string name="detected_media_title">Detected media</string>
+    <string name="detected_media_search">Search detected media</string>
+    <string name="media_filter_all">All</string>
+    <string name="media_filter_video">Video</string>
+    <string name="media_filter_audio">Audio</string>
+    <string name="media_filter_subtitles">Subtitles</string>
+    <string name="media_filter_other">Other</string>
+    <string name="media_filter_empty">No media matches this filter</string>
+    <string name="media_tap_hint">Tap a media row to download • Use play for in-app playback • Long-press for more options</string>
+    <string name="analyze_subtitles">Analyze subtitles</string>
+    <string name="clear_media_list">Clear list</string>
     <string name="no_media_found">No media files detected</string>
     <string name="ad_blocked">Advertisement blocked</string>
     <string name="popup_blocked">Popup blocked</string>
