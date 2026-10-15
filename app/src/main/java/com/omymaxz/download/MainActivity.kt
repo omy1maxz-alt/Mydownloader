@@ -4293,18 +4293,44 @@ private fun showMediaListDialog() {
             detectedMediaFiles.distinct().toMutableList()
         }
         val dialogBinding = com.omymaxz.download.databinding.DialogMediaListBinding.inflate(layoutInflater)
+        var selectedFilter = "ALL"
+        var searchQuery = ""
 
-        // Force opaque theme directly on the view to guarantee no transparency
-        val prefs = getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
-        val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-        val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
-        val opaqueColor = android.graphics.Color.rgb(android.graphics.Color.red(baseColor), android.graphics.Color.green(baseColor), android.graphics.Color.blue(baseColor))
-        val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
-            setColor(opaqueColor)
-            cornerRadius = 24f * resources.displayMetrics.density
+        fun updateMediaFilter() {
+            val filterText = searchQuery.trim()
+            val filtered = mediaFilesCopy.filter { file ->
+                val categoryMatches = when (selectedFilter) {
+                    "VIDEO" -> file.category == MediaCategory.VIDEO
+                    "AUDIO" -> file.category == MediaCategory.AUDIO
+                    "SUBTITLE" -> file.category == MediaCategory.SUBTITLE ||
+                        file.title.endsWith(".vtt", ignoreCase = true) ||
+                        file.title.endsWith(".srt", ignoreCase = true)
+                    "OTHER" -> file.category !in setOf(MediaCategory.VIDEO, MediaCategory.AUDIO, MediaCategory.SUBTITLE)
+                    else -> true
+                }
+                categoryMatches && (filterText.isBlank() ||
+                    file.title.contains(filterText, ignoreCase = true) ||
+                    file.url.contains(filterText, ignoreCase = true) ||
+                    file.quality.contains(filterText, ignoreCase = true) ||
+                    (file.language?.contains(filterText, ignoreCase = true) == true))
+            }
+            currentMediaListAdapter?.mediaFiles = filtered.toMutableList()
+            currentMediaListAdapter?.notifyDataSetChanged()
+            dialogBinding.mediaEmptyState.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
+            dialogBinding.mediaRecyclerView.visibility = if (filtered.isEmpty()) View.INVISIBLE else View.VISIBLE
+            dialogBinding.mediaSheetSummary.text = if (filterText.isBlank() && selectedFilter == "ALL") {
+                "${mediaFilesCopy.size} items detected on this page"
+            } else {
+                "${filtered.size} of ${mediaFilesCopy.size} items"
+            }
         }
-        dialogBinding.root.background = shapeDrawable
-                val dialog = createThemedDialogBuilder(this, isOpaque = true).setView(dialogBinding.root).create()
+
+        dialogBinding.root.setBackgroundColor(
+            androidx.core.content.ContextCompat.getColor(this, R.color.md_surface)
+        )
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(
+            this, R.style.DetectedMediaBottomSheetTheme
+        )
         currentMediaListAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
             // Tap to download (do not dismiss to keep scroll position)
             showRenameDialog(mediaFile)
@@ -4386,8 +4412,36 @@ private fun showMediaListDialog() {
             }
         }
 
+        dialogBinding.mediaFilterChipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
+            selectedFilter = when (checkedIds.firstOrNull()) {
+                R.id.filterVideo -> "VIDEO"
+                R.id.filterAudio -> "AUDIO"
+                R.id.filterSubtitle -> "SUBTITLE"
+                R.id.filterOther -> "OTHER"
+                else -> "ALL"
+            }
+            updateMediaFilter()
+        }
+        dialogBinding.mediaSearchInput?.doAfterTextChanged { editable ->
+            searchQuery = editable?.toString().orEmpty()
+            updateMediaFilter()
+        }
+
         dialogBinding.mediaRecyclerView.layoutManager = LinearLayoutManager(this)
         dialogBinding.mediaRecyclerView.adapter = currentMediaListAdapter
+        updateMediaFilter()
+        dialog.setOnShowListener {
+            dialog.window?.setLayout(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            bottomSheet?.let { sheet ->
+                sheet.layoutParams.height = android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                com.google.android.material.bottomsheet.BottomSheetBehavior.from(sheet).state =
+                    com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+            }
+        }
         dialog.show()
     }
 
