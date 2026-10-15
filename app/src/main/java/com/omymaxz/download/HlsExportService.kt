@@ -578,6 +578,9 @@ class HlsExportService : Service() {
                         tmp.delete()
                     }
                     writeExportLog("MP4_RANGE_FALLBACK_COMPLETE bytes=$totalLength host=${uri.host}")
+                } catch (e: Exception) {
+                    if (destFile.exists()) destFile.delete()
+                    throw e
                 } finally {
                     if (tmp.exists()) tmp.delete()
                 }
