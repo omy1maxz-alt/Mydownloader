@@ -4041,11 +4041,10 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                 val text = connection.getInputStream().bufferedReader().use { it.readText() }
                 val result = SubtitleUtils.extractSnippet(text)
                 val snippet = result.snippet.orEmpty()
-                val valid = SubtitleUtils.isValidSubtitleContent(text) && snippet.isNotBlank() &&
+                val validPayload = SubtitleUtils.isValidSubtitleContent(text) &&
                     !snippet.contains("<script", true) && !snippet.contains("<iframe", true) &&
                     !snippet.contains("<!DOCTYPE", true)
-
-                if (!valid) {
+                if (!validPayload) {
                     synchronized(detectedMediaFiles) {
                         detectedMediaFiles.removeAll { SubtitleUtils.canonicalMediaUrl(it.url) == canonicalUrl }
                     }
@@ -4054,6 +4053,12 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
                         refreshDetectedMediaSheet?.invoke()
                         currentMediaListAdapter?.notifyDataSetChanged()
                     }
+                    return@launch
+                }
+                // A valid subtitle may have fewer than 15 characters in its opening cues.
+                // Keep the source row and filename; do not treat short text as evidence of an invalid response.
+                if (snippet.isBlank()) {
+                    withContext(Dispatchers.Main) { refreshDetectedMediaSheet?.invoke() }
                     return@launch
                 }
 
