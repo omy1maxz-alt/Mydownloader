@@ -124,7 +124,7 @@ object SubtitleUtils {
             // timeline before removing X-TIMESTAMP-MAP so later segments do not restart
             // at zero or overlap the opening captions.
             val timestampMap = Regex(
-                """(?i)X-TIMESTAMP-MAP\\s*=\\s*LOCAL:([^,]+),\\s*MPEGTS:(\\d+)"""
+                """(?i)X-TIMESTAMP-MAP\s*=\s*LOCAL:([^,]+),\s*MPEGTS:(\d+)"""
             ).find(text)
             val offsetMillis = timestampMap?.let { match ->
                 val localMillis = parseWebVttTimestampMillis(match.groupValues[1])
@@ -170,7 +170,7 @@ object SubtitleUtils {
 
     private fun shiftWebVttCueTimes(content: String, offsetMillis: Long): String {
         val cueTiming = Regex(
-            """(?m)^(\\s*)(\\d{2,}:\\d{2}:\\d{2}\\.\\d{3}|\\d{2}:\\d{2}\\.\\d{3})(\\s*-->\\s*)(\\d{2,}:\\d{2}:\\d{2}\\.\\d{3}|\\d{2}:\\d{2}\\.\\d{3})(.*)$"""
+            """(?m)^(\s*)(\d{2,}:\d{2}:\d{2}\.\d{3}|\d{2}:\d{2}\.\d{3})(\s*-->\s*)(\d{2,}:\d{2}:\d{2}\.\d{3}|\d{2}:\d{2}\.\d{3})(.*)$"""
         )
         return cueTiming.replace(content) { match ->
             val start = parseWebVttTimestampMillis(match.groupValues[2])
