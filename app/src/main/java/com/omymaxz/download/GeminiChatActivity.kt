@@ -12,6 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.ai.client.generativeai.GenerativeModel
@@ -301,14 +302,17 @@ class ChatAdapter(
         val message = messages[position]
         markwon?.setMarkdown(holder.messageTextView, message.text)
 
+        val context = holder.itemView.context
         if (message.isUser) {
             holder.messageContainer.gravity = android.view.Gravity.END
             holder.messageInnerContainer.gravity = android.view.Gravity.END
-            holder.messageTextView.setBackgroundColor(0xFFDCF8C6.toInt()) // Light green
+            holder.messageTextView.background = ContextCompat.getDrawable(context, R.drawable.bg_chat_bubble_user)
+            holder.messageTextView.setTextColor(ContextCompat.getColor(context, R.color.chat_user_bubble_fg))
         } else {
             holder.messageContainer.gravity = android.view.Gravity.START
             holder.messageInnerContainer.gravity = android.view.Gravity.START
-            holder.messageTextView.setBackgroundColor(0xFFE0E0E0.toInt()) // Light gray
+            holder.messageTextView.background = ContextCompat.getDrawable(context, R.drawable.bg_chat_bubble_model)
+            holder.messageTextView.setTextColor(ContextCompat.getColor(context, R.color.chat_model_bubble_fg))
         }
 
         // Show buttons immediately or when clicked
