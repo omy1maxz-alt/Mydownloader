@@ -2397,30 +2397,25 @@ class MainActivity : AppCompatActivity() {
                 if (mimeType.contains("text/") || subtitleName || subtitleMime) {
                     val result = SubtitleUtils.extractSnippet(text)
                     if (!result.snippet.isNullOrBlank()) {
-                        val ext = if (filename.endsWith(".srt")) ".srt" else ".vtt"
-
-                        // Look for an existing language in the media file list so we don't overwrite a better URL extraction
-                        var targetLang = result.language
+                        val validatedLanguage = SubtitleUtils.languageDisplayName(result.language)
+                        val originalFilename = url?.let { SubtitleUtils.originalSubtitleFilename(it) }
+                            ?: filename.takeIf { it.substringAfterLast('.', "").lowercase() in setOf("vtt", "srt", "ass", "ssa", "ttml", "dfxp", "srv1", "srv2", "srv3") }
+                            ?: "subtitle.${if (filename.endsWith(".srt", true)) "srt" else "vtt"}"
                         if (url != null) {
                             synchronized(detectedMediaFiles) {
-                                val existing = detectedMediaFiles.find { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(url) }
-                                if (existing?.language != null) {
-                                    targetLang = existing.language
+                                val index = detectedMediaFiles.indexOfFirst {
+                                    SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(url)
                                 }
-                            }
-                        }
-
-                        val prefix = if (!targetLang.isNullOrBlank()) "[$targetLang] " else ""
-                        val snippetTitle = "$prefix${result.snippet}$ext"
-                        if (url != null) {
-                            synchronized(detectedMediaFiles) {
-                                val index = detectedMediaFiles.indexOfFirst { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(url) }
                                 if (index != -1) {
-                                    detectedMediaFiles[index] = detectedMediaFiles[index].copy(title = snippetTitle, language = targetLang)
+                                    val existing = detectedMediaFiles[index]
+                                    val language = existing.language?.let { SubtitleUtils.languageDisplayName(it) } ?: validatedLanguage
+                                    detectedMediaFiles[index] = existing.copy(title = originalFilename, language = language)
                                 }
                             }
+                            refreshDetectedMediaSheet?.invoke()
                         }
-                        currentFilename = snippetTitle
+                        // Keep the downloaded filename grounded in the source, not in snippet prose.
+                        currentFilename = originalFilename
                     }
                 }
 
