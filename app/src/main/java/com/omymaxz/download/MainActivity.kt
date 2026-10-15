@@ -4867,7 +4867,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                     connection.setRequestProperty("Accept", "text/vtt, application/ttml+xml, application/xml, text/plain, */*")
                     if (!requestCookie.isNullOrBlank()) connection.setRequestProperty("Cookie", requestCookie)
                     if (requestReferer.isNotBlank()) connection.setRequestProperty("Referer", requestReferer)
-                    val raw = try {
+                    val firstResponse = try {
                         val status = connection.responseCode
                         if (status !in 200..299) {
                             val detail = runCatching {
@@ -4879,6 +4879,18 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                     } finally {
                         connection.disconnect()
+                    }
+                    // A detected subtitle row can itself point to an HLS playlist. The
+                    // playlist is an index, not subtitle text: expand every segment before
+                    // normalization so Save writes the whole track, never just the index.
+                    val raw = if (firstResponse.trimStart('\uFEFF', ' ', '\t', '\r', '\n')
+                            .startsWith("#EXTM3U", ignoreCase = true)
+                    ) {
+                        HlsDownloadHelper.fetchCompleteSubtitleTrackContent(
+                            mediaFile.url, requestUserAgent, requestReferer, requestCookie
+                        ) ?: throw java.io.IOException("Could not download the complete HLS subtitle track")
+                    } else {
+                        firstResponse
                     }
                     val normalized = SubtitleUtils.normalizeForDownload(raw)
                     val isVtt = normalized.trimStart().startsWith("WEBVTT", ignoreCase = true)
