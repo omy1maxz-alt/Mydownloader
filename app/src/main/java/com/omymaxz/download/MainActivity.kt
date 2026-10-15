@@ -1311,10 +1311,11 @@ class MainActivity : AppCompatActivity() {
                         userscriptPageUrl = url
                         injectedUserscriptIdsForPage.clear()
                     }
-                    val isYt = url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))
-                    // Auto-clear detected media on new page load to prevent stale episode links
-                    // We also skip clearing if YouTube so we don't wipe the list immediately after we add it
+                    val isYt = isYouTubeVideoUrl(url)
+                    // YouTube SPA video changes are cleared by checkForYouTube using the
+                    // canonical video ID; leaving YouTube invalidates in-flight extraction results.
                     if (!isYt) {
+                        resetYouTubeDetectionContext()
                         synchronized(detectedMediaFiles) {
                             detectedMediaFiles.clear()
                         }
@@ -1382,7 +1383,7 @@ class MainActivity : AppCompatActivity() {
                     super.onPageStarted(view, url, favicon)
                     isPageLoading = true
 
-                    val isYt2 = url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))
+                    val isYt2 = isYouTubeVideoUrl(url)
                     if (!isYt2) {
                         synchronized(detectedMediaFiles) {
                             detectedMediaFiles.clear()
@@ -1422,8 +1423,9 @@ class MainActivity : AppCompatActivity() {
                     // Auto-clear detected media on SPA navigation or in-page history push
                     // EXCEPT for YouTube, because YouTube is an SPA that immediately fires this
                     // and wipes our extracted video from the list right after finding it.
-                    val isYt = url != null && (url.contains("youtube.com/watch") || url.contains("youtu.be/"))
+                    val isYt = isYouTubeVideoUrl(url)
                     if (!isYt) {
+                        resetYouTubeDetectionContext()
                         synchronized(detectedMediaFiles) {
                             detectedMediaFiles.clear()
                         }
@@ -4099,12 +4101,9 @@ private fun showMediaListDialog() {
                 mediaEngine.parseMetadataAsync(cand, isManual = true) { updatedCand ->
                     // Store manifest/variant evidence explicitly so the media list can
                     // recolor the row after analysis instead of guessing from subtitle presence.
-                    mediaFile.hasMultipleQualities =
-                        updatedCand.isManifest ||
-                        updatedCand.mediaKind == MediaKind.HLS_MANIFEST ||
-                        updatedCand.mediaKind == MediaKind.DASH_MANIFEST ||
-                        mediaFile.url.contains(".m3u8", ignoreCase = true) ||
-                        mediaFile.url.contains(".mpd", ignoreCase = true)
+                    // The manifest parser only sets this when actual HLS variant
+                    // entries prove that more than one video rendition is selectable.
+                    mediaFile.hasMultipleQualities = updatedCand.hasMultipleQualities
                     // Update MediaFile info from Candidate
                     if (updatedCand.durationSec > 0) {
                         val hours = updatedCand.durationSec / 3600
@@ -7537,26 +7536,127 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
         }
     }
 
+    private val youTubeDetectionLock = Any()
+    private var youtubeDetectionGeneration = 0
+    private var activeYouTubeVideoKey: String? = null
     private var lastYoutubeUrl: String? = null
     private var pendingYouTubeAutoPlay = false
+
+    private fun isYouTubeVideoUrl(url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        val uri = Uri.parse(url)
+        val host = uri.host?.lowercase() ?: return false
+        val isYouTubeHost = host == "youtube.com" || host.endsWith(".youtube.com") ||
+            host == "youtu.be" || host.endsWith(".youtu.be")
+        if (!isYouTubeHost) return false
+        val firstSegment = uri.pathSegments.firstOrNull()?.lowercase()
+        return host == "youtu.be" || host.endsWith(".youtu.be") ||
+            firstSegment == "watch" ||
+            (firstSegment != null && firstSegment in setOf("shorts", "embed", "live", "v"))
+    }
+
+    /**
+     * YouTube is an SPA, so multiple callbacks can report the same video with different
+     * query parameters. Key by video ID so its detection results are replaced only when
+     * the actual video changes.
+     */
+    private fun youtubeVideoKey(url: String): String {
+        val uri = Uri.parse(url)
+        val host = uri.host.orEmpty().lowercase()
+        val segments = uri.pathSegments
+        val firstSegment = segments.firstOrNull()?.lowercase()
+        val id = when {
+            host == "youtu.be" || host.endsWith(".youtu.be") -> segments.firstOrNull()
+            firstSegment == "watch" -> uri.getQueryParameter("v")
+            firstSegment != null && firstSegment in setOf("shorts", "embed", "live", "v") -> segments.getOrNull(1)
+            else -> null
+        }?.trim()
+
+        return id?.takeIf { it.isNotEmpty() }?.let { "video:$it" }
+            ?: "page:$host${uri.path.orEmpty()}"
+    }
+
+    /** Invalidate any pending YouTube extraction after navigating to another site. */
+    private fun resetYouTubeDetectionContext() {
+        synchronized(youTubeDetectionLock) {
+            if (activeYouTubeVideoKey != null || lastYoutubeUrl != null || pendingYouTubeAutoPlay) {
+                youtubeDetectionGeneration++
+                activeYouTubeVideoKey = null
+                lastYoutubeUrl = null
+                pendingYouTubeAutoPlay = false
+            }
+        }
+    }
 
     private fun checkForYouTube(url: String?, force: Boolean = false, autoPlay: Boolean = false) {
         if (url == null) return
 
-        // Ensure we are passing a valid YouTube URL to NewPipe extractor.
-        if (!url.contains("youtube.com") && !url.contains("youtu.be")) return
+        // Only extract page URLs that identify a YouTube video, not arbitrary YouTube pages.
+        if (!isYouTubeVideoUrl(url)) return
         if (url.contains("googlevideo.com/videoplayback")) return
 
-        if (autoPlay) pendingYouTubeAutoPlay = true
-        if (!force && url == lastYoutubeUrl) return
-        lastYoutubeUrl = url
-
-        runOnUiThread {
-            updateFabVisibility()
+        val videoKey = youtubeVideoKey(url)
+        var clearListForNewVideo = false
+        var requestGeneration = 0
+        synchronized(youTubeDetectionLock) {
+            if (videoKey != activeYouTubeVideoKey) {
+                activeYouTubeVideoKey = videoKey
+                youtubeDetectionGeneration++
+                lastYoutubeUrl = null
+                // Do not carry an autoplay request from a previous video into this one.
+                pendingYouTubeAutoPlay = false
+                clearListForNewVideo = true
+            }
+            if (autoPlay) pendingYouTubeAutoPlay = true
+            if (!force && url == lastYoutubeUrl) return
+            lastYoutubeUrl = url
+            requestGeneration = youtubeDetectionGeneration
         }
-        this.lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+
+        if (clearListForNewVideo) {
+            // Clear once per actual video ID. Run the UI/list reset before extraction so
+            // the new video cannot be appended to the previous video's video/audio/subtitle rows.
+            runOnUiThread {
+                val isCurrentRequest = synchronized(youTubeDetectionLock) {
+                    requestGeneration == youtubeDetectionGeneration &&
+                        videoKey == activeYouTubeVideoKey
+                }
+                if (!isCurrentRequest) return@runOnUiThread
+
+                synchronized(detectedMediaFiles) {
+                    detectedMediaFiles.clear()
+                }
+                (webView.tag as? MediaStateInterface)?.clearState()
+                mediaEngine.clear()
+                currentMediaListAdapter?.notifyDataSetChanged()
+                updateFabVisibility()
+                launchYouTubeExtraction(url, videoKey, requestGeneration)
+            }
+        } else {
+            runOnUiThread {
+                val isCurrentRequest = synchronized(youTubeDetectionLock) {
+                    requestGeneration == youtubeDetectionGeneration &&
+                        videoKey == activeYouTubeVideoKey
+                }
+                if (isCurrentRequest) updateFabVisibility()
+            }
+            launchYouTubeExtraction(url, videoKey, requestGeneration)
+        }
+    }
+
+    private fun launchYouTubeExtraction(url: String, videoKey: String, requestGeneration: Int) {
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             val mediaFile = YoutubeExtractorHelper.extractMedia(applicationContext, url)
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                val isCurrentRequest = synchronized(youTubeDetectionLock) {
+                    requestGeneration == youtubeDetectionGeneration &&
+                        videoKey == activeYouTubeVideoKey
+                }
+                if (!isCurrentRequest) {
+                    android.util.Log.d("YouTube_Regression", "Ignoring stale extraction result for a previous video")
+                    return@withContext
+                }
+
                 if (mediaFile != null) {
                     android.util.Log.d("YouTube_Regression", "Extracted media: ${mediaFile.title}, URL: ${mediaFile.url}")
                     android.util.Log.d("YouTube_Regression", "Target Audio URL: ${mediaFile.audioUrl}, Target Subtitles: ${mediaFile.subtitleUrls?.size}")
@@ -7612,13 +7712,39 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                     }
                     android.util.Log.d("YouTube_Regression", "UI Updated. Final list count: ${detectedMediaFiles.size}")
 
-                    if (pendingYouTubeAutoPlay) {
-                        pendingYouTubeAutoPlay = false
+                    val shouldAutoPlay = synchronized(youTubeDetectionLock) {
+                        if (requestGeneration == youtubeDetectionGeneration &&
+                            videoKey == activeYouTubeVideoKey &&
+                            pendingYouTubeAutoPlay
+                        ) {
+                            pendingYouTubeAutoPlay = false
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                    if (shouldAutoPlay) {
                         launchYouTubeInCustomPlayer(mediaFile)
                     }
-                } else if (pendingYouTubeAutoPlay) {
-                    pendingYouTubeAutoPlay = false
-                    android.widget.Toast.makeText(this@MainActivity, "YouTube extraction failed — see logcat tag YoutubeExtractorHelper", android.widget.Toast.LENGTH_LONG).show()
+                } else {
+                    val shouldAutoPlay = synchronized(youTubeDetectionLock) {
+                        if (requestGeneration == youtubeDetectionGeneration &&
+                            videoKey == activeYouTubeVideoKey &&
+                            pendingYouTubeAutoPlay
+                        ) {
+                            pendingYouTubeAutoPlay = false
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                    if (shouldAutoPlay) {
+                        android.widget.Toast.makeText(
+                            this@MainActivity,
+                            "YouTube extraction failed — see logcat tag YoutubeExtractorHelper",
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
         }
