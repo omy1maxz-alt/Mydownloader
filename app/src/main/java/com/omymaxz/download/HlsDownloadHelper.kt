@@ -462,15 +462,14 @@ object HlsDownloadHelper {
 
         for (track in tracks) {
             try {
-                // A subtitle URI may itself be an m3u8 (WebVTT variant playlist).
-                val vttUrl = resolveToDirectVtt(track.uri, userAgent, cookie) ?: continue
-                val ext = if (vttUrl.contains(".srt", true)) ".srt" else ".vtt"
+                // Subtitle tracks may point to HLS playlists containing many WebVTT
+                // segments. Fetch and merge the whole track; never silently save only
+                // the first segment when a later segment fails.
+                val contentString = fetchSubtitleTrackContent(track.uri, userAgent, cookie) ?: continue
+                val ext = if (track.uri.contains(".srt", true) && !track.uri.contains(".m3u8", true)) ".srt" else ".vtt"
                 var lang = track.language.ifBlank { "und" }.replace(Regex("[^a-zA-Z0-9-]"), "_")
 
-                val bytes = httpGetBytes(vttUrl, userAgent, referer, cookie) ?: continue
-
-                // Inspect the subtitle content to force English detection if it contains "thank"
-                val contentString = String(bytes, Charsets.UTF_8)
+                // Inspect the complete subtitle content to force English detection if it contains "thank"
                 if (contentString.contains("thank", ignoreCase = true)) {
                     lang = "en"
                 }
@@ -481,7 +480,7 @@ object HlsDownloadHelper {
                     if (ext == ".vtt" && !contentString.trimStart().startsWith("WEBVTT", ignoreCase = true)) {
                         it.write("WEBVTT\n\n".toByteArray(Charsets.UTF_8))
                     }
-                    it.write(bytes)
+                    it.write(contentString.toByteArray(Charsets.UTF_8))
                 }
             } catch (t: Throwable) {
                 t.printStackTrace()
@@ -489,18 +488,47 @@ object HlsDownloadHelper {
         }
     }
 
-    /** If [subUrl] is an m3u8, parse it and return the first non-comment line (the .vtt). */
-    private fun resolveToDirectVtt(subUrl: String, userAgent: String?, cookie: String?): String? {
-        if (!subUrl.contains(".m3u8", true)) return subUrl
-        val referer = currentReferer
-        val text = httpGetString(subUrl, userAgent, referer, cookie) ?: return null
-        val base = subUrl.substringBeforeLast('/')
-        for (raw in text.lines()) {
-            val line = raw.trim()
-            if (line.isEmpty() || line.startsWith("#")) continue
-            return if (line.startsWith("http://") || line.startsWith("https://")) line else "$base/$line"
+    /**
+     * Downloads a direct subtitle response or recursively expands HLS subtitle playlists.
+     * A playlist is considered complete only if every listed segment is fetched.
+     */
+    private fun fetchSubtitleTrackContent(
+        subtitleUrl: String,
+        userAgent: String?,
+        cookie: String?,
+        depth: Int = 0,
+        visited: Set<String> = emptySet()
+    ): String? {
+        if (depth > 4 || subtitleUrl in visited) {
+            android.util.Log.w("AdaptiveDownload", "Subtitle playlist nesting/cycle limit reached")
+            return null
         }
-        return null
+
+        val referer = currentReferer
+        val response = httpGetString(subtitleUrl, userAgent, referer, cookie) ?: return null
+        val trimmed = response.trimStart('\uFEFF', ' ', '\t', '\r', '\n')
+        if (!trimmed.startsWith("#EXTM3U", ignoreCase = true)) return response
+
+        val segmentUrls = SubtitleUtils.parseHlsSubtitlePlaylistUris(response, subtitleUrl)
+        if (segmentUrls.isEmpty()) {
+            android.util.Log.w("AdaptiveDownload", "Subtitle playlist has no segment/variant URIs")
+            return null
+        }
+
+        val segmentContents = ArrayList<String>(segmentUrls.size)
+        val nextVisited = visited + subtitleUrl
+        for (segmentUrl in segmentUrls) {
+            val segment = fetchSubtitleTrackContent(
+                segmentUrl, userAgent, cookie, depth + 1, nextVisited
+            ) ?: run {
+                android.util.Log.w("AdaptiveDownload", "Subtitle segment fetch failed; refusing partial subtitle")
+                return null
+            }
+            segmentContents.add(segment)
+        }
+
+        val merged = SubtitleUtils.mergeHlsSubtitleSegments(segmentContents)
+        return merged.takeIf { it.startsWith("WEBVTT", ignoreCase = true) }
     }
 
     fun httpGetString(url: String, ua: String?, referer: String?, cookie: String?): String? =
