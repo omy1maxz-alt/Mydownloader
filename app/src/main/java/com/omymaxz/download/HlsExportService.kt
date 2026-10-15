@@ -330,7 +330,7 @@ class HlsExportService : Service() {
                     // Export fails, and it asks to Download again using a cached URI.
                     // Instead, fallback directly to FFmpeg muxToMp4 using the original URI from the request.
                     val finalUrl = resolveVariantUrl(url, streamKeysStr, requestHeaders)
-                    muxToMp4(finalUrl, title, splitAudioUrl, streamKeysStr, exportRequestHeaders)
+                    muxToMp4(finalUrl, title, splitAudioUrl, streamKeysStr, requestHeaders)
                 }
             }
         } else {
