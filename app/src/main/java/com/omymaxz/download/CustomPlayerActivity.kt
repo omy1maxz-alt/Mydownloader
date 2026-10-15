@@ -839,6 +839,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             try {
                 // 1. Process EXTRA_SUBTITLE_URLS array as regular downloaded files so they merge properly without being hardcoded to "English"
                 val intentSubUrls = intent.getStringArrayListExtra(EXTRA_SUBTITLE_URLS)
+                var refreshedExternalSubtitles = false
                 if (!intentSubUrls.isNullOrEmpty()) {
                     val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, videoTitle!!)
                     for (subUrl in intentSubUrls) {
@@ -879,16 +880,21 @@ class CustomPlayerActivity : AppCompatActivity() {
                             val ext = if (subUrl.contains(".srt", true)) ".srt" else ".vtt"
                             val outFile = File(outDir, "${videoTitle!!.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_${detectedLang}_HASH_${hash}$ext")
 
-                            if (!outFile.exists()) {
-                                java.io.FileOutputStream(outFile).use {
-                                    // Normalize YouTube speaker markers and TTML/XML cues before saving.
-                                    val normalizedSubtitle = SubtitleUtils.normalizeForDownload(contentString)
-                                    val normalizedBytes = normalizedSubtitle.toByteArray(Charsets.UTF_8)
+                            // Refresh the cached track instead of preserving an older truncated preview.
+                            val normalizedSubtitle = SubtitleUtils.normalizeForDownload(contentString)
+                            if (normalizedSubtitle.count { it == '\n' } > 1 &&
+                                (normalizedSubtitle.contains("-->") || normalizedSubtitle.contains("<tt", true))
+                            ) {
+                                java.io.FileOutputStream(outFile, false).use {
                                     if (ext == ".vtt" && !normalizedSubtitle.trimStart().startsWith("WEBVTT", ignoreCase = true)) {
                                         it.write("WEBVTT\n\n".toByteArray(Charsets.UTF_8))
                                     }
-                                    it.write(normalizedBytes)
+                                    it.write(normalizedSubtitle.toByteArray(Charsets.UTF_8))
                                 }
+                                refreshedExternalSubtitles = true
+                                android.util.Log.d("YT_SUBTITLE_TRACE", "refreshed track lang=${targetLang} chars=${normalizedSubtitle.length}")
+                            } else {
+                                android.util.Log.w("YT_SUBTITLE_TRACE", "Ignoring empty/invalid subtitle response lang=\${targetLang} chars=\${contentString.length}")
                             }
                         }
                     }
@@ -907,7 +913,9 @@ class CustomPlayerActivity : AppCompatActivity() {
 
                 // 3. Hot swap if we have new files
                 val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, videoTitle!!)
-                if (newLocalFiles.isNotEmpty() && newLocalFiles.size > localFiles.size) {
+                if (newLocalFiles.isNotEmpty() &&
+                    (refreshedExternalSubtitles || newLocalFiles.size > localFiles.size)
+                ) {
                     withContext(Dispatchers.Main) {
                         hotSwapSubtitles(newLocalFiles, cacheFactory)
                     }
