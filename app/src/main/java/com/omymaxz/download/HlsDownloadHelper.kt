@@ -158,18 +158,28 @@ object HlsDownloadHelper {
         }
     }
 
-    // ---- Unified HTTP factory (headers applied per-request via thread-local-ish state) ----
-    var currentUserAgent: String? = null
-    var currentCookie: String? = null
-    var currentReferer: String? = null
+    // ---- HTTP request context ----
+    // The legacy current* properties remain for older playback/download callers. Export jobs
+    // should capture RequestHeaders once and pass that immutable snapshot through the full job.
+    @Volatile var currentUserAgent: String? = null
+    @Volatile var currentCookie: String? = null
+    @Volatile var currentReferer: String? = null
 
-    data class RequestHeaders(val userAgent: String? = null, val referer: String? = null, val cookie: String? = null)
+    data class RequestHeaders(val userAgent: String? = null, val referer: String? = null, val cookie: String? = null) {
+        companion object {
+            fun fromLegacyState(): RequestHeaders = RequestHeaders(
+                userAgent = HlsDownloadHelper.currentUserAgent,
+                referer = HlsDownloadHelper.currentReferer,
+                cookie = HlsDownloadHelper.currentCookie
+            )
+        }
+    }
 
     @Synchronized
     fun getDataSourceFactory(context: Context, requestHeaders: RequestHeaders? = null): DataSource.Factory {
-        val userAgent = requestHeaders?.userAgent?.takeIf { it.isNotBlank() } ?: currentUserAgent
-        val referer = requestHeaders?.referer?.takeIf { it.isNotBlank() } ?: currentReferer
-        val cookie = requestHeaders?.cookie?.takeIf { it.isNotBlank() } ?: currentCookie
+        val userAgent = requestHeaders?.userAgent?.takeIf { it.isNotBlank() } ?: if (requestHeaders == null) currentUserAgent else null
+        val referer = requestHeaders?.referer?.takeIf { it.isNotBlank() } ?: if (requestHeaders == null) currentReferer else null
+        val cookie = requestHeaders?.cookie?.takeIf { it.isNotBlank() } ?: if (requestHeaders == null) currentCookie else null
         // Instantiate a NEW factory per request rather than mutating the global singleton
         // to prevent race conditions or missing headers on background fetches.
         // Also use a ResolvingDataSource to explicitly log the final resolved DataSpec URI.
