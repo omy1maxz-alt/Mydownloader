@@ -549,6 +549,10 @@ class HlsExportService : Service() {
                 if (expectedBytes != totalLength) {
                     throw Exception("MP4_RANGE_INCOMPLETE: Server only returned an initial slice")
                 }
+                val declaredLength = connection.getHeaderFieldLong("Content-Length", -1L)
+                if (declaredLength >= 0L && declaredLength != totalLength) {
+                    throw Exception("MP4_RANGE_INVALID_RESPONSE: Content-Length mismatch")
+                }
                 val tmp = File(destFile.parentFile, destFile.name + ".range.tmp")
                 try {
                     connection.inputStream.use { input ->
@@ -587,6 +591,11 @@ class HlsExportService : Service() {
                 extractSpansToFile(targetUrl, destFile)
             } catch (cacheError: Exception) {
                 if (destFile.exists()) destFile.delete()
+                if (!cacheError.message.orEmpty().startsWith("CACHE_") &&
+                    !cacheError.message.orEmpty().contains("CACHE_GAP") &&
+                    !cacheError.message.orEmpty().contains("CACHE_MP4")) {
+                    throw cacheError
+                }
                 writeExportLog("MP4 cache span incomplete; attempting bounded HTTP Range fallback. reason=${cacheError.message}")
                 rangeDownloadToFile(targetUrl, destFile)
             }
