@@ -240,3 +240,5 @@
 - **Build fix — player accessibility strings (2026-10-15):** Android resource linking on master failed because the redesigned custom player layout referenced five undefined accessibility strings. Added the missing labels for PiP, resize, floating bubble, offline save, and track settings. CI re-run required; device verification pending.
 
 - **Build repair — Gemini chat string resources (2026-10-15):** Current-master Android CI failed during `:app:processDebugResources` because `activity_gemini_chat.xml` and `item_chat_message.xml` referenced four undefined string resources: `gemini_chat_hint`, `send`, `edit_message`, and `delete_message`. Added the missing resource definitions in a focused build-fix branch. CI re-run and device verification pending.
+
+- **Phase 4 T14 — resource cleanup (2026-10-15):** Removed the orphaned `ic_copy.xml` drawable after repository-wide searches found no XML or Kotlin references (`@drawable/ic_copy` and `R.drawable.ic_copy` both had no matches). Kept other legacy drawables when they still had active layout, service, notification, or style references. Build/CI and device verification pending.
