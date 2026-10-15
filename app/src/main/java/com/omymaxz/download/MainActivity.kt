@@ -1,5 +1,7 @@
 package com.omymaxz.download
 
+import androidx.core.widget.doAfterTextChanged
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
