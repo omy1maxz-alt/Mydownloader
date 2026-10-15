@@ -4590,11 +4590,7 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                 val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                 if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                if (mediaFile.requiresSeparateAudio && !mediaFile.audioUrl.isNullOrEmpty()) {
-                    // Merging a second source is correct only for video-only streams.
-                    putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
-                    putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
-                }
+                configureYouTubeAudioSource(this, mediaFile)
                 if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                     val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                         if (mediaFile.language != null && !url.contains("lang=")) {
@@ -4691,11 +4687,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                         val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                if (mediaFile.requiresSeparateAudio && !mediaFile.audioUrl.isNullOrEmpty()) {
-                    // Merging a second source is correct only for video-only streams.
-                    putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
-                    putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
-                }
+                configureYouTubeAudioSource(this, mediaFile)
                 if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                     val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                         if (mediaFile.language != null && !url.contains("lang=")) {
@@ -4725,11 +4717,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                         val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                if (mediaFile.requiresSeparateAudio && !mediaFile.audioUrl.isNullOrEmpty()) {
-                    // Merging a second source is correct only for video-only streams.
-                    putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
-                    putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
-                }
+                configureYouTubeAudioSource(this, mediaFile)
                 if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                     val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                         if (mediaFile.language != null && !url.contains("lang=")) {
@@ -7814,6 +7802,13 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
         }
     }
 
+    private fun configureYouTubeAudioSource(intent: android.content.Intent, mediaFile: MediaFile) {
+        if (!mediaFile.requiresSeparateAudio) return
+        val audioUrl = mediaFile.audioUrl?.takeIf { it.isNotBlank() } ?: return
+        intent.putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, audioUrl)
+        intent.putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
+    }
+
     private fun launchYouTubeInCustomPlayer(mediaFile: MediaFile) {
         val intent = android.content.Intent(this, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK);
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
@@ -7825,12 +7820,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
             android.webkit.CookieManager.getInstance().getCookie(referer)?.let {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, it)
             }
-            if (mediaFile.requiresSeparateAudio && !mediaFile.audioUrl.isNullOrEmpty()) {
-                // Only video-only YouTube streams need a second Media3 source. A DASH/HLS
-                // manifest or muxed MP4 already supplies its own audio timeline.
-                putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
-                putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
-            }
+            configureYouTubeAudioSource(this, mediaFile)
             if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                 val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                     if (mediaFile.language != null && !url.contains("lang=")) {
