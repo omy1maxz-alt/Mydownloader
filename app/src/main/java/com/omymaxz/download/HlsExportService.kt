@@ -412,7 +412,12 @@ class HlsExportService : Service() {
         }
 
 
-    private fun cacheOnlyDataSource(): androidx.media3.datasource.DataSource {
+    private fun cacheOnlyDataSource(): androidx.media3.datasource.DataSource =
+        cacheOnlyDataSource(HlsDownloadHelper.RequestHeaders.fromLegacyState())
+
+    private fun cacheOnlyDataSource(
+        requestHeaders: HlsDownloadHelper.RequestHeaders
+    ): androidx.media3.datasource.DataSource {
         val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
         val failingUpstream = androidx.media3.datasource.DataSource.Factory {
             object : androidx.media3.datasource.BaseDataSource(false) {
@@ -430,8 +435,6 @@ class HlsExportService : Service() {
             .setCacheKeyFactory(HlsDownloadHelper.customCacheKeyFactory)
             .createDataSource()
     }
-
-
 
     private suspend fun copyMp4FromCache(
         url: String,
@@ -566,7 +569,7 @@ class HlsExportService : Service() {
         tmpDir.mkdirs()
 
         try {
-            val cacheOnlyFactory = cacheOnlyDataSource()
+            val cacheOnlyFactory = cacheOnlyDataSource(requestHeaders)
             val networkFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = false, requestHeaders = requestHeaders).createDataSource()
 
             var masterText = ""
