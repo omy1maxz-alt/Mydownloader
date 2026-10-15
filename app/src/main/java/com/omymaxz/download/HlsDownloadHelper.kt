@@ -477,12 +477,8 @@ object HlsDownloadHelper {
                 // the first segment when a later segment fails.
                 val contentString = fetchSubtitleTrackContent(track.uri, userAgent, cookie) ?: continue
                 val ext = if (track.uri.contains(".srt", true) && !track.uri.contains(".m3u8", true)) ".srt" else ".vtt"
-                var lang = track.language.ifBlank { "und" }.replace(Regex("[^a-zA-Z0-9-]"), "_")
-
-                // Inspect the complete subtitle content to force English detection if it contains "thank"
-                if (contentString.contains("thank", ignoreCase = true)) {
-                    lang = "en"
-                }
+                // HLS LANGUAGE is explicit track metadata; caption words never override it.
+                val lang = SubtitleUtils.normalizeLanguageCode(track.language) ?: "und"
 
                 val outFile = File(outDir, "${title.replace(Regex("[^a-zA-Z0-9.-]"), "_")}_subtitle_$lang$ext")
                 FileOutputStream(outFile).use {
