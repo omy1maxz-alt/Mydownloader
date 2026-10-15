@@ -12,10 +12,6 @@ internal enum class YouTubeVideoSourceKind {
 }
 
 internal object YouTubePlaybackPolicy {
-    fun separateAudioUrl(
-        sourceKind: YouTubeVideoSourceKind,
-        candidateAudioUrl: String?
-    ): String? = candidateAudioUrl?.takeIf {
-        sourceKind == YouTubeVideoSourceKind.VIDEO_ONLY && it.isNotBlank()
-    }
+    fun requiresSeparateAudio(sourceKind: YouTubeVideoSourceKind): Boolean =
+        sourceKind == YouTubeVideoSourceKind.VIDEO_ONLY
 }
