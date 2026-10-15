@@ -68,7 +68,8 @@ object SubtitleUtils {
             host == "youtube-nocookie.com" || host.endsWith(".youtube-nocookie.com") ||
             host == "googlevideo.com" || host.endsWith(".googlevideo.com")
         if (!youtubeHost || !uri.path.orEmpty().contains("/api/timedtext", ignoreCase = true)) return null
-        normalizeLanguageCode(uri.getQueryParameter("lang"))
+        // tlang is the requested translation output language; lang is the source track language.
+        normalizeLanguageCode(uri.getQueryParameter("tlang") ?: uri.getQueryParameter("lang"))
     }.getOrNull()
 
     fun originalSubtitleFilename(rawUrl: String): String? = runCatching {
