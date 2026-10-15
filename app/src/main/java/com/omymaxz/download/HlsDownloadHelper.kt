@@ -489,12 +489,8 @@ object HlsDownloadHelper {
     }
 
     /**
-     * Downloads a direct subtitle response or recursively expands HLS subtitle playlists.
-     * A playlist is considered complete only if every listed segment is fetched.
-     */
-    /**
-     * Fetch a complete direct or HLS subtitle track for the detected-media download path.
-     * The method returns null rather than returning partial captions when any segment fails.
+     * Fetch a complete direct or HLS subtitle track. The method returns null rather than
+     * returning partial captions when any segment fails.
      */
     fun fetchCompleteSubtitleTrackContent(
         subtitleUrl: String,
