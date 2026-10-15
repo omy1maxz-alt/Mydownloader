@@ -4374,7 +4374,6 @@ private fun showMediaListDialog() {
             synchronized(detectedMediaFiles) {
                 detectedMediaFiles.clear()
             }
-            mediaFilesCopy.clear()
             updateMediaFilter()
             updateFabVisibility()
             dialog.dismiss()
