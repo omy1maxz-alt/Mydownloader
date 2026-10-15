@@ -71,6 +71,70 @@ object SubtitleUtils {
         return SubtitleTrack(absoluteUri, language, name, isDefault, isForced)
     }
 
+    /**
+     * Resolves every URI in an HLS subtitle playlist. For a master playlist, follow
+     * the first listed variant; for a media playlist, return every segment in order.
+     */
+    fun parseHlsSubtitlePlaylistUris(playlist: String, playlistUrl: String): List<String> {
+        val lines = playlist.replace("\r\n", "\n").replace('\r', '\n').lines()
+        val isMasterPlaylist = lines.any { it.trimStart().startsWith("#EXT-X-STREAM-INF", ignoreCase = true) }
+        val rawUris = mutableListOf<String>()
+
+        if (isMasterPlaylist) {
+            var waitingForVariantUri = false
+            for (raw in lines) {
+                val line = raw.trim()
+                if (line.isEmpty()) continue
+                if (line.startsWith("#EXT-X-STREAM-INF", ignoreCase = true)) {
+                    waitingForVariantUri = true
+                    continue
+                }
+                if (line.startsWith("#")) continue
+                if (waitingForVariantUri) {
+                    rawUris.add(line)
+                    break
+                }
+            }
+        } else {
+            for (raw in lines) {
+                val line = raw.trim()
+                if (line.isNotEmpty() && !line.startsWith("#")) rawUris.add(line)
+            }
+        }
+
+        return rawUris.mapNotNull { raw ->
+            runCatching {
+                java.net.URI(playlistUrl).resolve(java.net.URI(raw)).toString()
+            }.getOrNull()
+        }.take(2000)
+    }
+
+    /**
+     * Joins complete WebVTT HLS segments into one standalone VTT document.
+     * Segment headers and timestamp-map metadata belong to each segment, not the
+     * combined file; cue bodies and cue identifiers are retained.
+     */
+    fun mergeHlsSubtitleSegments(segments: List<String>): String {
+        val cueBodies = segments.mapNotNull { raw ->
+            var text = raw.removePrefix("\uFEFF")
+                .replace("\r\n", "\n")
+                .replace('\r', '\n')
+            val lines = text.lines().toMutableList()
+            val firstContentLine = lines.indexOfFirst { it.isNotBlank() }
+            if (firstContentLine >= 0 &&
+                lines[firstContentLine].trimStart().startsWith("WEBVTT", ignoreCase = true)
+            ) {
+                lines.removeAt(firstContentLine)
+            }
+            text = lines.filterNot {
+                it.trimStart().startsWith("X-TIMESTAMP-MAP=", ignoreCase = true)
+            }.joinToString("\n").trim()
+            text.takeIf { it.isNotBlank() }
+        }
+        if (cueBodies.isEmpty()) return ""
+        return normalizeSpeakerMarkersInVtt("WEBVTT\n\n" + cueBodies.joinToString("\n\n") + "\n")
+    }
+
     /** Read a KEY="VALUE" attribute from an HLS tag string. */
     private fun readAttr(tag: String, key: String): String? {
         val needle = "$key=\""
