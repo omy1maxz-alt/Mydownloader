@@ -1846,7 +1846,7 @@ class MainActivity : AppCompatActivity() {
                             val finalTitle = if (category == MediaCategory.SUBTITLE) SubtitleUtils.originalSubtitleFilename(url) ?: enhancedTitle else enhancedTitle
                             val mediaFile = MediaFile(
                                 url = url,
-                                title = enhancedTitle,
+                                title = finalTitle,
                                 mimeType = finalMime,
                                 quality = quality,
                                 category = category,
@@ -3326,7 +3326,7 @@ private fun injectMediaStateDetector() {
                                     val finalTitle = if (category == MediaCategory.SUBTITLE) SubtitleUtils.originalSubtitleFilename(url) ?: enhancedTitle else enhancedTitle
                                     val mediaFile = MediaFile(
                                         url = url,
-                                        title = enhancedTitle,
+                                        title = finalTitle,
                                         mimeType = finalMime,
                                         quality = quality,
                                         category = category,
@@ -3572,7 +3572,7 @@ private fun injectMediaStateDetector() {
                              val finalTitle = if (category == MediaCategory.SUBTITLE) SubtitleUtils.originalSubtitleFilename(url) ?: enhancedTitle else enhancedTitle
                              val mediaFile = MediaFile(
                                 url = url,
-                                title = enhancedTitle,
+                                title = finalTitle,
                                 mimeType = finalMime,
                                 quality = quality,
                                 category = category,
@@ -3635,7 +3635,7 @@ private fun injectMediaStateDetector() {
                     val finalTitle = if (subtitle) SubtitleUtils.originalSubtitleFilename(finalUrl) ?: enhancedTitle else enhancedTitle
                     val mediaFile = MediaFile(
                         url = finalUrl,
-                        title = enhancedTitle,
+                        title = finalTitle,
                         mimeType = detectedFormat.mimeType,
                         quality = quality,
                         category = category,
