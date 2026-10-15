@@ -2184,8 +2184,8 @@ class MainActivity : AppCompatActivity() {
                         preview.startsWith("<tt", ignoreCase = true) ||
                         preview.startsWith("<?xml", ignoreCase = true) ||
                         preview.startsWith("<transcript", ignoreCase = true) ||
-                        Regex("""(?m)^\\s*\\d{2}:\\d{2}:\\d{2}[,.]\\d{3}\\s*-->""").containsMatchIn(preview) ||
-                        Regex("""(?m)^\\s*\\d{2}:\\d{2}\\s*-->""").containsMatchIn(preview)
+                        Regex("""(?m)^\s*\d{2}:\d{2}:\d{2}[,.]\d{3}\s*-->""").containsMatchIn(preview) ||
+                        Regex("""(?m)^\s*\d{2}:\d{2}\s*-->""").containsMatchIn(preview)
                 }
                 val isSubtitlePreview = subtitleName || subtitleMime ||
                     (normalizedMime == "text/plain" && previewLooksLikeSubtitle)
