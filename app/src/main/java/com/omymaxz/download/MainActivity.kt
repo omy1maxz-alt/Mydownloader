@@ -7701,7 +7701,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
             binding.fabShowMedia.visibility = android.view.View.VISIBLE
             binding.mediaCountBadge.text = if (detectedMediaFiles.size > 99) "99+" else detectedMediaFiles.size.toString()
             binding.mediaCountBadge.visibility = android.view.View.VISIBLE
-            binding.fabShowMedia.setImageResource(android.R.drawable.ic_menu_add)
+            binding.fabShowMedia.setImageResource(R.drawable.ic_download)
 
             binding.fabShowMedia.setOnClickListener {
                 showMediaListDialog()
