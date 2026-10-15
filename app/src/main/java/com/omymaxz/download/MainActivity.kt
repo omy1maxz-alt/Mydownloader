@@ -2171,9 +2171,29 @@ class MainActivity : AppCompatActivity() {
         fun showPreview(text: String, filename: String, mimeType: String, url: String?) {
             runOnUiThread {
                 var currentFilename = filename
+                val normalizedMime = mimeType.substringBefore(";").trim().lowercase()
+                val filenameLower = filename.substringBefore("?").substringBefore("#").lowercase()
+                val subtitleName = listOf(".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp", ".srv1", ".srv2", ".srv3")
+                    .any { filenameLower.endsWith(it) }
+                val subtitleMime = normalizedMime in setOf(
+                    "text/vtt", "application/x-subrip", "application/ttml+xml",
+                    "application/dfxp+xml", "text/x-ssa", "text/x-ass"
+                )
+                val previewLooksLikeSubtitle = text.trimStart().let { preview ->
+                    preview.startsWith("WEBVTT", ignoreCase = true) ||
+                        preview.startsWith("<tt", ignoreCase = true) ||
+                        preview.startsWith("<?xml", ignoreCase = true) ||
+                        preview.startsWith("<transcript", ignoreCase = true) ||
+                        Regex("""(?m)^\\s*\\d{2}:\\d{2}:\\d{2}[,.]\\d{3}\\s*-->""").containsMatchIn(preview) ||
+                        Regex("""(?m)^\\s*\\d{2}:\\d{2}\\s*-->""").containsMatchIn(preview)
+                }
+                val isSubtitlePreview = subtitleName || subtitleMime ||
+                    (normalizedMime == "text/plain" && previewLooksLikeSubtitle)
 
-                // If this is a subtitle, extract the snippet and update the Detection List title
-                if (mimeType.contains("text/") || filename.endsWith(".vtt") || filename.endsWith(".srt")) {
+                // If this is a subtitle, extract the snippet and update the Detection List title.
+                // Preview payloads are intentionally capped for UI safety; never use them as the
+                // bytes for a subtitle download when the original source URL is still available.
+                if (mimeType.contains("text/") || subtitleName || subtitleMime) {
                     val result = SubtitleUtils.extractSnippet(text)
                     if (!result.snippet.isNullOrBlank()) {
                         val ext = if (filename.endsWith(".srt")) ".srt" else ".vtt"
@@ -2229,7 +2249,34 @@ class MainActivity : AppCompatActivity() {
                             .setPositiveButton("Save") { _, _ ->
                                 val newName = input.text.toString().trim()
                                 val finalName = if (newName.isNotEmpty()) "$newName.${currentFilename.substringAfterLast('.')}" else currentFilename
-                                saveToDownloads(text.toByteArray(), finalName, mimeType)
+                                val sourceUrl = url?.trim().orEmpty()
+                                val hasFetchableSource = sourceUrl.startsWith("https://", ignoreCase = true) ||
+                                    sourceUrl.startsWith("http://", ignoreCase = true) ||
+                                    sourceUrl.startsWith("blob:", ignoreCase = true)
+                                if (isSubtitlePreview && hasFetchableSource) {
+                                    // The preview caller passes only the first 20,000 characters.
+                                    // Re-enter the normal subtitle download path to fetch the whole
+                                    // source (including KissKH tracks whose URL has no .vtt suffix).
+                                    val sourceMime = when {
+                                        subtitleMime -> normalizedMime
+                                        filenameLower.endsWith(".srt") -> "application/x-subrip"
+                                        else -> "text/vtt"
+                                    }
+                                    val subtitleDownload = MediaFile(
+                                        url = sourceUrl,
+                                        title = finalName,
+                                        mimeType = sourceMime,
+                                        quality = "Auto",
+                                        category = MediaCategory.SUBTITLE,
+                                        fileSize = "Unknown",
+                                        language = null,
+                                        isMainContent = false,
+                                        referer = webView.url
+                                    )
+                                    downloadMediaFile(subtitleDownload)
+                                } else {
+                                    saveToDownloads(text.toByteArray(Charsets.UTF_8), finalName, mimeType)
+                                }
                             }
                             .show()
                     }
