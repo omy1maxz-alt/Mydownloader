@@ -4398,6 +4398,9 @@ private fun showMediaListDialog() {
             synchronized(detectedMediaFiles) {
                 detectedMediaFiles.clear()
             }
+            mediaFilesCopy.clear()
+            updateMediaFilter()
+            updateFabVisibility()
             dialog.dismiss()
             Toast.makeText(this, "Media list cleared", Toast.LENGTH_SHORT).show()
         }
