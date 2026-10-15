@@ -84,7 +84,7 @@ class MediaListAdapter(
             val categoryIndicator = when (mediaFile.category) {
                 MediaCategory.VIDEO -> if (mediaFile.isMainContent) "🎥 MAIN VIDEO" else "🎬 Video Clip"
                 MediaCategory.AUDIO -> "🔊 Audio"
-                MediaCategory.SUBTITLE -> "📝 Subtitle ${mediaFile.language ?: ""}"
+                MediaCategory.SUBTITLE -> mediaFile.language?.let { "📝 Subtitle $it" } ?: "📝 Subtitle"
                 MediaCategory.THUMBNAIL -> "🖼️ Thumbnail"
                 MediaCategory.AD -> "🚫 Advertisement"
                 else -> "❓ ${mediaFile.category.displayName}"

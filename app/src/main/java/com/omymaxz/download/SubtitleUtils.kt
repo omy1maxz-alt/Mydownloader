@@ -22,6 +22,72 @@ object SubtitleUtils {
 
     data class SubtitleResult(val snippet: String?, val language: String?)
 
+    private val languageLabels = mapOf(
+        "ar" to "Arabic", "bg" to "Bulgarian", "bn" to "Bengali", "ca" to "Catalan",
+        "cs" to "Czech", "da" to "Danish", "de" to "German", "el" to "Greek",
+        "en" to "English", "es" to "Spanish", "et" to "Estonian", "fa" to "Persian",
+        "fi" to "Finnish", "fil" to "Filipino", "fr" to "French", "he" to "Hebrew",
+        "hi" to "Hindi", "hr" to "Croatian", "hu" to "Hungarian", "id" to "Indonesian",
+        "is" to "Icelandic", "it" to "Italian", "ja" to "Japanese", "jv" to "Javanese",
+        "km" to "Khmer", "ko" to "Korean", "lt" to "Lithuanian", "lv" to "Latvian",
+        "ms" to "Malay", "my" to "Burmese", "nl" to "Dutch", "no" to "Norwegian",
+        "pl" to "Polish", "pt" to "Portuguese", "ro" to "Romanian", "ru" to "Russian",
+        "sk" to "Slovak", "sl" to "Slovenian", "sr" to "Serbian", "sv" to "Swedish",
+        "ta" to "Tamil", "te" to "Telugu", "th" to "Thai", "tl" to "Filipino",
+        "tr" to "Turkish", "uk" to "Ukrainian", "ur" to "Urdu", "vi" to "Vietnamese",
+        "zh" to "Chinese", "yue" to "Cantonese", "und" to "Unknown language"
+    )
+    private val languageAliases = languageLabels.entries.flatMap { (code, label) ->
+        listOf(code to code, label.lowercase() to code)
+    }.toMap() + mapOf("eng" to "en", "spa" to "es", "fra" to "fr", "fre" to "fr", "deu" to "de", "ger" to "de", "tha" to "th", "ind" to "id", "zho" to "zh", "chi" to "zh", "kor" to "ko", "jpn" to "ja", "ara" to "ar", "hin" to "hi", "por" to "pt", "vie" to "vi")
+
+    fun normalizeLanguageCode(value: String?): String? {
+        val raw = value?.trim()?.replace('_', '-')?.lowercase(java.util.Locale.ROOT)?.takeIf { it.isNotEmpty() } ?: return null
+        val base = raw.substringBefore('-')
+        val code = languageAliases[raw] ?: languageAliases[base] ?: return null
+        val suffix = raw.substringAfter('-', "")
+        return if (suffix.isEmpty()) code else if (suffix.matches(Regex("[a-z0-9]{2,8}(-[a-z0-9]{2,8})*"))) "$code-$suffix" else code
+    }
+
+    fun languageDisplayName(value: String?): String? {
+        val code = normalizeLanguageCode(value) ?: return null
+        return languageLabels[code.substringBefore('-')] ?: code
+    }
+
+    /** Ignore URL fragments only; preserve every query parameter, token and track selector. */
+    fun canonicalMediaUrl(rawUrl: String): String {
+        val raw = rawUrl.trim()
+        return runCatching { java.net.URI(raw).normalize().toASCIIString().substringBefore('#') }
+            .getOrElse { Uri.parse(raw).buildUpon().fragment(null).build().toString() }
+    }
+
+    fun extractTrustedLanguageFromUrl(rawUrl: String): String? = runCatching {
+        val uri = Uri.parse(rawUrl)
+        val host = uri.host?.lowercase(java.util.Locale.ROOT).orEmpty()
+        val youtubeHost = host == "youtube.com" || host.endsWith(".youtube.com") ||
+            host == "youtube-nocookie.com" || host.endsWith(".youtube-nocookie.com") ||
+            host == "googlevideo.com" || host.endsWith(".googlevideo.com")
+        if (!youtubeHost || !uri.path.orEmpty().contains("/api/timedtext", ignoreCase = true)) return null
+        // tlang is the requested translation output language; lang is the source track language.
+        normalizeLanguageCode(uri.getQueryParameter("tlang") ?: uri.getQueryParameter("lang"))
+    }.getOrNull()
+
+    fun originalSubtitleFilename(rawUrl: String): String? = runCatching {
+        val path = java.net.URI(rawUrl).path ?: return null
+        val name = java.net.URLDecoder.decode(path.substringAfterLast('/'), "UTF-8").trim()
+        name.takeIf { it.length in 1..180 && it !in setOf(".", "..") &&
+            it.substringAfterLast('.', "").lowercase() in setOf("vtt", "srt", "ass", "ssa", "ttml", "dfxp", "srv1", "srv2", "srv3") }
+    }.getOrNull()
+
+    fun isValidSubtitleContent(content: String): Boolean {
+        val text = content.trimStart().removePrefix("\uFEFF").trimStart()
+        if (text.isBlank() || text.startsWith("<!DOCTYPE", true) || text.startsWith("<html", true) ||
+            text.contains("<script", true) || text.contains("<iframe", true)) return false
+        val hasTiming = Regex("""(?m)^\s*\d{2,}:\d{2}(?::\d{2})?[.,]\d{3}\s*-->\s*\d{2,}:\d{2}(?::\d{2})?[.,]\d{3}""").containsMatchIn(text)
+        val ttmlCue = Regex("""(?is)<(?:tt|transcript)\b.*<(?:p\b[^>]*(?:begin|start|t)=|text\b[^>]*start=).*?</(?:tt|transcript)>""").containsMatchIn(text)
+        return hasTiming || ttmlCue
+    }
+
     /**
      * Parses every #EXT-X-MEDIA:TYPE=SUBTITLES,... block out of a master m3u8.
      * Handles:
@@ -49,12 +115,12 @@ object SubtitleUtils {
             }
             i++
         }
-        return out
+        return out.distinctBy { canonicalMediaUrl(it.uri) + "|" + it.language + "|" + it.name }
     }
 
     private fun parseOneTrack(tag: String, masterBaseUrl: String): SubtitleTrack? {
         val uri = readAttr(tag, "URI") ?: return null
-        val language = (readAttr(tag, "LANGUAGE") ?: "und").lowercase()
+        val language = normalizeLanguageCode(readAttr(tag, "LANGUAGE")) ?: "und"
         val name = readAttr(tag, "NAME") ?: language
         val isDefault = readAttr(tag, "DEFAULT")?.equals("YES", ignoreCase = true) == true
         val isForced = readAttr(tag, "FORCED")?.equals("YES", ignoreCase = true) == true
@@ -346,8 +412,10 @@ object SubtitleUtils {
         if (content.trimStart().startsWith("<tt", ignoreCase = true) ||
             content.contains("<tt ", ignoreCase = true) ||
             content.contains("<p begin=", ignoreCase = true)) {
-            val language = Regex("""xml:lang=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
-                .find(content)?.groupValues?.getOrNull(1)
+            val language = normalizeLanguageCode(
+                Regex("""xml:lang=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+                    .find(content)?.groupValues?.getOrNull(1)
+            )
             val cues = Regex(
                 """<p\b[^>]*>(.*?)</p>""",
                 setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
@@ -375,7 +443,10 @@ object SubtitleUtils {
             if (line.contains("WEBVTT", ignoreCase = true)) continue
 
             val langMatch = LANGUAGE_PATTERN.matcher(line)
-            if (langMatch.find()) { language = langMatch.group(1); continue }
+            if (langMatch.find()) {
+                language = normalizeLanguageCode(langMatch.group(1))
+                continue
+            }
 
             if (line.startsWith("Kind:", ignoreCase = true) ||
                 line.startsWith("Style:", ignoreCase = true) ||
@@ -403,40 +474,7 @@ object SubtitleUtils {
             return SubtitleResult(null, language)
         }
 
-        // Smart Language Detection Heuristics
-        if (language.isNullOrBlank()) {
-            val lowerText = finalSnippet.lowercase()
-            val words = lowerText.split(Regex("\\W+"))
-
-            val englishCount = words.count { it in setOf("the", "be", "to", "of", "and", "a", "in", "that", "have", "i", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at") }
-            val spanishCount = words.count { it in setOf("el", "la", "de", "que", "y", "en", "un", "una", "los", "las", "por", "con", "para", "como", "su") }
-            val tagalogCount = words.count { it in setOf("ang", "ng", "sa", "na", "at", "mga", "ay", "ako", "ito", "si", "mo", "ni", "niya", "kami", "kaya") }
-            val indonesianCount = words.count { it in setOf("yang", "di", "ke", "dari", "untuk", "pada", "dengan", "adalah", "ini", "itu", "dan", "atau", "tidak") }
-            val malayCount = words.count { it in setOf("yang", "di", "ke", "dari", "untuk", "pada", "dengan", "ini", "itu", "dan", "atau", "tidak", "boleh", "saya", "awak") }
-            val khmerCount = words.count { it in setOf("ខ្ញុំ", "អ្នក", "គាត់", "នាង", "វា", "យើង", "ពួកគេ", "នេះ", "នោះ") }
-            val portugueseCount = words.count { it in setOf("o", "a", "os", "as", "um", "uma", "de", "do", "da", "em", "no", "na", "para", "com", "por", "que", "e", "é", "não") }
-            val arabicCount = words.count { it in setOf("في", "من", "على", "إلى", "عن", "مع", "هذا", "هذه", "ذلك", "تلك", "هو", "هي", "هم", "هن", "نحن") }
-            val hindiCount = words.count { it in setOf("है", "कि", "की", "और", "में", "का", "के", "से", "को", "नहीं", "एक", "यह", "पर", "हो", "तो") }
-            val germanCount = words.count { it in setOf("der", "die", "das", "und", "sein", "in", "ein", "zu", "haben", "ich", "werden", "sie", "von", "nicht", "mit", "es") }
-            val frenchCount = words.count { it in setOf("le", "la", "les", "un", "une", "des", "de", "et", "à", "en", "que", "pour", "dans", "ce", "il", "qui", "ne", "sur", "se") }
-
-            // Require a minimum threshold to avoid false positives on short names
-            val maxCount = listOf(englishCount, spanishCount, tagalogCount, indonesianCount, malayCount, khmerCount, portugueseCount, arabicCount, hindiCount, germanCount, frenchCount).maxOrNull() ?: 0
-
-            if (maxCount >= 2) {
-                if (khmerCount == maxCount) language = "Khmer"
-                else if (arabicCount == maxCount) language = "Arabic"
-                else if (hindiCount == maxCount) language = "Hindi"
-                else if (indonesianCount == maxCount && indonesianCount > malayCount) language = "Indonesian"
-                else if (malayCount == maxCount) language = "Malay"
-                else if (tagalogCount == maxCount) language = "Filipino"
-                else if (portugueseCount == maxCount) language = "Portuguese"
-                else if (germanCount == maxCount) language = "German"
-                else if (frenchCount == maxCount) language = "French"
-                else if (spanishCount == maxCount) language = "Spanish"
-                else if (englishCount == maxCount) language = "English"
-            }
-        }
+        // No bundled detector reliably classifies short snippets; leave unknown language unset.
 
         val snippetText = if (finalSnippet.length > 120) {
             val cut = finalSnippet.lastIndexOf(' ', 120)

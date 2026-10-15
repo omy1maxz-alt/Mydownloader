@@ -93,4 +93,46 @@ A line with >> in the middle.
         assertEquals(2, Regex("-->").findAll(normalized).count())
     }
 
+
+    @Test
+    fun languageMetadataMustBeRecognizedAndSnippetIsNotLanguage() {
+        assertEquals("en", SubtitleUtils.normalizeLanguageCode("English"))
+        assertEquals("th", SubtitleUtils.normalizeLanguageCode("th"))
+        assertEquals(null, SubtitleUtils.normalizeLanguageCode("The subtitle starts here"))
+        val vtt = """WEBVTT
+Language: The subtitle starts here
+
+00:00:01.000 --> 00:00:03.000
+The subtitle starts here.
+"""
+        val result = SubtitleUtils.extractSnippet(vtt)
+        assertEquals(null, result.language)
+        assertEquals("The subtitle starts here.", result.snippet)
+    }
+
+    @Test
+    fun canonicalUrlRemovesFragmentButPreservesSignedAndLanguageQueries() {
+        val url = "https://cdn.example/sub.vtt?token=secret-value&lang=th&tlang=en#player"
+        assertEquals("https://cdn.example/sub.vtt?token=secret-value&lang=th&tlang=en", SubtitleUtils.canonicalMediaUrl(url))
+        assertEquals(SubtitleUtils.canonicalMediaUrl(url), SubtitleUtils.canonicalMediaUrl(url.substringBefore("#")))
+        assertEquals(false, SubtitleUtils.canonicalMediaUrl(url) == SubtitleUtils.canonicalMediaUrl(url.replace("lang=th", "lang=en")))
+        assertEquals(false, SubtitleUtils.canonicalMediaUrl(url) == SubtitleUtils.canonicalMediaUrl(url.replace("secret-value", "other-token")))
+    }
+
+    @Test
+    fun originalSubtitleFilenameComesFromUrlPath() {
+        assertEquals("The_Vanishing_Beauty__kisskh.vtt", SubtitleUtils.originalSubtitleFilename("https://sub.cdn.example/The_Vanishing_Beauty__kisskh.vtt?token=x#track"))
+        assertEquals(null, SubtitleUtils.originalSubtitleFilename("https://www.youtube.com/api/timedtext?lang=th"))
+    }
+
+    @Test
+    fun subtitlePayloadValidationRejectsHtmlButAcceptsVttAndTtml() {
+        assertEquals(false, SubtitleUtils.isValidSubtitleContent("<html><body>Forbidden</body></html>"))
+        assertEquals(true, SubtitleUtils.isValidSubtitleContent("""WEBVTT
+
+00:00:01.000 --> 00:00:03.000
+Hello.
+"""))
+        assertEquals(true, SubtitleUtils.isValidSubtitleContent("""<tt><body><div><p begin="00:00:01.000" end="00:00:03.000">Hello.</p></div></body></tt>"""))
+    }
 }

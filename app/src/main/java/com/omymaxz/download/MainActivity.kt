@@ -98,6 +98,8 @@ class MainActivity : AppCompatActivity() {
 
     private val detectedMediaFiles = Collections.synchronizedList(mutableListOf<MediaFile>())
     private var currentMediaListAdapter: MediaListAdapter? = null
+    private var refreshDetectedMediaSheet: (() -> Unit)? = null
+    private val subtitleAnalysisInFlight = Collections.synchronizedSet(mutableSetOf<String>())
     private var lastUsedName: String = "Video"
     var lastUsedUrl: String? = null
     var cachedUserAgent: String? = null
@@ -1841,9 +1843,10 @@ class MainActivity : AppCompatActivity() {
                             val enhancedTitle = generateSmartFileName(url, ext, quality, category)
                             val fileSize = estimateFileSize(url, category)
                             val language = extractLanguageFromUrl(url)
+                            val finalTitle = if (category == MediaCategory.SUBTITLE) SubtitleUtils.originalSubtitleFilename(url) ?: enhancedTitle else enhancedTitle
                             val mediaFile = MediaFile(
                                 url = url,
-                                title = enhancedTitle,
+                                title = finalTitle,
                                 mimeType = finalMime,
                                 quality = quality,
                                 category = category,
@@ -1857,7 +1860,7 @@ class MainActivity : AppCompatActivity() {
                             }
 
                             val existsAlready = synchronized(detectedMediaFiles) {
-                                detectedMediaFiles.any { it.url == url || (candidate != null && mediaEngine.getCandidate(it.url) == candidate) }
+                                detectedMediaFiles.any { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(url) || (candidate != null && mediaEngine.getCandidate(it.url) == candidate) }
                             }
                             // 60-Second Hard Eligibility Check
                             val isEligible = candidate == null || (candidate.durationSec == 0 || candidate.durationSec >= 60)
@@ -2395,30 +2398,25 @@ class MainActivity : AppCompatActivity() {
                 if (mimeType.contains("text/") || subtitleName || subtitleMime) {
                     val result = SubtitleUtils.extractSnippet(text)
                     if (!result.snippet.isNullOrBlank()) {
-                        val ext = if (filename.endsWith(".srt")) ".srt" else ".vtt"
-
-                        // Look for an existing language in the media file list so we don't overwrite a better URL extraction
-                        var targetLang = result.language
+                        val validatedLanguage = SubtitleUtils.languageDisplayName(result.language)
+                        val originalFilename = url?.let { SubtitleUtils.originalSubtitleFilename(it) }
+                            ?: filename.takeIf { it.substringAfterLast('.', "").lowercase() in setOf("vtt", "srt", "ass", "ssa", "ttml", "dfxp", "srv1", "srv2", "srv3") }
+                            ?: "subtitle.${if (filename.endsWith(".srt", true)) "srt" else "vtt"}"
                         if (url != null) {
                             synchronized(detectedMediaFiles) {
-                                val existing = detectedMediaFiles.find { it.url == url }
-                                if (existing?.language != null) {
-                                    targetLang = existing.language
+                                val index = detectedMediaFiles.indexOfFirst {
+                                    SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(url)
                                 }
-                            }
-                        }
-
-                        val prefix = if (!targetLang.isNullOrBlank()) "[$targetLang] " else ""
-                        val snippetTitle = "$prefix${result.snippet}$ext"
-                        if (url != null) {
-                            synchronized(detectedMediaFiles) {
-                                val index = detectedMediaFiles.indexOfFirst { it.url == url }
                                 if (index != -1) {
-                                    detectedMediaFiles[index] = detectedMediaFiles[index].copy(title = snippetTitle, language = targetLang)
+                                    val existing = detectedMediaFiles[index]
+                                    val language = existing.language?.let { SubtitleUtils.languageDisplayName(it) } ?: validatedLanguage
+                                    detectedMediaFiles[index] = existing.copy(title = originalFilename, language = language)
                                 }
                             }
+                            refreshDetectedMediaSheet?.invoke()
                         }
-                        currentFilename = snippetTitle
+                        // Keep the downloaded filename grounded in the source, not in snippet prose.
+                        currentFilename = originalFilename
                     }
                 }
 
@@ -3325,9 +3323,10 @@ private fun injectMediaStateDetector() {
                                     val enhancedTitle = activity.generateSmartFileName(url, ext, quality, category)
                                     val fileSize = activity.estimateFileSize(url, category)
                                     val language = extractLanguageFromUrl(url)
+                                    val finalTitle = if (category == MediaCategory.SUBTITLE) SubtitleUtils.originalSubtitleFilename(url) ?: enhancedTitle else enhancedTitle
                                     val mediaFile = MediaFile(
                                         url = url,
-                                        title = enhancedTitle,
+                                        title = finalTitle,
                                         mimeType = finalMime,
                                         quality = quality,
                                         category = category,
@@ -3336,7 +3335,7 @@ private fun injectMediaStateDetector() {
                                         isMainContent = isMainContent
                                     )
                                     val existsAlready = synchronized(detectedMediaFiles) {
-                                        detectedMediaFiles.any { it.url == url }
+                                        detectedMediaFiles.any { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(url) }
                                     }
                                     if (!existsAlready) {
                                         synchronized(detectedMediaFiles) {
@@ -3458,7 +3457,7 @@ private fun injectMediaStateDetector() {
                     )
 
                     synchronized(activity.detectedMediaFiles) {
-                        activity.detectedMediaFiles.removeIf { it.url == mediaFile.url }
+                        activity.detectedMediaFiles.removeIf { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(mediaFile.url) }
                         activity.detectedMediaFiles.add(0, mediaFile)
                     }
                     activity.updateFabVisibility()
@@ -3542,7 +3541,7 @@ private fun injectMediaStateDetector() {
                          }
 
                          val existsAlready = synchronized(activity.detectedMediaFiles) {
-                            activity.detectedMediaFiles.any { it.url == url }
+                            activity.detectedMediaFiles.any { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(url) }
                          }
 
                          if (!existsAlready) {
@@ -3570,9 +3569,10 @@ private fun injectMediaStateDetector() {
 
                              val enhancedTitle = activity.generateSmartFileName(url, ext, quality, category)
 
+                             val finalTitle = if (category == MediaCategory.SUBTITLE) SubtitleUtils.originalSubtitleFilename(url) ?: enhancedTitle else enhancedTitle
                              val mediaFile = MediaFile(
                                 url = url,
-                                title = enhancedTitle,
+                                title = finalTitle,
                                 mimeType = finalMime,
                                 quality = quality,
                                 category = category,
@@ -3632,9 +3632,10 @@ private fun injectMediaStateDetector() {
                     val subtitle = isSubtitleMediaUrl(finalUrl, type)
                     val ext = if (subtitle) ".vtt" else detectedFormat.extension
                     val enhancedTitle = activity.generateSmartFileName(finalUrl, ext, quality, category)
+                    val finalTitle = if (subtitle) SubtitleUtils.originalSubtitleFilename(finalUrl) ?: enhancedTitle else enhancedTitle
                     val mediaFile = MediaFile(
                         url = finalUrl,
-                        title = enhancedTitle,
+                        title = finalTitle,
                         mimeType = detectedFormat.mimeType,
                         quality = quality,
                         category = category,
@@ -3767,7 +3768,7 @@ private fun injectMediaStateDetector() {
 
                     var updated = false
                     synchronized(activity.detectedMediaFiles) {
-                        val foundFile = activity.detectedMediaFiles.find { it.url == videoUrl }
+                        val foundFile = activity.detectedMediaFiles.find { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(videoUrl) }
                         if (foundFile != null) {
                             if (!foundFile.isMainContent) {
                                 foundFile.isMainContent = true
@@ -3937,67 +3938,8 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     return "${categoryPrefix}${baseName}${cleanQuality}${extension}"
 }
     private fun estimateFileSize(url: String, category: MediaCategory): String { return "Unknown" }
-    private fun extractLanguageFromUrl(url: String): String? {
-        val lowerUrl = url.lowercase()
-        // Also check if `lang=` query parameter exists (e.g. from YouTube extractor wrapper)
-        val queryMatch = Regex("[?&]lang=([a-zA-Z0-9-]+)").find(lowerUrl)
-        if (queryMatch != null) {
-            val code = queryMatch.groupValues[1]
-            return when (code) {
-                "en" -> "English"
-                "es" -> "Spanish"
-                "fr" -> "French"
-                "de" -> "German"
-                "pt" -> "Portuguese"
-                "ko" -> "Korean"
-                "ja" -> "Japanese"
-                "zh" -> "Chinese"
-                "zh-cn" -> "Chinese"
-                "zh-tw" -> "Chinese"
-                "id" -> "Indonesian"
-                "ru" -> "Russian"
-                "ar" -> "Arabic"
-                "hi" -> "Hindi"
-                "it" -> "Italian"
-                "tr" -> "Turkish"
-                "nl" -> "Dutch"
-                "pl" -> "Polish"
-                "vi" -> "Vietnamese"
-                "th" -> "Thai"
-                else -> code.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString() }
-            }
-        }
-
-        // If it's a known locale format like "es", "ko", "ja", "zh-TW" inside the path
-        val matches = Regex("/(en|es|fr|de|pt|ko|ja|zh|zh-CN|zh-TW|id|ru|ar|hi|it|tr|nl|pl|v_i|th)(/|-|_)".replace("_", "")).find(lowerUrl)
-        if (matches != null) {
-            val code = matches.groupValues[1]
-            return when (code) {
-                "en" -> "English"
-                "es" -> "Spanish"
-                "fr" -> "French"
-                "de" -> "German"
-                "pt" -> "Portuguese"
-                "ko" -> "Korean"
-                "ja" -> "Japanese"
-                "zh" -> "Chinese"
-                "zh-cn" -> "Chinese"
-                "zh-tw" -> "Chinese"
-                "id" -> "Indonesian"
-                "ru" -> "Russian"
-                "ar" -> "Arabic"
-                "hi" -> "Hindi"
-                "it" -> "Italian"
-                "tr" -> "Turkish"
-                "nl" -> "Dutch"
-                "pl" -> "Polish"
-                "vi" -> "Vietnamese"
-                "th" -> "Thai"
-                else -> code
-            }
-        }
-        return null
-    }
+    private fun extractLanguageFromUrl(url: String): String? =
+        SubtitleUtils.extractTrustedLanguageFromUrl(url)?.let { SubtitleUtils.languageDisplayName(it) }
     private fun extractYouTubeVideoId(url: String): String {
         val patterns = listOf("(?<=watch\\?v=)[^&]+", "(?<=youtu.be/)[^?]+", "(?<=embed/)[^?]+", "(?<=v/)[^?]+]")
         for (pattern in patterns) {
@@ -4071,89 +4013,92 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val lower = url.lowercase()
         return lower.contains("videoplayback") || lower.contains("manifest")
     }
-    private fun fetchSubtitleSnippet(mediaFile: MediaFile) {
+        private fun fetchSubtitleSnippet(mediaFile: MediaFile) {
+        val canonicalUrl = SubtitleUtils.canonicalMediaUrl(mediaFile.url)
+        if (!subtitleAnalysisInFlight.add(canonicalUrl)) return
+
         lifecycleScope.launch(Dispatchers.IO) {
+            var connection: java.net.URLConnection? = null
             try {
-                val connection = java.net.URL(mediaFile.url).openConnection() as java.net.HttpURLConnection
-                val userAgent = withContext(Dispatchers.Main) { webView.settings.userAgentString }
-                val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
-                connection.setRequestProperty("User-Agent", userAgent)
-                if (cookie != null) {
-                    connection.setRequestProperty("Cookie", cookie)
+                connection = java.net.URL(mediaFile.url).openConnection().apply {
+                    connectTimeout = 12_000
+                    readTimeout = 12_000
                 }
-                // Try to get just the beginning of the file to save bandwidth
-                // Most servers support range requests
-                connection.setRequestProperty("Range", "bytes=0-4096")
+                val http = connection as? java.net.HttpURLConnection
+                if (http != null) {
+                    val userAgent = withContext(Dispatchers.Main) { webView.settings.userAgentString }
+                    val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
+                    http.setRequestProperty("User-Agent", userAgent)
+                    if (!cookie.isNullOrBlank()) http.setRequestProperty("Cookie", cookie)
+                    http.setRequestProperty("Range", "bytes=0-16383")
+                    http.connect()
+                    if (http.responseCode !in 200..299) {
+                        throw java.io.IOException("Subtitle request returned HTTP ${http.responseCode}")
+                    }
+                }
 
-                connection.connect()
-
-                val text = connection.inputStream.bufferedReader().use { it.readText() }
+                val text = connection.getInputStream().bufferedReader().use { it.readText() }
                 val result = SubtitleUtils.extractSnippet(text)
-
-                val snippet = result.snippet ?: ""
-                if (snippet.isBlank() ||
-                    snippet.length < 15 ||
-                    snippet.contains("<script", ignoreCase = true) ||
-                    snippet.contains("<iframe", ignoreCase = true) ||
-                    snippet.contains("<!DOCTYPE", ignoreCase = true)) {
-
-                    android.util.Log.d("SubtitleUtils", "Discarding fake/invalid subtitle: ${mediaFile.url}")
+                val trimmedPayload = text.trimStart().removePrefix("\\uFEFF").trimStart()
+                // HLS subtitle tracks may point to playlists, not a single VTT document.
+                // They are valid track resources and must not be removed by text analysis.
+                if (trimmedPayload.startsWith("#EXTM3U", ignoreCase = true)) {
+                    withContext(Dispatchers.Main) { refreshDetectedMediaSheet?.invoke() }
+                    return@launch
+                }
+                val snippet = result.snippet.orEmpty()
+                val validPayload = SubtitleUtils.isValidSubtitleContent(text) &&
+                    !snippet.contains("<script", true) && !snippet.contains("<iframe", true) &&
+                    !snippet.contains("<!DOCTYPE", true)
+                if (!validPayload) {
                     synchronized(detectedMediaFiles) {
-                        detectedMediaFiles.removeAll { it.url == mediaFile.url }
+                        detectedMediaFiles.removeAll { SubtitleUtils.canonicalMediaUrl(it.url) == canonicalUrl }
                     }
                     withContext(Dispatchers.Main) {
                         updateFabVisibility()
+                        refreshDetectedMediaSheet?.invoke()
                         currentMediaListAdapter?.notifyDataSetChanged()
                     }
                     return@launch
                 }
+                // A valid subtitle may have fewer than 15 characters in its opening cues.
+                // Keep the source row and filename; do not treat short text as evidence of an invalid response.
+                if (snippet.isBlank()) {
+                    withContext(Dispatchers.Main) { refreshDetectedMediaSheet?.invoke() }
+                    return@launch
+                }
 
-                val detectedFormat = detectVideoFormat(mediaFile.url)
-                // Prioritize explicit language from URL or Extractor if available, otherwise use inferred from text
-                val targetLang = mediaFile.language ?: result.language
-
-                if (!result.snippet.isNullOrBlank()) {
-                     val prefix = if (!targetLang.isNullOrBlank()) "[$targetLang] " else ""
-                     val newTitle = "$prefix${result.snippet}${detectedFormat.extension}"
-                     synchronized(detectedMediaFiles) {
-                         val index = detectedMediaFiles.indexOfFirst { it.url == mediaFile.url }
-                         if (index != -1) {
-                             val f = detectedMediaFiles[index]
-                             detectedMediaFiles[index] = f.copy(title = newTitle, language = targetLang)
-                         }
-                     }
-                     withContext(Dispatchers.Main) {
-                         currentMediaListAdapter?.notifyDataSetChanged()
-                     }
-                } else {
-                     // Fallback if extraction fails but we know it's a subtitle
-                     val pageTitle = withContext(Dispatchers.Main) { webView.title }?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(30) ?: "Track"
-                     val fileExtract = android.net.Uri.parse(mediaFile.url).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
-                     val prefix = if (!targetLang.isNullOrBlank()) "[$targetLang] " else "[Subtitle] "
-                     val fallbackTitle = "$prefix$pageTitle - $fileExtract" + detectedFormat.extension
-                     synchronized(detectedMediaFiles) {
-                         val index = detectedMediaFiles.indexOfFirst { it.url == mediaFile.url }
-                         if (index != -1) {
-                             val f = detectedMediaFiles[index]
-                             detectedMediaFiles[index] = f.copy(title = fallbackTitle, language = targetLang)
-                         }
-                     }
-                     withContext(Dispatchers.Main) {
-                         currentMediaListAdapter?.notifyDataSetChanged()
-                     }
+                val changed = synchronized(detectedMediaFiles) {
+                    val index = detectedMediaFiles.indexOfFirst { SubtitleUtils.canonicalMediaUrl(it.url) == canonicalUrl }
+                    if (index < 0) false else {
+                        val file = detectedMediaFiles[index]
+                        val language = file.language?.let { SubtitleUtils.languageDisplayName(it) }
+                            ?: SubtitleUtils.languageDisplayName(result.language)
+                        val originalName = SubtitleUtils.originalSubtitleFilename(file.url)
+                            ?: file.title.substringBefore('\n').takeIf {
+                                it.substringAfterLast('.', "").lowercase() in setOf("vtt", "srt", "ass", "ssa", "ttml", "dfxp", "srv1", "srv2", "srv3")
+                            } ?: "subtitle.vtt"
+                        detectedMediaFiles[index] = file.copy(title = originalName, language = language)
+                        true
+                    }
+                }
+                if (changed) withContext(Dispatchers.Main) {
+                    updateFabVisibility()
+                    refreshDetectedMediaSheet?.invoke()
+                    currentMediaListAdapter?.notifyDataSetChanged()
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Failed to fetch subtitle snippet: ${e.message}")
-                val detectedFormat = detectVideoFormat(mediaFile.url)
-                val pageTitle = withContext(Dispatchers.Main) { webView.title }?.replace(Regex("[^a-zA-Z0-9 -]"), "")?.trim()?.take(30) ?: "Track"
-                val fileExtract = android.net.Uri.parse(mediaFile.url).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
-                val fallbackTitle = "[Subtitle] $pageTitle - $fileExtract" + detectedFormat.extension
-                updateMediaTitle(mediaFile.url, fallbackTitle)
+                android.util.Log.e("MainActivity", "Subtitle analysis failed: ${e.javaClass.simpleName}")
+                // Preserve the original filename and the working URL on transient errors.
+                withContext(Dispatchers.Main) { refreshDetectedMediaSheet?.invoke() }
+            } finally {
+                (connection as? java.net.HttpURLConnection)?.disconnect()
+                subtitleAnalysisInFlight.remove(canonicalUrl)
             }
         }
     }
 
-    inner class YouTubeInterface(private val activity: MainActivity) {
+inner class YouTubeInterface(private val activity: MainActivity) {
         @JavascriptInterface
         fun onVideoData(json: String) {
             val video = YouTubeHelper.parseVideoData(json)
@@ -4291,22 +4236,33 @@ private fun showMediaListDialog() {
             android.widget.Toast.makeText(this, "No media files detected.", android.widget.Toast.LENGTH_SHORT).show()
             return
         }
-        val mediaFilesCopy = synchronized(detectedMediaFiles) {
-            detectedMediaFiles.distinct().toMutableList()
+        var mediaFilesCopy = synchronized(detectedMediaFiles) {
+            detectedMediaFiles.distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }.toMutableList()
         }
         val dialogBinding = com.omymaxz.download.databinding.DialogMediaListBinding.inflate(layoutInflater)
         var selectedFilter = "ALL"
         var searchQuery = ""
+        var sheetDismissed = false
+        var sheetAdapterOrNull: MediaListAdapter? = null
 
-        fun updateMediaFilter() {
+        fun updateMediaFilter(preserveScroll: Boolean = false) {
+            if (sheetDismissed) return
+            val recycler = dialogBinding.mediaRecyclerView
+            val manager = recycler.layoutManager as? LinearLayoutManager
+            val firstVisible = if (preserveScroll) manager?.findFirstVisibleItemPosition() ?: RecyclerView.NO_POSITION else RecyclerView.NO_POSITION
+            val firstOffset = if (firstVisible != RecyclerView.NO_POSITION) manager?.findViewByPosition(firstVisible)?.top ?: 0 else 0
+
+            // The detected list is authoritative; a long-lived sheet must not render its opening snapshot.
+            mediaFilesCopy = synchronized(detectedMediaFiles) {
+                detectedMediaFiles.distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }.toMutableList()
+            }
             val filterText = searchQuery.trim()
             val filtered = mediaFilesCopy.filter { file ->
                 val categoryMatches = when (selectedFilter) {
                     "VIDEO" -> file.category == MediaCategory.VIDEO
                     "AUDIO" -> file.category == MediaCategory.AUDIO
                     "SUBTITLE" -> file.category == MediaCategory.SUBTITLE ||
-                        file.title.endsWith(".vtt", ignoreCase = true) ||
-                        file.title.endsWith(".srt", ignoreCase = true)
+                        file.title.endsWith(".vtt", ignoreCase = true) || file.title.endsWith(".srt", ignoreCase = true)
                     "OTHER" -> file.category !in setOf(MediaCategory.VIDEO, MediaCategory.AUDIO, MediaCategory.SUBTITLE)
                     else -> true
                 }
@@ -4316,8 +4272,10 @@ private fun showMediaListDialog() {
                     file.quality.contains(filterText, ignoreCase = true) ||
                     (file.language?.contains(filterText, ignoreCase = true) == true))
             }
-            currentMediaListAdapter?.mediaFiles = filtered.toMutableList()
-            currentMediaListAdapter?.notifyDataSetChanged()
+            sheetAdapterOrNull?.let {
+                it.mediaFiles = filtered.toMutableList()
+                it.notifyDataSetChanged()
+            }
             dialogBinding.mediaEmptyState.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
             dialogBinding.mediaRecyclerView.visibility = if (filtered.isEmpty()) View.INVISIBLE else View.VISIBLE
             dialogBinding.mediaEmptyState.text = if (mediaFilesCopy.isEmpty()) {
@@ -4330,7 +4288,16 @@ private fun showMediaListDialog() {
             } else {
                 "${filtered.size} of ${mediaFilesCopy.size} items"
             }
-            dialogBinding.clearListButton.isEnabled = detectedMediaFiles.isNotEmpty()
+            dialogBinding.clearListButton.isEnabled = mediaFilesCopy.isNotEmpty()
+
+            if (preserveScroll && firstVisible != RecyclerView.NO_POSITION && filtered.isNotEmpty()) {
+                recycler.post {
+                    if (!sheetDismissed) {
+                        (recycler.layoutManager as? LinearLayoutManager)
+                            ?.scrollToPositionWithOffset(firstVisible.coerceAtMost(filtered.lastIndex), firstOffset)
+                    }
+                }
+            }
         }
 
         dialogBinding.root.setBackgroundColor(
@@ -4343,7 +4310,7 @@ private fun showMediaListDialog() {
         // Without this, the dialog window can appear blank while intercepting browser touches.
         dialog.setContentView(dialogBinding.root)
 
-        currentMediaListAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
+        val sheetAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
             // Tap to download (do not dismiss to keep scroll position)
             showRenameDialog(mediaFile)
         }, { mediaFile ->
@@ -4399,15 +4366,20 @@ private fun showMediaListDialog() {
             }
             startActivity(intent)
         })
+        sheetAdapterOrNull = sheetAdapter
+        currentMediaListAdapter = sheetAdapter
+        val refreshThisSheet: () -> Unit = { updateMediaFilter(preserveScroll = true) }
+        refreshDetectedMediaSheet = refreshThisSheet
         dialog.setOnDismissListener {
-            currentMediaListAdapter = null
+            sheetDismissed = true
+            if (refreshDetectedMediaSheet === refreshThisSheet) refreshDetectedMediaSheet = null
+            if (currentMediaListAdapter === sheetAdapter) currentMediaListAdapter = null
         }
 
         dialogBinding.clearListButton.setOnClickListener {
             synchronized(detectedMediaFiles) {
                 detectedMediaFiles.clear()
             }
-            mediaFilesCopy.clear()
             updateMediaFilter()
             updateFabVisibility()
             dialog.dismiss()
@@ -4444,7 +4416,7 @@ private fun showMediaListDialog() {
         }
 
         dialogBinding.mediaRecyclerView.layoutManager = LinearLayoutManager(this)
-        dialogBinding.mediaRecyclerView.adapter = currentMediaListAdapter
+        dialogBinding.mediaRecyclerView.adapter = sheetAdapter
         updateMediaFilter()
         dialog.setOnShowListener {
             dialog.window?.setLayout(
@@ -4463,7 +4435,7 @@ private fun showMediaListDialog() {
 
     private fun updateMediaTitle(url: String, newTitle: String) {
         synchronized(detectedMediaFiles) {
-            val index = detectedMediaFiles.indexOfFirst { it.url == url }
+            val index = detectedMediaFiles.indexOfFirst { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(url) }
             if (index != -1) {
                 val oldFile = detectedMediaFiles[index]
                 if (oldFile.title != newTitle) {
@@ -6199,9 +6171,9 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
                     var addedCount = 0
                     synchronized(detectedMediaFiles) {
-                        val existingUrls = detectedMediaFiles.map { it.url }.toSet()
+                        val existingUrls = detectedMediaFiles.map { SubtitleUtils.canonicalMediaUrl(it.url) }.toMutableSet()
                         newMediaFiles.forEach {
-                            if (!existingUrls.contains(it.url)) {
+                            if (existingUrls.add(SubtitleUtils.canonicalMediaUrl(it.url))) {
                                 detectedMediaFiles.add(it)
                                 addedCount++
                                 // Trigger http fetch if needed
@@ -6435,7 +6407,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 )
 
                 // Add to our standard detected list so it shows in the UI and can be downloaded normally
-                if (!detectedMediaFiles.any { it.url == manualFile.url }) {
+                if (!detectedMediaFiles.any { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(manualFile.url) }) {
                     detectedMediaFiles.add(0, manualFile)
                     updateFabVisibility()
                 }
@@ -7859,7 +7831,12 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
     }
 
     private fun updateFabVisibility() {
-        val hasFiles = detectedMediaFiles.isNotEmpty()
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            runOnUiThread { updateFabVisibility() }
+            return
+        }
+        refreshDetectedMediaSheet?.invoke()
+        val hasFiles = synchronized(detectedMediaFiles) { detectedMediaFiles.isNotEmpty() }
 
         if (hasFiles) {
             binding.fabShowMedia.visibility = android.view.View.VISIBLE
@@ -8026,7 +8003,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
         val localUriString = android.net.Uri.fromFile(subtitleFile).toString()
 
         val existsAlready = synchronized(detectedMediaFiles) {
-            detectedMediaFiles.any { it.url == localUriString }
+            detectedMediaFiles.any { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(localUriString) }
         }
 
         if (!existsAlready) {
@@ -8176,7 +8153,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                     var wasAdded = false
                     synchronized(detectedMediaFiles) {
                         // 1. Add main video
-                        if (!detectedMediaFiles.any { it.url == mediaFile.url }) {
+                        if (!detectedMediaFiles.any { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(mediaFile.url) }) {
                             detectedMediaFiles.add(0, mediaFile)
                             wasAdded = true
                         }
@@ -8193,7 +8170,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                                 subtitleUrls = null,
                                 requiresSeparateAudio = false
                             )
-                            if (!detectedMediaFiles.any { it.url == audioFile.url }) {
+                            if (!detectedMediaFiles.any { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(audioFile.url) }) {
                                 detectedMediaFiles.add(audioFile)
                                 wasAdded = true
                             }
@@ -8202,18 +8179,18 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                         // 3. Add subtitles
                         if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                             mediaFile.subtitleUrls!!.forEach { subUrl ->
-                                val subLang = subUrl.substringAfter("lang=", "en").substringBefore("&")
+                                val subLang = SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
                                 val subFile = mediaFile.copy(
                                     url = subUrl,
-                                    title = "${mediaFile.title}_$subLang.vtt",
+                                    title = "${mediaFile.title.substringBeforeLast('.', mediaFile.title)}_${SubtitleUtils.languageDisplayName(subLang) ?: "Subtitle"}.vtt",
                                     mimeType = "text/vtt",
                                     category = MediaCategory.SUBTITLE,
                                     audioUrl = null,
                                     subtitleUrls = null,
-                                    language = subLang,
+                                    language = subLang?.let { SubtitleUtils.languageDisplayName(it) },
                                     requiresSeparateAudio = false
                                 )
-                                if (!detectedMediaFiles.any { it.url == subFile.url }) {
+                                if (!detectedMediaFiles.any { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(subFile.url) }) {
                                     detectedMediaFiles.add(subFile)
                                     wasAdded = true
                                 }
