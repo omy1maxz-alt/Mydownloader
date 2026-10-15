@@ -892,7 +892,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                                     it.write(normalizedSubtitle.toByteArray(Charsets.UTF_8))
                                 }
                                 refreshedExternalSubtitles = true
-                                android.util.Log.d("YT_SUBTITLE_TRACE", "refreshed track lang=\${targetLang} chars=\${normalizedSubtitle.length}")
+                                android.util.Log.d("YT_SUBTITLE_TRACE", "refreshed track lang=${targetLang} chars=${normalizedSubtitle.length}")
                             } else {
                                 android.util.Log.w("YT_SUBTITLE_TRACE", "Ignoring empty/invalid subtitle response lang=\${targetLang} chars=\${contentString.length}")
                             }
