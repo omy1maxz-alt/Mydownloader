@@ -4590,7 +4590,8 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                 val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                 if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                if (!mediaFile.audioUrl.isNullOrEmpty()) {
+                if (mediaFile.requiresSeparateAudio && !mediaFile.audioUrl.isNullOrEmpty()) {
+                    // Merging a second source is correct only for video-only streams.
                     putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
                     putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
                 }
@@ -4690,7 +4691,8 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                         val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                if (!mediaFile.audioUrl.isNullOrEmpty()) {
+                if (mediaFile.requiresSeparateAudio && !mediaFile.audioUrl.isNullOrEmpty()) {
+                    // Merging a second source is correct only for video-only streams.
                     putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
                     putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
                 }
@@ -4723,7 +4725,8 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                         val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                if (!mediaFile.audioUrl.isNullOrEmpty()) {
+                if (mediaFile.requiresSeparateAudio && !mediaFile.audioUrl.isNullOrEmpty()) {
+                    // Merging a second source is correct only for video-only streams.
                     putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
                     putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
                 }
