@@ -4590,7 +4590,7 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                 val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                 if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                configureYouTubeAudioSource(this, mediaFile)
+                this@MainActivity.configureYouTubeAudioSource(this, mediaFile)
                 if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                     val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                         if (mediaFile.language != null && !url.contains("lang=")) {
@@ -4687,7 +4687,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                         val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                configureYouTubeAudioSource(this, mediaFile)
+                this@MainActivity.configureYouTubeAudioSource(this, mediaFile)
                 if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                     val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                         if (mediaFile.language != null && !url.contains("lang=")) {
@@ -4717,7 +4717,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                         val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                configureYouTubeAudioSource(this, mediaFile)
+                this@MainActivity.configureYouTubeAudioSource(this, mediaFile)
                 if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                     val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                         if (mediaFile.language != null && !url.contains("lang=")) {
@@ -7820,7 +7820,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
             android.webkit.CookieManager.getInstance().getCookie(referer)?.let {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, it)
             }
-            configureYouTubeAudioSource(this, mediaFile)
+            this@MainActivity.configureYouTubeAudioSource(this, mediaFile)
             if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                 val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                     if (mediaFile.language != null && !url.contains("lang=")) {
