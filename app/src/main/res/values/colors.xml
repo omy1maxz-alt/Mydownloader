@@ -1,25 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#009688</color>
-    <color name="colorPrimaryDark">#00796B</color>
-    <color name="colorAccent">#4CAF50</color>
+    <!-- Legacy aliases retained for existing screens and custom theme-color settings. -->
+    <color name="colorPrimary">#006A60</color>
+    <color name="colorPrimaryDark">#004F48</color>
+    <color name="colorAccent">#2E7D72</color>
     <color name="teal_200">#80CBC4</color>
-    <color name="teal_700">#00796B</color>
+    <color name="teal_700">#006A60</color>
     <color name="purple_500">#6200EE</color>
     <color name="red">#FF0000</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+    <!-- Material 3 semantic palette: light theme. -->
+    <color name="md_primary_container">#B4F1E7</color>
+    <color name="md_on_primary_container">#00201C</color>
+    <color name="md_secondary_container">#D5E8E3</color>
+    <color name="md_on_secondary_container">#10201D</color>
+    <color name="md_surface">#F7FAF9</color>
+    <color name="md_on_surface">#191D1C</color>
+    <color name="md_surface_variant">#DCE5E2</color>
+    <color name="md_on_surface_variant">#404946</color>
+    <color name="md_surface_container">#EBF1EF</color>
+    <color name="md_surface_container_high">#E5EBE9</color>
+    <color name="md_outline">#707976</color>
+    <color name="error_color">#BA1A1A</color>
+
+    <!-- Media category colors retained while UI surfaces are being migrated. -->
     <color name="media_video_main_bg">#C8E6C9</color>
-    <!-- Soft muted red highlight for video sources with multiple quality options -->
     <color name="media_video_multi_quality_bg">#E8B4B4</color>
     <color name="media_video_clip_bg">#E8F5E9</color>
     <color name="media_subtitle_bg">#FFF3E0</color>
     <color name="media_ad_bg">#FFCDD2</color>
     <color name="media_other_bg">#F5F5F5</color>
-
     <color name="active_tab_bg">#D1E4F6</color>
     <color name="selected_tab_bg">#FFCDD2</color>
-    <color name="error_color">#D32F2F</color>
-
 </resources>
