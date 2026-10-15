@@ -4225,22 +4225,33 @@ private fun showMediaListDialog() {
             android.widget.Toast.makeText(this, "No media files detected.", android.widget.Toast.LENGTH_SHORT).show()
             return
         }
-        val mediaFilesCopy = synchronized(detectedMediaFiles) {
-            detectedMediaFiles.distinct().toMutableList()
+        var mediaFilesCopy = synchronized(detectedMediaFiles) {
+            detectedMediaFiles.distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }.toMutableList()
         }
         val dialogBinding = com.omymaxz.download.databinding.DialogMediaListBinding.inflate(layoutInflater)
         var selectedFilter = "ALL"
         var searchQuery = ""
+        var sheetDismissed = false
+        var sheetAdapterOrNull: MediaListAdapter? = null
 
-        fun updateMediaFilter() {
+        fun updateMediaFilter(preserveScroll: Boolean = false) {
+            if (sheetDismissed) return
+            val recycler = dialogBinding.mediaRecyclerView
+            val manager = recycler.layoutManager as? LinearLayoutManager
+            val firstVisible = if (preserveScroll) manager?.findFirstVisibleItemPosition() ?: RecyclerView.NO_POSITION else RecyclerView.NO_POSITION
+            val firstOffset = if (firstVisible != RecyclerView.NO_POSITION) manager?.findViewByPosition(firstVisible)?.top ?: 0 else 0
+
+            // The detected list is authoritative; a long-lived sheet must not render its opening snapshot.
+            mediaFilesCopy = synchronized(detectedMediaFiles) {
+                detectedMediaFiles.distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }.toMutableList()
+            }
             val filterText = searchQuery.trim()
             val filtered = mediaFilesCopy.filter { file ->
                 val categoryMatches = when (selectedFilter) {
                     "VIDEO" -> file.category == MediaCategory.VIDEO
                     "AUDIO" -> file.category == MediaCategory.AUDIO
                     "SUBTITLE" -> file.category == MediaCategory.SUBTITLE ||
-                        file.title.endsWith(".vtt", ignoreCase = true) ||
-                        file.title.endsWith(".srt", ignoreCase = true)
+                        file.title.endsWith(".vtt", ignoreCase = true) || file.title.endsWith(".srt", ignoreCase = true)
                     "OTHER" -> file.category !in setOf(MediaCategory.VIDEO, MediaCategory.AUDIO, MediaCategory.SUBTITLE)
                     else -> true
                 }
@@ -4250,8 +4261,10 @@ private fun showMediaListDialog() {
                     file.quality.contains(filterText, ignoreCase = true) ||
                     (file.language?.contains(filterText, ignoreCase = true) == true))
             }
-            currentMediaListAdapter?.mediaFiles = filtered.toMutableList()
-            currentMediaListAdapter?.notifyDataSetChanged()
+            sheetAdapterOrNull?.let {
+                it.mediaFiles = filtered.toMutableList()
+                it.notifyDataSetChanged()
+            }
             dialogBinding.mediaEmptyState.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
             dialogBinding.mediaRecyclerView.visibility = if (filtered.isEmpty()) View.INVISIBLE else View.VISIBLE
             dialogBinding.mediaEmptyState.text = if (mediaFilesCopy.isEmpty()) {
@@ -4264,7 +4277,16 @@ private fun showMediaListDialog() {
             } else {
                 "${filtered.size} of ${mediaFilesCopy.size} items"
             }
-            dialogBinding.clearListButton.isEnabled = detectedMediaFiles.isNotEmpty()
+            dialogBinding.clearListButton.isEnabled = mediaFilesCopy.isNotEmpty()
+
+            if (preserveScroll && firstVisible != RecyclerView.NO_POSITION && filtered.isNotEmpty()) {
+                recycler.post {
+                    if (!sheetDismissed) {
+                        (recycler.layoutManager as? LinearLayoutManager)
+                            ?.scrollToPositionWithOffset(firstVisible.coerceAtMost(filtered.lastIndex), firstOffset)
+                    }
+                }
+            }
         }
 
         dialogBinding.root.setBackgroundColor(
@@ -4277,7 +4299,7 @@ private fun showMediaListDialog() {
         // Without this, the dialog window can appear blank while intercepting browser touches.
         dialog.setContentView(dialogBinding.root)
 
-        currentMediaListAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
+        val sheetAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
             // Tap to download (do not dismiss to keep scroll position)
             showRenameDialog(mediaFile)
         }, { mediaFile ->
@@ -4333,8 +4355,14 @@ private fun showMediaListDialog() {
             }
             startActivity(intent)
         })
+        sheetAdapterOrNull = sheetAdapter
+        currentMediaListAdapter = sheetAdapter
+        val refreshThisSheet: () -> Unit = { updateMediaFilter(preserveScroll = true) }
+        refreshDetectedMediaSheet = refreshThisSheet
         dialog.setOnDismissListener {
-            currentMediaListAdapter = null
+            sheetDismissed = true
+            if (refreshDetectedMediaSheet === refreshThisSheet) refreshDetectedMediaSheet = null
+            if (currentMediaListAdapter === sheetAdapter) currentMediaListAdapter = null
         }
 
         dialogBinding.clearListButton.setOnClickListener {
@@ -4378,7 +4406,7 @@ private fun showMediaListDialog() {
         }
 
         dialogBinding.mediaRecyclerView.layoutManager = LinearLayoutManager(this)
-        dialogBinding.mediaRecyclerView.adapter = currentMediaListAdapter
+        dialogBinding.mediaRecyclerView.adapter = sheetAdapter
         updateMediaFilter()
         dialog.setOnShowListener {
             dialog.window?.setLayout(
@@ -7793,7 +7821,12 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
     }
 
     private fun updateFabVisibility() {
-        val hasFiles = detectedMediaFiles.isNotEmpty()
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            runOnUiThread { updateFabVisibility() }
+            return
+        }
+        refreshDetectedMediaSheet?.invoke()
+        val hasFiles = synchronized(detectedMediaFiles) { detectedMediaFiles.isNotEmpty() }
 
         if (hasFiles) {
             binding.fabShowMedia.visibility = android.view.View.VISIBLE
