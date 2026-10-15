@@ -12,7 +12,9 @@ data class MediaFile(
     var hasMultipleQualities: Boolean = false,
     var referer: String? = null,
     var audioUrl: String? = null,
-    var subtitleUrls: List<String>? = null
+    var subtitleUrls: List<String>? = null,
+    // True only when url is a video-only stream and playback must merge audioUrl.
+    var requiresSeparateAudio: Boolean = false
 )
 
 enum class MediaCategory(val displayName: String, val priority: Int) {
