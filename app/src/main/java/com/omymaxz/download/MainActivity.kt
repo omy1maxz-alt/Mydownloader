@@ -4035,6 +4035,13 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
 
                 val text = connection.getInputStream().bufferedReader().use { it.readText() }
                 val result = SubtitleUtils.extractSnippet(text)
+                val trimmedPayload = text.trimStart().removePrefix("\\uFEFF").trimStart()
+                // HLS subtitle tracks may point to playlists, not a single VTT document.
+                // They are valid track resources and must not be removed by text analysis.
+                if (trimmedPayload.startsWith("#EXTM3U", ignoreCase = true)) {
+                    withContext(Dispatchers.Main) { refreshDetectedMediaSheet?.invoke() }
+                    return@launch
+                }
                 val snippet = result.snippet.orEmpty()
                 val validPayload = SubtitleUtils.isValidSubtitleContent(text) &&
                     !snippet.contains("<script", true) && !snippet.contains("<iframe", true) &&
