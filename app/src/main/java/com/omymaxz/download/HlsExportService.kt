@@ -156,11 +156,22 @@ class HlsExportService : Service() {
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
         val splitAudioUrl = intent.getStringExtra("com.omymaxz.download.extra.AUDIO_URL")
         val mimeType   = intent.getStringExtra(EXTRA_MIME_TYPE) ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
-        val exportRequestHeaders = HlsDownloadHelper.RequestHeaders(
+        val intentRequestHeaders = HlsDownloadHelper.RequestHeaders(
             userAgent = intent.getStringExtra(EXTRA_USER_AGENT),
             referer = intent.getStringExtra(EXTRA_REFERER),
             cookie = intent.getStringExtra(EXTRA_COOKIE)
         )
+        // Older Download-ID intents may not include request-header extras. Snapshot legacy state
+        // at entry for those callers, rather than reading mutable globals later in the export job.
+        val exportRequestHeaders = if (
+            intentRequestHeaders.userAgent.isNullOrBlank() &&
+            intentRequestHeaders.referer.isNullOrBlank() &&
+            intentRequestHeaders.cookie.isNullOrBlank()
+        ) {
+            HlsDownloadHelper.RequestHeaders.fromLegacyState()
+        } else {
+            intentRequestHeaders
+        }
 
 
         android.util.Log.d("HLS_EXPORT_DEBUG", "[HLS_EXPORT_DEBUG] intentVideoUrl=$videoUrl, intentMimeType=$mimeType")
