@@ -1989,7 +1989,7 @@ class MainActivity : AppCompatActivity() {
                     // Try to apply theme colors to this popup
                     val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
                     val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
-                            val parsedColor = android.graphics.Color.rgb(
+                                                val parsedColor = android.graphics.Color.rgb(
                         android.graphics.Color.red(baseColor),
                         android.graphics.Color.green(baseColor),
                         android.graphics.Color.blue(baseColor)
