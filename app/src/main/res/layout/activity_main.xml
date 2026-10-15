@@ -16,7 +16,7 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="56dp"
             android:background="?attr/colorPrimary"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             app:contentInsetStart="0dp">
@@ -30,8 +30,8 @@
                 <ImageButton
                     android:id="@+id/homeButton"
                     style="?attr/borderlessButtonStyle"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:contentDescription="Home"
                     android:src="@drawable/ic_home"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -41,14 +41,14 @@
                 <LinearLayout
                     android:id="@+id/searchBarContainer"
                     android:layout_width="0dp"
-                    android:layout_height="36dp"
+                    android:layout_height="40dp"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
                     android:background="@drawable/bg_search_bar_modern"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
+                    android:paddingEnd="4dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/rightIconsScroll"
                     app:layout_constraintStart_toEndOf="@+id/homeButton"
@@ -66,8 +66,17 @@
                         android:importantForAutofill="no"
                         android:inputType="textUri"
                         android:maxLines="1"
-                        android:textColor="@android:color/black"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?attr/colorOnSurfaceVariant"
                         android:textSize="14sp" />
+
+                    <ImageButton
+                        android:id="@+id/refreshButton"
+                        style="?attr/borderlessButtonStyle"
+                        android:layout_width="36dp"
+                        android:layout_height="40dp"
+                        android:contentDescription="Refresh"
+                        android:src="@drawable/ic_refresh" />
                 </LinearLayout>
 
                 <HorizontalScrollView
@@ -88,14 +97,6 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <ImageButton
-                            android:id="@+id/refreshButton"
-                            style="?attr/borderlessButtonStyle"
-                            android:layout_width="36dp"
-                            android:layout_height="40dp"
-                            android:contentDescription="Refresh"
-                            android:src="@drawable/ic_refresh" />
-
                         <!-- Secondary actions stay in the layout for existing click handlers,
                              but no longer consume scarce toolbar width in portrait. -->
                         <ImageButton
@@ -112,6 +113,7 @@
                             style="?attr/borderlessButtonStyle"
                             android:layout_width="36dp"
                             android:layout_height="40dp"
+                            android:visibility="gone"
                             android:contentDescription="Back"
                             android:src="@drawable/ic_arrow_back" />
 
@@ -120,6 +122,7 @@
                             style="?attr/borderlessButtonStyle"
                             android:layout_width="36dp"
                             android:layout_height="40dp"
+                            android:visibility="gone"
                             android:contentDescription="Forward"
                             android:src="@drawable/ic_arrow_forward" />
 
@@ -132,20 +135,42 @@
                             android:contentDescription="Gemini AI"
                             android:src="@drawable/ic_ai_sparkle" />
 
-                        <ImageButton
-                            android:id="@+id/fabShowMedia"
-                            style="?attr/borderlessButtonStyle"
-                            android:layout_width="36dp"
-                            android:layout_height="40dp"
-                            android:contentDescription="Downloads"
-                            android:src="@drawable/ic_download"
-                            android:visibility="gone"
-                            tools:visibility="visible" />
+                        <FrameLayout
+                            android:layout_width="48dp"
+                            android:layout_height="48dp">
+
+                            <ImageButton
+                                android:id="@+id/fabShowMedia"
+                                style="?attr/borderlessButtonStyle"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:contentDescription="Detected media"
+                                android:src="@drawable/ic_download"
+                                android:visibility="gone"
+                                tools:visibility="visible" />
+
+                            <TextView
+                                android:id="@+id/mediaCountBadge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="18dp"
+                                android:layout_gravity="top|end"
+                                android:background="@drawable/bg_media_count_badge"
+                                android:gravity="center"
+                                android:minWidth="18dp"
+                                android:paddingStart="4dp"
+                                android:paddingEnd="4dp"
+                                android:text="0"
+                                android:textColor="@color/white"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:visibility="gone"
+                                tools:visibility="visible" />
+                        </FrameLayout>
 
                         <FrameLayout
                             android:id="@+id/tabButton"
-                            android:layout_width="36dp"
-                            android:layout_height="40dp"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Tabs">
 
@@ -168,8 +193,8 @@
                         <ImageButton
                             android:id="@+id/overflowMenuButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="36dp"
-                            android:layout_height="40dp"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
                             android:contentDescription="More options"
                             android:src="@drawable/ic_more_vert" />
 
