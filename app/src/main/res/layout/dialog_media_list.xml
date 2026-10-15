@@ -1,69 +1,173 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Detected Media Files"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:padding="8dp" />
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="12dp">
 
     <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/darker_gray"
-        android:layout_marginVertical="8dp" />
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_sheet_drag_handle" />
 
-    <!-- A fixed height wrapper for the RecyclerView to ensure it scrolls and doesn't push the button off screen -->
+    <TextView
+        android:id="@+id/mediaSheetTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Detected media"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/mediaSheetSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Media found on this page"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="13sp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="Search detected media"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/mediaSearchInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:maxLines="1"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:fillViewport="false"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/mediaFilterChipGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleSelection="true"
+            android:selectionRequired="true"
+            android:checkedChip="@id/filterAll"
+            android:orientation="horizontal"
+            tools:ignore="MissingConstraints">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/filterAll"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:checked="true"
+                android:text="All" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/filterVideo"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="Video" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/filterAudio"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="Audio" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/filterSubtitle"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="Subtitles" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/filterOther"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="Other" />
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="350dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp">
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/mediaRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp"
             android:scrollbars="vertical" />
+
+        <TextView
+            android:id="@+id/mediaEmptyState"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="24dp"
+            android:text="No media matches this filter"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
     </FrameLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tap to download, hold to open with"
-        android:textSize="12sp"
-        android:textColor="@android:color/darker_gray"
-        android:gravity="center"
-        android:padding="8dp" />
+        android:layout_marginTop="4dp"
+        android:text="Tap a media row to download • Use play for in-app playback • Long-press for more options"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="12sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
         android:layout_marginTop="8dp">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/analyzeSubtitlesButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="Analyze Subs"
-            style="?android:attr/borderlessButtonStyle"
-            android:textColor="?android:attr/colorPrimary" />
+            android:text="Analyze subtitles" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/clearListButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="Clear List"
-            style="?android:attr/borderlessButtonStyle"
-            android:textColor="@color/error_color" />
+            android:text="Clear list"
+            android:textColor="?attr/colorError" />
     </LinearLayout>
-
 </LinearLayout>
