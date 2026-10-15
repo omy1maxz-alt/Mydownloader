@@ -63,7 +63,7 @@ class MediaListAdapter(
         private val titleTextView: TextView = itemView.findViewById(R.id.media_title)
         private val typeTextView: TextView = itemView.findViewById(R.id.media_type)
         private val thumbnailView: ImageView = itemView.findViewById(R.id.media_thumbnail)
-        private val btnAnalyzeMedia: Button? = itemView.findViewById(R.id.btn_analyze_media)
+        private val btnAnalyzeMedia: TextView? = itemView.findViewById(R.id.btn_analyze_media)
 
         fun bind(mediaFile: MediaFile) {
             val btnInfo = itemView.findViewById<android.widget.ImageButton>(R.id.btn_media_info)
