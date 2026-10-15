@@ -412,16 +412,7 @@ class HlsExportService : Service() {
         }
 
 
-    private fun cacheOnlyDataSource(): androidx.media3.datasource.DataSource =
-        cacheOnlyDataSource(HlsDownloadHelper.RequestHeaders.fromLegacyState())
-
-    private fun cacheOnlyDataSource(
-        requestHeaders: HlsDownloadHelper.RequestHeaders
-    ): androidx.media3.datasource.DataSource {
-        // This source must never fall back to network. Header values are accepted to make the
-        // export-call context explicit; they are intentionally not applied to this cache-only path.
-        @Suppress("UNUSED_VARIABLE")
-        val scopedHeaders = requestHeaders
+    private fun cacheOnlyDataSource(): androidx.media3.datasource.DataSource {
         val cache = HlsDownloadHelper.getUnifiedCache(applicationContext)
         val failingUpstream = androidx.media3.datasource.DataSource.Factory {
             object : androidx.media3.datasource.BaseDataSource(false) {
