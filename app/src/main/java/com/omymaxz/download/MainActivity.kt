@@ -4334,6 +4334,10 @@ private fun showMediaListDialog() {
         val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(
             this, R.style.DetectedMediaBottomSheetTheme
         )
+        // The binding is inflated manually, so attach its root to the dialog explicitly.
+        // Without this, the dialog window can appear blank while intercepting browser touches.
+        dialog.setContentView(dialogBinding.root)
+
         currentMediaListAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
             // Tap to download (do not dismiss to keep scroll position)
             showRenameDialog(mediaFile)
