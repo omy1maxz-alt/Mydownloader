@@ -168,9 +168,9 @@ object HlsDownloadHelper {
     data class RequestHeaders(val userAgent: String? = null, val referer: String? = null, val cookie: String? = null) {
         companion object {
             fun fromLegacyState(): RequestHeaders = RequestHeaders(
-                userAgent = currentUserAgent,
-                referer = currentReferer,
-                cookie = currentCookie
+                userAgent = HlsDownloadHelper.currentUserAgent,
+                referer = HlsDownloadHelper.currentReferer,
+                cookie = HlsDownloadHelper.currentCookie
             )
         }
     }
