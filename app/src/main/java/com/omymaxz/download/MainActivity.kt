@@ -1147,8 +1147,9 @@ class MainActivity : AppCompatActivity() {
                 binding.backButton.visibility = View.VISIBLE
                 binding.forwardButton.visibility = View.VISIBLE
                 binding.refreshButton.visibility = View.VISIBLE
-                binding.translateButton.visibility = View.VISIBLE
-                binding.aiButton.visibility = View.VISIBLE
+                // Translate and AI are intentionally hidden in the compact toolbar.
+                binding.translateButton.visibility = View.GONE
+                binding.aiButton.visibility = View.GONE
                 binding.tabButton.visibility = View.VISIBLE
             }
         }
@@ -1383,24 +1384,8 @@ class MainActivity : AppCompatActivity() {
                     super.onPageStarted(view, url, favicon)
                     isPageLoading = true
 
-                    val isYt2 = isYouTubeVideoUrl(url)
-                    if (!isYt2) {
-                        synchronized(detectedMediaFiles) {
-                            detectedMediaFiles.clear()
-                        }
-                        (webView.tag as? MediaStateInterface)?.clearState()
-                        mediaEngine.clear()
-                        currentMediaListAdapter?.notifyDataSetChanged()
-                    }
-
                     binding.progressBar.visibility = View.VISIBLE
                     binding.urlEditTextToolbar.setText(url)
-
-                    if (isYt2) {
-                        checkForYouTube(url)
-                    }
-
-                    runOnUiThread { updateFabVisibility() }
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
@@ -2004,12 +1989,11 @@ class MainActivity : AppCompatActivity() {
                     // Try to apply theme colors to this popup
                     val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
                     val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
-        val parsedColor = if (isOpaque) {
-            // Strip alpha to make it 100% opaque
-            android.graphics.Color.rgb(android.graphics.Color.red(baseColor), android.graphics.Color.green(baseColor), android.graphics.Color.blue(baseColor))
-        } else {
-            baseColor
-        }
+                    val parsedColor = android.graphics.Color.rgb(
+                        android.graphics.Color.red(baseColor),
+                        android.graphics.Color.green(baseColor),
+                        android.graphics.Color.blue(baseColor)
+                    )
 
                     // Helper to get text color based on luminance
                     val luminance = (0.299 * android.graphics.Color.red(parsedColor) + 0.587 * android.graphics.Color.green(parsedColor) + 0.114 * android.graphics.Color.blue(parsedColor)) / 255
@@ -2555,35 +2539,7 @@ class MainActivity : AppCompatActivity() {
                 'use strict';
                 if (window.AndroidMediaDetector) return;
 
-                // Inject fetch/XHR hooking specifically for capturing blobs manifesting to m3u8 upstream.
-                const originalFetch = window.fetch;
-                window.fetch = async function() {
-                    let requestUrl = arguments[0];
-                    if (typeof requestUrl === 'string' && (requestUrl.includes('.m3u8') || requestUrl.includes('.mp4') || requestUrl.includes('videoplayback'))) {
-                        if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) {
-                            window.AndroidMediaState.onMediaDetected(requestUrl, 'video');
-                        }
-                    } else if (arguments[0] instanceof Request) {
-                        let reqUrl = arguments[0].url;
-                        if (reqUrl.includes('.m3u8') || reqUrl.includes('.mp4') || reqUrl.includes('videoplayback')) {
-                            if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) {
-                                window.AndroidMediaState.onMediaDetected(reqUrl, 'video');
-                            }
-                        }
-                    }
-                    return originalFetch.apply(this, arguments);
-                };
-
-                const originalXhrOpen = XMLHttpRequest.prototype.open;
-                XMLHttpRequest.prototype.open = function(method, url) {
-                    if (typeof url === 'string' && (url.includes('.m3u8') || url.includes('.mp4') || url.includes('videoplayback'))) {
-                         if (window.AndroidMediaState && window.AndroidMediaState.onMediaDetected) {
-                            window.AndroidMediaState.onMediaDetected(url, 'video');
-                        }
-                    }
-                    return originalXhrOpen.apply(this, arguments);
-                };
-
+                // Network hooks are installed once by detector.initNetworkInterceptors().
                 const detector = {
                     processedUrls: new Set(),
 
