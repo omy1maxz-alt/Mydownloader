@@ -24,6 +24,7 @@
     <color name="md_surface_container_high">#E5EBE9</color>
     <color name="md_outline">#707976</color>
     <color name="error_color">#BA1A1A</color>
+    <color name="media_badge_bg">#B3261E</color>
 
     <!-- Media category colors retained while UI surfaces are being migrated. -->
     <color name="media_video_main_bg">#C8E6C9</color>
