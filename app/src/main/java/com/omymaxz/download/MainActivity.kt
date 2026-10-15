@@ -1306,6 +1306,7 @@ class MainActivity : AppCompatActivity() {
             webViewClient = object : WebViewClient() {
                 private var lastNavigationTime = 0L
                 private var navigationCount = 0
+                private var lastQuickRefreshScheduledUrl: String? = null
 
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                     synchronized(injectedUserscriptIdsForPage) {
@@ -1316,6 +1317,7 @@ class MainActivity : AppCompatActivity() {
                     // YouTube SPA video changes are cleared by checkForYouTube using the
                     // canonical video ID; leaving YouTube invalidates in-flight extraction results.
                     if (!isYt) {
+                        lastQuickRefreshScheduledUrl = null
                         resetYouTubeDetectionContext()
                         synchronized(detectedMediaFiles) {
                             detectedMediaFiles.clear()
@@ -1326,6 +1328,12 @@ class MainActivity : AppCompatActivity() {
                     }
                     if (isYt) {
                         checkForYouTube(url)
+                        if (getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                                .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false) &&
+                            !url.isNullOrBlank() && url != lastQuickRefreshScheduledUrl) {
+                            lastQuickRefreshScheduledUrl = url
+                            scheduleYouTubeQuickRefresh(url)
+                        }
                     }
                     runOnUiThread {
                         updateFabVisibility()
@@ -5264,6 +5272,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
 
 
+
     private fun isYouTubeUrl(url: String): Boolean {
         val host = try { Uri.parse(url).host.orEmpty().lowercase() } catch (_: Exception) { "" }
         return host == "youtube.com" || host.endsWith(".youtube.com") ||
@@ -5280,26 +5289,25 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             Toast.LENGTH_SHORT
         ).show()
 
-        // If enabled while already on YouTube, apply it to the current page once.
-        if (enabled && webView.visibility == View.VISIBLE && isYouTubeUrl(webView.url.orEmpty())) {
-            scheduleYouTubeQuickRefresh()
+        if (enabled && webView.visibility == View.VISIBLE) {
+            scheduleYouTubeQuickRefresh(webView.url.orEmpty())
         }
     }
 
-    private fun scheduleYouTubeQuickRefresh() {
+    private fun scheduleYouTubeQuickRefresh(targetUrl: String) {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         if (!prefs.getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) return
-        val currentUrl = webView.url.orEmpty()
-        if (!isYouTubeUrl(currentUrl)) return
-        val uri = Uri.parse(currentUrl)
+        if (!isYouTubeUrl(targetUrl)) return
+        val uri = Uri.parse(targetUrl)
         if (uri.scheme != "https" && uri.scheme != "http") return
 
         webView.postDelayed({
             if (isFinishing || isDestroyed || !::webView.isInitialized) return@postDelayed
-            val latestUrl = webView.url.orEmpty()
             val stillEnabled = getSharedPreferences("Settings", Context.MODE_PRIVATE)
                 .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)
-            if (stillEnabled && webView.visibility == View.VISIBLE && isYouTubeUrl(latestUrl)) {
+            val latestUrl = webView.url.orEmpty()
+            if (stillEnabled && webView.visibility == View.VISIBLE &&
+                latestUrl == targetUrl && isYouTubeUrl(latestUrl)) {
                 webView.reload()
             }
         }, 250L)
