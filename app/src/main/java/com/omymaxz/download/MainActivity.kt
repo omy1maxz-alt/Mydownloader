@@ -5259,6 +5259,54 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         menuDialog.show()
     }
 
+
+    /**
+     * One-shot manual test for the reported YouTube ad timing behavior.
+     * This does not claim to block ads; it only reloads the current YouTube page once.
+     */
+    private fun runYouTubeQuickRefreshTest() {
+        val currentUrl = webView.url.orEmpty()
+        val host = try {
+            Uri.parse(currentUrl).host.orEmpty().lowercase()
+        } catch (_: Exception) {
+            ""
+        }
+        val isYouTubeHost = host == "youtube.com" ||
+            host.endsWith(".youtube.com") ||
+            host == "youtu.be" ||
+            host.endsWith(".youtu.be")
+
+        if (!isYouTubeHost || webView.visibility != View.VISIBLE) {
+            Toast.makeText(
+                this,
+                "Open a YouTube page first to run this test.",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        // Require a valid HTTP(S) page URL and make exactly one delayed reload.
+        val uri = Uri.parse(currentUrl)
+        if (uri.scheme != "https" && uri.scheme != "http") {
+            Toast.makeText(this, "This YouTube page cannot be reloaded safely.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        Toast.makeText(this, "Testing YouTube quick refresh…", Toast.LENGTH_SHORT).show()
+        webView.postDelayed({
+            if (isFinishing || isDestroyed || !::webView.isInitialized) return@postDelayed
+            val latestUrl = webView.url.orEmpty()
+            val latestHost = try { Uri.parse(latestUrl).host.orEmpty().lowercase() } catch (_: Exception) { "" }
+            val stillOnYouTube = latestHost == "youtube.com" ||
+                latestHost.endsWith(".youtube.com") ||
+                latestHost == "youtu.be" ||
+                latestHost.endsWith(".youtu.be")
+            if (stillOnYouTube && webView.visibility == View.VISIBLE) {
+                webView.reload()
+            }
+        }, 250L)
+    }
+
     private fun makeMenuRow(
         title: String,
         iconRes: Int,
