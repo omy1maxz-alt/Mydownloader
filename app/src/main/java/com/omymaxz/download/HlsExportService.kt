@@ -156,6 +156,12 @@ class HlsExportService : Service() {
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Unknown_Video"
         val splitAudioUrl = intent.getStringExtra("com.omymaxz.download.extra.AUDIO_URL")
         val mimeType   = intent.getStringExtra(EXTRA_MIME_TYPE) ?: androidx.media3.common.MimeTypes.APPLICATION_M3U8
+        val exportRequestHeaders = HlsDownloadHelper.RequestHeaders(
+            userAgent = intent.getStringExtra(EXTRA_USER_AGENT),
+            referer = intent.getStringExtra(EXTRA_REFERER),
+            cookie = intent.getStringExtra(EXTRA_COOKIE)
+        )
+
 
         android.util.Log.d("HLS_EXPORT_DEBUG", "[HLS_EXPORT_DEBUG] intentVideoUrl=$videoUrl, intentMimeType=$mimeType")
         val streamKeyStrings = intent.getStringArrayListExtra(EXTRA_STREAM_KEYS)
@@ -186,9 +192,6 @@ class HlsExportService : Service() {
                 .build()
         }
 
-        intent.getStringExtra(EXTRA_USER_AGENT)?.let { HlsDownloadHelper.currentUserAgent = it }
-        intent.getStringExtra(EXTRA_REFERER)?.let { HlsDownloadHelper.currentReferer = it }
-        intent.getStringExtra(EXTRA_COOKIE)?.let { HlsDownloadHelper.currentCookie = it }
 
         if (videoUrl == null && extraDownloadId == null) {
             if (activeExports.get() == 0) stopSelf(startId)
@@ -204,7 +207,7 @@ class HlsExportService : Service() {
                 when {
                     extraDownloadId != null -> {
                         writeExportLog("source=PATH_C_DOWNLOAD_ID\ndownload_id=$extraDownloadId\nhas_media_item_bundle=${bundledMediaItem != null}\nhas_video_url=${videoUrl != null}\ninput_uri=null\nmimeType=$mimeType\nexport_method=exportFromDownloadId")
-                        exportFromDownloadId(extraDownloadId, title, mimeType, splitAudioUrl)
+                        exportFromDownloadId(extraDownloadId, title, mimeType, splitAudioUrl, exportRequestHeaders)
                     }
                     bundledMediaItem != null -> {
                         val isDirectMp4 = videoUrl != null &&
@@ -228,7 +231,7 @@ class HlsExportService : Service() {
                                 writeExportLog("Direct MP4 detected; bypassing Transformer and exporting from cache.")
                             } else if (forceTransformer && !isHlsManifest && splitAudioUrl.isNullOrEmpty()) {
                                 writeExportLog("User forced Transformer for progressive/non-HLS source; executing Transformer path.")
-                                muxToMp4WithTransformer(bundledMediaItem, title)
+                                muxToMp4WithTransformer(bundledMediaItem, title, exportRequestHeaders)
                                 return@launch
                             }
                             if (forceTransformer && isHlsManifest) {
@@ -236,9 +239,9 @@ class HlsExportService : Service() {
                             }
                             if (videoUrl != null) {
                                 if (videoUrl.contains(".mp4", ignoreCase = true) && !videoUrl.contains(".m3u8", ignoreCase = true)) {
-                                    copyMp4FromCache(videoUrl, title, splitAudioUrl)
+                                    copyMp4FromCache(videoUrl, title, splitAudioUrl, exportRequestHeaders)
                                 } else {
-                                    muxToMp4FromCache(videoUrl, streamKeyStrings, title, selectedAudioLanguage, selectedAudioLabel, selectedAudioId)
+                                    muxToMp4FromCache(videoUrl, streamKeyStrings, title, selectedAudioLanguage, selectedAudioLabel, selectedAudioId, exportRequestHeaders)
                                 }
                             } else {
                                 throw Exception("videoUrl is null")
@@ -251,8 +254,8 @@ class HlsExportService : Service() {
                                     val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(title, android.net.Uri.parse(videoUrl)).build()
                                     androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(applicationContext, HlsDownloadService::class.java, request, false)
                                 } else {
-                                    val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                                    muxToMp4(finalUrl, title, splitAudioUrl, streamKeyStrings)
+                                    val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings, exportRequestHeaders)
+                                    muxToMp4(finalUrl, title, splitAudioUrl, streamKeyStrings, exportRequestHeaders)
                                 }
                             } else {
                                 throw e
@@ -262,7 +265,7 @@ class HlsExportService : Service() {
                     videoUrl != null -> {
                         writeExportLog("source=PATH_B_NETWORK_FFMPEG\ndownload_id=null\nhas_media_item_bundle=false\nhas_video_url=true\ninput_uri=$videoUrl\nmimeType=$mimeType\nexport_method=muxToMp4\ncache_export=false")
                         val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                        muxToMp4(finalUrl, title, splitAudioUrl, streamKeyStrings) // Fallback to FFmpeg
+                        muxToMp4(finalUrl, title, splitAudioUrl, streamKeyStrings, requestHeaders) // Fallback to FFmpeg
                     }
                 }
             } catch (t: Throwable) {
@@ -276,7 +279,13 @@ class HlsExportService : Service() {
         return START_NOT_STICKY
     }
 
-    private suspend fun exportFromDownloadId(extraDownloadId: String, title: String, mimeType: String?, splitAudioUrl: String? = null) {
+    private suspend fun exportFromDownloadId(
+        extraDownloadId: String,
+        title: String,
+        mimeType: String?,
+        splitAudioUrl: String? = null,
+        requestHeaders: HlsDownloadHelper.RequestHeaders = HlsDownloadHelper.RequestHeaders.fromLegacyState()
+    ) {
         val dm = HlsDownloadHelper.getDownloadManager(applicationContext)
         val download = dm.downloadIndex.getDownload(extraDownloadId)
             ?: run {
@@ -310,7 +319,7 @@ class HlsExportService : Service() {
 
                 try {
                     if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
-                        copyMp4FromCache(url, title)
+                        copyMp4FromCache(url, title, requestHeaders = requestHeaders)
                     } else {
                         muxToMp4FromCache(url, streamKeysStr, title)
                     }
@@ -320,8 +329,8 @@ class HlsExportService : Service() {
                     // DO NOT call sendAddDownload() here, it causes an infinite recursion bug where Download completes,
                     // Export fails, and it asks to Download again using a cached URI.
                     // Instead, fallback directly to FFmpeg muxToMp4 using the original URI from the request.
-                    val finalUrl = resolveVariantUrl(url, streamKeysStr)
-                    muxToMp4(finalUrl, title, splitAudioUrl, streamKeysStr)
+                    val finalUrl = resolveVariantUrl(url, streamKeysStr, requestHeaders)
+                    muxToMp4(finalUrl, title, splitAudioUrl, streamKeysStr, exportRequestHeaders)
                 }
             }
         } else {
@@ -330,15 +339,19 @@ class HlsExportService : Service() {
             // CRITICAL FIX: Same as above. Do not call sendAddDownload if the download failed or was interrupted.
             // Just fallback to FFmpeg network download.
             val finalUrl = resolveVariantUrl(url, streamKeysStr)
-            muxToMp4(finalUrl, title, splitAudioUrl, streamKeysStr)
+            muxToMp4(finalUrl, title, splitAudioUrl, streamKeysStr, exportRequestHeaders)
         }
     }
 
-    private suspend fun muxToMp4WithTransformer(mediaItem: MediaItem, title: String) =
+    private suspend fun muxToMp4WithTransformer(
+        mediaItem: MediaItem,
+        title: String,
+        requestHeaders: HlsDownloadHelper.RequestHeaders = HlsDownloadHelper.RequestHeaders.fromLegacyState()
+    ) =
         suspendCancellableCoroutine<Unit> { cont ->
             android.util.Log.d("HLS_EXPORT_DEBUG", "[HLS_EXPORT_DEBUG] muxToMp4WithTransformer MediaItem URI=${mediaItem.localConfiguration?.uri} MIME=${mediaItem.localConfiguration?.mimeType}")
             val cacheFactory: CacheDataSource.Factory =
-                HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
+                HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true, requestHeaders = requestHeaders)
 
             // Force track selection by MIME type to avoid stale streamKey drift
             val trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(applicationContext)
@@ -420,7 +433,12 @@ class HlsExportService : Service() {
 
 
 
-    private suspend fun copyMp4FromCache(url: String, title: String, splitAudioUrl: String? = null) = withContext(Dispatchers.IO) {
+    private suspend fun copyMp4FromCache(
+        url: String,
+        title: String,
+        splitAudioUrl: String? = null,
+        requestHeaders: HlsDownloadHelper.RequestHeaders = HlsDownloadHelper.RequestHeaders.fromLegacyState()
+    ) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
         var out = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -527,7 +545,8 @@ class HlsExportService : Service() {
         title: String,
         selectedAudioLanguage: String? = null,
         selectedAudioLabel: String? = null,
-        selectedAudioId: String? = null
+        selectedAudioId: String? = null,
+        requestHeaders: HlsDownloadHelper.RequestHeaders = HlsDownloadHelper.RequestHeaders.fromLegacyState()
     ) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
         var out = File(
@@ -548,7 +567,7 @@ class HlsExportService : Service() {
 
         try {
             val cacheOnlyFactory = cacheOnlyDataSource()
-            val networkFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = false).createDataSource()
+            val networkFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = false, requestHeaders = requestHeaders).createDataSource()
 
             var masterText = ""
             val masterDataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(masterUrl))
@@ -1056,7 +1075,13 @@ if (!success) {
         }
     }
 
-    private suspend fun muxToMp4(url: String, title: String, splitAudioUrl: String? = null, streamKeyStrings: List<String>? = null) = withContext(Dispatchers.IO) {
+    private suspend fun muxToMp4(
+        url: String,
+        title: String,
+        splitAudioUrl: String? = null,
+        streamKeyStrings: List<String>? = null,
+        requestHeaders: HlsDownloadHelper.RequestHeaders = HlsDownloadHelper.RequestHeaders.fromLegacyState()
+    ) = withContext(Dispatchers.IO) {
         val safeTitle = title.replace(Regex("[^a-zA-Z0-9.-]"), "_")
         var out = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -1071,9 +1096,9 @@ if (!success) {
             counter++
         }
 
-        val userAgent = HlsDownloadHelper.currentUserAgent ?: ""
-        val referer = HlsDownloadHelper.currentReferer ?: ""
-        val cookie = HlsDownloadHelper.currentCookie ?: ""
+        val userAgent = requestHeaders.userAgent ?: ""
+        val referer = requestHeaders.referer ?: ""
+        val cookie = requestHeaders.cookie ?: ""
 
         val commandArgs = mutableListOf<String>()
 
@@ -1134,7 +1159,11 @@ if (!success) {
         }
     }
 
-    private suspend fun resolveVariantUrl(masterUrl: String, streamKeyStrings: List<String>?): String = withContext(Dispatchers.IO) {
+    private suspend fun resolveVariantUrl(
+        masterUrl: String,
+        streamKeyStrings: List<String>?,
+        requestHeaders: HlsDownloadHelper.RequestHeaders = HlsDownloadHelper.RequestHeaders.fromLegacyState()
+    ): String = withContext(Dispatchers.IO) {
         if (!masterUrl.contains(".m3u8", true) || streamKeyStrings.isNullOrEmpty()) {
             return@withContext masterUrl
         }
@@ -1142,7 +1171,7 @@ if (!success) {
         try {
             // Bug fix: Read master playlist FROM CACHE first. Live network master playlists drift over time (track group indices change),
             // which causes stale streamKeys to pick the wrong variant (audio-only bug).
-            val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true)
+            val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(applicationContext, readOnly = true, requestHeaders = requestHeaders)
             val dataSource = cacheFactory.createDataSource()
             val dataSpec = androidx.media3.datasource.DataSpec(android.net.Uri.parse(masterUrl))
 
@@ -1158,10 +1187,12 @@ if (!success) {
                 masterText = outputStream.toString("UTF-8")
             } catch (e: Exception) {
                 // If not in cache, fallback to network (but risky for drift)
-                val userAgent = HlsDownloadHelper.currentUserAgent
-                val cookie = HlsDownloadHelper.currentCookie
-                val referer = HlsDownloadHelper.currentReferer
-                masterText = HlsDownloadHelper.httpGetString(masterUrl, userAgent, referer, cookie) ?: return@withContext masterUrl
+                masterText = HlsDownloadHelper.httpGetString(
+                    masterUrl,
+                    requestHeaders.userAgent,
+                    requestHeaders.referer,
+                    requestHeaders.cookie
+                ) ?: return@withContext masterUrl
             } finally {
                 dataSource.close()
             }
