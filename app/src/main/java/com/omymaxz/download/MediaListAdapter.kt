@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Button
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
@@ -35,31 +36,26 @@ class MediaListAdapter(
             true
         }
 
-        // Red highlighting is reserved for confirmed alternative quality variants.
-        // A manifest URL or an HLS/DASH label alone does not prove that alternatives exist.
+        // Keep Material surface cards theme-aware. Category information is shown
+        // by the icon/title; the thumbnail gets a soft semantic category accent.
         val context = holder.itemView.context
-        when (mediaFile.category) {
-            MediaCategory.VIDEO -> {
-                val hasMultipleQualities = mediaFile.hasMultipleQualities
-                val colorRes = when {
-                    hasMultipleQualities -> R.color.media_video_multi_quality_bg
-                    mediaFile.isMainContent -> R.color.media_video_main_bg
-                    else -> R.color.media_video_clip_bg
-                }
-                holder.itemView.background = android.graphics.drawable.ColorDrawable(
-                    ContextCompat.getColor(context, colorRes)
-                )
+        val tint = when (mediaFile.category) {
+            MediaCategory.VIDEO -> when {
+                mediaFile.hasMultipleQualities -> R.color.media_video_multi_quality_bg
+                mediaFile.isMainContent -> R.color.media_video_main_bg
+                else -> R.color.media_video_clip_bg
             }
-            MediaCategory.SUBTITLE -> {
-                                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.media_subtitle_bg))
-            }
-            MediaCategory.AD -> {
-                                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.media_ad_bg))
-            }
-            else -> { // Handles AUDIO, THUMBNAIL, UNKNOWN
-                                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.media_other_bg))
-            }
+            MediaCategory.AUDIO -> R.color.md_secondary_container
+            MediaCategory.SUBTITLE -> R.color.media_subtitle_bg
+            MediaCategory.AD -> R.color.media_ad_bg
+            else -> R.color.md_surface_variant
         }
+        holder.itemView.findViewById<ImageView>(R.id.media_thumbnail).background =
+            android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                cornerRadius = 12f * holder.itemView.resources.displayMetrics.density
+                setColor(ContextCompat.getColor(context, tint))
+            }
     }
 
     override fun getItemCount(): Int = mediaFiles.size
@@ -68,7 +64,7 @@ class MediaListAdapter(
         private val titleTextView: TextView = itemView.findViewById(R.id.media_title)
         private val typeTextView: TextView = itemView.findViewById(R.id.media_type)
         private val thumbnailView: ImageView = itemView.findViewById(R.id.media_thumbnail)
-        private val btnAnalyzeMedia: android.widget.Button? = itemView.findViewById(R.id.btn_analyze_media)
+        private val btnAnalyzeMedia: Button? = itemView.findViewById(R.id.btn_analyze_media)
 
         fun bind(mediaFile: MediaFile) {
             val btnInfo = itemView.findViewById<android.widget.ImageButton>(R.id.btn_media_info)
