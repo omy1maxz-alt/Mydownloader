@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>    <color name="error_color">#EF5350</color>
-
+<resources>
+    <!-- Material 3 semantic palette: dark theme. -->
+    <color name="colorPrimary">#7ADACB</color>
+    <color name="colorPrimaryDark">#003731</color>
+    <color name="colorAccent">#7ADACB</color>
+    <color name="teal_700">#7ADACB</color>
+    <color name="md_primary_container">#005047</color>
+    <color name="md_on_primary_container">#9CF2E3</color>
+    <color name="md_secondary_container">#344B46</color>
+    <color name="md_on_secondary_container">#D5E8E3</color>
+    <color name="md_surface">#101413</color>
+    <color name="md_on_surface">#E0E4E2</color>
+    <color name="md_surface_variant">#404946</color>
+    <color name="md_on_surface_variant">#C0C9C5</color>
+    <color name="md_surface_container">#1C211F</color>
+    <color name="md_surface_container_high">#262C2A</color>
+    <color name="md_outline">#8A938F</color>
+    <color name="error_color">#FFB4AB</color>
+    <color name="media_badge_bg">#93000A</color>
 </resources>
