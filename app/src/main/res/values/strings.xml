@@ -36,4 +36,10 @@
         <item>document-end</item>
         <item>document-idle</item>
     </string-array>
+
+    <!-- Gemini chat UI labels required by the Material chat layouts. -->
+    <string name="gemini_chat_hint">Ask Gemini something…</string>
+    <string name="send">Send</string>
+    <string name="edit_message">Edit message</string>
+    <string name="delete_message">Delete message</string>
 </resources>
