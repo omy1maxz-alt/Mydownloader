@@ -264,8 +264,8 @@ class HlsExportService : Service() {
                     }
                     videoUrl != null -> {
                         writeExportLog("source=PATH_B_NETWORK_FFMPEG\ndownload_id=null\nhas_media_item_bundle=false\nhas_video_url=true\ninput_uri=$videoUrl\nmimeType=$mimeType\nexport_method=muxToMp4\ncache_export=false")
-                        val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings)
-                        muxToMp4(finalUrl, title, splitAudioUrl, streamKeyStrings, requestHeaders) // Fallback to FFmpeg
+                        val finalUrl = resolveVariantUrl(videoUrl, streamKeyStrings, exportRequestHeaders)
+                        muxToMp4(finalUrl, title, splitAudioUrl, streamKeyStrings, exportRequestHeaders) // Fallback to FFmpeg
                     }
                 }
             } catch (t: Throwable) {
@@ -313,7 +313,7 @@ class HlsExportService : Service() {
                     writeExportLog("Transformer skipped for split YouTube HLS from PATH_C. Falling back to FFmpeg cache export.")
                     throw Exception("Skipping Transformer for YouTube split stream")
                 }
-                muxToMp4WithTransformer(mediaItem, title)
+                muxToMp4WithTransformer(mediaItem, title, requestHeaders)
             } catch (e: Exception) {
                 writeExportLog("Transformer failed or skipped on downloaded item, falling back to muxToMp4FromCache: ${e.message}")
 
@@ -321,7 +321,7 @@ class HlsExportService : Service() {
                     if (url.contains(".mp4", ignoreCase = true) && !url.contains(".m3u8", ignoreCase = true)) {
                         copyMp4FromCache(url, title, requestHeaders = requestHeaders)
                     } else {
-                        muxToMp4FromCache(url, streamKeysStr, title)
+                        muxToMp4FromCache(url, streamKeysStr, title, requestHeaders = requestHeaders)
                     }
                 } catch (cacheEx: Exception) {
                     writeExportLog("Cache export failed, falling back to network FFmpeg: ${cacheEx.message}")
@@ -338,8 +338,8 @@ class HlsExportService : Service() {
             val streamKeysStr = download.request.streamKeys.map { "${it.groupIndex},${it.streamIndex}" }
             // CRITICAL FIX: Same as above. Do not call sendAddDownload if the download failed or was interrupted.
             // Just fallback to FFmpeg network download.
-            val finalUrl = resolveVariantUrl(url, streamKeysStr)
-            muxToMp4(finalUrl, title, splitAudioUrl, streamKeysStr, exportRequestHeaders)
+            val finalUrl = resolveVariantUrl(url, streamKeysStr, requestHeaders)
+            muxToMp4(finalUrl, title, splitAudioUrl, streamKeysStr, requestHeaders)
         }
     }
 
