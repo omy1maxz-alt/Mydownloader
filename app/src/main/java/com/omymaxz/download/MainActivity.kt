@@ -67,7 +67,12 @@ import android.widget.LinearLayout
 class MainActivity : AppCompatActivity() {
 
     private val detectorHideHandler = Handler(Looper.getMainLooper())
-    private val detectorHideRunnable = Runnable { findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = android.view.View.GONE }
+    private var floatingDetectorMediaKey: String? = null
+    private var floatingDetectorHiddenMediaKey: String? = null
+    private val detectorHideRunnable = Runnable {
+        floatingDetectorHiddenMediaKey = floatingDetectorMediaKey
+        findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = android.view.View.GONE
+    }
 
 
 
@@ -7519,6 +7524,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
             val minDuration = prefs.getInt("FLOATING_DETECTOR_MIN_DURATION", 0)
 
             if (!isFloatingEnabled || (bestPlayable != null && bestPlayable.durationSec > 0 && bestPlayable.durationSec < minDuration)) {
+                detectorHideHandler.removeCallbacks(detectorHideRunnable)
                 floatingDetector?.visibility = android.view.View.GONE
                 return@runOnUiThread
             }
@@ -7583,14 +7589,37 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
 
                 val btnClose = findViewById<android.widget.ImageButton>(R.id.btnDetectorClose)
                 btnClose?.setOnClickListener {
+                    floatingDetectorHiddenMediaKey = floatingDetectorMediaKey
                     floatingDetector?.visibility = android.view.View.GONE
                     detectorHideHandler.removeCallbacks(detectorHideRunnable)
                 }
 
-                // Auto hide after 10 seconds
+                // Show for up to 10 seconds per media candidate. Repeated detector updates
+                // must not keep resetting the timer or resurrect a dismissed overlay.
+                val mediaKey = bestPlayable.url
+                val isNewMedia = mediaKey != floatingDetectorMediaKey
+                if (isNewMedia) {
+                    floatingDetectorMediaKey = mediaKey
+                    floatingDetectorHiddenMediaKey = null
+                    detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                }
 
+                if (floatingDetectorHiddenMediaKey == mediaKey) {
+                    floatingDetector?.visibility = android.view.View.GONE
+                    detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                } else {
+                    val wasHidden = floatingDetector?.visibility != android.view.View.VISIBLE
+                    floatingDetector?.visibility = android.view.View.VISIBLE
+                    if (isNewMedia || wasHidden) {
+                        detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                        detectorHideHandler.postDelayed(detectorHideRunnable, 10_000L)
+                    }
+                }
 
             } else {
+                detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                floatingDetectorMediaKey = null
+                floatingDetectorHiddenMediaKey = null
                 floatingDetector?.visibility = android.view.View.GONE
             }
         }
