@@ -4325,6 +4325,7 @@ private fun showMediaListDialog() {
             } else {
                 "${filtered.size} of ${mediaFilesCopy.size} items"
             }
+            dialogBinding.clearListButton.isEnabled = detectedMediaFiles.isNotEmpty()
         }
 
         dialogBinding.root.setBackgroundColor(
