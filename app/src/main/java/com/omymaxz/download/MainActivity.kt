@@ -4334,6 +4334,9 @@ private fun showMediaListDialog() {
         val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(
             this, R.style.DetectedMediaBottomSheetTheme
         )
+        // Attach the inflated layout to the dialog; without this, the binding's
+        // listeners target views that are never displayed inside the bottom sheet.
+        dialog.setContentView(dialogBinding.root)
         currentMediaListAdapter = MediaListAdapter(mediaFilesCopy, { mediaFile ->
             // Tap to download (do not dismiss to keep scroll position)
             showRenameDialog(mediaFile)
