@@ -4590,10 +4590,7 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                 val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                 if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                if (!mediaFile.audioUrl.isNullOrEmpty()) {
-                    putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
-                    putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
-                }
+                this@MainActivity.configureYouTubeAudioSource(this, mediaFile)
                 if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                     val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                         if (mediaFile.language != null && !url.contains("lang=")) {
@@ -4690,10 +4687,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                         val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                if (!mediaFile.audioUrl.isNullOrEmpty()) {
-                    putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
-                    putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
-                }
+                this@MainActivity.configureYouTubeAudioSource(this, mediaFile)
                 if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                     val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                         if (mediaFile.language != null && !url.contains("lang=")) {
@@ -4723,10 +4717,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         putExtra(CustomPlayerActivity.EXTRA_REFERER, refererToUse)
                         val cookie = android.webkit.CookieManager.getInstance().getCookie(mediaFile.url) ?: android.webkit.CookieManager.getInstance().getCookie(refererToUse)
                         if (cookie != null) putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
-                if (!mediaFile.audioUrl.isNullOrEmpty()) {
-                    putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
-                    putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
-                }
+                this@MainActivity.configureYouTubeAudioSource(this, mediaFile)
                 if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                     val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                         if (mediaFile.language != null && !url.contains("lang=")) {
@@ -4867,7 +4858,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                     connection.setRequestProperty("Accept", "text/vtt, application/ttml+xml, application/xml, text/plain, */*")
                     if (!requestCookie.isNullOrBlank()) connection.setRequestProperty("Cookie", requestCookie)
                     if (requestReferer.isNotBlank()) connection.setRequestProperty("Referer", requestReferer)
-                    val raw = try {
+                    val firstResponse = try {
                         val status = connection.responseCode
                         if (status !in 200..299) {
                             val detail = runCatching {
@@ -4879,6 +4870,18 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                         connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                     } finally {
                         connection.disconnect()
+                    }
+                    // A detected subtitle row can itself point to an HLS playlist. The
+                    // playlist is an index, not subtitle text: expand every segment before
+                    // normalization so Save writes the whole track, never just the index.
+                    val raw = if (firstResponse.trimStart('\uFEFF', ' ', '\t', '\r', '\n')
+                            .startsWith("#EXTM3U", ignoreCase = true)
+                    ) {
+                        HlsDownloadHelper.fetchCompleteSubtitleTrackContent(
+                            mediaFile.url, requestUserAgent, requestReferer, requestCookie
+                        ) ?: throw java.io.IOException("Could not download the complete HLS subtitle track")
+                    } else {
+                        firstResponse
                     }
                     val normalized = SubtitleUtils.normalizeForDownload(raw)
                     val isVtt = normalized.trimStart().startsWith("WEBVTT", ignoreCase = true)
@@ -7724,7 +7727,8 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                                 mimeType = "audio/mp4",
                                 category = MediaCategory.AUDIO,
                                 audioUrl = null,
-                                subtitleUrls = null
+                                subtitleUrls = null,
+                                requiresSeparateAudio = false
                             )
                             if (!detectedMediaFiles.any { it.url == audioFile.url }) {
                                 detectedMediaFiles.add(audioFile)
@@ -7743,7 +7747,8 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                                     category = MediaCategory.SUBTITLE,
                                     audioUrl = null,
                                     subtitleUrls = null,
-                                    language = subLang
+                                    language = subLang,
+                                    requiresSeparateAudio = false
                                 )
                                 if (!detectedMediaFiles.any { it.url == subFile.url }) {
                                     detectedMediaFiles.add(subFile)
@@ -7797,6 +7802,13 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
         }
     }
 
+    private fun configureYouTubeAudioSource(intent: android.content.Intent, mediaFile: MediaFile) {
+        if (!mediaFile.requiresSeparateAudio) return
+        val audioUrl = mediaFile.audioUrl?.takeIf { it.isNotBlank() } ?: return
+        intent.putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, audioUrl)
+        intent.putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
+    }
+
     private fun launchYouTubeInCustomPlayer(mediaFile: MediaFile) {
         val intent = android.content.Intent(this, CustomPlayerActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK);
             putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, mediaFile.url)
@@ -7808,10 +7820,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
             android.webkit.CookieManager.getInstance().getCookie(referer)?.let {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, it)
             }
-            if (!mediaFile.audioUrl.isNullOrEmpty()) {
-                putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
-                putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
-            }
+            this@MainActivity.configureYouTubeAudioSource(this, mediaFile)
             if (!mediaFile.subtitleUrls.isNullOrEmpty()) {
                 val taggedUrls = mediaFile.subtitleUrls!!.map { url ->
                     if (mediaFile.language != null && !url.contains("lang=")) {

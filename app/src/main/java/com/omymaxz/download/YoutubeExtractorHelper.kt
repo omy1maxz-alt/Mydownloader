@@ -161,7 +161,12 @@ object YoutubeExtractorHelper {
                     language = null,
                     isMainContent = true,
                     subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
-                    audioUrl = bestAudioUrl
+                    // Keep audioUrl available for the detected Audio row, but don't merge
+                    // it into playback: the DASH manifest owns its audio/video timeline.
+                    audioUrl = bestAudioUrl,
+                    requiresSeparateAudio = YouTubePlaybackPolicy.requiresSeparateAudio(
+                        YouTubeVideoSourceKind.ADAPTIVE_MANIFEST
+                    )
                 )
             }
 
@@ -177,7 +182,11 @@ object YoutubeExtractorHelper {
                     language = null,
                     isMainContent = true,
                     subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
-                    audioUrl = bestAudioUrl
+                    // Preserve the Audio row while letting the HLS manifest manage playback audio.
+                    audioUrl = bestAudioUrl,
+                    requiresSeparateAudio = YouTubePlaybackPolicy.requiresSeparateAudio(
+                        YouTubeVideoSourceKind.ADAPTIVE_MANIFEST
+                    )
                 )
             }
 
@@ -197,7 +206,11 @@ object YoutubeExtractorHelper {
                     language = null,
                     isMainContent = true,
                     subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
-                    audioUrl = bestAudioUrl
+                    // Keep the separate Audio row, but play this muxed stream on its own.
+                    audioUrl = bestAudioUrl,
+                    requiresSeparateAudio = YouTubePlaybackPolicy.requiresSeparateAudio(
+                        YouTubeVideoSourceKind.COMBINED_AUDIO_VIDEO
+                    )
                 )
             }
 
@@ -215,7 +228,10 @@ object YoutubeExtractorHelper {
                         fileSize = "Unknown",
                         language = null,
                         isMainContent = true,
-                        audioUrl = bestAudioUrl!!,
+                        audioUrl = bestAudioUrl,
+                        requiresSeparateAudio = YouTubePlaybackPolicy.requiresSeparateAudio(
+                            YouTubeVideoSourceKind.VIDEO_ONLY
+                        ),
                         subtitleUrls = if (subtitleList.isNotEmpty()) subtitleList else null,
                     )
                 }

@@ -489,22 +489,34 @@ object HlsDownloadHelper {
     }
 
     /**
-     * Downloads a direct subtitle response or recursively expands HLS subtitle playlists.
-     * A playlist is considered complete only if every listed segment is fetched.
+     * Fetch a complete direct or HLS subtitle track. The method returns null rather than
+     * returning partial captions when any segment fails.
      */
+    fun fetchCompleteSubtitleTrackContent(
+        subtitleUrl: String,
+        userAgent: String?,
+        referer: String?,
+        cookie: String?
+    ): String? = fetchSubtitleTrackContent(
+        subtitleUrl = subtitleUrl,
+        userAgent = userAgent,
+        cookie = cookie,
+        referer = referer
+    )
+
     private fun fetchSubtitleTrackContent(
         subtitleUrl: String,
         userAgent: String?,
         cookie: String?,
         depth: Int = 0,
-        visited: Set<String> = emptySet()
+        visited: Set<String> = emptySet(),
+        referer: String? = currentReferer
     ): String? {
         if (depth > 4 || subtitleUrl in visited) {
             android.util.Log.w("AdaptiveDownload", "Subtitle playlist nesting/cycle limit reached")
             return null
         }
 
-        val referer = currentReferer
         val response = httpGetString(subtitleUrl, userAgent, referer, cookie) ?: return null
         val trimmed = response.trimStart('\uFEFF', ' ', '\t', '\r', '\n')
         if (!trimmed.startsWith("#EXTM3U", ignoreCase = true)) return response
@@ -519,7 +531,7 @@ object HlsDownloadHelper {
         val nextVisited = visited + subtitleUrl
         for (segmentUrl in segmentUrls) {
             val segment = fetchSubtitleTrackContent(
-                segmentUrl, userAgent, cookie, depth + 1, nextVisited
+                segmentUrl, userAgent, cookie, depth + 1, nextVisited, referer
             ) ?: run {
                 android.util.Log.w("AdaptiveDownload", "Subtitle segment fetch failed; refusing partial subtitle")
                 return null
