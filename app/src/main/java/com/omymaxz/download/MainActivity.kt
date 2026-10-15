@@ -7736,7 +7736,8 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                                 mimeType = "audio/mp4",
                                 category = MediaCategory.AUDIO,
                                 audioUrl = null,
-                                subtitleUrls = null
+                                subtitleUrls = null,
+                                requiresSeparateAudio = false
                             )
                             if (!detectedMediaFiles.any { it.url == audioFile.url }) {
                                 detectedMediaFiles.add(audioFile)
@@ -7755,7 +7756,8 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                                     category = MediaCategory.SUBTITLE,
                                     audioUrl = null,
                                     subtitleUrls = null,
-                                    language = subLang
+                                    language = subLang,
+                                    requiresSeparateAudio = false
                                 )
                                 if (!detectedMediaFiles.any { it.url == subFile.url }) {
                                     detectedMediaFiles.add(subFile)
@@ -7820,7 +7822,9 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
             android.webkit.CookieManager.getInstance().getCookie(referer)?.let {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, it)
             }
-            if (!mediaFile.audioUrl.isNullOrEmpty()) {
+            if (mediaFile.requiresSeparateAudio && !mediaFile.audioUrl.isNullOrEmpty()) {
+                // Only video-only YouTube streams need a second Media3 source. A DASH/HLS
+                // manifest or muxed MP4 already supplies its own audio timeline.
                 putExtra(YouTubeDownloadService.EXTRA_AUDIO_URL, mediaFile.audioUrl)
                 putExtra("EXTRA_AUDIO_MIME_TYPE", "audio/mp4")
             }
