@@ -18,4 +18,8 @@
     <color name="md_outline">#8A938F</color>
     <color name="error_color">#FFB4AB</color>
     <color name="media_badge_bg">#93000A</color>
+    <color name="chat_user_bubble_bg">#244D46</color>
+    <color name="chat_user_bubble_fg">#E0F4EF</color>
+    <color name="chat_model_bubble_bg">#242A28</color>
+    <color name="chat_model_bubble_fg">#E0E4E2</color>
 </resources>

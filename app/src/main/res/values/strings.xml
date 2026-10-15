@@ -8,6 +8,15 @@
     <string name="cancel">Cancel</string>
     <string name="close">Close</string>
     <string name="media_detected">Media files detected</string>
+    <string name="gemini_chat_hint">Ask Gemini something…</string>
+    <string name="send">Send</string>
+    <string name="edit_message">Edit message</string>
+    <string name="delete_message">Delete message</string>
+    <string name="player_pip">Picture in Picture</string>
+    <string name="player_resize">Resize video</string>
+    <string name="player_bubble">Floating bubble</string>
+    <string name="player_save_offline">Save offline</string>
+    <string name="player_track_settings">Track selection settings</string>
     <string name="detected_media_title">Detected media</string>
     <string name="detected_media_search">Search detected media</string>
     <string name="media_filter_all">All</string>
