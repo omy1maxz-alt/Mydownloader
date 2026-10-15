@@ -3335,7 +3335,7 @@ private fun injectMediaStateDetector() {
                                         isMainContent = isMainContent
                                     )
                                     val existsAlready = synchronized(detectedMediaFiles) {
-                                        detectedMediaFiles.any { it.url == url }
+                                        detectedMediaFiles.any { SubtitleUtils.canonicalMediaUrl(it.url) == SubtitleUtils.canonicalMediaUrl(url) }
                                     }
                                     if (!existsAlready) {
                                         synchronized(detectedMediaFiles) {
