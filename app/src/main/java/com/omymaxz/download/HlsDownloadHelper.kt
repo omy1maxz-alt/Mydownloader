@@ -177,10 +177,9 @@ object HlsDownloadHelper {
 
     @Synchronized
     fun getDataSourceFactory(context: Context, requestHeaders: RequestHeaders? = null): DataSource.Factory {
-        val headersSnapshot = requestHeaders
-        val userAgent = headersSnapshot?.userAgent?.takeIf { it.isNotBlank() } ?: if (headersSnapshot == null) currentUserAgent else null
-        val referer = headersSnapshot?.referer?.takeIf { it.isNotBlank() } ?: if (headersSnapshot == null) currentReferer else null
-        val cookie = headersSnapshot?.cookie?.takeIf { it.isNotBlank() } ?: if (headersSnapshot == null) currentCookie else null
+        val userAgent = requestHeaders?.userAgent?.takeIf { it.isNotBlank() } ?: if (requestHeaders == null) currentUserAgent else null
+        val referer = requestHeaders?.referer?.takeIf { it.isNotBlank() } ?: if (requestHeaders == null) currentReferer else null
+        val cookie = requestHeaders?.cookie?.takeIf { it.isNotBlank() } ?: if (requestHeaders == null) currentCookie else null
         // Instantiate a NEW factory per request rather than mutating the global singleton
         // to prevent race conditions or missing headers on background fetches.
         // Also use a ResolvingDataSource to explicitly log the final resolved DataSpec URI.
