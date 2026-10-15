@@ -7597,7 +7597,8 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                 // Show for up to 10 seconds per media candidate. Repeated detector updates
                 // must not keep resetting the timer or resurrect a dismissed overlay.
                 val mediaKey = bestPlayable.url
-                if (mediaKey != floatingDetectorMediaKey) {
+                val isNewMedia = mediaKey != floatingDetectorMediaKey
+                if (isNewMedia) {
                     floatingDetectorMediaKey = mediaKey
                     floatingDetectorHiddenMediaKey = null
                     detectorHideHandler.removeCallbacks(detectorHideRunnable)
@@ -7609,7 +7610,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                 } else {
                     val wasHidden = floatingDetector?.visibility != android.view.View.VISIBLE
                     floatingDetector?.visibility = android.view.View.VISIBLE
-                    if (wasHidden) {
+                    if (isNewMedia || wasHidden) {
                         detectorHideHandler.removeCallbacks(detectorHideRunnable)
                         detectorHideHandler.postDelayed(detectorHideRunnable, 10_000L)
                     }
