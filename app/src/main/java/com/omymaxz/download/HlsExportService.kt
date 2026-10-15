@@ -83,13 +83,54 @@ class HlsExportService : Service() {
         }
     }
 
+    private fun redactExportLogMessage(message: String): String {
+        // Signed media URLs often carry bearer-like tokens in query parameters.
+        // Keep the host/path useful for diagnosis, but never persist query or fragment values.
+        val urlPattern = Regex("""(?i)\bhttps?://[^\s"'<>]+""")
+        return urlPattern.replace(message) { match ->
+            val rawUrl = match.value.trimEnd(',', ')', ']', ';')
+            val suffix = match.value.removePrefix(rawUrl)
+            val safe = try {
+                val uri = android.net.Uri.parse(rawUrl)
+                val builder = uri.buildUpon().clearQuery().fragment(null)
+                val redacted = builder.build().toString()
+                if (uri.encodedQuery != null) "$redacted?<redacted>" else redacted
+            } catch (_: Exception) {
+                rawUrl.substringBefore('?').substringBefore('#') + if (rawUrl.contains('?') || rawUrl.contains('#')) "?<redacted>" else ""
+            }
+            safe + suffix
+        }
+    }
+
     private fun writeExportLog(message: String) {
         try {
-            val logFile = java.io.File(applicationContext.filesDir, "export_logs.txt")
+            val logFile = File(applicationContext.filesDir, "export_logs.txt")
+            val maxBytes = 512 * 1024L
             val timestamp = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
-            logFile.appendText("[$timestamp] $message\n")
-        } catch (e: Exception) {}
+            val safeMessage = redactExportLogMessage(message)
+            val line = "[$timestamp] $safeMessage\n"
+            synchronized(exportLogLock) {
+                if (logFile.exists() && logFile.length() + line.toByteArray(Charsets.UTF_8).size > maxBytes) {
+                    val backup = File(applicationContext.filesDir, "export_logs.previous.txt")
+                    if (backup.exists()) backup.delete()
+                    if (!logFile.renameTo(backup)) {
+                        // A failed rotation must not grow the primary log without bound.
+                        logFile.writeText("")
+                    }
+                }
+                logFile.appendText(line)
+                if (logFile.length() > maxBytes) {
+                    // A single exceptionally large message must not defeat the size cap.
+                    val tail = logFile.readText().takeLast((maxBytes / 2).toInt())
+                    logFile.writeText(tail)
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to write export diagnostic log", e)
+        }
     }
+
+    private val exportLogLock = Any()
 
     private val activeExports = AtomicInteger(0)
     private val serviceJob = Job()
