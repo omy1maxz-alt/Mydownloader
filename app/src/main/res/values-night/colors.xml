@@ -17,4 +17,5 @@
     <color name="md_surface_container_high">#262C2A</color>
     <color name="md_outline">#8A938F</color>
     <color name="error_color">#FFB4AB</color>
+    <color name="media_badge_bg">#93000A</color>
 </resources>
