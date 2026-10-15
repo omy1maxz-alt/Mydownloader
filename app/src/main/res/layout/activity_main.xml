@@ -135,15 +135,37 @@
                             android:contentDescription="Gemini AI"
                             android:src="@drawable/ic_ai_sparkle" />
 
-                        <ImageButton
-                            android:id="@+id/fabShowMedia"
-                            style="?attr/borderlessButtonStyle"
+                        <FrameLayout
                             android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:contentDescription="Downloads"
-                            android:src="@drawable/ic_download"
-                            android:visibility="gone"
-                            tools:visibility="visible" />
+                            android:layout_height="48dp">
+
+                            <ImageButton
+                                android:id="@+id/fabShowMedia"
+                                style="?attr/borderlessButtonStyle"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:contentDescription="Detected media"
+                                android:src="@drawable/ic_download"
+                                android:visibility="gone"
+                                tools:visibility="visible" />
+
+                            <TextView
+                                android:id="@+id/mediaCountBadge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="18dp"
+                                android:layout_gravity="top|end"
+                                android:background="@drawable/bg_media_count_badge"
+                                android:gravity="center"
+                                android:minWidth="18dp"
+                                android:paddingStart="4dp"
+                                android:paddingEnd="4dp"
+                                android:text="0"
+                                android:textColor="@color/white"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:visibility="gone"
+                                tools:visibility="visible" />
+                        </FrameLayout>
 
                         <FrameLayout
                             android:id="@+id/tabButton"
