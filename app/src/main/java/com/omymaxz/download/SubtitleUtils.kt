@@ -71,6 +71,116 @@ object SubtitleUtils {
         return SubtitleTrack(absoluteUri, language, name, isDefault, isForced)
     }
 
+    /**
+     * Resolves every URI in an HLS subtitle playlist. For a master playlist, follow
+     * the first listed variant; for a media playlist, return every segment in order.
+     */
+    fun parseHlsSubtitlePlaylistUris(playlist: String, playlistUrl: String): List<String> {
+        val lines = playlist.replace("\r\n", "\n").replace('\r', '\n').lines()
+        val isMasterPlaylist = lines.any { it.trimStart().startsWith("#EXT-X-STREAM-INF", ignoreCase = true) }
+        val rawUris = mutableListOf<String>()
+
+        if (isMasterPlaylist) {
+            var waitingForVariantUri = false
+            for (raw in lines) {
+                val line = raw.trim()
+                if (line.isEmpty()) continue
+                if (line.startsWith("#EXT-X-STREAM-INF", ignoreCase = true)) {
+                    waitingForVariantUri = true
+                    continue
+                }
+                if (line.startsWith("#")) continue
+                if (waitingForVariantUri) {
+                    rawUris.add(line)
+                    break
+                }
+            }
+        } else {
+            for (raw in lines) {
+                val line = raw.trim()
+                if (line.isNotEmpty() && !line.startsWith("#")) rawUris.add(line)
+            }
+        }
+
+        return rawUris.mapNotNull { raw ->
+            runCatching {
+                java.net.URI(playlistUrl).resolve(java.net.URI(raw)).toString()
+            }.getOrNull()
+        }.take(2000)
+    }
+
+    /**
+     * Joins complete WebVTT HLS segments into one standalone VTT document.
+     * Segment headers and timestamp-map metadata belong to each segment, not the
+     * combined file; cue bodies and cue identifiers are retained.
+     */
+    fun mergeHlsSubtitleSegments(segments: List<String>): String {
+        val cueBodies = segments.mapNotNull { raw ->
+            var text = raw.removePrefix("\uFEFF")
+                .replace("\r\n", "\n")
+                .replace('\r', '\n')
+
+            // HLS WebVTT timestamps are local to a segment. Map them onto the media
+            // timeline before removing X-TIMESTAMP-MAP so later segments do not restart
+            // at zero or overlap the opening captions.
+            val timestampMap = Regex(
+                """(?i)X-TIMESTAMP-MAP\s*=\s*LOCAL:([^,]+),\s*MPEGTS:(\d+)"""
+            ).find(text)
+            val offsetMillis = timestampMap?.let { match ->
+                val localMillis = parseWebVttTimestampMillis(match.groupValues[1])
+                val mpegTicks = match.groupValues[2].toLongOrNull()
+                if (localMillis != null && mpegTicks != null) mpegTicks / 90L - localMillis else null
+            }
+
+            val lines = text.lines().toMutableList()
+            val firstContentLine = lines.indexOfFirst { it.isNotBlank() }
+            if (firstContentLine >= 0 &&
+                lines[firstContentLine].trimStart().startsWith("WEBVTT", ignoreCase = true)
+            ) {
+                lines.removeAt(firstContentLine)
+            }
+            text = lines.filterNot {
+                it.trimStart().startsWith("X-TIMESTAMP-MAP=", ignoreCase = true)
+            }.joinToString("\n").trim()
+
+            if (offsetMillis != null) shiftWebVttCueTimes(text, offsetMillis) else text
+        }.filter { it.isNotBlank() }
+
+        if (cueBodies.isEmpty()) return ""
+        return normalizeSpeakerMarkersInVtt("WEBVTT\n\n" + cueBodies.joinToString("\n\n") + "\n")
+    }
+
+    private fun parseWebVttTimestampMillis(value: String): Long? {
+        val parts = value.trim().split(':')
+        if (parts.size !in 2..3) return null
+        val secondsPart = parts.last().split('.', limit = 2)
+        val seconds = secondsPart[0].toLongOrNull() ?: return null
+        val millis = secondsPart.getOrNull(1)?.padEnd(3, '0')?.take(3)?.toLongOrNull() ?: 0L
+        val minutes = parts[parts.size - 2].toLongOrNull() ?: return null
+        val hours = if (parts.size == 3) parts[0].toLongOrNull() ?: return null else 0L
+        return ((hours * 60 + minutes) * 60 + seconds) * 1000 + millis
+    }
+
+    private fun formatWebVttTimestampMillis(value: Long): String {
+        val safe = value.coerceAtLeast(0)
+        return "%02d:%02d:%02d.%03d".format(
+            safe / 3_600_000, (safe / 60_000) % 60, (safe / 1_000) % 60, safe % 1_000
+        )
+    }
+
+    private fun shiftWebVttCueTimes(content: String, offsetMillis: Long): String {
+        val cueTiming = Regex(
+            """(?m)^(\s*)(\d{2,}:\d{2}:\d{2}\.\d{3}|\d{2}:\d{2}\.\d{3})(\s*-->\s*)(\d{2,}:\d{2}:\d{2}\.\d{3}|\d{2}:\d{2}\.\d{3})(.*)$"""
+        )
+        return cueTiming.replace(content) { match ->
+            val start = parseWebVttTimestampMillis(match.groupValues[2])
+            val end = parseWebVttTimestampMillis(match.groupValues[4])
+            if (start == null || end == null) match.value
+            else match.groupValues[1] + formatWebVttTimestampMillis(start + offsetMillis) +
+                match.groupValues[3] + formatWebVttTimestampMillis(end + offsetMillis) + match.groupValues[5]
+        }
+    }
+
     /** Read a KEY="VALUE" attribute from an HLS tag string. */
     private fun readAttr(tag: String, key: String): String? {
         val needle = "$key=\""
