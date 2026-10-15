@@ -61,7 +61,7 @@
         <item name="android:background">@color/md_surface</item>
     </style>
 
-    <style name="DetectedMediaBottomSheetShape">
+    <style name="DetectedMediaBottomSheetShape" parent="ShapeAppearance.Material3.LargeComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSizeTopLeft">28dp</item>
         <item name="cornerSizeTopRight">28dp</item>
