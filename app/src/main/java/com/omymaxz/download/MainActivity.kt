@@ -1843,6 +1843,7 @@ class MainActivity : AppCompatActivity() {
                             val enhancedTitle = generateSmartFileName(url, ext, quality, category)
                             val fileSize = estimateFileSize(url, category)
                             val language = extractLanguageFromUrl(url)
+                            val finalTitle = if (category == MediaCategory.SUBTITLE) SubtitleUtils.originalSubtitleFilename(url) ?: enhancedTitle else enhancedTitle
                             val mediaFile = MediaFile(
                                 url = url,
                                 title = enhancedTitle,
@@ -3322,6 +3323,7 @@ private fun injectMediaStateDetector() {
                                     val enhancedTitle = activity.generateSmartFileName(url, ext, quality, category)
                                     val fileSize = activity.estimateFileSize(url, category)
                                     val language = extractLanguageFromUrl(url)
+                                    val finalTitle = if (category == MediaCategory.SUBTITLE) SubtitleUtils.originalSubtitleFilename(url) ?: enhancedTitle else enhancedTitle
                                     val mediaFile = MediaFile(
                                         url = url,
                                         title = enhancedTitle,
@@ -3567,6 +3569,7 @@ private fun injectMediaStateDetector() {
 
                              val enhancedTitle = activity.generateSmartFileName(url, ext, quality, category)
 
+                             val finalTitle = if (category == MediaCategory.SUBTITLE) SubtitleUtils.originalSubtitleFilename(url) ?: enhancedTitle else enhancedTitle
                              val mediaFile = MediaFile(
                                 url = url,
                                 title = enhancedTitle,
@@ -3629,6 +3632,7 @@ private fun injectMediaStateDetector() {
                     val subtitle = isSubtitleMediaUrl(finalUrl, type)
                     val ext = if (subtitle) ".vtt" else detectedFormat.extension
                     val enhancedTitle = activity.generateSmartFileName(finalUrl, ext, quality, category)
+                    val finalTitle = if (subtitle) SubtitleUtils.originalSubtitleFilename(finalUrl) ?: enhancedTitle else enhancedTitle
                     val mediaFile = MediaFile(
                         url = finalUrl,
                         title = enhancedTitle,
