@@ -5413,6 +5413,17 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             setTextColor(textColor)
             setPadding(dp(4), dp(4), dp(4), dp(10))
         }
+        val dragHandle = View(this).apply {
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(if (luminance > 0.5) 0x55000000 else 0x66FFFFFF)
+                cornerRadius = dp(2).toFloat()
+            }
+            contentDescription = "Drag to resize or dismiss"
+        }
+        root.addView(dragHandle, LinearLayout.LayoutParams(dp(36), dp(4)).apply {
+            gravity = android.view.Gravity.CENTER_HORIZONTAL
+            bottomMargin = dp(10)
+        })
         root.addView(title, LinearLayout.LayoutParams(-1, -2))
 
         val body = LinearLayout(this).apply {
@@ -5529,7 +5540,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 behavior.skipCollapsed = true
                 behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
                 // Let the nested ScrollView own vertical gestures instead of dragging the whole sheet.
-                behavior.isDraggable = false
+                behavior.isDraggable = true
             }
         }
 
@@ -6643,6 +6654,17 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             setTextColor(textColor)
             setPadding(dp(4), dp(4), dp(4), dp(10))
         }
+        val dragHandle = View(this).apply {
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(if (luminance > 0.5) 0x55000000 else 0x66FFFFFF)
+                cornerRadius = dp(2).toFloat()
+            }
+            contentDescription = "Drag to resize or dismiss"
+        }
+        root.addView(dragHandle, LinearLayout.LayoutParams(dp(36), dp(4)).apply {
+            gravity = android.view.Gravity.CENTER_HORIZONTAL
+            bottomMargin = dp(10)
+        })
         root.addView(title, LinearLayout.LayoutParams(-1, -2))
         val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
 
@@ -6673,7 +6695,79 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             body.addView(row, LinearLayout.LayoutParams(-1, -2))
         }
 
+        fun addInlineSwitch(
+            label: String,
+            iconRes: Int,
+            checkedInitially: Boolean,
+            onChanged: (Boolean) -> Unit
+        ) {
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                minimumHeight = dp(56)
+                setPadding(dp(8), dp(4), dp(8), dp(4))
+                isClickable = true
+                isFocusable = true
+                background = androidx.appcompat.content.res.AppCompatResources.getDrawable(
+                    this@MainActivity,
+                    android.R.drawable.list_selector_background
+                )
+            }
+            val icon = android.widget.ImageView(this).apply {
+                setImageResource(iconRes)
+                setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                contentDescription = null
+            }
+            row.addView(icon, LinearLayout.LayoutParams(dp(24), dp(24)).apply {
+                marginEnd = dp(14)
+            })
+            val textView = TextView(this@MainActivity).apply {
+                text = label
+                textSize = 14f
+                setTextColor(textColor)
+                typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+            }
+            row.addView(textView, LinearLayout.LayoutParams(0, -2, 1f))
+            val toggle = com.google.android.material.switchmaterial.SwitchMaterial(this@MainActivity).apply {
+                isChecked = checkedInitially
+                contentDescription = label
+                setOnCheckedChangeListener { _, checked -> onChanged(checked) }
+            }
+            row.addView(toggle, LinearLayout.LayoutParams(-2, -2))
+            row.setOnClickListener { toggle.isChecked = !toggle.isChecked }
+            body.addView(row, LinearLayout.LayoutParams(-1, -2))
+        }
+
         // Keep a small number of descriptive sections, but don't hide actions behind category screens.
+
+            addSettingsHeader("Quick toggles")
+            addInlineSwitch(
+                "Floating media detector",
+                android.R.drawable.ic_menu_view,
+                prefs.getBoolean("FLOATING_DETECTOR_ENABLED", true)
+            ) { checked ->
+                prefs.edit().putBoolean("FLOATING_DETECTOR_ENABLED", checked).apply()
+                updateFabVisibility()
+                Toast.makeText(this, if (checked) "Floating detector enabled" else "Floating detector disabled", Toast.LENGTH_SHORT).show()
+            }
+            addInlineSwitch(
+                "YouTube quick refresh",
+                android.R.drawable.ic_popup_sync,
+                prefs.getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)
+            ) { checked ->
+                if (prefs.getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false) != checked) {
+                    toggleYouTubeQuickRefresh()
+                }
+            }
+            val blockerPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
+            addInlineSwitch(
+                "Popup blocked notices",
+                android.R.drawable.ic_dialog_alert,
+                blockerPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
+            ) { checked ->
+                blockerPrefs.edit().putBoolean("SHOW_POPUP_BLOCKED_NOTICE", checked).apply()
+                Toast.makeText(this, if (checked) "Popup notices enabled" else "Popup notices disabled", Toast.LENGTH_SHORT).show()
+            }
 
             addSettingsHeader("Privacy & Blocking")
             addSettingsAction("Content Blocking", android.R.drawable.ic_menu_close_clear_cancel) { showContentBlockingDialog() }
@@ -6714,7 +6808,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheet)
                 behavior.skipCollapsed = true
                 behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
-                behavior.isDraggable = false
+                behavior.isDraggable = true
             }
         }
         dialog.show()
