@@ -4369,6 +4369,7 @@ private fun showMediaListDialog() {
                         mediaFile.fileSize = "Unknown"
                     }
                     currentMediaListAdapter?.notifyItemChanged(position)
+                    updateMediaFilter()
                 }
             } else {
                 Toast.makeText(this, "Could not find underlying candidate to analyze", Toast.LENGTH_SHORT).show()
