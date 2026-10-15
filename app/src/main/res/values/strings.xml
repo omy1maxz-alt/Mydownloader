@@ -12,6 +12,11 @@
     <string name="send">Send</string>
     <string name="edit_message">Edit message</string>
     <string name="delete_message">Delete message</string>
+    <string name="player_pip">Picture in Picture</string>
+    <string name="player_resize">Resize video</string>
+    <string name="player_bubble">Floating bubble</string>
+    <string name="player_save_offline">Save offline</string>
+    <string name="player_track_settings">Track selection settings</string>
     <string name="no_media_found">No media files detected</string>
     <string name="ad_blocked">Advertisement blocked</string>
     <string name="popup_blocked">Popup blocked</string>
