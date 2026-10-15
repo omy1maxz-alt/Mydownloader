@@ -102,6 +102,8 @@ class MainActivity : AppCompatActivity() {
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     var isServiceRunning = false
     private val handler = Handler(Looper.getMainLooper())
+    private var lastQuickRefreshVideoKey: String? = null
+    private var quickRefreshMonitorRunnable: Runnable? = null
     private var isDesktopMode: Boolean = false
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -1306,7 +1308,6 @@ class MainActivity : AppCompatActivity() {
             webViewClient = object : WebViewClient() {
                 private var lastNavigationTime = 0L
                 private var navigationCount = 0
-                private var lastQuickRefreshScheduledUrl: String? = null
 
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                     synchronized(injectedUserscriptIdsForPage) {
@@ -1317,7 +1318,7 @@ class MainActivity : AppCompatActivity() {
                     // YouTube SPA video changes are cleared by checkForYouTube using the
                     // canonical video ID; leaving YouTube invalidates in-flight extraction results.
                     if (!isYt) {
-                        lastQuickRefreshScheduledUrl = null
+                        lastQuickRefreshVideoKey = null
                         resetYouTubeDetectionContext()
                         synchronized(detectedMediaFiles) {
                             detectedMediaFiles.clear()
@@ -1328,12 +1329,6 @@ class MainActivity : AppCompatActivity() {
                     }
                     if (isYt) {
                         checkForYouTube(url)
-                        if (getSharedPreferences("Settings", Context.MODE_PRIVATE)
-                                .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false) &&
-                            !url.isNullOrBlank() && url != lastQuickRefreshScheduledUrl) {
-                            lastQuickRefreshScheduledUrl = url
-                            scheduleYouTubeQuickRefresh(url)
-                        }
                     }
                     runOnUiThread {
                         updateFabVisibility()
@@ -1465,6 +1460,10 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     checkForYouTube(url)
+                    if (getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                            .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) {
+                        startYouTubeQuickRefreshMonitor()
+                    }
                 }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
@@ -5289,9 +5288,65 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             Toast.LENGTH_SHORT
         ).show()
 
-        if (enabled && webView.visibility == View.VISIBLE) {
-            scheduleYouTubeQuickRefresh(webView.url.orEmpty())
+        if (enabled) {
+            startYouTubeQuickRefreshMonitor(refreshCurrentVideo = true)
+        } else {
+            quickRefreshMonitorRunnable?.let(handler::removeCallbacks)
+            quickRefreshMonitorRunnable = null
+            lastQuickRefreshVideoKey = null
         }
+    }
+
+    /**
+     * YouTube changes videos with client-side navigation, which does not reliably invoke
+     * WebViewClient.onPageStarted(). Poll the WebView URL while enabled and refresh once
+     * when the canonical video ID changes. Keeping the video key stable prevents reload loops.
+     */
+    private fun startYouTubeQuickRefreshMonitor(refreshCurrentVideo: Boolean = false) {
+        if (!::webView.isInitialized || isFinishing || isDestroyed) return
+        if (!getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) return
+        if (quickRefreshMonitorRunnable != null) return
+
+        val currentUrl = webView.url.orEmpty()
+        if (isYouTubeVideoUrl(currentUrl)) {
+            lastQuickRefreshVideoKey = youtubeVideoKey(currentUrl)
+            if (refreshCurrentVideo && webView.visibility == View.VISIBLE) {
+                scheduleYouTubeQuickRefresh(currentUrl)
+            }
+        } else {
+            lastQuickRefreshVideoKey = null
+        }
+
+        val monitor = object : Runnable {
+            override fun run() {
+                if (!::webView.isInitialized || isFinishing || isDestroyed) {
+                    quickRefreshMonitorRunnable = null
+                    return
+                }
+                if (!getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                        .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) {
+                    quickRefreshMonitorRunnable = null
+                    return
+                }
+
+                val url = webView.url.orEmpty()
+                if (isYouTubeVideoUrl(url)) {
+                    val videoKey = youtubeVideoKey(url)
+                    if (videoKey != lastQuickRefreshVideoKey) {
+                        lastQuickRefreshVideoKey = videoKey
+                        if (webView.visibility == View.VISIBLE) {
+                            scheduleYouTubeQuickRefresh(url)
+                        }
+                    }
+                } else {
+                    lastQuickRefreshVideoKey = null
+                }
+                handler.postDelayed(this, 350L)
+            }
+        }
+        quickRefreshMonitorRunnable = monitor
+        handler.postDelayed(monitor, 350L)
     }
 
     private fun scheduleYouTubeQuickRefresh(targetUrl: String) {
