@@ -33,19 +33,16 @@
         <item name="android:windowFullscreen">true</item>
     </style>
 
-    <!-- Solid Dark Popup Menu Style -->
     <style name="GlassyPopupMenu" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="actionMenuTextColor">@android:color/white</item>
         <item name="android:popupElevation">8dp</item>
     </style>
 
-    <!-- Custom Dialog Theme -->
     <style name="CustomAlertDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
         <item name="android:windowBackground">@drawable/dialog_background</item>
     </style>
 
-    <!-- Transparent BottomSheet Theme -->
     <style name="TransparentBottomSheetDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/TransparentBottomSheetStyle</item>
     </style>

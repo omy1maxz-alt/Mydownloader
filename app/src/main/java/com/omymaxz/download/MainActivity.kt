@@ -67,7 +67,12 @@ import android.widget.LinearLayout
 class MainActivity : AppCompatActivity() {
 
     private val detectorHideHandler = Handler(Looper.getMainLooper())
-    private val detectorHideRunnable = Runnable { findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = android.view.View.GONE }
+    private var floatingDetectorMediaKey: String? = null
+    private var floatingDetectorHiddenMediaKey: String? = null
+    private val detectorHideRunnable = Runnable {
+        floatingDetectorHiddenMediaKey = floatingDetectorMediaKey
+        findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = android.view.View.GONE
+    }
 
 
 
@@ -102,6 +107,59 @@ class MainActivity : AppCompatActivity() {
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     var isServiceRunning = false
     private val handler = Handler(Looper.getMainLooper())
+    private val webMediaPipHandler = Handler(Looper.getMainLooper())
+    @Volatile private var webMediaPlayingForPip = false
+    @Volatile private var webMediaPipAspectRatio = android.util.Rational(16, 9)
+    private var webMediaPipMonitorStarted = false
+    private var pipToolbarVisibility = View.VISIBLE
+    private var pipFabVisibility = View.GONE
+    private var pipProgressVisibility = View.GONE
+    private var pipDetectorVisibility = View.GONE
+    private val webMediaPipMonitor = object : Runnable {
+        override fun run() {
+            if (!webMediaPipMonitorStarted || !::webView.isInitialized || isFinishing || isDestroyed) {
+                webMediaPipMonitorStarted = false
+                return
+            }
+            val script = """
+                (function() {
+                    var videos = Array.from(document.querySelectorAll('video'));
+                    var active = videos.filter(function(v) {
+                        if (v.paused || v.ended || v.readyState < 2) return false;
+                        var r = v.getBoundingClientRect();
+                        var style = window.getComputedStyle(v);
+                        return r.width > 0 && r.height > 0 &&
+                               style.display !== 'none' && style.visibility !== 'hidden';
+                    }).sort(function(a, b) {
+                        return (b.videoWidth * b.videoHeight) - (a.videoWidth * a.videoHeight);
+                    })[0];
+                    return active ? ('1,' + (active.videoWidth || active.clientWidth || 16) +
+                        ',' + (active.videoHeight || active.clientHeight || 9)) : '0,16,9';
+                })();
+            """.trimIndent()
+            webView.evaluateJavascript(script) { result ->
+                val parts = result?.trim('"')?.split(',')
+                val playing = parts?.getOrNull(0) == "1"
+                webMediaPlayingForPip = playing
+                if (playing) {
+                    val width = parts?.getOrNull(1)?.toIntOrNull() ?: 16
+                    val height = parts?.getOrNull(2)?.toIntOrNull() ?: 9
+                    if (width > 0 && height > 0) {
+                        val ratio = width.toFloat() / height.toFloat()
+                        if (ratio in 0.5f..2.0f) {
+                            webMediaPipAspectRatio = android.util.Rational(width, height)
+                        }
+                    }
+                }
+                updateWebMediaPipParams()
+                if (webMediaPipMonitorStarted) {
+                    webMediaPipHandler.postDelayed(this, 700L)
+                }
+            }
+        }
+    }
+    private var lastQuickRefreshVideoKey: String? = null
+    private var quickRefreshMonitorRunnable: Runnable? = null
     private var isDesktopMode: Boolean = false
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -545,9 +603,156 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        // Keep website WebView playback separate from CustomPlayerActivity's PiP behavior.
+        if (CustomPlayerActivity.activePlayer != null || !webMediaPlayingForPip) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                enterPictureInPictureMode(buildWebMediaPipParams())
+            } catch (e: Exception) {
+                android.util.Log.w("WebMediaPiP", "Unable to enter PiP for website playback", e)
+            }
+        }
+    }
+
+    private fun buildWebMediaPipParams(): android.app.PictureInPictureParams {
+        val builder = android.app.PictureInPictureParams.Builder()
+            .setAspectRatio(webMediaPipAspectRatio)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.setAutoEnterEnabled(webMediaPlayingForPip)
+        }
+        return builder.build()
+    }
+
+    /**
+     * PiP snapshots the Activity, not just the HTML video. Temporarily isolate the
+     * active video in the page so the PiP window contains video rather than site chrome.
+     * Original inline styles are saved and restored when leaving PiP.
+     */
+    private fun applyWebVideoPipLayout(enabled: Boolean) {
+        if (!::webView.isInitialized) return
+        val script = if (enabled) """
+            (function() {
+              var v = Array.from(document.querySelectorAll('video')).filter(function(x) {
+                return !x.paused && !x.ended && x.readyState >= 2;
+              }).sort(function(a,b) {
+                return (b.videoWidth*b.videoHeight)-(a.videoWidth*a.videoHeight);
+              })[0];
+              if (!v) return 'no-active-video';
+              if (window.__myDownloaderPipVideo && window.__myDownloaderPipVideo !== v) {
+                window.__myDownloaderRestorePip && window.__myDownloaderRestorePip();
+              }
+              if (window.__myDownloaderPipVideo === v) return 'already-applied';
+              var saved = [];
+              function remember(el) {
+                if (!el || saved.some(function(x){return x.el===el;})) return;
+                saved.push({el:el, style:el.getAttribute('style'), hidden:el.getAttribute('hidden')});
+              }
+              remember(document.documentElement);
+              remember(document.body);
+              var node = v;
+              while (node && node !== document.body) {
+                var parent = node.parentElement;
+                if (!parent) break;
+                Array.from(parent.children).forEach(function(sibling) {
+                  if (sibling !== node) {
+                    remember(sibling);
+                    sibling.style.setProperty('visibility','hidden','important');
+                    sibling.style.setProperty('pointer-events','none','important');
+                  }
+                });
+                node = parent;
+              }
+              remember(v);
+              document.documentElement.style.setProperty('background','#000','important');
+              document.documentElement.style.setProperty('overflow','hidden','important');
+              document.body.style.setProperty('background','#000','important');
+              document.body.style.setProperty('overflow','hidden','important');
+              v.style.setProperty('position','fixed','important');
+              v.style.setProperty('inset','0','important');
+              v.style.setProperty('width','100vw','important');
+              v.style.setProperty('height','100vh','important');
+              v.style.setProperty('max-width','none','important');
+              v.style.setProperty('max-height','none','important');
+              v.style.setProperty('margin','0','important');
+              v.style.setProperty('z-index','2147483647','important');
+              v.style.setProperty('object-fit','contain','important');
+              v.style.setProperty('background','#000','important');
+              window.__myDownloaderPipVideo = v;
+              window.__myDownloaderPipSaved = saved;
+              window.__myDownloaderRestorePip = function() {
+                (window.__myDownloaderPipSaved || []).reverse().forEach(function(x) {
+                  if (x.style === null) x.el.removeAttribute('style');
+                  else x.el.setAttribute('style', x.style);
+                  if (x.hidden === null) x.el.removeAttribute('hidden');
+                  else x.el.setAttribute('hidden', x.hidden);
+                });
+                window.__myDownloaderPipVideo = null;
+                window.__myDownloaderPipSaved = null;
+                window.__myDownloaderRestorePip = null;
+              };
+              return 'applied';
+            })();
+        """.trimIndent() else """
+            (function() {
+              if (window.__myDownloaderRestorePip) window.__myDownloaderRestorePip();
+              return 'restored';
+            })();
+        """.trimIndent()
+        webView.evaluateJavascript(script, null)
+    }
+
+    private fun updateWebMediaPipParams() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || isFinishing || isDestroyed) return
+        try {
+            setPictureInPictureParams(buildWebMediaPipParams())
+        } catch (e: Exception) {
+            android.util.Log.d("WebMediaPiP", "Could not update PiP parameters", e)
+        }
+    }
+
+    private fun startWebMediaPipMonitor() {
+        if (webMediaPipMonitorStarted || !::webView.isInitialized || isFinishing || isDestroyed) return
+        webMediaPipMonitorStarted = true
+        webMediaPipHandler.removeCallbacks(webMediaPipMonitor)
+        webMediaPipHandler.post(webMediaPipMonitor)
+    }
+
+    private fun stopWebMediaPipMonitor() {
+        webMediaPipMonitorStarted = false
+        webMediaPipHandler.removeCallbacks(webMediaPipMonitor)
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: android.content.res.Configuration
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        if (isInPictureInPictureMode) {
+            applyWebVideoPipLayout(true)
+            pipToolbarVisibility = binding.toolbar.visibility
+            pipFabVisibility = binding.fabShowMedia.visibility
+            pipProgressVisibility = binding.progressBar.visibility
+            pipDetectorVisibility = findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility
+                ?: View.GONE
+            binding.toolbar.visibility = View.GONE
+            binding.fabShowMedia.visibility = View.GONE
+            binding.progressBar.visibility = View.GONE
+            findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = View.GONE
+        } else {
+            applyWebVideoPipLayout(false)
+            binding.toolbar.visibility = pipToolbarVisibility
+            binding.fabShowMedia.visibility = pipFabVisibility
+            binding.progressBar.visibility = pipProgressVisibility
+            findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = pipDetectorVisibility
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         isAppInBackground = true
+        if (!isInPictureInPictureMode) stopWebMediaPipMonitor()
         if (isMediaPlaying) {
             startOrUpdatePlaybackService()
         }
@@ -556,6 +761,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
+        startWebMediaPipMonitor()
         if (hasStartedForegroundService) {
             stopPlaybackService()
         }
@@ -599,6 +805,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         // Receivers are now unregistered in onStop
+        stopWebMediaPipMonitor()
         webView.destroy()
         if (hasStartedForegroundService) {
             stopPlaybackService()
@@ -1316,6 +1523,7 @@ class MainActivity : AppCompatActivity() {
                     // YouTube SPA video changes are cleared by checkForYouTube using the
                     // canonical video ID; leaving YouTube invalidates in-flight extraction results.
                     if (!isYt) {
+                        lastQuickRefreshVideoKey = null
                         resetYouTubeDetectionContext()
                         synchronized(detectedMediaFiles) {
                             detectedMediaFiles.clear()
@@ -1457,6 +1665,11 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     checkForYouTube(url)
+                    startWebMediaPipMonitor()
+                    if (getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                            .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) {
+                        startYouTubeQuickRefreshMonitor()
+                    }
                 }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
@@ -5086,7 +5299,11 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 MenuAction("User Scripts", R.drawable.ic_translate) { startActivity(Intent(this, UserScriptManagerActivity::class.java)) },
                 MenuAction("Urban VPN", R.drawable.ic_public) { showUrbanVpnDialog() },
                 MenuAction(getString(R.string.proxy_settings), R.drawable.ic_public) { showProxySettingsDialog() },
-                MenuAction("Block Ads / Traps on This Page", R.drawable.ic_close) { nukeAdsAndTraps() }
+                MenuAction("Block Ads / Traps on This Page", R.drawable.ic_close) { nukeAdsAndTraps() },
+                MenuAction(
+                    if (getSharedPreferences("Settings", Context.MODE_PRIVATE).getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) "YouTube Quick Refresh: On" else "YouTube Quick Refresh: Off",
+                    android.R.drawable.ic_popup_sync
+                ) { toggleYouTubeQuickRefresh() }
             )),
             MenuCategory("Media & Appearance", R.drawable.ic_play_arrow, listOf(
                 MenuAction("Media Detection Settings", R.drawable.ic_play_arrow) { showMediaDetectionSettingsDialog() },
@@ -5256,6 +5473,105 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         }
 
         menuDialog.show()
+    }
+
+
+
+
+    private fun isYouTubeUrl(url: String): Boolean {
+        val host = try { Uri.parse(url).host.orEmpty().lowercase() } catch (_: Exception) { "" }
+        return host == "youtube.com" || host.endsWith(".youtube.com") ||
+            host == "youtu.be" || host.endsWith(".youtu.be")
+    }
+
+    private fun toggleYouTubeQuickRefresh() {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val enabled = !prefs.getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)
+        prefs.edit().putBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", enabled).apply()
+        Toast.makeText(
+            this,
+            if (enabled) "YouTube quick refresh enabled" else "YouTube quick refresh disabled",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        if (enabled) {
+            startYouTubeQuickRefreshMonitor(refreshCurrentVideo = true)
+        } else {
+            quickRefreshMonitorRunnable?.let(handler::removeCallbacks)
+            quickRefreshMonitorRunnable = null
+            lastQuickRefreshVideoKey = null
+        }
+    }
+
+    /**
+     * YouTube changes videos with client-side navigation, which does not reliably invoke
+     * WebViewClient.onPageStarted(). Poll the WebView URL while enabled and refresh once
+     * when the canonical video ID changes. Keeping the video key stable prevents reload loops.
+     */
+    private fun startYouTubeQuickRefreshMonitor(refreshCurrentVideo: Boolean = false) {
+        if (!::webView.isInitialized || isFinishing || isDestroyed) return
+        if (!getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) return
+        if (quickRefreshMonitorRunnable != null) return
+
+        val currentUrl = webView.url.orEmpty()
+        if (isYouTubeVideoUrl(currentUrl)) {
+            lastQuickRefreshVideoKey = youtubeVideoKey(currentUrl)
+            if (refreshCurrentVideo && webView.visibility == View.VISIBLE) {
+                scheduleYouTubeQuickRefresh(currentUrl)
+            }
+        } else {
+            lastQuickRefreshVideoKey = null
+        }
+
+        val monitor = object : Runnable {
+            override fun run() {
+                if (!::webView.isInitialized || isFinishing || isDestroyed) {
+                    quickRefreshMonitorRunnable = null
+                    return
+                }
+                if (!getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                        .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) {
+                    quickRefreshMonitorRunnable = null
+                    return
+                }
+
+                val url = webView.url.orEmpty()
+                if (isYouTubeVideoUrl(url)) {
+                    val videoKey = youtubeVideoKey(url)
+                    if (videoKey != lastQuickRefreshVideoKey) {
+                        lastQuickRefreshVideoKey = videoKey
+                        if (webView.visibility == View.VISIBLE) {
+                            scheduleYouTubeQuickRefresh(url)
+                        }
+                    }
+                } else {
+                    lastQuickRefreshVideoKey = null
+                }
+                handler.postDelayed(this, 350L)
+            }
+        }
+        quickRefreshMonitorRunnable = monitor
+        handler.postDelayed(monitor, 350L)
+    }
+
+    private fun scheduleYouTubeQuickRefresh(targetUrl: String) {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) return
+        if (!isYouTubeUrl(targetUrl)) return
+        val uri = Uri.parse(targetUrl)
+        if (uri.scheme != "https" && uri.scheme != "http") return
+
+        webView.postDelayed({
+            if (isFinishing || isDestroyed || !::webView.isInitialized) return@postDelayed
+            val stillEnabled = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)
+            val latestUrl = webView.url.orEmpty()
+            if (stillEnabled && webView.visibility == View.VISIBLE &&
+                latestUrl == targetUrl && isYouTubeUrl(latestUrl)) {
+                webView.reload()
+            }
+        }, 250L)
     }
 
     private fun makeMenuRow(
@@ -7385,7 +7701,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
             binding.fabShowMedia.visibility = android.view.View.VISIBLE
             binding.mediaCountBadge.text = if (detectedMediaFiles.size > 99) "99+" else detectedMediaFiles.size.toString()
             binding.mediaCountBadge.visibility = android.view.View.VISIBLE
-            binding.fabShowMedia.setImageResource(android.R.drawable.ic_menu_add)
+            binding.fabShowMedia.setImageResource(R.drawable.ic_download)
 
             binding.fabShowMedia.setOnClickListener {
                 showMediaListDialog()
@@ -7412,6 +7728,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
             val minDuration = prefs.getInt("FLOATING_DETECTOR_MIN_DURATION", 0)
 
             if (!isFloatingEnabled || (bestPlayable != null && bestPlayable.durationSec > 0 && bestPlayable.durationSec < minDuration)) {
+                detectorHideHandler.removeCallbacks(detectorHideRunnable)
                 floatingDetector?.visibility = android.view.View.GONE
                 return@runOnUiThread
             }
@@ -7476,14 +7793,37 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
 
                 val btnClose = findViewById<android.widget.ImageButton>(R.id.btnDetectorClose)
                 btnClose?.setOnClickListener {
+                    floatingDetectorHiddenMediaKey = floatingDetectorMediaKey
                     floatingDetector?.visibility = android.view.View.GONE
                     detectorHideHandler.removeCallbacks(detectorHideRunnable)
                 }
 
-                // Auto hide after 10 seconds
+                // Show for up to 10 seconds per media candidate. Repeated detector updates
+                // must not keep resetting the timer or resurrect a dismissed overlay.
+                val mediaKey = bestPlayable.url
+                val isNewMedia = mediaKey != floatingDetectorMediaKey
+                if (isNewMedia) {
+                    floatingDetectorMediaKey = mediaKey
+                    floatingDetectorHiddenMediaKey = null
+                    detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                }
 
+                if (floatingDetectorHiddenMediaKey == mediaKey) {
+                    floatingDetector?.visibility = android.view.View.GONE
+                    detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                } else {
+                    val wasHidden = floatingDetector?.visibility != android.view.View.VISIBLE
+                    floatingDetector?.visibility = android.view.View.VISIBLE
+                    if (isNewMedia || wasHidden) {
+                        detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                        detectorHideHandler.postDelayed(detectorHideRunnable, 10_000L)
+                    }
+                }
 
             } else {
+                detectorHideHandler.removeCallbacks(detectorHideRunnable)
+                floatingDetectorMediaKey = null
+                floatingDetectorHiddenMediaKey = null
                 floatingDetector?.visibility = android.view.View.GONE
             }
         }
