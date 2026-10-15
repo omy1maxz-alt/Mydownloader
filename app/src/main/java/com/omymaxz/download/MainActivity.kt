@@ -102,6 +102,57 @@ class MainActivity : AppCompatActivity() {
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     var isServiceRunning = false
     private val handler = Handler(Looper.getMainLooper())
+    private val webMediaPipHandler = Handler(Looper.getMainLooper())
+    @Volatile private var webMediaPlayingForPip = false
+    @Volatile private var webMediaPipAspectRatio = android.util.Rational(16, 9)
+    private var webMediaPipMonitorStarted = false
+    private var pipToolbarVisibility = View.VISIBLE
+    private var pipFabVisibility = View.GONE
+    private var pipProgressVisibility = View.GONE
+    private var pipDetectorVisibility = View.GONE
+    private val webMediaPipMonitor = object : Runnable {
+        override fun run() {
+            if (!webMediaPipMonitorStarted || !::webView.isInitialized || isFinishing || isDestroyed) {
+                webMediaPipMonitorStarted = false
+                return
+            }
+            val script = """
+                (function() {
+                    var videos = Array.from(document.querySelectorAll('video'));
+                    var active = videos.filter(function(v) {
+                        if (v.paused || v.ended || v.readyState < 2) return false;
+                        var r = v.getBoundingClientRect();
+                        var style = window.getComputedStyle(v);
+                        return r.width > 0 && r.height > 0 &&
+                               style.display !== 'none' && style.visibility !== 'hidden';
+                    }).sort(function(a, b) {
+                        return (b.videoWidth * b.videoHeight) - (a.videoWidth * a.videoHeight);
+                    })[0];
+                    return active ? ('1,' + (active.videoWidth || active.clientWidth || 16) +
+                        ',' + (active.videoHeight || active.clientHeight || 9)) : '0,16,9';
+                })();
+            """.trimIndent()
+            webView.evaluateJavascript(script) { result ->
+                val parts = result?.trim('"')?.split(',')
+                val playing = parts?.getOrNull(0) == "1"
+                webMediaPlayingForPip = playing
+                if (playing) {
+                    val width = parts?.getOrNull(1)?.toIntOrNull() ?: 16
+                    val height = parts?.getOrNull(2)?.toIntOrNull() ?: 9
+                    if (width > 0 && height > 0) {
+                        val ratio = width.toFloat() / height.toFloat()
+                        if (ratio in 0.5f..2.0f) {
+                            webMediaPipAspectRatio = android.util.Rational(width, height)
+                        }
+                    }
+                }
+                updateWebMediaPipParams()
+                if (webMediaPipMonitorStarted) {
+                    webMediaPipHandler.postDelayed(this, 700L)
+                }
+            }
+        }
+    }
     private var lastQuickRefreshVideoKey: String? = null
     private var quickRefreshMonitorRunnable: Runnable? = null
     private var isDesktopMode: Boolean = false
@@ -547,9 +598,76 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        // Keep website WebView playback separate from CustomPlayerActivity's PiP behavior.
+        if (CustomPlayerActivity.activePlayer != null || !webMediaPlayingForPip) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                enterPictureInPictureMode(buildWebMediaPipParams())
+            } catch (e: Exception) {
+                android.util.Log.w("WebMediaPiP", "Unable to enter PiP for website playback", e)
+            }
+        }
+    }
+
+    private fun buildWebMediaPipParams(): android.app.PictureInPictureParams {
+        val builder = android.app.PictureInPictureParams.Builder()
+            .setAspectRatio(webMediaPipAspectRatio)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.setAutoEnterEnabled(webMediaPlayingForPip)
+        }
+        return builder.build()
+    }
+
+    private fun updateWebMediaPipParams() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || isFinishing || isDestroyed) return
+        try {
+            setPictureInPictureParams(buildWebMediaPipParams())
+        } catch (e: Exception) {
+            android.util.Log.d("WebMediaPiP", "Could not update PiP parameters", e)
+        }
+    }
+
+    private fun startWebMediaPipMonitor() {
+        if (webMediaPipMonitorStarted || !::webView.isInitialized || isFinishing || isDestroyed) return
+        webMediaPipMonitorStarted = true
+        webMediaPipHandler.removeCallbacks(webMediaPipMonitor)
+        webMediaPipHandler.post(webMediaPipMonitor)
+    }
+
+    private fun stopWebMediaPipMonitor() {
+        webMediaPipMonitorStarted = false
+        webMediaPipHandler.removeCallbacks(webMediaPipMonitor)
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: android.content.res.Configuration
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        if (isInPictureInPictureMode) {
+            pipToolbarVisibility = binding.toolbar.visibility
+            pipFabVisibility = binding.fabShowMedia.visibility
+            pipProgressVisibility = binding.progressBar.visibility
+            pipDetectorVisibility = findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility
+                ?: View.GONE
+            binding.toolbar.visibility = View.GONE
+            binding.fabShowMedia.visibility = View.GONE
+            binding.progressBar.visibility = View.GONE
+            findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = View.GONE
+        } else {
+            binding.toolbar.visibility = pipToolbarVisibility
+            binding.fabShowMedia.visibility = pipFabVisibility
+            binding.progressBar.visibility = pipProgressVisibility
+            findViewById<android.view.View>(R.id.floatingDetectorUI)?.visibility = pipDetectorVisibility
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         isAppInBackground = true
+        if (!isInPictureInPictureMode) stopWebMediaPipMonitor()
         if (isMediaPlaying) {
             startOrUpdatePlaybackService()
         }
@@ -558,6 +676,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         isAppInBackground = false
+        startWebMediaPipMonitor()
         if (hasStartedForegroundService) {
             stopPlaybackService()
         }
@@ -601,6 +720,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         // Receivers are now unregistered in onStop
+        stopWebMediaPipMonitor()
         webView.destroy()
         if (hasStartedForegroundService) {
             stopPlaybackService()
@@ -1460,6 +1580,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     checkForYouTube(url)
+                    startWebMediaPipMonitor()
                     if (getSharedPreferences("Settings", Context.MODE_PRIVATE)
                             .getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) {
                         startYouTubeQuickRefreshMonitor()
