@@ -93,7 +93,6 @@ A line with >> in the middle.
         assertEquals(2, Regex("-->").findAll(normalized).count())
     }
 
-}
 
     @Test
     fun languageMetadataMustBeRecognizedAndSnippetIsNotLanguage() {
