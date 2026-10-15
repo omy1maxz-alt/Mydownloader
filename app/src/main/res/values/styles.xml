@@ -51,4 +51,21 @@
         <item name="android:background">@android:color/transparent</item>
     </style>
 
+
+    <style name="DetectedMediaBottomSheetTheme" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/DetectedMediaBottomSheetStyle</item>
+    </style>
+
+    <style name="DetectedMediaBottomSheetStyle" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="shapeAppearanceOverlay">@style/DetectedMediaBottomSheetShape</item>
+        <item name="android:background">@color/md_surface</item>
+    </style>
+
+    <style name="DetectedMediaBottomSheetShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">28dp</item>
+        <item name="cornerSizeTopRight">28dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
 </resources>
