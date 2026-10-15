@@ -92,22 +92,18 @@ object YoutubeExtractorHelper {
                             // The same caption track is often returned once per format.
                             // Ignore fmt when deduplicating, but retain separate manual,
                             // auto-generated (kind=asr), named, and translated tracks.
-                            val canonicalUrl = contentUrl
-                                .replace(Regex("([?&])fmt=[^&]*"), "$1")
-                                .trimEnd('?', '&')
-                            val trackKey = if (
-                                language.isNotBlank() || trackName.isNotBlank() ||
-                                trackKind.isNotBlank() || translatedLanguage.isNotBlank()
-                            ) {
-                                listOf(
-                                    language.lowercase(),
-                                    trackName.lowercase(),
-                                    trackKind.lowercase(),
-                                    translatedLanguage.lowercase()
-                                ).joinToString("|")
-                            } else {
-                                canonicalUrl
-                            }
+                            val canonicalUrl = SubtitleUtils.canonicalMediaUrl(
+                                contentUrl.replace(Regex("([?&])fmt=[^&]*"), "$1").trimEnd('?', '&')
+                            )
+                            // Ignore only the representation-format selector. Preserve token,
+                            // lang, tlang, name, kind, and any other track-identifying query data.
+                            val trackKey = listOf(
+                                canonicalUrl,
+                                language.lowercase(),
+                                trackName.lowercase(),
+                                trackKind.lowercase(),
+                                translatedLanguage.lowercase()
+                            ).joinToString("|")
 
                             val separator = if (contentUrl.contains("?")) "&" else "?"
                             val taggedUrl = if (language.isNotBlank() && uri.getQueryParameter("lang").isNullOrBlank()) {
