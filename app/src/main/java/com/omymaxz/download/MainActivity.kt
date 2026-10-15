@@ -4320,6 +4320,11 @@ private fun showMediaListDialog() {
             currentMediaListAdapter?.notifyDataSetChanged()
             dialogBinding.mediaEmptyState.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
             dialogBinding.mediaRecyclerView.visibility = if (filtered.isEmpty()) View.INVISIBLE else View.VISIBLE
+            dialogBinding.mediaEmptyState.text = if (mediaFilesCopy.isEmpty()) {
+                "No detected media on this page"
+            } else {
+                "No media matches this filter"
+            }
             dialogBinding.mediaSheetSummary.text = if (filterText.isBlank() && selectedFilter == "ALL") {
                 "${mediaFilesCopy.size} items detected on this page"
             } else {
