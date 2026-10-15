@@ -5087,6 +5087,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 MenuAction("Urban VPN", R.drawable.ic_public) { showUrbanVpnDialog() },
                 MenuAction(getString(R.string.proxy_settings), R.drawable.ic_public) { showProxySettingsDialog() },
                 MenuAction("Block Ads / Traps on This Page", R.drawable.ic_close) { nukeAdsAndTraps() }
+                ,MenuAction("YouTube Quick Refresh Test", android.R.drawable.ic_popup_sync) { runYouTubeQuickRefreshTest() }
             )),
             MenuCategory("Media & Appearance", R.drawable.ic_play_arrow, listOf(
                 MenuAction("Media Detection Settings", R.drawable.ic_play_arrow) { showMediaDetectionSettingsDialog() },
