@@ -135,4 +135,4 @@ Hello.
 """))
         assertEquals(true, SubtitleUtils.isValidSubtitleContent("""<tt><body><div><p begin="00:00:01.000" end="00:00:03.000">Hello.</p></div></body></tt>"""))
     }
-
+}
