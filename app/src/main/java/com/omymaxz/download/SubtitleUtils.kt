@@ -473,7 +473,9 @@ object SubtitleUtils {
             return SubtitleResult(null, language)
         }
 
-        // No bundled detector reliably classifies short snippets; leave unknown language unset.\n\n        val snippetText = if (finalSnippet.length > 120) {
+        // No bundled detector reliably classifies short snippets; leave unknown language unset.
+
+        val snippetText = if (finalSnippet.length > 120) {
             val cut = finalSnippet.lastIndexOf(' ', 120)
             if (cut > 0) finalSnippet.substring(0, cut) + "..." else finalSnippet.substring(0, 120) + "..."
         } else finalSnippet
