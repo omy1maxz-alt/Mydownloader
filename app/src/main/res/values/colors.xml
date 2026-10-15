@@ -35,4 +35,8 @@
     <color name="media_other_bg">#F5F5F5</color>
     <color name="active_tab_bg">#D1E4F6</color>
     <color name="selected_tab_bg">#FFCDD2</color>
+    <color name="chat_user_bubble_bg">#D9F0E9</color>
+    <color name="chat_user_bubble_fg">#133E36</color>
+    <color name="chat_model_bubble_bg">#EBF0EE</color>
+    <color name="chat_model_bubble_fg">#191D1C</color>
 </resources>
