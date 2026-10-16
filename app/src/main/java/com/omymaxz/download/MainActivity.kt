@@ -4796,6 +4796,15 @@ private fun showMediaListDialog() {
             }
             if (allSubtitleUrls.isNotEmpty()) {
                 putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+                val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
+                    val pagePath = webView.url?.toString().orEmpty().substringBefore("?").substringBefore("#")
+                    detectedMediaFiles.filter { file ->
+                        val refPath = file.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
+                        (file.category == MediaCategory.SUBTITLE || file.title.endsWith(".vtt", true) || file.title.endsWith(".srt", true)) &&
+                            (refPath == pagePath || (file.referer == candidate.referer && candidate.referer != null))
+                    }
+                }
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, subtitleMetadataPayload(subtitleMetadataFiles))
             }
 
                 val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
@@ -4905,6 +4914,15 @@ private fun showMediaListDialog() {
                 }
                 if (allSubtitleUrls.isNotEmpty()) {
                     putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+                    val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
+                        val pagePath = webView.url?.toString().orEmpty().substringBefore("?").substringBefore("#")
+                        detectedMediaFiles.filter { file ->
+                            val refPath = file.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
+                            (file.category == MediaCategory.SUBTITLE || file.title.endsWith(".vtt", true) || file.title.endsWith(".srt", true)) &&
+                                (refPath == pagePath || (file.referer == mediaFile.referer && mediaFile.referer != null))
+                        }
+                    }
+                    putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, subtitleMetadataPayload(subtitleMetadataFiles))
                 }
 
                     val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
