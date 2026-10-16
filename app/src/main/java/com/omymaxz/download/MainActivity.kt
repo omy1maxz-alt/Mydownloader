@@ -4782,7 +4782,6 @@ private fun showMediaListDialog() {
                     })
                 )
             }
-            }
         }
         startActivity(intent)
     }
