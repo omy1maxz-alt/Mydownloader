@@ -183,7 +183,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 languageName != null -> languageName
                 meaningfulLabel != null -> meaningfulLabel
                 !format.language.isNullOrBlank() && format.language != "und" ->
-                    format.language.uppercase(java.util.Locale.ROOT)
+                    format.language.orEmpty().uppercase(java.util.Locale.ROOT)
                 else -> "Unknown language"
             }
         }
