@@ -254,7 +254,11 @@ class CustomPlayerActivity : AppCompatActivity() {
         val label = value.trim()
         if (label.matches(Regex("(?i)^(?:und|undetermined|unknown|unknown[_ ]language|null|none|default|track|subtitle|subtitles|caption|captions)(?:[-_ #]*\\d+)?$"))) return true
         // Some site/player templates leak unevaluated interpolation into Media3's format.label.
-        return label.matches(Regex("(?i)^(?:subtitle|caption|track)\\s*\\$\\{[^}]+}$"))
+        val hasKnownPrefix = label.startsWith("subtitle", ignoreCase = true) ||
+            label.startsWith("caption", ignoreCase = true) ||
+            label.startsWith("track", ignoreCase = true)
+        // Avoid a fragile regex here: malformed regex syntax crashes while opening the track picker.
+        return hasKnownPrefix && label.contains("\${") && label.endsWith("}")
     }
 
     /**
