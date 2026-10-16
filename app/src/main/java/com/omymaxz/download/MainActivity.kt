@@ -4018,84 +4018,164 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         if (!subtitleAnalysisInFlight.add(canonicalUrl)) return
 
         lifecycleScope.launch(Dispatchers.IO) {
-            var connection: java.net.URLConnection? = null
-            try {
-                connection = java.net.URL(mediaFile.url).openConnection().apply {
-                    connectTimeout = 12_000
-                    readTimeout = 12_000
+            val candidate = mediaEngine.getCandidate(mediaFile.url)
+            val userAgent = candidate?.userAgent
+                ?: withContext(Dispatchers.Main) { webView.settings.userAgentString }
+            val referer = candidate?.referer
+                ?: withContext(Dispatchers.Main) { webView.url }
+            val cookie = candidate?.cookie ?: CookieManager.getInstance().getCookie(mediaFile.url)
+
+            fun readLimitedText(url: String, maxBytes: Int = 262144): String {
+                val connection = java.net.URL(url).openConnection()
+                try {
+                    connection.connectTimeout = 12000
+                    connection.readTimeout = 12000
+                    if (connection is java.net.HttpURLConnection) {
+                        connection.instanceFollowRedirects = true
+                        userAgent.takeIf { it.isNotBlank() }?.let { connection.setRequestProperty("User-Agent", it) }
+                        referer?.takeIf { it.isNotBlank() }?.let { connection.setRequestProperty("Referer", it) }
+                        cookie?.takeIf { it.isNotBlank() }?.let { connection.setRequestProperty("Cookie", it) }
+                        connection.setRequestProperty("Accept", "text/vtt, application/x-subrip, application/ttml+xml, application/vnd.apple.mpegurl, */*")
+                        connection.setRequestProperty("Range", "bytes=0-${maxBytes - 1}")
+                        val status = connection.responseCode
+                        if (status !in 200..299) throw java.io.IOException("HTTP $status")
+                    }
+                    val bytes = connection.getInputStream().use { input ->
+                        val output = java.io.ByteArrayOutputStream()
+                        val buffer = ByteArray(8192)
+                        var remaining = maxBytes
+                        while (remaining > 0) {
+                            val count = input.read(buffer, 0, minOf(buffer.size, remaining))
+                            if (count < 0) break
+                            output.write(buffer, 0, count)
+                            remaining -= count
+                        }
+                        output.toByteArray()
+                    }
+                    return String(bytes, Charsets.UTF_8).removePrefix("\uFEFF")
+                } finally {
+                    (connection as? java.net.HttpURLConnection)?.disconnect()
                 }
-                val http = connection as? java.net.HttpURLConnection
-                if (http != null) {
-                    val userAgent = withContext(Dispatchers.Main) { webView.settings.userAgentString }
-                    val cookie = CookieManager.getInstance().getCookie(mediaFile.url)
-                    http.setRequestProperty("User-Agent", userAgent)
-                    if (!cookie.isNullOrBlank()) http.setRequestProperty("Cookie", cookie)
-                    http.setRequestProperty("Range", "bytes=0-16383")
-                    http.connect()
-                    if (http.responseCode !in 200..299) {
-                        throw java.io.IOException("Subtitle request returned HTTP ${http.responseCode}")
+            }
+
+            try {
+                var text = readLimitedText(mediaFile.url)
+                val trimmedPayload = text.trimStart().removePrefix("\uFEFF").trimStart()
+
+                if (trimmedPayload.startsWith("#EXTM3U", ignoreCase = true)) {
+                    val tracks = SubtitleUtils.parseSubtitleTracks(text, mediaFile.url)
+                    if (tracks.isNotEmpty()) {
+                        val firstTrack = tracks.first()
+                        val normalized = SubtitleUtils.normalizeLanguageCode(firstTrack.language)
+                            ?.takeUnless { it == "und" }
+                        val language = normalized?.let { SubtitleUtils.languageDisplayName(it) }
+                            ?: firstTrack.name.takeIf { it.isNotBlank() && !it.equals("und", true) }
+                        synchronized(detectedMediaFiles) {
+                            val index = detectedMediaFiles.indexOfFirst {
+                                SubtitleUtils.canonicalMediaUrl(it.url) == canonicalUrl
+                            }
+                            if (index >= 0) {
+                                val file = detectedMediaFiles[index]
+                                detectedMediaFiles[index] = file.copy(language = language)
+                            }
+                        }
+                        withContext(Dispatchers.Main) {
+                            refreshDetectedMediaSheet?.invoke()
+                            Toast.makeText(
+                                this@MainActivity,
+                                if (language != null) "Subtitle analyzed: $language" else "Found ${tracks.size} subtitle tracks",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        return@launch
+                    }
+
+                    // A subtitle media playlist contains segment URLs, not cue text.
+                    // Fetch a few opening segments and merge their WebVTT cues for analysis.
+                    val segmentUrls = SubtitleUtils.parseHlsSubtitlePlaylistUris(text, mediaFile.url).take(4)
+                    val segments = segmentUrls.mapNotNull { segmentUrl ->
+                        runCatching { readLimitedText(segmentUrl, 131072) }.getOrNull()
+                    }
+                    text = SubtitleUtils.mergeHlsSubtitleSegments(segments)
+                    if (text.isBlank()) {
+                        withContext(Dispatchers.Main) {
+                            refreshDetectedMediaSheet?.invoke()
+                            Toast.makeText(this@MainActivity, "Subtitle playlist found, but its caption segments could not be read.", Toast.LENGTH_LONG).show()
+                        }
+                        return@launch
                     }
                 }
 
-                val text = connection.getInputStream().bufferedReader().use { it.readText() }
                 val result = SubtitleUtils.extractSnippet(text)
-                val trimmedPayload = text.trimStart().removePrefix("\\uFEFF").trimStart()
-                // HLS subtitle tracks may point to playlists, not a single VTT document.
-                // They are valid track resources and must not be removed by text analysis.
-                if (trimmedPayload.startsWith("#EXTM3U", ignoreCase = true)) {
-                    withContext(Dispatchers.Main) { refreshDetectedMediaSheet?.invoke() }
+                val validPayload = SubtitleUtils.isValidSubtitleContent(text) &&
+                    !text.contains("<script", true) && !text.contains("<iframe", true) &&
+                    !text.contains("<!DOCTYPE", true)
+                if (!validPayload) {
+                    withContext(Dispatchers.Main) {
+                        refreshDetectedMediaSheet?.invoke()
+                        Toast.makeText(this@MainActivity, "Could not analyze this URL as subtitle text. The detected item was kept.", Toast.LENGTH_LONG).show()
+                    }
                     return@launch
                 }
-                val snippet = result.snippet.orEmpty()
-                val validPayload = SubtitleUtils.isValidSubtitleContent(text) &&
-                    !snippet.contains("<script", true) && !snippet.contains("<iframe", true) &&
-                    !snippet.contains("<!DOCTYPE", true)
-                if (!validPayload) {
-                    synchronized(detectedMediaFiles) {
-                        detectedMediaFiles.removeAll { SubtitleUtils.canonicalMediaUrl(it.url) == canonicalUrl }
+
+                val inferredCode = SubtitleUtils.normalizeLanguageCode(
+                    result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(mediaFile.url)
+                )?.takeUnless { it == "und" }
+                val language = inferredCode?.let { SubtitleUtils.languageDisplayName(it) }
+                    ?: mediaFile.language?.takeUnless {
+                        it.equals("Unknown language", true) || it.equals("und", true)
                     }
-                    withContext(Dispatchers.Main) {
+                    ?: inferSubtitleLanguageFromName(mediaFile.title, mediaFile.url)
+
+                val changed = synchronized(detectedMediaFiles) {
+                    val index = detectedMediaFiles.indexOfFirst {
+                        SubtitleUtils.canonicalMediaUrl(it.url) == canonicalUrl
+                    }
+                    if (index < 0) false else {
+                        val file = detectedMediaFiles[index]
+                        detectedMediaFiles[index] = file.copy(language = language)
+                        true
+                    }
+                }
+                withContext(Dispatchers.Main) {
+                    if (changed) {
                         updateFabVisibility()
                         refreshDetectedMediaSheet?.invoke()
                         currentMediaListAdapter?.notifyDataSetChanged()
                     }
-                    return@launch
-                }
-                // A valid subtitle may have fewer than 15 characters in its opening cues.
-                // Keep the source row and filename; do not treat short text as evidence of an invalid response.
-                if (snippet.isBlank()) {
-                    withContext(Dispatchers.Main) { refreshDetectedMediaSheet?.invoke() }
-                    return@launch
-                }
-
-                val changed = synchronized(detectedMediaFiles) {
-                    val index = detectedMediaFiles.indexOfFirst { SubtitleUtils.canonicalMediaUrl(it.url) == canonicalUrl }
-                    if (index < 0) false else {
-                        val file = detectedMediaFiles[index]
-                        val language = file.language?.let { SubtitleUtils.languageDisplayName(it) }
-                            ?: SubtitleUtils.languageDisplayName(result.language)
-                        val originalName = SubtitleUtils.originalSubtitleFilename(file.url)
-                            ?: file.title.substringBefore('\n').takeIf {
-                                it.substringAfterLast('.', "").lowercase() in setOf("vtt", "srt", "ass", "ssa", "ttml", "dfxp", "srv1", "srv2", "srv3")
-                            } ?: "subtitle.vtt"
-                        detectedMediaFiles[index] = file.copy(title = originalName, language = language)
-                        true
-                    }
-                }
-                if (changed) withContext(Dispatchers.Main) {
-                    updateFabVisibility()
-                    refreshDetectedMediaSheet?.invoke()
-                    currentMediaListAdapter?.notifyDataSetChanged()
+                    Toast.makeText(
+                        this@MainActivity,
+                        if (language != null) "Subtitle analyzed: $language" else "Subtitle content found, but language metadata is missing.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Subtitle analysis failed: ${e.javaClass.simpleName}")
-                // Preserve the original filename and the working URL on transient errors.
-                withContext(Dispatchers.Main) { refreshDetectedMediaSheet?.invoke() }
+                android.util.Log.e("MainActivity", "Subtitle analysis failed for ${mediaFile.url}: ${e.javaClass.simpleName}", e)
+                withContext(Dispatchers.Main) {
+                    refreshDetectedMediaSheet?.invoke()
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Subtitle analysis failed: ${e.message ?: e.javaClass.simpleName}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             } finally {
-                (connection as? java.net.HttpURLConnection)?.disconnect()
                 subtitleAnalysisInFlight.remove(canonicalUrl)
             }
         }
+    }
+
+    private fun inferSubtitleLanguageFromName(title: String, url: String): String? {
+        val candidates = listOf(title, android.net.Uri.parse(url).lastPathSegment.orEmpty())
+        for (candidate in candidates) {
+            val bracketCode = Regex("(?i)\\[([a-z]{2,3})\\]").find(candidate)?.groupValues?.getOrNull(1)
+            val separatedCode = Regex("(?i)(?:^|[^a-z])(en|eng|id|ind|ja|jpn|ko|kor|zh|zho|es|spa|fr|fra|de|deu|pt|por|ms|msa|th|tha|vi|vie|ar|ara|hi|hin|ru|rus|fil|tl|km)(?:$|[^a-z])")
+                .find(candidate)?.groupValues?.getOrNull(1)
+            val code = SubtitleUtils.normalizeLanguageCode(bracketCode ?: separatedCode)
+                ?.takeUnless { it == "und" }
+            if (code != null) return SubtitleUtils.languageDisplayName(code)
+        }
+        return null
     }
 
 inner class YouTubeInterface(private val activity: MainActivity) {
