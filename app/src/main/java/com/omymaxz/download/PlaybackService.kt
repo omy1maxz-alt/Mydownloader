@@ -2,7 +2,6 @@ package com.omymaxz.download
 
 import android.content.Intent
 import android.os.Build
-import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -26,10 +25,12 @@ class PlaybackService : MediaSessionService() {
     companion object {
         const val NOTIFICATION_ID = 2001
         const val CHANNEL_ID = "playback_service_channel"
+        const val ACTION_CLOSE_BACKGROUND = "com.omymaxz.download.ACTION_CLOSE_BACKGROUND"
+        private const val ACTION_START_BACKGROUND_AUDIO = "com.omymaxz.download.START_BACKGROUND_AUDIO"
     }
 
     @OptIn(UnstableApi::class)
-override fun onCreate() {
+    override fun onCreate() {
         super.onCreate()
 
         val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this)
@@ -63,14 +64,14 @@ override fun onCreate() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
-private fun createNotificationChannel() {
+    private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Background Audio Playback",
+                "Custom Player background playback",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Controls for background audio playback"
+                description = "Controls for Custom Player background playback"
             }
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
@@ -78,25 +79,67 @@ private fun createNotificationChannel() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val title = intent?.getStringExtra("video_title") ?: "Background Audio"
+        if (intent?.action == ACTION_CLOSE_BACKGROUND) {
+            player?.stop()
+            player?.clearMediaItems()
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
 
-        // Prevent ForegroundServiceDidNotStartInTimeException by calling startForeground immediately
+        val title = intent?.getStringExtra("video_title")
+            ?: player?.currentMediaItem?.mediaMetadata?.title?.toString()
+            ?: "Background Audio"
+
+        // Start foreground promptly when launched with startForegroundService().
         createNotificationChannel()
+
+        val urlForNotification = intent?.getStringExtra("video_url")
+            ?: player?.currentMediaItem?.localConfiguration?.uri?.toString()
+        val openPlayerIntent = Intent(this, CustomPlayerActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            urlForNotification?.let { putExtra(CustomPlayerActivity.EXTRA_VIDEO_URL, it) }
+            putExtra(CustomPlayerActivity.EXTRA_VIDEO_TITLE, title)
+        }
+        val openPlayerPendingIntent = PendingIntent.getActivity(
+            this,
+            (urlForNotification ?: "custom-player").hashCode(),
+            openPlayerIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val closeIntent = Intent(this, PlaybackService::class.java).apply {
+            action = ACTION_CLOSE_BACKGROUND
+        }
+        val closePendingIntent = PendingIntent.getService(
+            this,
+            NOTIFICATION_ID + 1,
+            closeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Playing Audio")
+            .setContentTitle("Custom Player")
             .setContentText(title)
+            .setSubText("Custom Player • Background playback")
+            .setContentIntent(openPlayerPendingIntent)
+            .setDeleteIntent(closePendingIntent)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "Close",
+                closePendingIntent
+            )
             .setSmallIcon(R.drawable.ic_headset)
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
             .build()
         startForeground(NOTIFICATION_ID, notification)
 
-        val action = intent?.action
-
-        if (action == "com.omymaxz.download.START_BACKGROUND_AUDIO") {
+        if (intent?.action == ACTION_START_BACKGROUND_AUDIO) {
             val url = intent.getStringExtra("video_url")
             val position = intent.getLongExtra("current_position", 0L)
 
-            if (url != null) {
+            if (!url.isNullOrBlank()) {
                 val mediaItem = MediaItem.Builder()
                     .setUri(url)
                     .setMediaMetadata(MediaMetadata.Builder().setTitle(title).build())
@@ -112,10 +155,11 @@ private fun createNotificationChannel() {
 
     override fun onDestroy() {
         mediaSession?.run {
-            player.release()
+            player?.release()
             release()
-            mediaSession = null
         }
+        player = null
+        mediaSession = null
         super.onDestroy()
     }
 }
