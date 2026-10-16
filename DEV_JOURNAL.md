@@ -259,3 +259,6 @@
 
 
 - 2026-10-16 strict subtitle language follow-up: replaced arbitrary separated two-letter matching with exact language codes/names, bracketed codes, and explicit subtitle/language tokens. Local subtitle configurations now share the same parser, include Korean/Japanese/Chinese/Thai/Vietnamese/Russian and other supported language names through SubtitleUtils, ignore unknown/site-brand sentinels, and use sequential `Subtitle N` labels when metadata is genuinely unavailable. Playback/PiP/cache/export behavior was left unchanged. CI and device verification pending.
+
+
+- 2026-10-16 subtitle metadata handoff fix: the detected-media player launch previously reduced subtitle entries to URL strings and appended `lang=` query parameters, which can mutate signed URLs and still lose readable labels. It now passes subtitle URLs, readable labels, and normalized language codes in parallel intent extras without changing the URLs. Initial subtitle loading and live subtitle injection use the corresponding metadata before falling back to payload/URL inference. CI and device verification pending.
