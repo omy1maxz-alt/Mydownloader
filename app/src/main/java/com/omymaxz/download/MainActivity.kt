@@ -4678,6 +4678,22 @@ private fun showMediaListDialog() {
         """
     }
 
+    private fun subtitleMetadataPayload(files: List<MediaFile>): ArrayList<String> =
+        ArrayList(files.distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }.map { file ->
+            val url64 = android.util.Base64.encodeToString(
+                file.url.toByteArray(Charsets.UTF_8),
+                android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+            )
+            val title64 = file.title.trim().takeIf { it.isNotEmpty() }?.let {
+                android.util.Base64.encodeToString(
+                    it.toByteArray(Charsets.UTF_8),
+                    android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                )
+            } ?: "-"
+            val language = SubtitleUtils.normalizeLanguageCode(file.language)?.takeUnless { it == "und" } ?: "-"
+            "$url64${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$language${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$title64"
+        })
+
         private fun launchPlayerWithCandidate(candidate: MediaCandidate, title: String, fallbackReferer: String?) {
 
         // Prevent playback of pure segment groups without a manifest
