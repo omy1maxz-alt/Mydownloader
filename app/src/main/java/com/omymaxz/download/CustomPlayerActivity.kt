@@ -524,7 +524,16 @@ class CustomPlayerActivity : AppCompatActivity() {
                                 ?.substringBeforeLast("?")
                                 ?.substringBeforeLast(".")
                                 ?.takeIf { it.isNotBlank() }
-                            val detectedLang = languageLabel
+                            // Blob subtitles carry the webpage's exact track label in their local filename.
+                            // Prefer it over language inference so names like "English (CC)" survive.
+                            val blobTrackLabel = fileSegment
+                                ?.takeIf { it.startsWith("blob_sub_", ignoreCase = true) }
+                                ?.removePrefix("blob_sub_")
+                                ?.substringBeforeLast("_")
+                                ?.replace("_", " ")
+                                ?.takeIf { it.isNotBlank() }
+                            val detectedLang = blobTrackLabel
+                                ?: languageLabel
                                 ?: fileSegment?.takeIf { SubtitleUtils.normalizeLanguageCode(it) != null }
                                     ?.let { SubtitleUtils.languageDisplayName(it) }
                                 ?: "Unknown language"
