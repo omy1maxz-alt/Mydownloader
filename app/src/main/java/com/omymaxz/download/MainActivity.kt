@@ -7985,8 +7985,9 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
 
         // Create a unique hash for the filename based on URL and language to avoid duplicates
         val hash = java.util.UUID.nameUUIDFromBytes(originalUrl.toByteArray()).toString()
-        val safeTitle = "$label [$language]".replace(Regex("[^a-zA-Z0-9.\\[\\] -]"), "_")
-        val fileName = "blob_sub_${hash}${extension}"
+        val safeTitle = "$label [$language]".replace(Regex("[^a-zA-Z0-9.\\[\\] -]"), "_").take(100)
+        // Preserve the webpage-provided track label in the URI passed to CustomPlayerActivity.
+        val fileName = "blob_sub_${safeTitle}_${hash}${extension}"
         val subtitleFile = java.io.File(filesDir, fileName)
 
         // Prevent duplicate writing if we already processed this exact Blob URL
