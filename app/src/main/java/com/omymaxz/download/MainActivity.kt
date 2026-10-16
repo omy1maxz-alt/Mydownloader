@@ -4678,9 +4678,17 @@ private fun showMediaListDialog() {
         """
     }
 
+        private fun sameEpisodePageUrl(left: String?, right: String?): Boolean {
+        if (left.isNullOrBlank() || right.isNullOrBlank()) return false
+        fun normalized(value: String): String = runCatching {
+            android.net.Uri.parse(value.trim()).normalizeScheme().toString().trimEnd('/')
+        }.getOrDefault(value.trim().trimEnd('/'))
+        return normalized(left) == normalized(right)
+    }
+
     private fun subtitleMetadataPayload(files: List<MediaFile>): ArrayList<String> =
         ArrayList(files.distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }.map { file ->
-            // Preserve the exact detected URL; never append language parameters to signed URLs.
+            // Keep signed URLs byte-for-byte unchanged; language is carried separately.
             val url64 = android.util.Base64.encodeToString(
                 file.url.toByteArray(Charsets.UTF_8),
                 android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
@@ -4692,7 +4700,7 @@ private fun showMediaListDialog() {
                 )
             } ?: "-"
             val language = SubtitleUtils.normalizeLanguageCode(file.language)?.takeUnless { it == "und" } ?: "-"
-            url64 + CustomPlayerActivity.SUBTITLE_META_SEPARATOR + language + CustomPlayerActivity.SUBTITLE_META_SEPARATOR + title64
+            "$url64${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$language${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$title64"
         })
 
         private fun launchPlayerWithCandidate(candidate: MediaCandidate, title: String, fallbackReferer: String?) {
@@ -4775,26 +4783,34 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
             }
 
-                        val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
-                val currentPath = (webView.url?.toString() ?: "").substringBefore("?").substringBefore("#")
+                        val allSubtitleUrls = synchronized(detectedMediaFiles) {
                 detectedMediaFiles
-                    .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt", true) || it.title.endsWith(".srt", true) }
-                    .filter {
-                        val subtitlePath = it.referer?.substringBefore("?")?.substringBefore("#") ?: ""
-                        subtitlePath == currentPath || (it.referer == candidate.referer && candidate.referer != null)
+                    .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
+                    // Filter subtitles strictly based on the current page's URL to prevent mixing KissKH episodes
+                    .filter { sameEpisodePageUrl(it.referer, webView.url?.toString()) }
+                    .map { it.url }
+                    .distinct().toMutableList()
+            }
+            if (allSubtitleUrls.isNotEmpty()) {
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+                val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
+                    detectedMediaFiles.filter { file ->
+                        (file.category == MediaCategory.SUBTITLE || file.title.endsWith(".vtt", true) || file.title.endsWith(".srt", true)) &&
+                            sameEpisodePageUrl(file.referer, webView.url?.toString())
                     }
-                    .distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }
+                }
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, subtitleMetadataPayload(subtitleMetadataFiles))
             }
-            if (subtitleMetadataFiles.isNotEmpty()) {
-                putStringArrayListExtra(
-                    CustomPlayerActivity.EXTRA_SUBTITLE_URLS,
-                    ArrayList(subtitleMetadataFiles.map { it.url })
-                )
-                putStringArrayListExtra(
-                    CustomPlayerActivity.EXTRA_SUBTITLE_METADATA,
-                    subtitleMetadataPayload(subtitleMetadataFiles)
-                )
-            }
+
+                val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
+                    val pagePath = webView.url?.toString().orEmpty().substringBefore("?").substringBefore("#")
+                    detectedMediaFiles.filter { file ->
+                        val refPath = file.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
+                        (file.category == MediaCategory.SUBTITLE || file.title.endsWith(".vtt", true) || file.title.endsWith(".srt", true)) &&
+                            (refPath == pagePath || (file.referer == candidate.referer && candidate.referer != null))
+                    }
+                }
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, subtitleMetadataPayload(subtitleMetadataFiles))
         }
         startActivity(intent)
     }
@@ -4835,18 +4851,8 @@ private fun showMediaListDialog() {
                 detectedMediaFiles
                     .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
                     // Filter subtitles strictly based on the current page's URL to prevent mixing KissKH episodes
-                    .filter {
-                        val currentUrl = webView.url?.toString() ?: ""
-                        val currentPath = currentUrl.substringBefore("?").substringBefore("#")
-                        val subPath = it.referer?.substringBefore("?")?.substringBefore("#") ?: ""
-
-                        subPath == currentPath || (it.referer == fallbackReferer && fallbackReferer != null)
-                    }
-                    .map {
-                        val langParam = if (it.language != null) "?lang=${it.language}" else ""
-                        val joiner = if (it.url.contains("?")) "&lang=${it.language}" else langParam
-                        if (it.language != null && !it.url.contains("lang=")) it.url + joiner else it.url
-                    }
+                    .filter { sameEpisodePageUrl(it.referer, webView.url?.toString()) }
+                    .map { it.url }
                     .distinct().toMutableList()
             }
             if (allSubtitleUrls.isNotEmpty()) {
@@ -4877,19 +4883,9 @@ private fun showMediaListDialog() {
                     detectedMediaFiles
                         .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
                         // Filter subtitles strictly based on the current page's URL to prevent mixing KissKH episodes
-                        .filter {
-                            val currentUrl = webView.url?.toString() ?: ""
-                            val currentPath = currentUrl.substringBefore("?").substringBefore("#")
-                            val subPath = it.referer?.substringBefore("?")?.substringBefore("#") ?: ""
-
-                            subPath == currentPath || (it.referer == mediaFile.referer && mediaFile.referer != null)
-                        }
-                        .map {
-                            val langParam = if (it.language != null) "?lang=${it.language}" else ""
-                            val joiner = if (it.url.contains("?")) "&lang=${it.language}" else langParam
-                            if (it.language != null && !it.url.contains("lang=")) it.url + joiner else it.url
-                        }
-                        .distinct().toMutableList()
+                        .filter { sameEpisodePageUrl(it.referer, webView.url?.toString()) }
+                    .map { it.url }
+                    .distinct().toMutableList()
                 }
                 if (allSubtitleUrls.isNotEmpty()) {
                     putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
