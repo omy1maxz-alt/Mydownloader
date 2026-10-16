@@ -4678,6 +4678,26 @@ private fun showMediaListDialog() {
         """
     }
 
+        private fun subtitleMetadataPayload(files: List<MediaFile>): ArrayList<String> =
+        ArrayList(files.distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }.map { file ->
+            // Match the URL mutation used by EXTRA_SUBTITLE_URLS exactly; the player validates this key.
+            val languageValue = file.language
+            val joiner = if (file.url.contains("?")) "&lang=$languageValue" else "?lang=$languageValue"
+            val playerUrl = if (!languageValue.isNullOrBlank() && !file.url.contains("lang=")) file.url + joiner else file.url
+            val url64 = android.util.Base64.encodeToString(
+                playerUrl.toByteArray(Charsets.UTF_8),
+                android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+            )
+            val title64 = file.title.trim().takeIf { it.isNotEmpty() }?.let {
+                android.util.Base64.encodeToString(
+                    it.toByteArray(Charsets.UTF_8),
+                    android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                )
+            } ?: "-"
+            val language = SubtitleUtils.normalizeLanguageCode(file.language)?.takeUnless { it == "und" } ?: "-"
+            "$url64${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$language${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$title64"
+        })
+
         private fun launchPlayerWithCandidate(candidate: MediaCandidate, title: String, fallbackReferer: String?) {
 
         // Prevent playback of pure segment groups without a manifest
@@ -4780,7 +4800,26 @@ private fun showMediaListDialog() {
             }
             if (allSubtitleUrls.isNotEmpty()) {
                 putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+                val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
+                    val pagePath = webView.url?.toString().orEmpty().substringBefore("?").substringBefore("#")
+                    detectedMediaFiles.filter { file ->
+                        val refPath = file.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
+                        (file.category == MediaCategory.SUBTITLE || file.title.endsWith(".vtt", true) || file.title.endsWith(".srt", true)) &&
+                            (refPath == pagePath || (file.referer == candidate.referer && candidate.referer != null))
+                    }
+                }
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, subtitleMetadataPayload(subtitleMetadataFiles))
             }
+
+                val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
+                    val pagePath = webView.url?.toString().orEmpty().substringBefore("?").substringBefore("#")
+                    detectedMediaFiles.filter { file ->
+                        val refPath = file.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
+                        (file.category == MediaCategory.SUBTITLE || file.title.endsWith(".vtt", true) || file.title.endsWith(".srt", true)) &&
+                            (refPath == pagePath || (file.referer == candidate.referer && candidate.referer != null))
+                    }
+                }
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, subtitleMetadataPayload(subtitleMetadataFiles))
         }
         startActivity(intent)
     }
@@ -4879,7 +4918,26 @@ private fun showMediaListDialog() {
                 }
                 if (allSubtitleUrls.isNotEmpty()) {
                     putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+                    val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
+                        val pagePath = webView.url?.toString().orEmpty().substringBefore("?").substringBefore("#")
+                        detectedMediaFiles.filter { file ->
+                            val refPath = file.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
+                            (file.category == MediaCategory.SUBTITLE || file.title.endsWith(".vtt", true) || file.title.endsWith(".srt", true)) &&
+                                (refPath == pagePath || (file.referer == mediaFile.referer && mediaFile.referer != null))
+                        }
+                    }
+                    putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, subtitleMetadataPayload(subtitleMetadataFiles))
                 }
+
+                    val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
+                    val pagePath = webView.url?.toString().orEmpty().substringBefore("?").substringBefore("#")
+                    detectedMediaFiles.filter { file ->
+                        val refPath = file.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
+                        (file.category == MediaCategory.SUBTITLE || file.title.endsWith(".vtt", true) || file.title.endsWith(".srt", true)) &&
+                            (refPath == pagePath || (file.referer == mediaFile.referer && mediaFile.referer != null))
+                    }
+                }
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, subtitleMetadataPayload(subtitleMetadataFiles))
             }
             startActivity(intent)
             return

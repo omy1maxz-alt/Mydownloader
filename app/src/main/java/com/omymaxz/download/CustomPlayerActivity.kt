@@ -55,6 +55,9 @@ class CustomPlayerActivity : AppCompatActivity() {
         const val EXTRA_COOKIE        = "extra_cookie"
         const val EXTRA_MIME_TYPE     = "extra_mime_type"
         var activePlayer: ExoPlayer? = null
+        const val EXTRA_SUBTITLE_METADATA = "extra_subtitle_metadata"
+        const val SUBTITLE_META_SEPARATOR = "\u001F"
+
     }
 
     private var player: ExoPlayer? = null
@@ -64,6 +67,52 @@ class CustomPlayerActivity : AppCompatActivity() {
     private val cacheProgressHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private var hasNotifiedCacheComplete = false
     private var mediaSession: MediaSession? = null
+
+    private data class ExternalSubtitleMetadata(val languageCode: String?, val displayLabel: String?)
+
+    private fun parseExternalSubtitleMetadata(url: String, encoded: String?): ExternalSubtitleMetadata {
+        if (encoded.isNullOrBlank()) return ExternalSubtitleMetadata(null, null)
+        val parts = encoded.split(SUBTITLE_META_SEPARATOR, limit = 3)
+        if (parts.size != 3) return ExternalSubtitleMetadata(null, null)
+        val expectedUrl = runCatching {
+            android.util.Base64.decode(parts[0], android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING).toString(Charsets.UTF_8)
+        }.getOrNull()
+        if (expectedUrl != url) return ExternalSubtitleMetadata(null, null)
+        val language = parts[1].takeIf { it.isNotBlank() && it != "-" }
+            ?.let { SubtitleUtils.normalizeLanguageCode(it) }?.takeUnless { it == "und" }
+        val label = parts[2].takeIf { it.isNotBlank() && it != "-" }?.let {
+            runCatching { android.util.Base64.decode(it, android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING).toString(Charsets.UTF_8) }.getOrNull()
+        }?.trim()?.takeIf { it.isNotEmpty() }
+        return ExternalSubtitleMetadata(language, label)
+    }
+
+    private fun subtitleFallbackLabel(url: String, languageCode: String?, index: Int): String {
+        val language = languageCode ?: runCatching {
+            val uri = Uri.parse(url)
+            listOf("tlang", "lang", "srclang", "locale", "hl", "language")
+                .firstNotNullOfOrNull { key -> uri.getQueryParameter(key)?.let { SubtitleUtils.normalizeLanguageCode(it) } }
+        }.getOrNull() ?: SubtitleUtils.extractTrustedLanguageFromUrl(url)
+        language?.let { SubtitleUtils.languageDisplayName(it) }
+            ?.takeUnless { it.equals("Unknown language", true) }
+            ?.let { return it }
+        val basename = Uri.parse(url).lastPathSegment.orEmpty().substringBeforeLast('.')
+            .replace(Regex("[^A-Za-z0-9 _.-]"), " ").replace(Regex("[-_]+"), " ").trim()
+        val useful = basename.takeIf {
+            it.isNotBlank() && SubtitleUtils.normalizeLanguageCode(it) == null &&
+                !it.matches(Regex("(?i)^(?:blob|subtitle|subtitles|caption|captions|track|unknown|und|video|media)(?:\\s*\\d+)?$")) &&
+                !it.matches(Regex("(?i)^(?:KISSASIACO|KISSKHASIA|KISSKH|KISSASIAN|KISSASIANET)(?:[-_ ].*)?$"))
+        }
+        return useful ?: "Subtitle $index"
+    }
+
+
+    private fun entryUrlFromMetadata(entry: String): String? {
+        val first = entry.substringBefore(SUBTITLE_META_SEPARATOR, missingDelimiterValue = "")
+        if (first.isBlank()) return null
+        return runCatching {
+            android.util.Base64.decode(first, android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING).toString(Charsets.UTF_8)
+        }.getOrNull()
+    }
     private var requestHeaders = HlsDownloadHelper.RequestHeaders()
 
     private val ACTION_BACKGROUND_PLAY = "com.omymaxz.download.ACTION_BACKGROUND_PLAY"
@@ -586,6 +635,11 @@ class CustomPlayerActivity : AppCompatActivity() {
                         }
                         if (bytes != null) {
                             val contentString = String(bytes, Charsets.UTF_8)
+                            val carried = parseExternalSubtitleMetadata(
+                                subUrl,
+                                intent.getStringArrayListExtra(EXTRA_SUBTITLE_METADATA)
+                                    ?.firstOrNull { entry -> entryUrlFromMetadata(entry) == subUrl }
+                            )
 
                             // Check if a language query param was encoded in the URL during detection
                             val urlQueryLangMatch = Regex("[?&]lang=([a-zA-Z0-9-]+)").find(subUrl)
@@ -597,7 +651,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                             // Prefer explicit track/URL metadata, then TTML language metadata,
                             // then a trusted language encoded in the source URL.
                             val targetLang = SubtitleUtils.normalizeLanguageCode(
-                                explicitLang ?: result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
+                                carried.languageCode ?: explicitLang ?: result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
                             )
                             val languageLabel = targetLang?.let { SubtitleUtils.languageDisplayName(it) }
                             val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment
@@ -614,9 +668,12 @@ class CustomPlayerActivity : AppCompatActivity() {
                                 ?.takeIf { it.isNotBlank() }
                             val detectedLang = blobTrackLabel
                                 ?: languageLabel
+                                ?: carried.displayLabel?.let { label ->
+                                    extractStrictSubtitleLanguage(label)?.let { SubtitleUtils.languageDisplayName(it) } ?: label
+                                }
                                 ?: fileSegment?.takeIf { SubtitleUtils.normalizeLanguageCode(it) != null }
                                     ?.let { SubtitleUtils.languageDisplayName(it) }
-                                ?: "Unknown language"
+                                ?: subtitleFallbackLabel(subUrl, carried.languageCode, newSubUrls.indexOf(subUrl) + 1)
 
                             // Append a unique hash to the filename to prevent overwriting when snippets are identical,
                             // but format it predictably so hotSwapSubtitles can strip it for the UI label.
@@ -918,6 +975,11 @@ class CustomPlayerActivity : AppCompatActivity() {
                         }
                         if (bytes != null) {
                             val contentString = String(bytes, Charsets.UTF_8)
+                            val carried = parseExternalSubtitleMetadata(
+                                subUrl,
+                                intent?.getStringArrayListExtra(EXTRA_SUBTITLE_METADATA)
+                                    ?.firstOrNull { entry -> entryUrlFromMetadata(entry) == subUrl }
+                            )
 
                             // Check if a language query param was encoded in the URL during detection
                             val urlQueryLangMatch = Regex("[?&]lang=([a-zA-Z0-9-]+)").find(subUrl)
@@ -929,7 +991,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                             // Prefer explicit track/URL metadata, then TTML language metadata,
                             // then a trusted language encoded in the source URL.
                             val targetLang = SubtitleUtils.normalizeLanguageCode(
-                                explicitLang ?: result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
+                                carried.languageCode ?: explicitLang ?: result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
                             )
                             val languageLabel = targetLang?.let { SubtitleUtils.languageDisplayName(it) }
                             val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment
@@ -937,9 +999,12 @@ class CustomPlayerActivity : AppCompatActivity() {
                                 ?.substringBeforeLast(".")
                                 ?.takeIf { it.isNotBlank() }
                             val detectedLang = languageLabel
+                                ?: carried.displayLabel?.let { label ->
+                                    extractStrictSubtitleLanguage(label)?.let { SubtitleUtils.languageDisplayName(it) } ?: label
+                                }
                                 ?: fileSegment?.takeIf { SubtitleUtils.normalizeLanguageCode(it) != null }
                                     ?.let { SubtitleUtils.languageDisplayName(it) }
-                                ?: "Unknown language"
+                                ?: subtitleFallbackLabel(subUrl, carried.languageCode, intentSubUrls.indexOf(subUrl) + 1)
 
                             val hash = Math.abs(subUrl.hashCode())
 
