@@ -165,59 +165,103 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     private fun showSubtitleSelectionDialog() {
         if (player == null) return
+        var fallbackIndex = 0
         val trackNameProvider = androidx.media3.ui.TrackNameProvider { format ->
-            // Some HLS hosts reuse their site name as every subtitle FORMAT label.
-            // Prefer a readable language name; keep a meaningful label as a fallback.
-            // Media3 reports "und" for HLS subtitle tracks whose manifest omits LANGUAGE.
-            // Do not turn that sentinel into "Unknown language" before checking label/id metadata.
-            val normalizedLanguage = SubtitleUtils.normalizeLanguageCode(format.language)
-                ?.takeUnless { it == "und" }
+            fallbackIndex++
             val rawLabel = format.label?.trim()?.takeIf { it.isNotEmpty() }
-            val siteLikeLabel = rawLabel?.matches(
-                Regex("(?i)^(KISSASIACO|KISSKHASIA|KISSKH|KISSASIAN|KISSASIANET)$")
+            val siteLabel = rawLabel?.matches(
+                Regex("(?i)^(?:KISSASIACO|KISSKHASIA|KISSKH|KISSASIAN|KISSASIANET|DRAMACOOL|BILIBILI|IQIYI|VIU|WETV)(?:[-_ ].*)?$")
             ) == true
-            val meaningfulLabel = rawLabel?.takeUnless { siteLikeLabel }
-            val id = format.id?.trim()?.takeIf { it.isNotEmpty() }
-            val metadataCandidates = listOfNotNull(meaningfulLabel, id)
-            val inferredLanguage = metadataCandidates.firstNotNullOfOrNull { candidate ->
-                val bracketCode = Regex("(?i)\\[([a-z]{2,3})\\]")
-                    .find(candidate)?.groupValues?.getOrNull(1)
-                val separatedCode = Regex("(?i)(?:^|[^a-z])(en|eng|id|ind|ja|jpn|ko|kor|zh|zho|es|spa|fr|fra|de|deu|pt|por|ms|msa|th|tha|vi|vie|ar|ara|hi|hin|ru|rus|fil|tl|km)(?:$|[^a-z])")
-                    .find(candidate)?.groupValues?.getOrNull(1)
-                val tokenCode = Regex("(?i)^(?:sub|subtitle|caption)[-_ ]+([a-z]{2,3})(?:[-_ ]|$)")
-                    .find(candidate)?.groupValues?.getOrNull(1)
-                SubtitleUtils.normalizeLanguageCode(tokenCode ?: bracketCode ?: separatedCode ?: candidate)
-                    ?.takeUnless { it == "und" }
-            }
-            val languageName = (normalizedLanguage ?: inferredLanguage)
-                ?.let { SubtitleUtils.languageDisplayName(it) }
-
+            val label = rawLabel?.takeUnless { siteLabel || isUnknownSubtitleLabel(it) }
+            val language = format.language?.takeIf { !isUnknownSubtitleLabel(it) }
+                ?.let { SubtitleUtils.normalizeLanguageCode(it) }
+                ?.takeUnless { it.equals("und", true) }
+                ?: listOfNotNull(label, format.id?.trim()?.takeIf { it.isNotEmpty() })
+                    .firstNotNullOfOrNull { extractStrictSubtitleLanguage(it) }
+            val languageName = language?.let { SubtitleUtils.languageDisplayName(it) }
+                ?.takeUnless { isUnknownSubtitleLabel(it) }
             when {
-                languageName != null && meaningfulLabel != null &&
-                    !meaningfulLabel.equals(languageName, ignoreCase = true) ->
-                    "$languageName — $meaningfulLabel"
+                languageName != null && label != null &&
+                    !label.equals(languageName, true) &&
+                    !label.equals(language, true) &&
+                    extractStrictSubtitleLanguage(label) == null -> "$languageName — $label"
                 languageName != null -> languageName
-                meaningfulLabel != null -> meaningfulLabel
-                else -> "Unknown language"
+                label != null -> label
+                else -> "Subtitle $fallbackIndex"
             }
         }
         val trackSelectionDialog = androidx.media3.ui.TrackSelectionDialogBuilder(
-            this,
-            "Select Subtitle",
-            player!!,
-            C.TRACK_TYPE_TEXT
+            this, "Select Subtitle", player!!, C.TRACK_TYPE_TEXT
         ).setTrackNameProvider(trackNameProvider).build()
-
         trackSelectionDialog.show()
-
-        val themeColor = getSafeGlossyThemeColor(this)
         val drawable = android.graphics.drawable.GradientDrawable().apply {
-            setColor(themeColor)
+            setColor(getSafeGlossyThemeColor(this@CustomPlayerActivity))
             cornerRadius = 32f
         }
         trackSelectionDialog.window?.setBackgroundDrawable(drawable)
     }
 
+    private fun isUnknownSubtitleLabel(value: String): Boolean =
+        value.trim().matches(Regex("(?i)^(?:und|undetermined|unknown|unknown[_ ]language|null|none|default|track|subtitle|subtitles|caption|captions)(?:[-_ #]*\\d+)?$"))
+
+    /**
+     * Infer a language only from a complete code/name or an explicit language marker.
+     * Never match arbitrary two-letter fragments such as "id" inside "video_id_1".
+     */
+    private fun extractStrictSubtitleLanguage(candidate: String): String? {
+        val value = candidate.trim()
+        if (value.isEmpty() || isUnknownSubtitleLabel(value)) return null
+        SubtitleUtils.normalizeLanguageCode(value)
+            ?.takeUnless { it.equals("und", true) }
+            ?.let { return it }
+
+        val bracketCode = Regex("(?i)[\\[(]([a-z]{2,3}(?:[-_][a-z]{2,4})?)[\\])]")
+            .find(value)?.groupValues?.getOrNull(1)
+        val cleanBracketCode = bracketCode?.let { SubtitleUtils.normalizeLanguageCode(it) }
+            ?.takeUnless { it.equals("und", true) }
+        if (cleanBracketCode != null) return cleanBracketCode
+
+        val explicitToken = Regex("(?i)(?:^|[-_ ./])(?:sub|subs|subtitle|subtitles|caption|captions|lang)[-_ :.=]+([a-z]{2,3}(?:[-_][a-z]{2,4})?)(?:$|[-_ ./])")
+            .find(value)?.groupValues?.getOrNull(1)
+        val cleanToken = explicitToken?.let { SubtitleUtils.normalizeLanguageCode(it) }
+            ?.takeUnless { it.equals("und", true) }
+        if (cleanToken != null) return cleanToken
+
+        val fullName = Regex("(?i)\\b(english|indonesian|bahasa\\s+indonesia|malay|bahasa\\s+melayu|korean|japanese|chinese|thai|vietnamese|spanish|french|german|portuguese|russian|arabic|hindi|filipino|tagalog|khmer|burmese|turkish|italian|dutch|polish)\\b")
+            .find(value)?.groupValues?.getOrNull(1)
+        return fullName?.let { SubtitleUtils.normalizeLanguageCode(it) }
+            ?.takeUnless { it.equals("und", true) }
+    }
+
+    private fun buildLocalSubtitleConfig(file: File, index: Int): MediaItem.SubtitleConfiguration {
+        val rawPart = file.nameWithoutExtension
+            .substringAfter("_subtitle_", "")
+            .substringBeforeLast("_HASH_")
+            .trim()
+        val labelWithoutCode = rawPart.replace(Regex("\\[[^]]+\\]"), "")
+            .replace('_', ' ').trim()
+        val code = extractStrictSubtitleLanguage(rawPart)
+        val languageName = code?.let { SubtitleUtils.languageDisplayName(it) }
+        val meaningfulLabel = labelWithoutCode.takeIf {
+            it.isNotBlank() && !isUnknownSubtitleLabel(it) &&
+                !it.matches(Regex("(?i)^(?:KISSASIACO|KISSKHASIA|KISSKH|KISSASIAN|KISSASIANET)(?:[-_ ].*)?$"))
+        }
+        val displayLabel = when {
+            languageName != null && meaningfulLabel != null &&
+                !meaningfulLabel.equals(languageName, true) &&
+                extractStrictSubtitleLanguage(meaningfulLabel) == null -> "$languageName — $meaningfulLabel"
+            languageName != null -> languageName
+            meaningfulLabel != null -> meaningfulLabel
+            else -> "Subtitle \${index + 1}"
+        }
+        val mime = if (file.extension.equals("srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
+        return MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(file))
+            .setMimeType(mime)
+            .setLanguage(code ?: "und")
+            .setLabel(displayLabel)
+            .setSelectionFlags(C.SELECTION_FLAG_FORCED)
+            .build()
+    }
 
     private fun getSafeGlossyThemeColor(context: android.content.Context): Int {
         val prefs = context.getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
@@ -717,35 +761,8 @@ class CustomPlayerActivity : AppCompatActivity() {
         val localFiles = HlsDownloadHelper.listLocalSubtitles(this, videoTitle!!)
 
         // (a) Local subtitles
-        for (f in localFiles) {
-            val rawLang = f.nameWithoutExtension.substringAfter("_subtitle_", "und").substringBeforeLast("_HASH_").substringBeforeLast(".")
-            // Fix: the file is named Video_Title_subtitle_[eng] Label_HASH_123.srt.
-            // `substringAfter("_subtitle_")` returns `[eng] Label`
-            // If the label is not English (e.g. Indonesian), and we strip brackets, we might get just "Indonesian"
-            val displayLang = rawLang.replace(Regex("\\[.*?\\]"), "").trim().ifBlank { "Undetermined" }
-
-            val cleanSystemLang = if (rawLang.contains("[id]", true) || rawLang.contains("indones", true)) "id"
-                                  else if (rawLang.contains("[en]", true) || rawLang.contains("english", true)) "en"
-                                  else if (rawLang.contains("[es]", true) || rawLang.contains("spanish", true)) "es"
-                                  else if (rawLang.contains("[fil]", true) || rawLang.contains("filipino", true) || rawLang.contains("tagalog", true) || rawLang.contains("[tl]", true)) "tl"
-                                  else if (rawLang.contains("[km]", true) || rawLang.contains("khmer", true)) "km"
-                                  else if (rawLang.contains("[ms]", true) || rawLang.contains("malay", true)) "ms"
-                                  else if (rawLang.contains("[pt]", true) || rawLang.contains("portuguese", true)) "pt"
-                                  else if (rawLang.contains("[ar]", true) || rawLang.contains("arabic", true)) "ar"
-                                  else if (rawLang.contains("[hi]", true) || rawLang.contains("hindi", true)) "hi"
-                                  else if (rawLang.contains("[de]", true) || rawLang.contains("german", true)) "de"
-                                  else if (rawLang.contains("[fr]", true) || rawLang.contains("french", true)) "fr"
-                                  else "und"
-
-
-            val mime = if (f.extension.equals("srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
-            val cfg = MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(f))
-                .setMimeType(mime)
-                .setLanguage(cleanSystemLang)
-                .setLabel(displayLang.replace("_", " ").uppercase())
-                .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED)
-                .build()
-            subtitleConfigs.add(cfg)
+        localFiles.forEachIndexed { index, file ->
+            subtitleConfigs.add(buildLocalSubtitleConfig(file, index))
         }
 
         val emptySubtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse("data:text/vtt;charset=utf-8,WEBVTT"))
@@ -993,35 +1010,8 @@ class CustomPlayerActivity : AppCompatActivity() {
         val subtitleConfigs = mutableListOf<MediaItem.SubtitleConfiguration>()
 
         // (a) Local subtitles
-        for (f in localFiles) {
-            val rawLang = f.nameWithoutExtension.substringAfter("_subtitle_", "und").substringBeforeLast("_HASH_").substringBeforeLast(".")
-            // Fix: the file is named Video_Title_subtitle_[eng] Label_HASH_123.srt.
-            // `substringAfter("_subtitle_")` returns `[eng] Label`
-            // If the label is not English (e.g. Indonesian), and we strip brackets, we might get just "Indonesian"
-            val displayLang = rawLang.replace(Regex("\\[.*?\\]"), "").trim().ifBlank { "Undetermined" }
-
-            val cleanSystemLang = if (rawLang.contains("[id]", true) || rawLang.contains("indones", true)) "id"
-                                  else if (rawLang.contains("[en]", true) || rawLang.contains("english", true)) "en"
-                                  else if (rawLang.contains("[es]", true) || rawLang.contains("spanish", true)) "es"
-                                  else if (rawLang.contains("[fil]", true) || rawLang.contains("filipino", true) || rawLang.contains("tagalog", true) || rawLang.contains("[tl]", true)) "tl"
-                                  else if (rawLang.contains("[km]", true) || rawLang.contains("khmer", true)) "km"
-                                  else if (rawLang.contains("[ms]", true) || rawLang.contains("malay", true)) "ms"
-                                  else if (rawLang.contains("[pt]", true) || rawLang.contains("portuguese", true)) "pt"
-                                  else if (rawLang.contains("[ar]", true) || rawLang.contains("arabic", true)) "ar"
-                                  else if (rawLang.contains("[hi]", true) || rawLang.contains("hindi", true)) "hi"
-                                  else if (rawLang.contains("[de]", true) || rawLang.contains("german", true)) "de"
-                                  else if (rawLang.contains("[fr]", true) || rawLang.contains("french", true)) "fr"
-                                  else "und"
-
-
-            val mime = if (f.extension.equals("srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
-            val cfg = MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(f))
-                .setMimeType(mime)
-                .setLanguage(cleanSystemLang)
-                .setLabel(displayLang.replace("_", " ").uppercase())
-                .setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_FORCED)
-                .build()
-            subtitleConfigs.add(cfg)
+        localFiles.forEachIndexed { index, file ->
+            subtitleConfigs.add(buildLocalSubtitleConfig(file, index))
         }
 
         if (subtitleConfigs.isNotEmpty()) {
