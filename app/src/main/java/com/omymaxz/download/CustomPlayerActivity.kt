@@ -761,13 +761,13 @@ class CustomPlayerActivity : AppCompatActivity() {
         // an unrelated change to the configured buffer target.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                50_000,       // minBufferMs
-                2_700_000,    // maxBufferMs: 45 minutes
+                50_000,       // minBufferMs: preserve the existing 50-second minimum
+                12_000_000,   // maxBufferMs: 200 minutes
                 2_500,        // bufferForPlaybackMs
                 5_000         // bufferForPlaybackAfterRebufferMs
             )
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setTargetBufferBytes(Int.MAX_VALUE) // Maximum positive Int (~2 GiB minus 1 byte)
+            .setTargetBufferBytes(C.LENGTH_UNSET)
             .build()
 
         // Temporary A/B diagnostic: enable via Settings shared preferences for one test.
