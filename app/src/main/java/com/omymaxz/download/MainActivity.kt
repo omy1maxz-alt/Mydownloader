@@ -4678,14 +4678,11 @@ private fun showMediaListDialog() {
         """
     }
 
-        private fun subtitleMetadataPayload(files: List<MediaFile>): ArrayList<String> =
+    private fun subtitleMetadataPayload(files: List<MediaFile>): ArrayList<String> =
         ArrayList(files.distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }.map { file ->
-            // Match the URL mutation used by EXTRA_SUBTITLE_URLS exactly; the player validates this key.
-            val languageValue = file.language
-            val joiner = if (file.url.contains("?")) "&lang=$languageValue" else "?lang=$languageValue"
-            val playerUrl = if (!languageValue.isNullOrBlank() && !file.url.contains("lang=")) file.url + joiner else file.url
+            // Preserve the exact detected URL; never append language parameters to signed URLs.
             val url64 = android.util.Base64.encodeToString(
-                playerUrl.toByteArray(Charsets.UTF_8),
+                file.url.toByteArray(Charsets.UTF_8),
                 android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
             )
             val title64 = file.title.trim().takeIf { it.isNotEmpty() }?.let {
@@ -4695,7 +4692,7 @@ private fun showMediaListDialog() {
                 )
             } ?: "-"
             val language = SubtitleUtils.normalizeLanguageCode(file.language)?.takeUnless { it == "und" } ?: "-"
-            "$url64${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$language${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$title64"
+            url64 + CustomPlayerActivity.SUBTITLE_META_SEPARATOR + language + CustomPlayerActivity.SUBTITLE_META_SEPARATOR + title64
         })
 
         private fun launchPlayerWithCandidate(candidate: MediaCandidate, title: String, fallbackReferer: String?) {
@@ -4778,48 +4775,26 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
             }
 
-                        val allSubtitleUrls = synchronized(detectedMediaFiles) {
+                        val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
+                val currentPath = (webView.url?.toString() ?: "").substringBefore("?").substringBefore("#")
                 detectedMediaFiles
-                    .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
-                    // Filter subtitles strictly based on the current page's URL to prevent mixing KissKH episodes
+                    .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt", true) || it.title.endsWith(".srt", true) }
                     .filter {
-                        val currentUrl = webView.url?.toString() ?: ""
-                        // Strip query params and hashes for stable episode path matching
-                        val currentPath = currentUrl.substringBefore("?").substringBefore("#")
-                        val subPath = it.referer?.substringBefore("?")?.substringBefore("#") ?: ""
-
-                        subPath == currentPath || (it.referer == candidate.referer && candidate.referer != null)
+                        val subtitlePath = it.referer?.substringBefore("?")?.substringBefore("#") ?: ""
+                        subtitlePath == currentPath || (it.referer == candidate.referer && candidate.referer != null)
                     }
-                    .map {
-                        // Preserve the detected language metadata into the URL payload so it passes through the Intent properly
-                        val langParam = if (it.language != null) "?lang=${it.language}" else ""
-                        val joiner = if (it.url.contains("?")) "&lang=${it.language}" else langParam
-                        if (it.language != null && !it.url.contains("lang=")) it.url + joiner else it.url
-                    }
-                    .distinct().toMutableList()
+                    .distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }
             }
-            if (allSubtitleUrls.isNotEmpty()) {
-                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
-                val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
-                    val pagePath = webView.url?.toString().orEmpty().substringBefore("?").substringBefore("#")
-                    detectedMediaFiles.filter { file ->
-                        val refPath = file.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
-                        (file.category == MediaCategory.SUBTITLE || file.title.endsWith(".vtt", true) || file.title.endsWith(".srt", true)) &&
-                            (refPath == pagePath || (file.referer == candidate.referer && candidate.referer != null))
-                    }
-                }
-                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, subtitleMetadataPayload(subtitleMetadataFiles))
+            if (subtitleMetadataFiles.isNotEmpty()) {
+                putStringArrayListExtra(
+                    CustomPlayerActivity.EXTRA_SUBTITLE_URLS,
+                    ArrayList(subtitleMetadataFiles.map { it.url })
+                )
+                putStringArrayListExtra(
+                    CustomPlayerActivity.EXTRA_SUBTITLE_METADATA,
+                    subtitleMetadataPayload(subtitleMetadataFiles)
+                )
             }
-
-                val subtitleMetadataFiles = synchronized(detectedMediaFiles) {
-                    val pagePath = webView.url?.toString().orEmpty().substringBefore("?").substringBefore("#")
-                    detectedMediaFiles.filter { file ->
-                        val refPath = file.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
-                        (file.category == MediaCategory.SUBTITLE || file.title.endsWith(".vtt", true) || file.title.endsWith(".srt", true)) &&
-                            (refPath == pagePath || (file.referer == candidate.referer && candidate.referer != null))
-                    }
-                }
-                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, subtitleMetadataPayload(subtitleMetadataFiles))
         }
         startActivity(intent)
     }
