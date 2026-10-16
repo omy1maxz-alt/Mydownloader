@@ -267,4 +267,10 @@
 - 2026-10-16 subtitle metadata handoff correction: the player-launch path now sends each detected subtitle's original display title and normalized language code in a URL-keyed metadata extra alongside the legacy URL list. The player validates metadata against the exact URL and prefers detector-provided labels/languages when storing local subtitles. Build and unit tests pending; device retest still required.
 
 
-- 2026-10-16 literal subtitle-template retest: the screenshot showed Media3 receiving the unevaluated label `Subtitle ${index + 1}` from a source track. The native track-name provider now classifies these placeholder strings as missing metadata, then uses a detected language/real label or a numbered fallback. The detected-media handoff keeps the signed subtitle URL unchanged and carries language/title metadata separately. CI and device verification pending.
+- 2026-10-16 subtitle episode isolation: the detected-media player launch no longer includes subtitle rows merely because they share a stale candidate/fallback referer; it requires a strict match to the current page URL, retaining query/fragment identity so episode routes are not collapsed. Subtitle URLs are passed through unchanged instead of appending `lang=` to potentially signed links. Local subtitle storage is now keyed by video URL as well as title so a series reusing the same title cannot load another episode's saved subtitle tracks. CI and device verification pending.
+
+
+- 2026-10-16 current-episode subtitle isolation: subtitle candidates passed to CustomPlayer now require an exact normalized match to the active WebView page URL; no fallback to a potentially stale media-candidate referer is allowed. URL query/fragment identity is retained so episode-specific routes are not collapsed. Subtitle URLs remain byte-for-byte unchanged rather than having `lang=` appended. Local subtitle directories are scoped by video URL plus title to prevent same-title episodes from reusing stale saved tracks. CI and device verification pending.
+
+
+- 2026-10-17 subtitle template label correction: classify unevaluated labels such as `Subtitle ${index + 1}` as missing metadata so the selector can use language inference or a numbered fallback. Preserve current-episode isolation and pass signed subtitle URLs unchanged. Build and device verification pending.
