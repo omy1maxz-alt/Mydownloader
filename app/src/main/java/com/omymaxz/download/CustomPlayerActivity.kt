@@ -250,8 +250,12 @@ class CustomPlayerActivity : AppCompatActivity() {
         trackSelectionDialog.window?.setBackgroundDrawable(drawable)
     }
 
-    private fun isUnknownSubtitleLabel(value: String): Boolean =
-        value.trim().matches(Regex("(?i)^(?:und|undetermined|unknown|unknown[_ ]language|null|none|default|track|subtitle|subtitles|caption|captions)(?:[-_ #]*\\d+)?$"))
+    private fun isUnknownSubtitleLabel(value: String): Boolean {
+        val label = value.trim()
+        if (label.matches(Regex("(?i)^(?:und|undetermined|unknown|unknown[_ ]language|null|none|default|track|subtitle|subtitles|caption|captions)(?:[-_ #]*\\d+)?$"))) return true
+        // Some site/player templates leak unevaluated interpolation into Media3's format.label.
+        return label.matches(Regex("(?i)^(?:subtitle|caption|track)\\s*\\$\\{[^}]+}$"))
+    }
 
     /**
      * Infer a language only from a complete code/name or an explicit language marker.
