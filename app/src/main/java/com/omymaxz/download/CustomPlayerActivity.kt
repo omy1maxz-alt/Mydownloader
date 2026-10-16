@@ -755,18 +755,18 @@ class CustomPlayerActivity : AppCompatActivity() {
             userAgent = requestHeaders.userAgent ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
             referer = requestHeaders.referer ?: videoUrl
         )
-        // Preserve the existing 512 MiB target and duration-priority policy.
-        // Reduce only the maximum amount of media buffered ahead from 200 minutes
-        // to 45 minutes. This limits excessive forward buffering while avoiding
-        // an unrelated change to the configured buffer target.
+        // Keep the user's near-2 GiB target request, but prevent very long
+        // time-prioritized buffering from overwhelming the app's Java heap.
+        // The byte target is not a process-memory limit; cap buffered duration
+        // and let the size threshold take priority.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                50_000,       // minBufferMs
-                2_700_000,    // maxBufferMs: 45 minutes
+                15_000,       // minBufferMs: 15 seconds
+                120_000,      // maxBufferMs: 2 minutes
                 2_500,        // bufferForPlaybackMs
                 5_000         // bufferForPlaybackAfterRebufferMs
             )
-            .setPrioritizeTimeOverSizeThresholds(true)
+            .setPrioritizeTimeOverSizeThresholds(false)
             .setTargetBufferBytes(Int.MAX_VALUE) // Maximum positive Int (~2 GiB minus 1 byte)
             .build()
 
