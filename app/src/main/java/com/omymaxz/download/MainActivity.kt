@@ -4781,6 +4781,33 @@ private fun showMediaListDialog() {
             if (allSubtitleUrls.isNotEmpty()) {
                 putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
             }
+
+                val subtitleMetadata = synchronized(detectedMediaFiles) {
+                    detectedMediaFiles
+                        .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt", true) || it.title.endsWith(".srt", true) }
+                        .filter {
+                            val currentUrl = webView.url?.toString().orEmpty()
+                            val currentPath = currentUrl.substringBefore("?").substringBefore("#")
+                            val subtitleRef = it.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
+                            subtitleRef == currentPath || (it.referer == candidate.referer && candidate.referer != null)
+                        }
+                        .distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }
+                        .map { file ->
+                            val encodedUrl = android.util.Base64.encodeToString(
+                                file.url.toByteArray(Charsets.UTF_8),
+                                android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                            )
+                            val encodedTitle = file.title.trim().takeIf { it.isNotBlank() }?.let {
+                                android.util.Base64.encodeToString(
+                                    it.toByteArray(Charsets.UTF_8),
+                                    android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                                )
+                            } ?: "-"
+                            val language = SubtitleUtils.normalizeLanguageCode(file.language)?.takeUnless { it == "und" } ?: "-"
+                            "$encodedUrl${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$language${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$encodedTitle"
+                        }
+                }
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, ArrayList(subtitleMetadata))
         }
         startActivity(intent)
     }
@@ -4880,6 +4907,33 @@ private fun showMediaListDialog() {
                 if (allSubtitleUrls.isNotEmpty()) {
                     putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
                 }
+
+                    val subtitleMetadata = synchronized(detectedMediaFiles) {
+                        detectedMediaFiles
+                            .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt", true) || it.title.endsWith(".srt", true) }
+                            .filter {
+                                val currentUrl = webView.url?.toString().orEmpty()
+                                val currentPath = currentUrl.substringBefore("?").substringBefore("#")
+                                val subtitleRef = it.referer?.substringBefore("?")?.substringBefore("#").orEmpty()
+                                subtitleRef == currentPath || (it.referer == mediaFile.referer && mediaFile.referer != null)
+                            }
+                            .distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }
+                            .map { file ->
+                                val encodedUrl = android.util.Base64.encodeToString(
+                                    file.url.toByteArray(Charsets.UTF_8),
+                                    android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                                )
+                                val encodedTitle = file.title.trim().takeIf { it.isNotBlank() }?.let {
+                                    android.util.Base64.encodeToString(
+                                        it.toByteArray(Charsets.UTF_8),
+                                        android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                                    )
+                                } ?: "-"
+                                val language = SubtitleUtils.normalizeLanguageCode(file.language)?.takeUnless { it == "und" } ?: "-"
+                                "$encodedUrl${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$language${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$encodedTitle"
+                            }
+                    }
+                    putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_METADATA, ArrayList(subtitleMetadata))
             }
             startActivity(intent)
             return
