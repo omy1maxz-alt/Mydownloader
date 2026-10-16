@@ -575,6 +575,16 @@ class CustomPlayerActivity : AppCompatActivity() {
         savePlaybackPosition()
     }
 
+    /**
+     * Isolate saved subtitles by episode URL. A series may reuse the same visible title for
+     * every episode, so title-only storage causes stale subtitle tracks to leak across episodes.
+     */
+    private fun subtitleStorageKey(): String {
+        val base = (videoTitle ?: "Offline_Video").replace(Regex("[^a-zA-Z0-9.-]"), "_")
+        val source = videoUrl ?: intent.getStringExtra(EXTRA_VIDEO_URL).orEmpty()
+        return "${base}_episode_${java.lang.Integer.toHexString(source.hashCode())}"
+    }
+
     private fun savePlaybackPosition() {
         if (player != null && videoUrl != null) {
             val position = player!!.currentPosition
@@ -625,7 +635,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 try {
                     var downloadedAny = false
                     val safeTitle = videoTitle ?: "Offline_Video_${System.currentTimeMillis()}"
-                    val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, safeTitle)
+                    val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, subtitleStorageKey())
 
                     for (subUrl in newSubUrls) {
                         val bytes = if (subUrl.startsWith("file://")) {
@@ -703,7 +713,7 @@ class CustomPlayerActivity : AppCompatActivity() {
 
                     if (downloadedAny) {
                         val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this@CustomPlayerActivity)
-                        val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, safeTitle)
+                        val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, subtitleStorageKey())
                         withContext(Dispatchers.Main) {
                             hotSwapSubtitles(newLocalFiles, cacheFactory)
                         }
@@ -741,18 +751,19 @@ class CustomPlayerActivity : AppCompatActivity() {
             userAgent = requestHeaders.userAgent ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
             referer = requestHeaders.referer ?: videoUrl
         )
-        // Test a larger explicit buffer target to see whether buffering ahead improves.
-        // This is a target, not a strict RAM ceiling or a guarantee of minutes buffered.
-        // Monitor high-resolution playback for memory pressure or stuttering.
+        // Preserve the existing 512 MiB target and duration-priority policy.
+        // Reduce only the maximum amount of media buffered ahead from 200 minutes
+        // to 45 minutes. This limits excessive forward buffering while avoiding
+        // an unrelated change to the configured buffer target.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
                 50_000,       // minBufferMs
-                12_000_000,   // maxBufferMs: 200 minutes
+                2_700_000,    // maxBufferMs: 45 minutes
                 2_500,        // bufferForPlaybackMs
                 5_000         // bufferForPlaybackAfterRebufferMs
             )
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setTargetBufferBytes(512 * 1024 * 1024) // 512 MiB target
+            .setTargetBufferBytes(512 * 1024 * 1024) // Preserve 512 MiB target
             .build()
 
         // Temporary A/B diagnostic: enable via Settings shared preferences for one test.
@@ -819,7 +830,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         val isHls = videoUrl!!.contains("m3u8", ignoreCase = true)
 
         val subtitleConfigs = mutableListOf<MediaItem.SubtitleConfiguration>()
-        val localFiles = HlsDownloadHelper.listLocalSubtitles(this, videoTitle!!)
+        val localFiles = HlsDownloadHelper.listLocalSubtitles(this, subtitleStorageKey())
 
         // (a) Local subtitles
         localFiles.forEachIndexed { index, file ->
@@ -966,7 +977,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 val intentSubUrls = intent.getStringArrayListExtra(EXTRA_SUBTITLE_URLS)
                 var refreshedExternalSubtitles = false
                 if (!intentSubUrls.isNullOrEmpty()) {
-                    val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, videoTitle!!)
+                    val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, subtitleStorageKey())
                     for (subUrl in intentSubUrls) {
                         val bytes = if (subUrl.startsWith("file://")) {
                             try {
@@ -1040,14 +1051,14 @@ class CustomPlayerActivity : AppCompatActivity() {
                     HlsDownloadHelper.fetchAndSaveSubtitles(
                         this@CustomPlayerActivity,
                         videoUrl!!,
-                        videoTitle!!,
+                        subtitleStorageKey(),
                         HlsDownloadHelper.currentUserAgent,
                         HlsDownloadHelper.currentCookie
                     )
                 }
 
                 // 3. Hot swap if we have new files
-                val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, videoTitle!!)
+                val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, subtitleStorageKey())
                 if (newLocalFiles.isNotEmpty() &&
                     (refreshedExternalSubtitles || newLocalFiles.size > localFiles.size)
                 ) {
