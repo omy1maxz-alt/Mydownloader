@@ -252,7 +252,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 extractStrictSubtitleLanguage(meaningfulLabel) == null -> "$languageName — $meaningfulLabel"
             languageName != null -> languageName
             meaningfulLabel != null -> meaningfulLabel
-            else -> "Subtitle \${index + 1}"
+            else -> "Subtitle ${index + 1}"
         }
         val mime = if (file.extension.equals("srt", true)) MimeTypes.APPLICATION_SUBRIP else MimeTypes.TEXT_VTT
         return MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(file))
