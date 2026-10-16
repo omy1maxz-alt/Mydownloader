@@ -747,18 +747,19 @@ class CustomPlayerActivity : AppCompatActivity() {
             userAgent = requestHeaders.userAgent ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
             referer = requestHeaders.referer ?: videoUrl
         )
-        // Test a larger explicit buffer target to see whether buffering ahead improves.
-        // This is a target, not a strict RAM ceiling or a guarantee of minutes buffered.
-        // Monitor high-resolution playback for memory pressure or stuttering.
+        // Preserve the existing 512 MiB target and duration-priority policy.
+        // Reduce only the maximum amount of media buffered ahead from 200 minutes
+        // to 45 minutes. This limits excessive forward buffering while avoiding
+        // an unrelated change to the configured buffer target.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
                 50_000,       // minBufferMs
-                12_000_000,   // maxBufferMs: 200 minutes
+                2_700_000,    // maxBufferMs: 45 minutes
                 2_500,        // bufferForPlaybackMs
                 5_000         // bufferForPlaybackAfterRebufferMs
             )
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setTargetBufferBytes(512 * 1024 * 1024) // 512 MiB target
+            .setTargetBufferBytes(512 * 1024 * 1024) // Preserve 512 MiB target
             .build()
 
         // Temporary A/B diagnostic: enable via Settings shared preferences for one test.
