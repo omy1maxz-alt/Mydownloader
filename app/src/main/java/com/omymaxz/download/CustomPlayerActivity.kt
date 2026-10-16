@@ -165,12 +165,34 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     private fun showSubtitleSelectionDialog() {
         if (player == null) return
+        val trackNameProvider = androidx.media3.ui.TrackNameProvider { format ->
+            // Some HLS hosts reuse their site name as every subtitle FORMAT label.
+            // Prefer a readable language name; keep a meaningful label as a fallback.
+            val normalizedLanguage = SubtitleUtils.normalizeLanguageCode(format.language)
+            val languageName = normalizedLanguage?.let { SubtitleUtils.languageDisplayName(it) }
+            val rawLabel = format.label?.trim()?.takeIf { it.isNotEmpty() }
+            val siteLikeLabel = rawLabel?.matches(
+                Regex("(?i)^(KISSASIACO|KISSKHASIA|KISSKH|KISSASIAN|KISSASIANET)$")
+            ) == true
+            val meaningfulLabel = rawLabel?.takeUnless { siteLikeLabel }
+
+            when {
+                languageName != null && meaningfulLabel != null &&
+                    !meaningfulLabel.equals(languageName, ignoreCase = true) ->
+                    "$languageName — $meaningfulLabel"
+                languageName != null -> languageName
+                meaningfulLabel != null -> meaningfulLabel
+                !format.language.isNullOrBlank() && format.language != "und" ->
+                    format.language.uppercase(java.util.Locale.ROOT)
+                else -> "Unknown language"
+            }
+        }
         val trackSelectionDialog = androidx.media3.ui.TrackSelectionDialogBuilder(
             this,
             "Select Subtitle",
             player!!,
             C.TRACK_TYPE_TEXT
-        ).build()
+        ).setTrackNameProvider(trackNameProvider).build()
 
         trackSelectionDialog.show()
 
