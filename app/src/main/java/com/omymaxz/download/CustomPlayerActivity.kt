@@ -667,8 +667,10 @@ class CustomPlayerActivity : AppCompatActivity() {
                                 ?.replace("_", " ")
                                 ?.takeIf { it.isNotBlank() }
                             val detectedLang = blobTrackLabel
-                                ?: carried.displayLabel
                                 ?: languageLabel
+                                ?: carried.displayLabel?.let { label ->
+                                    extractStrictSubtitleLanguage(label)?.let { SubtitleUtils.languageDisplayName(it) } ?: label
+                                }
                                 ?: fileSegment?.takeIf { SubtitleUtils.normalizeLanguageCode(it) != null }
                                     ?.let { SubtitleUtils.languageDisplayName(it) }
                                 ?: subtitleFallbackLabel(subUrl, carried.languageCode, newSubUrls.indexOf(subUrl) + 1)
@@ -996,8 +998,10 @@ class CustomPlayerActivity : AppCompatActivity() {
                                 ?.substringBeforeLast("?")
                                 ?.substringBeforeLast(".")
                                 ?.takeIf { it.isNotBlank() }
-                            val detectedLang = carried.displayLabel
-                                ?: languageLabel
+                            val detectedLang = languageLabel
+                                ?: carried.displayLabel?.let { label ->
+                                    extractStrictSubtitleLanguage(label)?.let { SubtitleUtils.languageDisplayName(it) } ?: label
+                                }
                                 ?: fileSegment?.takeIf { SubtitleUtils.normalizeLanguageCode(it) != null }
                                     ?.let { SubtitleUtils.languageDisplayName(it) }
                                 ?: subtitleFallbackLabel(subUrl, carried.languageCode, intentSubUrls.indexOf(subUrl) + 1)
