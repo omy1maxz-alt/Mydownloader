@@ -763,7 +763,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 5_000         // bufferForPlaybackAfterRebufferMs
             )
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setTargetBufferBytes(2L * 1024 * 1024 * 1024).coerceAtMost(Int.MAX_VALUE.toLong()).toInt() // Requested 2 GiB target (clamped to Int.MAX_VALUE)
+            .setTargetBufferBytes(Int.MAX_VALUE) // Maximum positive Int (~2 GiB minus 1 byte)
             .build()
 
         // Temporary A/B diagnostic: enable via Settings shared preferences for one test.
