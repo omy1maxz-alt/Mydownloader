@@ -49,7 +49,9 @@ class CustomPlayerActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_VIDEO_URL     = "extra_video_url"
         const val EXTRA_VIDEO_TITLE   = "extra_video_title"
-        const val EXTRA_SUBTITLE_URLS = "extra_subtitle_urls" // Now an ArrayList<String>
+        const val EXTRA_SUBTITLE_URLS = "extra_subtitle_urls" // ArrayList<String>
+        const val EXTRA_SUBTITLE_LABELS = "extra_subtitle_labels" // parallel ArrayList<String>
+        const val EXTRA_SUBTITLE_LANGUAGES = "extra_subtitle_languages" // parallel ISO language codes
         const val EXTRA_USER_AGENT    = "extra_user_agent"
         const val EXTRA_REFERER       = "extra_referer"
         const val EXTRA_COOKIE        = "extra_cookie"
@@ -574,7 +576,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                     val safeTitle = videoTitle ?: "Offline_Video_${System.currentTimeMillis()}"
                     val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, safeTitle)
 
-                    for (subUrl in newSubUrls) {
+                    for ((subtitleIndex, subUrl) in newSubUrls.withIndex()) {
                         val bytes = if (subUrl.startsWith("file://")) {
                             try {
                                 java.io.File(java.net.URI.create(subUrl)).readBytes()
@@ -596,8 +598,14 @@ class CustomPlayerActivity : AppCompatActivity() {
                             // A subtitle cue preview is spoken dialogue, NOT a language label.
                             // Prefer explicit track/URL metadata, then TTML language metadata,
                             // then a trusted language encoded in the source URL.
+                            val suppliedLanguage = intent.getStringArrayListExtra(EXTRA_SUBTITLE_LANGUAGES)
+                                ?.getOrNull(subtitleIndex)
+                            val suppliedLabel = intent.getStringArrayListExtra(EXTRA_SUBTITLE_LABELS)
+                                ?.getOrNull(subtitleIndex)
+                                ?.trim()
+                                ?.takeIf { it.isNotEmpty() && !isUnknownSubtitleLabel(it) }
                             val targetLang = SubtitleUtils.normalizeLanguageCode(
-                                explicitLang ?: result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
+                                explicitLang ?: suppliedLanguage ?: result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
                             )
                             val languageLabel = targetLang?.let { SubtitleUtils.languageDisplayName(it) }
                             val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment
@@ -612,7 +620,8 @@ class CustomPlayerActivity : AppCompatActivity() {
                                 ?.substringBeforeLast("_")
                                 ?.replace("_", " ")
                                 ?.takeIf { it.isNotBlank() }
-                            val detectedLang = blobTrackLabel
+                            val detectedLang = suppliedLabel
+                                ?: blobTrackLabel?.takeUnless { isUnknownSubtitleLabel(it) }
                                 ?: languageLabel
                                 ?: fileSegment?.takeIf { SubtitleUtils.normalizeLanguageCode(it) != null }
                                     ?.let { SubtitleUtils.languageDisplayName(it) }
@@ -906,7 +915,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 var refreshedExternalSubtitles = false
                 if (!intentSubUrls.isNullOrEmpty()) {
                     val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, videoTitle!!)
-                    for (subUrl in intentSubUrls) {
+                    for ((subtitleIndex, subUrl) in intentSubUrls.withIndex()) {
                         val bytes = if (subUrl.startsWith("file://")) {
                             try {
                                 java.io.File(java.net.URI.create(subUrl)).readBytes()
@@ -928,15 +937,22 @@ class CustomPlayerActivity : AppCompatActivity() {
                             // A subtitle cue preview is spoken dialogue, NOT a language label.
                             // Prefer explicit track/URL metadata, then TTML language metadata,
                             // then a trusted language encoded in the source URL.
+                            val suppliedLanguage = intent.getStringArrayListExtra(EXTRA_SUBTITLE_LANGUAGES)
+                                ?.getOrNull(subtitleIndex)
+                            val suppliedLabel = intent.getStringArrayListExtra(EXTRA_SUBTITLE_LABELS)
+                                ?.getOrNull(subtitleIndex)
+                                ?.trim()
+                                ?.takeIf { it.isNotEmpty() && !isUnknownSubtitleLabel(it) }
                             val targetLang = SubtitleUtils.normalizeLanguageCode(
-                                explicitLang ?: result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
+                                explicitLang ?: suppliedLanguage ?: result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
                             )
                             val languageLabel = targetLang?.let { SubtitleUtils.languageDisplayName(it) }
                             val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment
                                 ?.substringBeforeLast("?")
                                 ?.substringBeforeLast(".")
                                 ?.takeIf { it.isNotBlank() }
-                            val detectedLang = languageLabel
+                            val detectedLang = suppliedLabel
+                                ?: languageLabel
                                 ?: fileSegment?.takeIf { SubtitleUtils.normalizeLanguageCode(it) != null }
                                     ?.let { SubtitleUtils.languageDisplayName(it) }
                                 ?: "Unknown language"
