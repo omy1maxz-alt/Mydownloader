@@ -271,3 +271,6 @@
 
 
 - 2026-10-16 current-episode subtitle isolation: subtitle candidates passed to CustomPlayer now require an exact normalized match to the active WebView page URL; no fallback to a potentially stale media-candidate referer is allowed. URL query/fragment identity is retained so episode-specific routes are not collapsed. Subtitle URLs remain byte-for-byte unchanged rather than having `lang=` appended. Local subtitle directories are scoped by video URL plus title to prevent same-title episodes from reusing stale saved tracks. CI and device verification pending.
+
+
+- 2026-10-17 subtitle template label correction: classify unevaluated labels such as `Subtitle ${index + 1}` as missing metadata so the selector can use language inference or a numbered fallback. Preserve current-episode isolation and pass signed subtitle URLs unchanged. Build and device verification pending.
