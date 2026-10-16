@@ -20,6 +20,72 @@ object SubtitleUtils {
         val isForced: Boolean
     )
 
+
+    private val validatedLanguageLabels = mapOf(
+        "ar" to "Arabic", "bg" to "Bulgarian", "bn" to "Bengali", "ca" to "Catalan",
+        "cs" to "Czech", "da" to "Danish", "de" to "German", "el" to "Greek",
+        "en" to "English", "es" to "Spanish", "fa" to "Persian", "fi" to "Finnish",
+        "fil" to "Filipino", "fr" to "French", "he" to "Hebrew", "hi" to "Hindi",
+        "hr" to "Croatian", "hu" to "Hungarian", "id" to "Indonesian", "it" to "Italian",
+        "ja" to "Japanese", "km" to "Khmer", "ko" to "Korean", "ms" to "Malay",
+        "nl" to "Dutch", "pl" to "Polish", "pt" to "Portuguese", "ro" to "Romanian",
+        "ru" to "Russian", "sv" to "Swedish", "ta" to "Tamil", "te" to "Telugu",
+        "th" to "Thai", "tr" to "Turkish", "uk" to "Ukrainian", "ur" to "Urdu",
+        "vi" to "Vietnamese", "zh" to "Chinese"
+    )
+    private val validatedLanguageAliases = validatedLanguageLabels.entries.flatMap { (code, name) ->
+        listOf(code to code, name.lowercase(java.util.Locale.ROOT) to code)
+    }.toMap() + mapOf("eng" to "en", "tha" to "th", "ind" to "id", "zho" to "zh", "chi" to "zh", "kor" to "ko", "jpn" to "ja")
+
+    /** Only recognized codes/names pass; caption text and arbitrary hints remain unknown. */
+    fun normalizeLanguageCode(value: String?): String? {
+        val raw = value?.trim()?.replace('_', '-')?.lowercase(java.util.Locale.ROOT)
+            ?.takeIf { it.isNotEmpty() } ?: return null
+        val base = raw.substringBefore('-')
+        val code = validatedLanguageAliases[raw] ?: validatedLanguageAliases[base] ?: return null
+        val suffix = raw.substringAfter('-', "")
+        return if (suffix.isEmpty()) code else "$code-$suffix"
+    }
+
+    fun languageDisplayName(value: String?): String? {
+        val code = normalizeLanguageCode(value) ?: return null
+        return validatedLanguageLabels[code.substringBefore('-')] ?: code
+    }
+
+    /** Fragments do not identify a network resource; query parameters may carry tokens or track identity. */
+    fun canonicalMediaUrl(rawUrl: String): String {
+        val raw = rawUrl.trim()
+        return runCatching { java.net.URI(raw).normalize().toASCIIString().substringBefore('#') }
+            .getOrElse { Uri.parse(raw).buildUpon().fragment(null).build().toString() }
+    }
+
+    /** URL language hints are accepted only for known YouTube timed-text endpoints. */
+    fun extractTrustedLanguageFromUrl(rawUrl: String): String? = runCatching {
+        val uri = Uri.parse(rawUrl)
+        val host = uri.host?.lowercase(java.util.Locale.ROOT).orEmpty()
+        val trustedHost = host == "youtube.com" || host.endsWith(".youtube.com") ||
+            host == "youtube-nocookie.com" || host.endsWith(".youtube-nocookie.com") ||
+            host == "googlevideo.com" || host.endsWith(".googlevideo.com")
+        if (!trustedHost || !uri.path.orEmpty().contains("/api/timedtext", ignoreCase = true)) return null
+        normalizeLanguageCode(uri.getQueryParameter("lang"))
+    }.getOrNull()
+
+    fun originalSubtitleFilename(rawUrl: String): String? = runCatching {
+        val path = java.net.URI(rawUrl).path ?: return null
+        val name = java.net.URLDecoder.decode(path.substringAfterLast('/'), "UTF-8").trim()
+        name.takeIf { it.length in 1..180 && it.substringAfterLast('.', "").lowercase() in
+            setOf("vtt", "srt", "ass", "ssa", "ttml", "dfxp", "srv1", "srv2", "srv3") }
+    }.getOrNull()
+
+    fun isValidSubtitleContent(content: String): Boolean {
+        val text = content.trimStart().removePrefix("\uFEFF").trimStart()
+        if (text.isBlank() || text.startsWith("<!DOCTYPE", true) || text.startsWith("<html", true) ||
+            text.contains("<script", true) || text.contains("<iframe", true)) return false
+        val hasTiming = Regex("""(?m)^\\s*\\d{2,}:\\d{2}(?::\\d{2})?[.,]\\d{3}\\s*-->\\s*\\d{2,}:\\d{2}(?::\\d{2})?[.,]\\d{3}""").containsMatchIn(text)
+        val ttmlCue = Regex("""(?is)<(?:tt|transcript)\\b.*<(?:p\\b[^>]*(?:begin|start|t)=|text\\b[^>]*start=).*?</(?:tt|transcript)>""").containsMatchIn(text)
+        return hasTiming || ttmlCue
+    }
+
     data class SubtitleResult(val snippet: String?, val language: String?)
 
     private val languageLabels = mapOf(
