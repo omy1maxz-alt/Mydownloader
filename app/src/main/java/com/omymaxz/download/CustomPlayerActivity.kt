@@ -511,21 +511,23 @@ class CustomPlayerActivity : AppCompatActivity() {
                             val urlQueryLangMatch = Regex("[?&]lang=([a-zA-Z0-9-]+)").find(subUrl)
                             val explicitLang = urlQueryLangMatch?.groupValues?.get(1)
 
-                            var detectedLang = "und"
                             val result = SubtitleUtils.extractSnippet(contentString)
 
-                            val targetLang = explicitLang ?: result.language ?: "und"
-
-                            if (!result.snippet.isNullOrBlank()) {
-                                detectedLang = result.snippet.replace(Regex("[^a-zA-Z0-9 -]"), "").take(15)
-                                if (targetLang != "und") {
-                                    detectedLang = "[$targetLang] $detectedLang"
-                                }
-                            } else {
-                                // Fallback to filename segment if snippet fails
-                                val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
-                                detectedLang = "[$targetLang] Track_$fileSegment"
-                            }
+                            // A subtitle cue preview is spoken dialogue, NOT a language label.
+                            // Prefer explicit track/URL metadata, then TTML language metadata,
+                            // then a trusted language encoded in the source URL.
+                            val targetLang = SubtitleUtils.normalizeLanguageCode(
+                                explicitLang ?: result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
+                            )
+                            val languageLabel = targetLang?.let { SubtitleUtils.languageDisplayName(it) }
+                            val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment
+                                ?.substringBeforeLast("?")
+                                ?.substringBeforeLast(".")
+                                ?.takeIf { it.isNotBlank() }
+                            val detectedLang = languageLabel
+                                ?: fileSegment?.takeIf { SubtitleUtils.normalizeLanguageCode(it) != null }
+                                    ?.let { SubtitleUtils.languageDisplayName(it) }
+                                ?: "Unknown language"
 
                             // Append a unique hash to the filename to prevent overwriting when snippets are identical,
                             // but format it predictably so hotSwapSubtitles can strip it for the UI label.
@@ -859,21 +861,23 @@ class CustomPlayerActivity : AppCompatActivity() {
                             val urlQueryLangMatch = Regex("[?&]lang=([a-zA-Z0-9-]+)").find(subUrl)
                             val explicitLang = urlQueryLangMatch?.groupValues?.get(1)
 
-                            var detectedLang = "und"
                             val result = SubtitleUtils.extractSnippet(contentString)
 
-                            val targetLang = explicitLang ?: result.language ?: "und"
-
-                            if (!result.snippet.isNullOrBlank()) {
-                                detectedLang = result.snippet.replace(Regex("[^a-zA-Z0-9 -]"), "").take(15)
-                                if (targetLang != "und") {
-                                    detectedLang = "[$targetLang] $detectedLang"
-                                }
-                            } else {
-                                // Fallback to filename segment if snippet fails
-                                val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment?.substringBeforeLast("?") ?: "Sub"
-                                detectedLang = "[$targetLang] Track_$fileSegment"
-                            }
+                            // A subtitle cue preview is spoken dialogue, NOT a language label.
+                            // Prefer explicit track/URL metadata, then TTML language metadata,
+                            // then a trusted language encoded in the source URL.
+                            val targetLang = SubtitleUtils.normalizeLanguageCode(
+                                explicitLang ?: result.language ?: SubtitleUtils.extractTrustedLanguageFromUrl(subUrl)
+                            )
+                            val languageLabel = targetLang?.let { SubtitleUtils.languageDisplayName(it) }
+                            val fileSegment = android.net.Uri.parse(subUrl).lastPathSegment
+                                ?.substringBeforeLast("?")
+                                ?.substringBeforeLast(".")
+                                ?.takeIf { it.isNotBlank() }
+                            val detectedLang = languageLabel
+                                ?: fileSegment?.takeIf { SubtitleUtils.normalizeLanguageCode(it) != null }
+                                    ?.let { SubtitleUtils.languageDisplayName(it) }
+                                ?: "Unknown language"
 
                             val hash = Math.abs(subUrl.hashCode())
 
