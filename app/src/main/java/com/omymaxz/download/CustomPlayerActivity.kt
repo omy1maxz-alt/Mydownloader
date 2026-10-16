@@ -571,6 +571,16 @@ class CustomPlayerActivity : AppCompatActivity() {
         savePlaybackPosition()
     }
 
+    /**
+     * Isolate saved subtitles by episode URL. A series may reuse the same visible title for
+     * every episode, so title-only storage causes stale subtitle tracks to leak across episodes.
+     */
+    private fun subtitleStorageKey(): String {
+        val base = (videoTitle ?: "Offline_Video").replace(Regex("[^a-zA-Z0-9.-]"), "_")
+        val source = videoUrl ?: intent.getStringExtra(EXTRA_VIDEO_URL).orEmpty()
+        return "${base}_episode_${java.lang.Integer.toHexString(source.hashCode())}"
+    }
+
     private fun savePlaybackPosition() {
         if (player != null && videoUrl != null) {
             val position = player!!.currentPosition
@@ -621,7 +631,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 try {
                     var downloadedAny = false
                     val safeTitle = videoTitle ?: "Offline_Video_${System.currentTimeMillis()}"
-                    val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, safeTitle)
+                    val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, subtitleStorageKey())
 
                     for (subUrl in newSubUrls) {
                         val bytes = if (subUrl.startsWith("file://")) {
@@ -699,7 +709,7 @@ class CustomPlayerActivity : AppCompatActivity() {
 
                     if (downloadedAny) {
                         val cacheFactory = HlsDownloadHelper.getCacheDataSourceFactory(this@CustomPlayerActivity)
-                        val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, safeTitle)
+                        val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, subtitleStorageKey())
                         withContext(Dispatchers.Main) {
                             hotSwapSubtitles(newLocalFiles, cacheFactory)
                         }
@@ -815,7 +825,7 @@ class CustomPlayerActivity : AppCompatActivity() {
         val isHls = videoUrl!!.contains("m3u8", ignoreCase = true)
 
         val subtitleConfigs = mutableListOf<MediaItem.SubtitleConfiguration>()
-        val localFiles = HlsDownloadHelper.listLocalSubtitles(this, videoTitle!!)
+        val localFiles = HlsDownloadHelper.listLocalSubtitles(this, subtitleStorageKey())
 
         // (a) Local subtitles
         localFiles.forEachIndexed { index, file ->
@@ -962,7 +972,7 @@ class CustomPlayerActivity : AppCompatActivity() {
                 val intentSubUrls = intent.getStringArrayListExtra(EXTRA_SUBTITLE_URLS)
                 var refreshedExternalSubtitles = false
                 if (!intentSubUrls.isNullOrEmpty()) {
-                    val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, videoTitle!!)
+                    val outDir = HlsDownloadHelper.subtitlesDirFor(this@CustomPlayerActivity, subtitleStorageKey())
                     for (subUrl in intentSubUrls) {
                         val bytes = if (subUrl.startsWith("file://")) {
                             try {
@@ -1036,14 +1046,14 @@ class CustomPlayerActivity : AppCompatActivity() {
                     HlsDownloadHelper.fetchAndSaveSubtitles(
                         this@CustomPlayerActivity,
                         videoUrl!!,
-                        videoTitle!!,
+                        subtitleStorageKey(),
                         HlsDownloadHelper.currentUserAgent,
                         HlsDownloadHelper.currentCookie
                     )
                 }
 
                 // 3. Hot swap if we have new files
-                val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, videoTitle!!)
+                val newLocalFiles = HlsDownloadHelper.listLocalSubtitles(this@CustomPlayerActivity, subtitleStorageKey())
                 if (newLocalFiles.isNotEmpty() &&
                     (refreshedExternalSubtitles || newLocalFiles.size > localFiles.size)
                 ) {
