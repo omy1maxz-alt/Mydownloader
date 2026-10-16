@@ -168,13 +168,29 @@ class CustomPlayerActivity : AppCompatActivity() {
         val trackNameProvider = androidx.media3.ui.TrackNameProvider { format ->
             // Some HLS hosts reuse their site name as every subtitle FORMAT label.
             // Prefer a readable language name; keep a meaningful label as a fallback.
+            // Media3 reports "und" for HLS subtitle tracks whose manifest omits LANGUAGE.
+            // Do not turn that sentinel into "Unknown language" before checking label/id metadata.
             val normalizedLanguage = SubtitleUtils.normalizeLanguageCode(format.language)
-            val languageName = normalizedLanguage?.let { SubtitleUtils.languageDisplayName(it) }
+                ?.takeUnless { it == "und" }
             val rawLabel = format.label?.trim()?.takeIf { it.isNotEmpty() }
             val siteLikeLabel = rawLabel?.matches(
                 Regex("(?i)^(KISSASIACO|KISSKHASIA|KISSKH|KISSASIAN|KISSASIANET)$")
             ) == true
             val meaningfulLabel = rawLabel?.takeUnless { siteLikeLabel }
+            val id = format.id?.trim()?.takeIf { it.isNotEmpty() }
+            val metadataCandidates = listOfNotNull(meaningfulLabel, id)
+            val inferredLanguage = metadataCandidates.firstNotNullOfOrNull { candidate ->
+                val bracketCode = Regex("(?i)\\[([a-z]{2,3})\\]")
+                    .find(candidate)?.groupValues?.getOrNull(1)
+                val separatedCode = Regex("(?i)(?:^|[^a-z])(en|eng|id|ind|ja|jpn|ko|kor|zh|zho|es|spa|fr|fra|de|deu|pt|por|ms|msa|th|tha|vi|vie|ar|ara|hi|hin|ru|rus|fil|tl|km)(?:$|[^a-z])")
+                    .find(candidate)?.groupValues?.getOrNull(1)
+                val tokenCode = Regex("(?i)^(?:sub|subtitle|caption)[-_ ]+([a-z]{2,3})(?:[-_ ]|$)")
+                    .find(candidate)?.groupValues?.getOrNull(1)
+                SubtitleUtils.normalizeLanguageCode(tokenCode ?: bracketCode ?: separatedCode ?: candidate)
+                    ?.takeUnless { it == "und" }
+            }
+            val languageName = (normalizedLanguage ?: inferredLanguage)
+                ?.let { SubtitleUtils.languageDisplayName(it) }
 
             when {
                 languageName != null && meaningfulLabel != null &&
@@ -182,8 +198,6 @@ class CustomPlayerActivity : AppCompatActivity() {
                     "$languageName — $meaningfulLabel"
                 languageName != null -> languageName
                 meaningfulLabel != null -> meaningfulLabel
-                !format.language.isNullOrBlank() && format.language != "und" ->
-                    format.language.orEmpty().uppercase(java.util.Locale.ROOT)
                 else -> "Unknown language"
             }
         }
