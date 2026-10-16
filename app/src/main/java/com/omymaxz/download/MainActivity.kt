@@ -4758,28 +4758,30 @@ private fun showMediaListDialog() {
                 putExtra(CustomPlayerActivity.EXTRA_COOKIE, cookie)
             }
 
-                        val allSubtitleUrls = synchronized(detectedMediaFiles) {
+            val allSubtitleFiles = synchronized(detectedMediaFiles) {
                 detectedMediaFiles
-                    .filter { (it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt")) }
-                    // Filter subtitles strictly based on the current page's URL to prevent mixing KissKH episodes
+                    .filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt", true) || it.title.endsWith(".srt", true) }
+                    // Keep only subtitle files associated with the current episode/page.
                     .filter {
-                        val currentUrl = webView.url?.toString() ?: ""
-                        // Strip query params and hashes for stable episode path matching
-                        val currentPath = currentUrl.substringBefore("?").substringBefore("#")
+                        val currentPath = (webView.url?.toString() ?: "").substringBefore("?").substringBefore("#")
                         val subPath = it.referer?.substringBefore("?")?.substringBefore("#") ?: ""
-
                         subPath == currentPath || (it.referer == candidate.referer && candidate.referer != null)
                     }
-                    .map {
-                        // Preserve the detected language metadata into the URL payload so it passes through the Intent properly
-                        val langParam = if (it.language != null) "?lang=${it.language}" else ""
-                        val joiner = if (it.url.contains("?")) "&lang=${it.language}" else langParam
-                        if (it.language != null && !it.url.contains("lang=")) it.url + joiner else it.url
-                    }
-                    .distinct().toMutableList()
+                    .distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }
             }
-            if (allSubtitleUrls.isNotEmpty()) {
-                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleUrls))
+            if (allSubtitleFiles.isNotEmpty()) {
+                // Keep metadata separate from URLs so signed URLs remain byte-for-byte unchanged.
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_URLS, ArrayList(allSubtitleFiles.map { it.url }))
+                putStringArrayListExtra(CustomPlayerActivity.EXTRA_SUBTITLE_LABELS, ArrayList(allSubtitleFiles.map { it.language?.trim().orEmpty() }))
+                putStringArrayListExtra(
+                    CustomPlayerActivity.EXTRA_SUBTITLE_LANGUAGES,
+                    ArrayList(allSubtitleFiles.map { file ->
+                        file.language?.let { SubtitleUtils.normalizeLanguageCode(it) }
+                            ?.takeUnless { it.equals("und", true) }
+                            ?: SubtitleUtils.extractTrustedLanguageFromUrl(file.url).orEmpty()
+                    })
+                )
+            }
             }
         }
         startActivity(intent)
