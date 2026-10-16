@@ -4013,6 +4013,23 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
         val lower = url.lowercase()
         return lower.contains("videoplayback") || lower.contains("manifest")
     }
+
+    private fun isSubtitleAnalysisCandidate(file: MediaFile): Boolean {
+        if (file.category == MediaCategory.SUBTITLE) return true
+        val url = file.url.lowercase(java.util.Locale.ROOT)
+        val title = file.title.substringBefore('\n').lowercase(java.util.Locale.ROOT)
+        val mime = file.mimeType.lowercase(java.util.Locale.ROOT)
+        val subtitleExtensions = setOf("vtt", "srt", "ass", "ssa", "ttml", "dfxp", "srv1", "srv2", "srv3")
+        val extension = title.substringAfterLast('.', "").ifBlank {
+            android.net.Uri.parse(file.url).lastPathSegment.orEmpty().substringAfterLast('.', "")
+        }
+        return extension in subtitleExtensions ||
+            listOf("text/vtt", "subrip", "ttml", "dfxp").any { mime.contains(it) } ||
+            listOf("/subtitle", "/subtitles", "/caption", "/captions", "timedtext").any { url.contains(it) } ||
+            Regex("[?&](?:lang|tlang|subtitle|caption|subtitles|captions)(?:=|&|$)", RegexOption.IGNORE_CASE)
+                .containsMatchIn(url)
+    }
+
         private fun fetchSubtitleSnippet(mediaFile: MediaFile) {
         val canonicalUrl = SubtitleUtils.canonicalMediaUrl(mediaFile.url)
         if (!subtitleAnalysisInFlight.add(canonicalUrl)) return
@@ -4468,7 +4485,7 @@ private fun showMediaListDialog() {
 
         dialogBinding.analyzeSubtitlesButton.setOnClickListener {
             val subs = synchronized(detectedMediaFiles) {
-                detectedMediaFiles.filter { it.category == MediaCategory.SUBTITLE || it.title.endsWith(".vtt") || it.title.endsWith(".srt") }
+                detectedMediaFiles.filter { isSubtitleAnalysisCandidate(it) }
             }
             if (subs.isEmpty()) {
                 Toast.makeText(this, "No subtitles found to analyze.", Toast.LENGTH_SHORT).show()
