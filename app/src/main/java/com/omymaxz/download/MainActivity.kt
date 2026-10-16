@@ -4678,10 +4678,14 @@ private fun showMediaListDialog() {
         """
     }
 
-    private fun subtitleMetadataPayload(files: List<MediaFile>): ArrayList<String> =
+        private fun subtitleMetadataPayload(files: List<MediaFile>): ArrayList<String> =
         ArrayList(files.distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }.map { file ->
+            // Match the URL mutation used by EXTRA_SUBTITLE_URLS exactly; the player validates this key.
+            val languageValue = file.language
+            val joiner = if (file.url.contains("?")) "&lang=$languageValue" else "?lang=$languageValue"
+            val playerUrl = if (!languageValue.isNullOrBlank() && !file.url.contains("lang=")) file.url + joiner else file.url
             val url64 = android.util.Base64.encodeToString(
-                file.url.toByteArray(Charsets.UTF_8),
+                playerUrl.toByteArray(Charsets.UTF_8),
                 android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
             )
             val title64 = file.title.trim().takeIf { it.isNotEmpty() }?.let {
