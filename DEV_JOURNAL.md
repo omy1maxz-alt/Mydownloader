@@ -265,3 +265,6 @@
 
 
 - 2026-10-16 subtitle metadata handoff correction: the player-launch path now sends each detected subtitle's original display title and normalized language code in a URL-keyed metadata extra alongside the legacy URL list. The player validates metadata against the exact URL and prefers detector-provided labels/languages when storing local subtitles. Build and unit tests pending; device retest still required.
+
+
+- 2026-10-16 screenshot retest follow-up: Media3's track-name provider now treats unevaluated template labels such as `Subtitle ${index + 1}` as missing metadata, allowing the provider to infer a real language or use a numbered fallback. The detected-media handoff also keeps subtitle URLs unchanged while passing the title/language metadata separately. Android Build must pass and the same selector still needs device verification.
