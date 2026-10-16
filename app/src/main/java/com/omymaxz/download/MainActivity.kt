@@ -3940,7 +3940,6 @@ private fun generateSmartFileName(url: String, extension: String, quality: Strin
     private fun estimateFileSize(url: String, category: MediaCategory): String { return "Unknown" }
     private fun extractLanguageFromUrl(url: String): String? =
         SubtitleUtils.extractTrustedLanguageFromUrl(url)?.let { SubtitleUtils.languageDisplayName(it) }
-        SubtitleUtils.extractTrustedLanguageFromUrl(url)?.let { SubtitleUtils.languageDisplayName(it) }
     private fun extractYouTubeVideoId(url: String): String {
         val patterns = listOf("(?<=watch\\?v=)[^&]+", "(?<=youtu.be/)[^?]+", "(?<=embed/)[^?]+", "(?<=v/)[^?]+]")
         for (pattern in patterns) {
