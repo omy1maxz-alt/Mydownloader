@@ -4678,6 +4678,7 @@ private fun showMediaListDialog() {
         """
     }
 
+        // Restrict detected subtitle candidates to the exact active episode page.
         private fun subtitleMetadataPayload(files: List<MediaFile>): ArrayList<String> =
         ArrayList(files.distinctBy { SubtitleUtils.canonicalMediaUrl(it.url) }.map { file ->
             // Match the URL mutation used by EXTRA_SUBTITLE_URLS exactly; the player validates this key.
