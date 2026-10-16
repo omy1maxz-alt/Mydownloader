@@ -258,7 +258,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             label.startsWith("caption", ignoreCase = true) ||
             label.startsWith("track", ignoreCase = true)
         // Avoid a fragile regex here: malformed regex syntax crashes while opening the track picker.
-        return hasKnownPrefix && label.contains("\\${") && label.endsWith("}")
+        return hasKnownPrefix && label.contains("\${") && label.endsWith("}")
     }
 
     /**
