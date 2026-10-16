@@ -4692,7 +4692,7 @@ private fun showMediaListDialog() {
                 )
             } ?: "-"
             val language = SubtitleUtils.normalizeLanguageCode(file.language)?.takeUnless { it == "und" } ?: "-"
-            "$url64\${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$language\${CustomPlayerActivity.SUBTITLE_META_SEPARATOR}$title64"
+            url64 + CustomPlayerActivity.SUBTITLE_META_SEPARATOR + language + CustomPlayerActivity.SUBTITLE_META_SEPARATOR + title64
         })
 
         private fun launchPlayerWithCandidate(candidate: MediaCandidate, title: String, fallbackReferer: String?) {
