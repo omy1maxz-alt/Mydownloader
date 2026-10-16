@@ -747,19 +747,19 @@ class CustomPlayerActivity : AppCompatActivity() {
             userAgent = requestHeaders.userAgent ?: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
             referer = requestHeaders.referer ?: videoUrl
         )
-        // Keep playback buffering bounded. A 200-minute buffer and 512 MiB target
-        // can create severe heap pressure on long/high-resolution streams and contribute
-        // to MediaCodec output-buffer OOMs. Media3's buffer target is not a hard process
-        // memory limit, so keep it conservative and do not prioritize duration over size.
+        // Preserve the existing 512 MiB target and duration-priority policy.
+        // Reduce only the maximum amount of media buffered ahead from 200 minutes
+        // to 45 minutes. This limits excessive forward buffering while avoiding
+        // an unrelated change to the configured buffer target.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                15_000,       // minBufferMs
-                120_000,      // maxBufferMs: 2 minutes
+                50_000,       // minBufferMs
+                2_700_000,    // maxBufferMs: 45 minutes
                 2_500,        // bufferForPlaybackMs
                 5_000         // bufferForPlaybackAfterRebufferMs
             )
-            .setPrioritizeTimeOverSizeThresholds(false)
-            .setTargetBufferBytes(64 * 1024 * 1024) // 64 MiB target
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .setTargetBufferBytes(512 * 1024 * 1024) // Preserve 512 MiB target
             .build()
 
         // Temporary A/B diagnostic: enable via Settings shared preferences for one test.
