@@ -761,8 +761,8 @@ class CustomPlayerActivity : AppCompatActivity() {
         // an unrelated change to the configured buffer target.
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                50_000,       // minBufferMs: preserve the existing 50-second minimum
-                12_000_000,   // maxBufferMs: 200 minutes
+                50_000,       // minBufferMs
+                2_700_000,    // maxBufferMs: 45 minutes
                 2_500,        // bufferForPlaybackMs
                 5_000         // bufferForPlaybackAfterRebufferMs
             )
