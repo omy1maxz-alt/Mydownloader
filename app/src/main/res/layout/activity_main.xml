@@ -6,53 +6,68 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/md_surface"
     android:fitsSystemWindows="true">
 
     <LinearLayout
+        android:id="@+id/appBarContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/md_surface"
+        android:elevation="2dp"
         android:orientation="vertical">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:background="?attr/colorPrimary"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:contentInsetStart="0dp">
+            android:layout_height="@dimen/toolbar_height"
+            android:background="@color/md_surface"
+            app:contentInsetStart="0dp"
+            app:contentInsetEnd="0dp">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/toolbarConstraintLayout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
                 android:animateLayoutChanges="true">
 
                 <ImageButton
                     android:id="@+id/homeButton"
                     style="?attr/borderlessButtonStyle"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:contentDescription="Home"
                     android:src="@drawable/ic_home"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent"  android:background="?attr/selectableItemBackgroundBorderless"  app:tint="@color/md_on_surface" />
 
                 <LinearLayout
                     android:id="@+id/searchBarContainer"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="@dimen/omnibox_height"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
                     android:background="@drawable/bg_search_bar_modern"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingStart="12dp"
+                    android:paddingStart="10dp"
                     android:paddingEnd="4dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/rightIconsScroll"
                     app:layout_constraintStart_toEndOf="@+id/homeButton"
                     app:layout_constraintTop_toTopOf="parent">
+
+                    <ImageView
+                        android:id="@+id/omniboxLeadingIcon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginEnd="8dp"
+                        android:contentDescription="Search or website"
+                        android:src="@drawable/ic_search"
+                        app:tint="@color/md_on_surface_variant" />
 
                     <EditText
                         android:id="@+id/urlEditTextToolbar"
@@ -61,22 +76,22 @@
                         android:layout_weight="1"
                         android:background="@null"
                         android:ellipsize="end"
-                        android:hint="Search or enter URL"
+                        android:hint="@string/enter_url"
                         android:imeOptions="actionGo"
                         android:importantForAutofill="no"
                         android:inputType="textUri"
                         android:maxLines="1"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textColorHint="?attr/colorOnSurfaceVariant"
-                        android:textSize="14sp" />
+                        android:textColor="@color/md_on_surface"
+                        android:textColorHint="@color/md_on_surface_variant"
+                        android:textSize="14.5sp" />
 
                     <ImageButton
                         android:id="@+id/refreshButton"
                         style="?attr/borderlessButtonStyle"
-                        android:layout_width="36dp"
-                        android:layout_height="40dp"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
                         android:contentDescription="Refresh"
-                        android:src="@drawable/ic_refresh" />
+                        android:src="@drawable/ic_refresh"  android:padding="8dp"  app:tint="@color/md_on_surface_variant" />
                 </LinearLayout>
 
                 <HorizontalScrollView
@@ -106,7 +121,7 @@
                             android:layout_height="40dp"
                             android:visibility="gone"
                             android:contentDescription="Translate Page"
-                            android:src="@drawable/ic_translate" />
+                            android:src="@drawable/ic_translate"  app:tint="@color/md_on_surface" />
 
                         <ImageButton
                             android:id="@+id/backButton"
@@ -115,7 +130,7 @@
                             android:layout_height="40dp"
                             android:visibility="gone"
                             android:contentDescription="Back"
-                            android:src="@drawable/ic_arrow_back" />
+                            android:src="@drawable/ic_arrow_back"  app:tint="@color/md_on_surface" />
 
                         <ImageButton
                             android:id="@+id/forwardButton"
@@ -124,7 +139,7 @@
                             android:layout_height="40dp"
                             android:visibility="gone"
                             android:contentDescription="Forward"
-                            android:src="@drawable/ic_arrow_forward" />
+                            android:src="@drawable/ic_arrow_forward"  app:tint="@color/md_on_surface" />
 
                         <ImageButton
                             android:id="@+id/aiButton"
@@ -133,7 +148,7 @@
                             android:layout_height="40dp"
                             android:visibility="gone"
                             android:contentDescription="Gemini AI"
-                            android:src="@drawable/ic_ai_sparkle" />
+                            android:src="@drawable/ic_ai_sparkle"  app:tint="@color/md_on_surface" />
 
                         <FrameLayout
                             android:layout_width="48dp"
@@ -142,12 +157,12 @@
                             <ImageButton
                                 android:id="@+id/fabShowMedia"
                                 style="?attr/borderlessButtonStyle"
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
+                                android:layout_width="46dp"
+                                android:layout_height="46dp"
                                 android:contentDescription="Detected media"
                                 android:src="@drawable/ic_download"
                                 android:visibility="gone"
-                                tools:visibility="visible" />
+                                tools:visibility="visible"  app:tint="@color/colorPrimary" />
 
                             <TextView
                                 android:id="@+id/mediaCountBadge"
@@ -184,7 +199,7 @@
                                 android:minWidth="24dp"
                                 android:padding="4dp"
                                 android:text="1"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/md_on_surface"
                                 android:textSize="12sp"
                                 android:textStyle="bold"
                                 tools:ignore="SmallSp" />
@@ -193,10 +208,10 @@
                         <ImageButton
                             android:id="@+id/overflowMenuButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
                             android:contentDescription="More options"
-                            android:src="@drawable/ic_more_vert" />
+                            android:src="@drawable/ic_more_vert"  app:tint="@color/md_on_surface" />
 
                     </LinearLayout>
                 </HorizontalScrollView>
@@ -205,12 +220,18 @@
 
         </androidx.appcompat.widget.Toolbar>
 
+        <View
+            android:id="@+id/toolbarDivider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/md_outline_variant" />
+
         <ProgressBar
             android:id="@+id/progressBar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:progressTint="?attr/colorAccent"
+            android:layout_height="3dp"
+            android:progressTint="@color/colorPrimary"
             android:visibility="gone"
             tools:visibility="visible" />
 
@@ -228,13 +249,114 @@
             android:layout_height="match_parent"
             android:visibility="gone" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/bookmarkRecyclerView"
+                <LinearLayout
+            android:id="@+id/startPageContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="visible"
-            android:paddingTop="0dp"
-            android:clipToPadding="false" />
+            android:background="@color/md_surface"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/md_surface_container"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/md_outline_variant"
+                app:strokeWidth="1dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/start_page_headline"
+                        android:textColor="@color/md_on_surface"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/start_page_subhead"
+                        android:textColor="@color/md_on_surface_variant"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:fillViewport="false"
+                android:scrollbars="none">
+                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/quickActionDownloads"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content" android:layout_height="38dp" android:layout_marginEnd="8dp" android:minHeight="38dp"
+                        android:text="@string/downloads" android:textAllCaps="false" android:textColor="@color/md_on_secondary_container" android:textSize="12sp"
+                        app:backgroundTint="@color/md_secondary_container" app:cornerRadius="19dp" app:icon="@drawable/ic_folder_open"
+                        app:iconGravity="textStart" app:iconPadding="6dp" app:iconSize="18dp" app:iconTint="@color/md_on_secondary_container" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/quickActionHistory"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content" android:layout_height="38dp" android:layout_marginEnd="8dp" android:minHeight="38dp"
+                        android:text="@string/quick_action_history" android:textAllCaps="false" android:textColor="@color/md_on_secondary_container" android:textSize="12sp"
+                        app:backgroundTint="@color/md_secondary_container" app:cornerRadius="19dp" app:icon="@drawable/ic_history"
+                        app:iconGravity="textStart" app:iconPadding="6dp" app:iconSize="18dp" app:iconTint="@color/md_on_secondary_container" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/quickActionScripts"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content" android:layout_height="38dp" android:layout_marginEnd="8dp" android:minHeight="38dp"
+                        android:text="@string/quick_action_scripts" android:textAllCaps="false" android:textColor="@color/md_on_secondary_container" android:textSize="12sp"
+                        app:backgroundTint="@color/md_secondary_container" app:cornerRadius="19dp" app:icon="@drawable/ic_code"
+                        app:iconGravity="textStart" app:iconPadding="6dp" app:iconSize="18dp" app:iconTint="@color/md_on_secondary_container" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/quickActionAi"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content" android:layout_height="38dp" android:minHeight="38dp"
+                        android:text="@string/quick_action_ai" android:textAllCaps="false" android:textColor="@color/md_on_secondary_container" android:textSize="12sp"
+                        app:backgroundTint="@color/md_secondary_container" app:cornerRadius="19dp" app:icon="@drawable/ic_ai_sparkle"
+                        app:iconGravity="textStart" app:iconPadding="6dp" app:iconSize="18dp" app:iconTint="@color/md_on_secondary_container" />
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="4dp" android:gravity="center_vertical" android:orientation="horizontal">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/bookmarks_section_title"
+                    android:textColor="@color/md_on_surface" android:textSize="15sp" android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddManualLinkHome" style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content" android:layout_height="40dp" android:minHeight="40dp"
+                    android:text="@string/add_link" android:textAllCaps="false" android:textColor="@color/colorPrimary" android:textSize="12sp"
+                    app:icon="@drawable/ic_add" app:iconGravity="textStart" app:iconPadding="4dp" app:iconSize="16dp" app:iconTint="@color/colorPrimary" />
+            </LinearLayout>
+
+            <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:paddingTop="4dp">
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/bookmarkRecyclerView" android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:clipToPadding="false" android:paddingBottom="8dp" android:visibility="gone" />
+                <LinearLayout
+                    android:id="@+id/bookmarkEmptyState" android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:gravity="center" android:orientation="vertical" android:padding="24dp" android:visibility="visible">
+                    <FrameLayout android:layout_width="56dp" android:layout_height="56dp" android:layout_marginBottom="12dp" android:background="@drawable/bg_icon_container">
+                        <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"
+                            android:contentDescription="Bookmarks" android:src="@drawable/ic_bookmark_border" app:tint="@color/md_on_surface_variant" />
+                    </FrameLayout>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center"
+                        android:text="@string/bookmarks_empty_title" android:textColor="@color/md_on_surface" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center"
+                        android:text="@string/bookmarks_empty_subtitle" android:textColor="@color/md_on_surface_variant" android:textSize="12sp" />
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
 
 
         <LinearLayout
@@ -243,9 +365,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
             android:layout_marginBottom="80dp"
-            android:background="@drawable/rounded_background"
-            android:backgroundTint="#D9000000"
-            android:elevation="6dp"
+            android:background="@drawable/bg_floating_pill"
+            android:elevation="8dp"
             android:orientation="horizontal"
             android:padding="12dp"
             android:visibility="gone"
@@ -290,12 +411,12 @@
 
             <ImageButton
                 android:id="@+id/btnDetectorClose"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:src="@drawable/ic_close"
                 android:contentDescription="Close"
-                app:tint="#FFFFFF"
+                app:tint="@android:color/white"
                 android:scaleType="centerInside" />
 
         </LinearLayout>

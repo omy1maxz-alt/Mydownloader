@@ -147,7 +147,7 @@
             android:supportsPictureInPicture="true"
             android:screenOrientation="sensor"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
-            android:theme="@style/Theme.AppCompat.NoActionBar" />
+            android:theme="@style/Theme.MyDownloader.Fullscreen" />
 
         <activity
             android:name=".LogcatViewerActivity"
