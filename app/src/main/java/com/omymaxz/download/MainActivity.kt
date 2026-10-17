@@ -534,6 +534,7 @@ class MainActivity : AppCompatActivity() {
 
         initializeTabs()
         setupUrlBarInToolbar()
+        setupUrlBarBackHandling()
         loadLastUsedName()
         setupHomeButton()
         setupTabButton()
@@ -1427,13 +1428,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // When Android handles Back internally to dismiss the keyboard, no Activity
-        // Back callback may run. Exit URL input mode when IME visibility changes to hidden.
+        // Android may consume Back to dismiss the keyboard before Activity Back handling.
+        // Track the IME transition and leave URL input mode as soon as the keyboard closes.
+        wasImeVisible = ViewCompat.getRootWindowInsets(binding.rootContainer)
+            ?.isVisible(WindowInsetsCompat.Type.ime()) ?: false
         ViewCompat.setOnApplyWindowInsetsListener(binding.rootContainer) { _, insets ->
             val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
             if (wasImeVisible && !imeVisible && binding.urlEditTextToolbar.hasFocus()) {
-                binding.urlEditTextToolbar.clearFocus()
-                binding.toolbarConstraintLayout.requestFocus()
+                exitUrlBarInputMode()
             }
             wasImeVisible = imeVisible
             insets
@@ -1491,14 +1493,38 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupUrlBarBackHandling() {
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding.urlEditTextToolbar.hasFocus()) {
+                    exitUrlBarInputMode()
+                    return
+                }
+
+                // Delegate normal browser/activity Back handling without recursing into this callback.
+                isEnabled = false
+                try {
+                    onBackPressedDispatcher.onBackPressed()
+                } finally {
+                    isEnabled = true
+                }
+            }
+        })
+    }
+
     private fun exitUrlBarInputMode() {
         val urlBar = binding.urlEditTextToolbar
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(urlBar.windowToken, 0)
+        urlBar.clearComposingText()
         urlBar.clearFocus()
-        // Prevent the old insertion cursor/selection from remaining visible.
-        urlBar.setSelection(urlBar.text?.length ?: 0)
-        binding.toolbarConstraintLayout.requestFocus()
+        // Clear selection/cursor visuals after focus has been removed.
+        urlBar.post {
+            if (!urlBar.hasFocus()) {
+                urlBar.setSelection(urlBar.text?.length ?: 0)
+                binding.toolbarConstraintLayout.requestFocus()
+            }
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -4408,6 +4434,11 @@ inner class YouTubeInterface(private val activity: MainActivity) {
         createThemedDialogBuilder(this)
             .setTitle("Media Info")
             .setMessage(infoText.toString())
+            .setNeutralButton("Copy URL") { _, _ ->
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Media URL", mediaFile.url))
+                Toast.makeText(this, "Media URL copied", Toast.LENGTH_SHORT).show()
+            }
             .setPositiveButton("Close", null)
             .show()
     }
