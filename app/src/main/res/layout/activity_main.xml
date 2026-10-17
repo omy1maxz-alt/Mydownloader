@@ -113,7 +113,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constrainedWidth="true"
-                    app:layout_constraintWidth_max="204dp">
+                    app:layout_constraintWidth_max="232dp">
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -124,8 +124,8 @@
                         <ImageButton
                             android:id="@+id/backButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="36dp"
-                            android:layout_height="40dp"
+                            android:layout_width="32dp"
+                            android:layout_height="36dp"
                             android:visibility="visible"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Back"
@@ -137,8 +137,8 @@
                         <ImageButton
                             android:id="@+id/forwardButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="36dp"
-                            android:layout_height="40dp"
+                            android:layout_width="32dp"
+                            android:layout_height="36dp"
                             android:visibility="visible"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Forward"
@@ -150,8 +150,8 @@
                         <ImageButton
                             android:id="@+id/newTabToolbarButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="36dp"
-                            android:layout_height="40dp"
+                            android:layout_width="32dp"
+                            android:layout_height="36dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="New tab"
                             android:padding="6dp"
@@ -162,8 +162,8 @@
                         <ImageButton
                             android:id="@+id/translateButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="36dp"
-                            android:layout_height="40dp"
+                            android:layout_width="32dp"
+                            android:layout_height="36dp"
                             android:visibility="visible"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Translate Page"
@@ -172,30 +172,18 @@
                             android:src="@drawable/ic_translate"
                             app:tint="@color/md_on_surface" />
 
-                        <ImageButton
-                            android:id="@+id/aiButton"
-                            style="?attr/borderlessButtonStyle"
-                            android:layout_width="36dp"
-                            android:layout_height="40dp"
-                            android:visibility="visible"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="Gemini AI"
-                            android:padding="6dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/ic_ai_sparkle"
-                            app:tint="@color/md_on_surface" />
 
                         <FrameLayout
                             android:id="@+id/mediaActionContainer"
-                            android:layout_width="46dp"
-                            android:layout_height="46dp"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
                             android:visibility="gone">
 
                             <ImageButton
                                 android:id="@+id/fabShowMedia"
                                 style="?attr/borderlessButtonStyle"
-                                android:layout_width="46dp"
-                                android:layout_height="46dp"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="Detected media"
                                 android:src="@drawable/ic_download"
@@ -225,8 +213,8 @@
 
                         <FrameLayout
                             android:id="@+id/tabButton"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
+                            android:layout_width="32dp"
+                            android:layout_height="36dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Tabs">
 
@@ -250,8 +238,8 @@
                         <ImageButton
                             android:id="@+id/overflowMenuButton"
                             style="?attr/borderlessButtonStyle"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
+                            android:layout_width="32dp"
+                            android:layout_height="36dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="More options"
                             android:src="@drawable/ic_more_vert"
