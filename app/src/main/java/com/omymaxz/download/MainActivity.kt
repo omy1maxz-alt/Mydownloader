@@ -962,7 +962,19 @@ class MainActivity : AppCompatActivity() {
         binding.backButton.setOnClickListener { navigateBack() }
         binding.forwardButton.setOnClickListener { navigateForward() }
         binding.aiButton.setOnClickListener { openGeminiForCurrentPage() }
-        binding.refreshButton.setOnClickListener { webView.reload() }
+        binding.refreshButton.setOnClickListener {
+            val enteredText = binding.urlEditTextToolbar.text.toString().trim()
+            val currentUrl = webView.url.orEmpty()
+            // When the omnibox is being edited, its trailing action submits a pasted/typed
+            // destination instead of silently reloading the page that was open before.
+            if (enteredText.isNotEmpty() &&
+                !enteredText.equals(currentUrl, ignoreCase = true)
+            ) {
+                loadUrlFromEditTextToolbar()
+            } else {
+                webView.reload()
+            }
+        }
         binding.translateButton.setOnClickListener { toggleAutoTranslate() }
         binding.translateButton.setOnLongClickListener {
             showTranslateSettingsDialog()
@@ -1373,8 +1385,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUrlBarInToolbar() {
-        binding.urlEditTextToolbar.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_GO) {
+        binding.urlEditTextToolbar.setOnEditorActionListener { _, actionId, event ->
+            val isSubmitAction = actionId == EditorInfo.IME_ACTION_GO ||
+                actionId == EditorInfo.IME_ACTION_DONE ||
+                actionId == EditorInfo.IME_ACTION_SEARCH
+            val isEnterKey = event?.let {
+                it.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
+                    it.action == android.view.KeyEvent.ACTION_UP
+            } == true
+            if (isSubmitAction || isEnterKey) {
                 loadUrlFromEditTextToolbar()
                 true
             } else {
@@ -1387,14 +1406,8 @@ class MainActivity : AppCompatActivity() {
                     binding.urlEditTextToolbar.selectAll()
                 }
 
-                // Keep the dedicated browser-action row available while editing the URL.
-                binding.homeButton.visibility = View.GONE
-                binding.refreshButton.visibility = View.GONE
-                binding.tabButton.visibility = View.GONE
+                // Keep every browser action on the single toolbar row while editing.
             } else {
-                binding.homeButton.visibility = View.VISIBLE
-                binding.refreshButton.visibility = View.VISIBLE
-                binding.tabButton.visibility = View.VISIBLE
                 updateToolbarNavButtonState()
             }
         }
@@ -4348,6 +4361,11 @@ inner class YouTubeInterface(private val activity: MainActivity) {
         createThemedDialogBuilder(this)
             .setTitle("Media Info")
             .setMessage(infoText.toString())
+            .setNeutralButton("Copy URL") { _, _ ->
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Media URL", mediaFile.url))
+                Toast.makeText(this, "Media URL copied", Toast.LENGTH_SHORT).show()
+            }
             .setPositiveButton("Close", null)
             .show()
     }
@@ -7966,6 +7984,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
         val hasFiles = synchronized(detectedMediaFiles) { detectedMediaFiles.isNotEmpty() }
 
         if (hasFiles) {
+            binding.detectedMediaContainer.visibility = android.view.View.VISIBLE
             binding.fabShowMedia.visibility = android.view.View.VISIBLE
             binding.fabShowMedia.isEnabled = true
             binding.fabShowMedia.alpha = 1.0f
@@ -7987,11 +8006,8 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                 true
             }
         } else {
-            // Keep the toolbar action discoverable even before media is detected.
-            binding.fabShowMedia.visibility = android.view.View.VISIBLE
-            binding.fabShowMedia.isEnabled = false
-            binding.fabShowMedia.alpha = 0.5f
-            binding.fabShowMedia.contentDescription = "Detected media, no items detected"
+            // Hide the complete toolbar slot until there is media to open.
+            binding.detectedMediaContainer.visibility = android.view.View.GONE
             binding.mediaCountBadge.visibility = android.view.View.GONE
         }
 
