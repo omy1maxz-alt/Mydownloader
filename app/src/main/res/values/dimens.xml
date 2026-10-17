@@ -2,4 +2,20 @@
 <resources>
     <dimen name="custom_exo_button_size">40dp</dimen>
     <dimen name="custom_exo_button_padding">8dp</dimen>
+    <dimen name="space_xxs">4dp</dimen>
+    <dimen name="space_xs">8dp</dimen>
+    <dimen name="space_sm">12dp</dimen>
+    <dimen name="space_md">16dp</dimen>
+    <dimen name="space_lg">20dp</dimen>
+    <dimen name="space_xl">24dp</dimen>
+    <dimen name="space_xxl">32dp</dimen>
+    <dimen name="toolbar_height">56dp</dimen>
+    <dimen name="omnibox_height">42dp</dimen>
+    <dimen name="touch_target_min">48dp</dimen>
+    <dimen name="icon_button_size">44dp</dimen>
+    <dimen name="corner_radius_sm">8dp</dimen>
+    <dimen name="corner_radius_md">14dp</dimen>
+    <dimen name="corner_radius_lg">20dp</dimen>
+    <dimen name="corner_radius_xl">28dp</dimen>
+    <dimen name="corner_radius_pill">999dp</dimen>
 </resources>
