@@ -882,47 +882,81 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun isCustomGlossyThemeActive(): Boolean {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val enabled = prefs.getBoolean("use_custom_glossy_theme", false)
+        val hexColor = prefs.getString("glossy_theme_color", "SYSTEM_M3") ?: "SYSTEM_M3"
+        return enabled && hexColor != "SYSTEM_M3" && hexColor != "#A0000000"
+    }
+
+    private fun resolveSurfaceAndContentColors(forceOpaque: Boolean = true): Pair<Int, Int> {
+        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
+        val hexColor = prefs.getString("glossy_theme_color", "SYSTEM_M3") ?: "SYSTEM_M3"
+        if (!isCustomGlossyThemeActive()) {
+            return androidx.core.content.ContextCompat.getColor(this, R.color.md_surface_container_high) to
+                androidx.core.content.ContextCompat.getColor(this, R.color.md_on_surface)
+        }
+        val parsedColor = try {
+            android.graphics.Color.parseColor(hexColor)
+        } catch (e: Exception) {
+            androidx.core.content.ContextCompat.getColor(this, R.color.md_surface_container_high)
+        }
+        val background = if (forceOpaque) {
+            android.graphics.Color.rgb(android.graphics.Color.red(parsedColor), android.graphics.Color.green(parsedColor), android.graphics.Color.blue(parsedColor))
+        } else parsedColor
+        val luminanceColor = android.graphics.Color.rgb(
+            android.graphics.Color.red(background),
+            android.graphics.Color.green(background),
+            android.graphics.Color.blue(background)
+        )
+        val foreground = if (androidx.core.graphics.ColorUtils.calculateLuminance(luminanceColor) > 0.5) {
+            androidx.core.content.ContextCompat.getColor(this, R.color.md_on_surface)
+        } else {
+            android.graphics.Color.parseColor("#DFE4E2")
+        }
+        return background to foreground
+    }
+
     private fun applyGlossyTheme() {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-        // Default to a dark semi-transparent tint
-        val hexColor = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-
+        val hexColor = prefs.getString("glossy_theme_color", "SYSTEM_M3") ?: "SYSTEM_M3"
         try {
-            val color = android.graphics.Color.parseColor(hexColor)
-            binding.toolbar.setBackgroundColor(color)
-
-            // Also apply theme color to the status bar and popup menu
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-
-                // Clear TRANSLUCENT_STATUS flag if it was ever set so we don't accidentally draw underneath the status bar/toolbar
-                window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-
-                // Strip the alpha channel to make the status bar solid, as some OS versions don't render translucent well.
-                val solidColor = android.graphics.Color.rgb(
-                    android.graphics.Color.red(color),
-                    android.graphics.Color.green(color),
-                    android.graphics.Color.blue(color)
-                )
-                window.statusBarColor = solidColor
+            val toolbarColor: Int
+            val statusColor: Int
+            val iconColor: Int
+            if (!isCustomGlossyThemeActive()) {
+                toolbarColor = androidx.core.content.ContextCompat.getColor(this, R.color.md_surface)
+                statusColor = toolbarColor
+                iconColor = androidx.core.content.ContextCompat.getColor(this, R.color.md_on_surface)
+            } else {
+                val parsedColor = android.graphics.Color.parseColor(hexColor)
+                toolbarColor = parsedColor
+                statusColor = android.graphics.Color.rgb(android.graphics.Color.red(parsedColor), android.graphics.Color.green(parsedColor), android.graphics.Color.blue(parsedColor))
+                iconColor = if (androidx.core.graphics.ColorUtils.calculateLuminance(statusColor) > 0.5) {
+                    androidx.core.content.ContextCompat.getColor(this, R.color.md_on_surface)
+                } else android.graphics.Color.WHITE
             }
-
-            // On Android 12+, we can apply a hardware-accelerated background blur
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                try {
-                    val renderEffect = android.graphics.RenderEffect.createBlurEffect(
-                        10f, 10f, android.graphics.Shader.TileMode.CLAMP
-                    )
-                    // Apply blur to the background drawable if possible,
-                    // or to a dedicated view behind it. For the toolbar itself,
-                    // applying it to the toolbar blurs its children (buttons).
-                    // To avoid blurring the buttons, we rely strictly on the semi-transparent color for now.
-                } catch (e: Exception) {
-                    android.util.Log.e("MainActivity", "Failed to apply blur effect", e)
-                }
+            binding.appBarContainer.setBackgroundColor(toolbarColor)
+            binding.toolbar.setBackgroundColor(toolbarColor)
+            binding.homeButton.setColorFilter(iconColor)
+            binding.overflowMenuButton.setColorFilter(iconColor)
+            binding.refreshButton.setColorFilter(iconColor)
+            binding.omniboxLeadingIcon.setColorFilter(iconColor)
+            binding.backButton.setColorFilter(iconColor)
+            binding.forwardButton.setColorFilter(iconColor)
+            binding.translateButton.setColorFilter(iconColor)
+            binding.aiButton.setColorFilter(iconColor)
+            binding.tabCount.setTextColor(iconColor)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+                window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+                window.statusBarColor = statusColor
+                window.navigationBarColor = androidx.core.content.ContextCompat.getColor(this, R.color.md_surface)
+                androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars =
+                    androidx.core.graphics.ColorUtils.calculateLuminance(statusColor) > 0.5
             }
         } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Invalid hex color: $hexColor")
+            android.util.Log.e("MainActivity", "Invalid theme color: $hexColor", e)
         }
     }
 
@@ -1035,9 +1069,7 @@ class MainActivity : AppCompatActivity() {
 
         // Force opaque theme directly on the view to guarantee no transparency
         val prefs = getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
-        val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-        val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
-        val opaqueColor = android.graphics.Color.rgb(android.graphics.Color.red(baseColor), android.graphics.Color.green(baseColor), android.graphics.Color.blue(baseColor))
+        val (opaqueColor, _) = resolveSurfaceAndContentColors(forceOpaque = true)
         val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
             setColor(opaqueColor)
             cornerRadius = 24f * resources.displayMetrics.density
@@ -1271,14 +1303,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun showStartPage() {
         webView.visibility = View.GONE
-        binding.bookmarkRecyclerView.visibility = View.VISIBLE
+        binding.startPageContainer.visibility = View.VISIBLE
+        binding.omniboxLeadingIcon.setImageResource(R.drawable.ic_search)
         binding.urlEditTextToolbar.setText("")
         updateToolbarNavButtonState()
     }
 
     private fun showWebView() {
         webView.visibility = View.VISIBLE
-        binding.bookmarkRecyclerView.visibility = View.GONE
+        binding.startPageContainer.visibility = View.GONE
+        binding.omniboxLeadingIcon.setImageResource(R.drawable.ic_public)
         updateToolbarNavButtonState()
     }
 
@@ -1297,6 +1331,14 @@ class MainActivity : AppCompatActivity() {
             layoutManager = GridLayoutManager(this@MainActivity, 4)
             adapter = bookmarkAdapter
         }
+        // Phase 2 will replace this temporary destination with a dedicated download manager.
+        binding.quickActionDownloads.setOnClickListener { showExportLogsDialog() }
+        binding.quickActionHistory.setOnClickListener { showHistory() }
+        binding.quickActionScripts.setOnClickListener {
+            startActivity(Intent(this@MainActivity, UserScriptManagerActivity::class.java))
+        }
+        binding.quickActionAi.setOnClickListener { openGeminiForCurrentPage() }
+        binding.btnAddManualLinkHome.setOnClickListener { showManualAddLinkDialog() }
     }
 
     private fun loadBookmarks() {
@@ -1304,6 +1346,9 @@ class MainActivity : AppCompatActivity() {
             val bookmarks = db.bookmarkDao().getAll()
             withContext(Dispatchers.Main) {
                 bookmarkAdapter.updateData(bookmarks)
+                val empty = bookmarks.isEmpty()
+                binding.bookmarkEmptyState.visibility = if (empty) View.VISIBLE else View.GONE
+                binding.bookmarkRecyclerView.visibility = if (empty) View.GONE else View.VISIBLE
             }
         }
     }
@@ -1353,10 +1398,10 @@ class MainActivity : AppCompatActivity() {
                 binding.aiButton.visibility = View.GONE
                 binding.tabButton.visibility = View.GONE
             } else {
-                // Restore buttons when focus is lost
+                // Restore compact-toolbar actions, but keep navigation controls hidden as designed.
                 binding.homeButton.visibility = View.VISIBLE
-                binding.backButton.visibility = View.VISIBLE
-                binding.forwardButton.visibility = View.VISIBLE
+                binding.backButton.visibility = View.GONE
+                binding.forwardButton.visibility = View.GONE
                 binding.refreshButton.visibility = View.VISIBLE
                 // Translate and AI are intentionally hidden in the compact toolbar.
                 binding.translateButton.visibility = View.GONE
@@ -2204,18 +2249,8 @@ class MainActivity : AppCompatActivity() {
                         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ newWebView.destroy() }, 500)
                     }
 
-                    // Try to apply theme colors to this popup
-                    val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-                    val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
-                    val parsedColor = android.graphics.Color.rgb(
-                        android.graphics.Color.red(baseColor),
-                        android.graphics.Color.green(baseColor),
-                        android.graphics.Color.blue(baseColor)
-                    )
-
-                    // Helper to get text color based on luminance
-                    val luminance = (0.299 * android.graphics.Color.red(parsedColor) + 0.587 * android.graphics.Color.green(parsedColor) + 0.114 * android.graphics.Color.blue(parsedColor)) / 255
-                    val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+                    // Resolve popup colors without parsing the SYSTEM_M3 sentinel as a hex value.
+                    val (parsedColor, textColor) = resolveSurfaceAndContentColors(forceOpaque = true)
 
                     val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
                         setColor(parsedColor)
@@ -5428,19 +5463,8 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
     private fun showCustomOverflowMenu(anchor: View) {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-        val hexColor = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-        val savedColor = try {
-            android.graphics.Color.parseColor(hexColor)
-        } catch (e: Exception) {
-            android.graphics.Color.BLACK
-        }
-        val bgColor = android.graphics.Color.rgb(
-            android.graphics.Color.red(savedColor),
-            android.graphics.Color.green(savedColor),
-            android.graphics.Color.blue(savedColor)
-        )
+        val (bgColor, textColor) = resolveSurfaceAndContentColors(forceOpaque = true)
         val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
-        val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
         val mutedColor = if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
         val density = resources.displayMetrics.density
 
@@ -6411,9 +6435,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
     private val sniffedApiLogs = java.util.concurrent.CopyOnWriteArrayList<String>()
 
     private fun showApiSnifferLogDialog() {
-        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-        val currentHex = prefs.getString("glossy_theme_color", "#A0000000")
-        val textColor = if (androidx.core.graphics.ColorUtils.calculateLuminance(android.graphics.Color.parseColor(currentHex)) > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+        val (_, textColor) = resolveSurfaceAndContentColors(forceOpaque = true)
 
         val listView = android.widget.ListView(this).apply {
             adapter = android.widget.ArrayAdapter(this@MainActivity, android.R.layout.simple_list_item_1, sniffedApiLogs)
@@ -6732,15 +6754,8 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         data class SettingsAction(val title: String, val iconRes: Int, val onClick: () -> Unit)
 
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-        val hexColor = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-        val savedColor = try { android.graphics.Color.parseColor(hexColor) } catch (e: Exception) { android.graphics.Color.BLACK }
-        val bgColor = android.graphics.Color.rgb(
-            android.graphics.Color.red(savedColor),
-            android.graphics.Color.green(savedColor),
-            android.graphics.Color.blue(savedColor)
-        )
+        val (bgColor, textColor) = resolveSurfaceAndContentColors(forceOpaque = true)
         val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
-        val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
         val mutedColor = if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
         val density = resources.displayMetrics.density
         fun dp(value: Int): Int = (value * density).toInt()
@@ -7437,44 +7452,54 @@ private fun showRenameDialog(mediaFile: MediaFile) {
     }
     private fun showThemeColorPickerDialog() {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-        val currentHex = prefs.getString("glossy_theme_color", "#A0000000")
-
+        val currentHex = prefs.getString("glossy_theme_color", "SYSTEM_M3") ?: "SYSTEM_M3"
+        val density = resources.displayMetrics.density
+        val pad = (14 * density).toInt()
         val input = EditText(this).apply {
-            hint = "e.g., #AAFF0000 for semi-transparent red"
-            setText(currentHex)
+            hint = "e.g., #004F48 or #E6121716"
+            setText(if (currentHex == "SYSTEM_M3" || currentHex == "#A0000000") "#006A60" else currentHex)
+            setBackgroundResource(R.drawable.edit_text_custom)
+            setPadding(pad, pad, pad, pad)
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         }
-
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(50, 40, 50, 10)
+            setPadding((20 * density).toInt(), (12 * density).toInt(), (20 * density).toInt(), (4 * density).toInt())
             addView(input)
         }
-
         createThemedDialogBuilder(this)
-            .setTitle("Set Theme Color (HEX)")
-            .setMessage("Enter an 8-character HEX code (AARRGGBB) for a glossy effect.")
+            .setTitle("Theme & Appearance")
+            .setMessage("Choose Default Adaptive for Material 3 Day/Night, or enter a custom HEX color (#RRGGBB or #AARRGGBB).")
             .setView(layout)
-            .setPositiveButton("Apply") { _, _ ->
+            .setPositiveButton("Apply Custom") { _, _ ->
                 val newColor = input.text.toString().trim()
                 if (newColor.matches(Regex("^#[0-9a-fA-F]{8}$")) || newColor.matches(Regex("^#[0-9a-fA-F]{6}$"))) {
-                    prefs.edit().putString("glossy_theme_color", newColor).apply()
+                    prefs.edit().putBoolean("use_custom_glossy_theme", true).putString("glossy_theme_color", newColor).apply()
                     applyGlossyTheme()
-                    Toast.makeText(this, "Theme applied!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Custom theme applied", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this, "Invalid HEX code. Use #AARRGGBB format.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Invalid HEX code. Use #RRGGBB or #AARRGGBB format.", Toast.LENGTH_LONG).show()
                 }
             }
             .setNeutralButton("Presets") { _, _ ->
-                val presetColors = arrayOf("Dark Glass (#A0000000)", "Light Glass (#90FFFFFF)", "Red Glass (#80FF0000)", "Blue Glass (#800000FF)", "Green Glass (#8000FF00)")
-                val presetHexCodes = arrayOf("#A0000000", "#90FFFFFF", "#80FF0000", "#800000FF", "#8000FF00")
-
+                val labels = arrayOf(
+                    "Default Adaptive (Material 3 Day/Night)",
+                    "Deep Teal (#004F48)",
+                    "Midnight Slate (#182026)",
+                    "Light Glass (#90FFFFFF)",
+                    "Red Glass (#80FF0000)",
+                    "Blue Glass (#800000FF)",
+                    "Green Glass (#8000FF00)"
+                )
+                val values = arrayOf("SYSTEM_M3", "#004F48", "#182026", "#90FFFFFF", "#80FF0000", "#800000FF", "#8000FF00")
                 createThemedDialogBuilder(this)
-                    .setTitle("Choose Preset")
-                    .setItems(presetColors) { _, which ->
-                        prefs.edit().putString("glossy_theme_color", presetHexCodes[which]).apply()
+                    .setTitle("Choose Appearance")
+                    .setItems(labels) { _, which ->
+                        val chosen = values[which]
+                        val custom = chosen != "SYSTEM_M3" && chosen != "#A0000000"
+                        prefs.edit().putBoolean("use_custom_glossy_theme", custom).putString("glossy_theme_color", chosen).apply()
                         applyGlossyTheme()
-                        Toast.makeText(this, "Theme applied!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, if (custom) "Custom theme applied" else "Adaptive Material 3 theme applied", Toast.LENGTH_SHORT).show()
                     }
                     .show()
             }
@@ -7890,18 +7915,9 @@ if (isDesktopMode) {
     }
 
 private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = false): AlertDialog.Builder {
-        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-        val themeColorHex = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-        val baseColor = try { android.graphics.Color.parseColor(themeColorHex) } catch(e: Exception) { android.graphics.Color.parseColor("#A0000000") }
-        val parsedColor = if (isOpaque) {
-            // Strip alpha to make it 100% opaque
-            android.graphics.Color.rgb(android.graphics.Color.red(baseColor), android.graphics.Color.green(baseColor), android.graphics.Color.blue(baseColor))
-        } else {
-            baseColor
-        }
-
-        val luminance = (0.299 * android.graphics.Color.red(parsedColor) + 0.587 * android.graphics.Color.green(parsedColor) + 0.114 * android.graphics.Color.blue(parsedColor)) / 255
-        val textColor = if (luminance > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+        val (parsedColor, textColor) = resolveSurfaceAndContentColors(
+            forceOpaque = isOpaque || !isCustomGlossyThemeActive()
+        )
 
         return object : AlertDialog.Builder(context, R.style.CustomAlertDialogTheme) {
             override fun create(): AlertDialog {
