@@ -282,3 +282,5 @@
 
 
 - **2026-10-17 single-row toolbar correction:** Follow-up to the merged toolbar change after installed-device feedback. Moved the browser action strip into the Toolbar's single horizontal row, constrained the search/URL field to expand into the remaining width, and kept toolbar actions present while the URL field is focused. The Detected Media slot now hides when there are no detected items and appears with its count only when media exists. This is a focused UI correction; no Phase 2 work. Build/CI and installed-device verification pending.
+
+- **2026-10-17 Media Info copy URL action:** Added a **Copy URL** action to the Detected Media item's Media Info dialog. It copies that media item's exact URL to the Android clipboard and shows a brief confirmation toast. Kept the change on `fix/single-row-toolbar`; no master edits or Phase 2 work. Build/device verification pending.
