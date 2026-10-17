@@ -967,8 +967,7 @@ class MainActivity : AppCompatActivity() {
             val currentUrl = webView.url.orEmpty()
             // When the omnibox is being edited, its trailing action submits a pasted/typed
             // destination instead of silently reloading the page that was open before.
-            if (binding.urlEditTextToolbar.hasFocus() &&
-                enteredText.isNotEmpty() &&
+            if (enteredText.isNotEmpty() &&
                 !enteredText.equals(currentUrl, ignoreCase = true)
             ) {
                 loadUrlFromEditTextToolbar()
@@ -1390,8 +1389,10 @@ class MainActivity : AppCompatActivity() {
             val isSubmitAction = actionId == EditorInfo.IME_ACTION_GO ||
                 actionId == EditorInfo.IME_ACTION_DONE ||
                 actionId == EditorInfo.IME_ACTION_SEARCH
-            val isEnterKey = event?.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
-                event.action == android.view.KeyEvent.ACTION_UP
+            val isEnterKey = event?.let {
+                it.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
+                    it.action == android.view.KeyEvent.ACTION_UP
+            } == true
             if (isSubmitAction || isEnterKey) {
                 loadUrlFromEditTextToolbar()
                 true
