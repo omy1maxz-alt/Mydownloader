@@ -3626,6 +3626,15 @@ private fun injectMediaStateDetector() {
 
         private fun handleIncomingMediaDetection(url: String, type: String, contentType: String? = null) {
             if (url.startsWith("blob:")) return
+            val requestMime = contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
+            val requestPath = runCatching { java.net.URL(url).path.lowercase() }
+                .getOrDefault(url.substringBefore("?").lowercase())
+            val requestExtension = requestPath.substringAfterLast('.', "")
+            if (requestMime.startsWith("image/") ||
+                requestExtension in setOf("gif", "jpg", "jpeg", "png", "svg", "webp", "ico")) {
+                android.util.Log.d("MediaStateInterface", "Ignoring image asset instead of listing as media: $requestPath")
+                return
+            }
             if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
                 lastSubtitleUrl = url
             }
