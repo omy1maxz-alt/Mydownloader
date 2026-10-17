@@ -4361,6 +4361,11 @@ inner class YouTubeInterface(private val activity: MainActivity) {
         createThemedDialogBuilder(this)
             .setTitle("Media Info")
             .setMessage(infoText.toString())
+            .setNeutralButton("Copy URL") { _, _ ->
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Media URL", mediaFile.url))
+                Toast.makeText(this, "Media URL copied", Toast.LENGTH_SHORT).show()
+            }
             .setPositiveButton("Close", null)
             .show()
     }
