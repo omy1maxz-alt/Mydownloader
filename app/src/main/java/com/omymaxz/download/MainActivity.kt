@@ -1386,24 +1386,15 @@ class MainActivity : AppCompatActivity() {
                     binding.urlEditTextToolbar.selectAll()
                 }
 
-                // Modern UI: Hide other buttons to stretch the URL bar
+                // Keep the dedicated browser-action row available while editing the URL.
                 binding.homeButton.visibility = View.GONE
-                binding.backButton.visibility = View.GONE
-                binding.forwardButton.visibility = View.GONE
                 binding.refreshButton.visibility = View.GONE
-                binding.translateButton.visibility = View.GONE
-                binding.aiButton.visibility = View.GONE
                 binding.tabButton.visibility = View.GONE
             } else {
-                // Restore compact-toolbar actions, but keep navigation controls hidden as designed.
                 binding.homeButton.visibility = View.VISIBLE
-                binding.backButton.visibility = View.GONE
-                binding.forwardButton.visibility = View.GONE
                 binding.refreshButton.visibility = View.VISIBLE
-                // Translate and AI are intentionally hidden in the compact toolbar.
-                binding.translateButton.visibility = View.GONE
-                binding.aiButton.visibility = View.GONE
                 binding.tabButton.visibility = View.VISIBLE
+                updateToolbarNavButtonState()
             }
         }
 
