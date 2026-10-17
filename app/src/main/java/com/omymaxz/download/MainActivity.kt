@@ -1864,6 +1864,8 @@ class MainActivity : AppCompatActivity() {
                     val reqReferer = reqHeaders?.get("Referer") ?: reqHeaders?.get("referer")
                     val userAgent = reqHeaders?.get("User-Agent") ?: reqHeaders?.get("user-agent")
 
+
+
                     // Check for standard YouTube watch links or embedded player frames
                     if (url.contains("youtube.com/watch") ||
                         url.contains("youtube.com/embed/") ||
