@@ -1386,15 +1386,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupUrlBarInToolbar() {
         binding.urlEditTextToolbar.setOnEditorActionListener { _, actionId, event ->
-            val isSubmitAction = actionId == EditorInfo.IME_ACTION_GO ||
-                actionId == EditorInfo.IME_ACTION_DONE ||
-                actionId == EditorInfo.IME_ACTION_SEARCH
+            // Some keyboards report IME_ACTION_UNSPECIFIED (0) even though the
+            // EditText requests actionGo. Treat any actual editor action as submit.
+            val isSubmitAction = actionId != EditorInfo.IME_ACTION_NONE
             val isEnterKey = event?.let {
                 it.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
                     it.action == android.view.KeyEvent.ACTION_UP
             } == true
             if (isSubmitAction || isEnterKey) {
-                loadUrlFromEditTextToolbar()
+                // Snapshot the field before hiding the IME or clearing focus, because
+                // page callbacks update this same EditText with the current WebView URL.
+                val submittedText = binding.urlEditTextToolbar.text?.toString().orEmpty()
+                if (submittedText.isNotBlank()) {
+                    android.util.Log.d("MainActivity", "Omnibox submit action=$actionId text=$submittedText")
+                    loadUrlFromEditTextToolbar(submittedText)
+                }
                 true
             } else {
                 false
@@ -1423,8 +1429,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadUrlFromEditTextToolbar() {
-        var url = binding.urlEditTextToolbar.text.toString().trim()
+    private fun loadUrlFromEditTextToolbar(submittedText: String? = null) {
+        var url = (submittedText ?: binding.urlEditTextToolbar.text.toString()).trim()
         if (url.isEmpty()) return
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "https://www.google.com/search?q=$url"
