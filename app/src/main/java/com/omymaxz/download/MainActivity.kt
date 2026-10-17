@@ -962,7 +962,20 @@ class MainActivity : AppCompatActivity() {
         binding.backButton.setOnClickListener { navigateBack() }
         binding.forwardButton.setOnClickListener { navigateForward() }
         binding.aiButton.setOnClickListener { openGeminiForCurrentPage() }
-        binding.refreshButton.setOnClickListener { webView.reload() }
+        binding.refreshButton.setOnClickListener {
+            val enteredText = binding.urlEditTextToolbar.text.toString().trim()
+            val currentUrl = webView.url.orEmpty()
+            // When the omnibox is being edited, its trailing action submits a pasted/typed
+            // destination instead of silently reloading the page that was open before.
+            if (binding.urlEditTextToolbar.hasFocus() &&
+                enteredText.isNotEmpty() &&
+                !enteredText.equals(currentUrl, ignoreCase = true)
+            ) {
+                loadUrlFromEditTextToolbar()
+            } else {
+                webView.reload()
+            }
+        }
         binding.translateButton.setOnClickListener { toggleAutoTranslate() }
         binding.translateButton.setOnLongClickListener {
             showTranslateSettingsDialog()
@@ -1373,8 +1386,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUrlBarInToolbar() {
-        binding.urlEditTextToolbar.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_GO) {
+        binding.urlEditTextToolbar.setOnEditorActionListener { _, actionId, event ->
+            val isSubmitAction = actionId == EditorInfo.IME_ACTION_GO ||
+                actionId == EditorInfo.IME_ACTION_DONE ||
+                actionId == EditorInfo.IME_ACTION_SEARCH
+            val isEnterKey = event?.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
+                event.action == android.view.KeyEvent.ACTION_UP
+            if (isSubmitAction || isEnterKey) {
                 loadUrlFromEditTextToolbar()
                 true
             } else {
