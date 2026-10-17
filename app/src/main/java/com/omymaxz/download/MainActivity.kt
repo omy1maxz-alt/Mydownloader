@@ -968,6 +968,7 @@ class MainActivity : AppCompatActivity() {
             showTranslateSettingsDialog()
             true
         }
+        updateToolbarNavButtonState()
     }
 
     private fun navigateBack() {
@@ -1386,24 +1387,15 @@ class MainActivity : AppCompatActivity() {
                     binding.urlEditTextToolbar.selectAll()
                 }
 
-                // Modern UI: Hide other buttons to stretch the URL bar
+                // Keep the dedicated browser-action row available while editing the URL.
                 binding.homeButton.visibility = View.GONE
-                binding.backButton.visibility = View.GONE
-                binding.forwardButton.visibility = View.GONE
                 binding.refreshButton.visibility = View.GONE
-                binding.translateButton.visibility = View.GONE
-                binding.aiButton.visibility = View.GONE
                 binding.tabButton.visibility = View.GONE
             } else {
-                // Restore compact-toolbar actions, but keep navigation controls hidden as designed.
                 binding.homeButton.visibility = View.VISIBLE
-                binding.backButton.visibility = View.GONE
-                binding.forwardButton.visibility = View.GONE
                 binding.refreshButton.visibility = View.VISIBLE
-                // Translate and AI are intentionally hidden in the compact toolbar.
-                binding.translateButton.visibility = View.GONE
-                binding.aiButton.visibility = View.GONE
                 binding.tabButton.visibility = View.VISIBLE
+                updateToolbarNavButtonState()
             }
         }
 
@@ -5475,16 +5467,12 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
         val categories = listOf(
             MenuCategory("Browser", android.R.drawable.ic_menu_view, listOf(
-                MenuAction("Back", R.drawable.ic_arrow_back) { navigateBack() },
-                MenuAction("Forward", R.drawable.ic_arrow_forward) { navigateForward() },
                 MenuAction("History", R.drawable.ic_public) { showHistory() },
                 MenuAction("Add Bookmark", R.drawable.ic_add) { addCurrentPageToBookmarks() },
                 MenuAction("Add Link", R.drawable.ic_download) { showManualAddLinkDialog() },
                 MenuAction("Open in External Browser", R.drawable.ic_public) { openCurrentPageInExternalBrowser() }
             )),
             MenuCategory("Tools", R.drawable.ic_translate, listOf(
-                MenuAction(if (isAutoTranslateEnabled) "Auto-Translate: On" else "Auto-Translate: Off", R.drawable.ic_translate) { toggleAutoTranslate() },
-                MenuAction("Ask Gemini About This Page", R.drawable.ic_ai_sparkle) { openGeminiForCurrentPage() },
                 MenuAction("User Scripts", R.drawable.ic_translate) { startActivity(Intent(this, UserScriptManagerActivity::class.java)) },
                 MenuAction("Urban VPN", R.drawable.ic_public) { showUrbanVpnDialog() },
                 MenuAction(getString(R.string.proxy_settings), R.drawable.ic_public) { showProxySettingsDialog() },
@@ -7979,6 +7967,9 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
 
         if (hasFiles) {
             binding.fabShowMedia.visibility = android.view.View.VISIBLE
+            binding.fabShowMedia.isEnabled = true
+            binding.fabShowMedia.alpha = 1.0f
+            binding.fabShowMedia.contentDescription = "Detected media, ${detectedMediaFiles.size} items"
             binding.mediaCountBadge.text = if (detectedMediaFiles.size > 99) "99+" else detectedMediaFiles.size.toString()
             binding.mediaCountBadge.visibility = android.view.View.VISIBLE
             binding.fabShowMedia.setImageResource(R.drawable.ic_download)
@@ -7996,7 +7987,11 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                 true
             }
         } else {
-            binding.fabShowMedia.visibility = android.view.View.GONE
+            // Keep the toolbar action discoverable even before media is detected.
+            binding.fabShowMedia.visibility = android.view.View.VISIBLE
+            binding.fabShowMedia.isEnabled = false
+            binding.fabShowMedia.alpha = 0.5f
+            binding.fabShowMedia.contentDescription = "Detected media, no items detected"
             binding.mediaCountBadge.visibility = android.view.View.GONE
         }
 
