@@ -148,6 +148,18 @@
                             app:tint="@color/md_on_surface" />
 
                         <ImageButton
+                            android:id="@+id/newTabToolbarButton"
+                            style="?attr/borderlessButtonStyle"
+                            android:layout_width="36dp"
+                            android:layout_height="40dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="New tab"
+                            android:padding="6dp"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/ic_add"
+                            app:tint="@color/md_on_surface" />
+
+                        <ImageButton
                             android:id="@+id/translateButton"
                             style="?attr/borderlessButtonStyle"
                             android:layout_width="36dp"
@@ -174,8 +186,10 @@
                             app:tint="@color/md_on_surface" />
 
                         <FrameLayout
+                            android:id="@+id/mediaActionContainer"
                             android:layout_width="46dp"
-                            android:layout_height="46dp">
+                            android:layout_height="46dp"
+                            android:visibility="gone">
 
                             <ImageButton
                                 android:id="@+id/fabShowMedia"
