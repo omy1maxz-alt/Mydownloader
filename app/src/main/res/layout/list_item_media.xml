@@ -5,32 +5,32 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="?attr/colorSurface"
+    app:cardBackgroundColor="@color/md_surface_container_low"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
-    app:strokeColor="?attr/colorOutline"
+    app:strokeColor="@color/md_outline_variant"
     app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="10dp"
+        android:padding="12dp"
         android:gravity="center_vertical"
         android:background="?attr/selectableItemBackground">
 
         <FrameLayout
-            android:layout_width="44dp"
-            android:layout_height="44dp">
+            android:layout_width="46dp"
+            android:layout_height="46dp">
 
             <ImageView
                 android:id="@+id/media_thumbnail"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
                 android:contentDescription="Media type"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_menu_gallery"
-                tools:src="@android:drawable/ic_media_play" />
+                android:padding="11dp"
+                android:src="@drawable/ic_video_file"
+                tools:src="@drawable/ic_video_file" />
         </FrameLayout>
 
         <LinearLayout
@@ -39,18 +39,60 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:layout_marginStart="12dp"
-            android:layout_marginEnd="4dp">
+            android:layout_marginEnd="6dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/media_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_badge_pill"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingStart="7dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="7dp"
+                    android:paddingBottom="2dp"
+                    android:textColor="@color/md_on_primary_container"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    tools:text="MAIN VIDEO" />
+
+                <TextView
+                    android:id="@+id/media_secondary_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_badge_pill"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingStart="7dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="7dp"
+                    android:paddingBottom="2dp"
+                    android:textColor="@color/md_on_secondary_container"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:text="MULTI-QUALITY"
+                    tools:visibility="visible" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/media_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="14sp"
+                android:textSize="14.5sp"
                 android:textStyle="bold"
                 android:maxLines="2"
                 android:ellipsize="end"
-                tools:text="Video · Episode 01.mp4" />
+                tools:text="Episode_01_1080p.mp4" />
 
             <TextView
                 android:id="@+id/media_type"
@@ -61,41 +103,47 @@
                 android:textSize="12sp"
                 android:maxLines="2"
                 android:ellipsize="end"
-                tools:text="Site · 1080p · MP4 · 45 MB" />
+                tools:text="YouTube • 1080p • MP4 • 45 MB" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_analyze_media"
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="34dp"
                 android:layout_marginTop="6dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:text="Analyze media"
-                android:textSize="11sp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="Analyze Media"
+                android:textSize="11.5sp"
                 android:visibility="gone" />
         </LinearLayout>
 
         <ImageButton
             android:id="@+id/btn_play_media"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
             android:src="@drawable/ic_play_arrow"
-            android:tint="?attr/colorPrimary"
+            app:tint="?attr/colorPrimary"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Play in app"
+            android:padding="9dp"
+            android:scaleType="centerInside"
             android:layout_marginStart="2dp" />
 
         <ImageButton
             android:id="@+id/btn_media_info"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:src="@android:drawable/ic_dialog_info"
-            android:tint="?attr/colorOnSurfaceVariant"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/ic_info_outline"
+            app:tint="?attr/colorOnSurfaceVariant"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Media info"
+            android:padding="9dp"
+            android:scaleType="centerInside"
             android:layout_marginStart="2dp" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

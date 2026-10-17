@@ -5,43 +5,81 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/md_surface"
     android:paddingStart="16dp"
     android:paddingEnd="16dp"
-    android:paddingTop="8dp"
+    android:paddingTop="10dp"
     android:paddingBottom="12dp">
 
     <View
         android:layout_width="36dp"
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:layout_marginBottom="12dp"
         android:background="@drawable/bg_sheet_drag_handle" />
 
-    <TextView
-        android:id="@+id/mediaSheetTitle"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Detected media"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/mediaSheetSummary"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:text="Media found on this page"
-        android:textColor="?attr/colorOnSurfaceVariant"
-        android:textSize="13sp" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/mediaSheetTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/detected_media_title"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/mediaSheetSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Media found on this page"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOpenDownloadsFromSheet"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minHeight="38dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="@string/downloads"
+            android:textSize="12sp"
+            app:icon="@drawable/ic_folder_open"
+            app:iconPadding="6dp"
+            app:iconSize="16dp" />
+    </LinearLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="Search detected media"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        android:hint="@string/detected_media_search"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        app:boxCornerRadiusTopStart="14dp"
+        app:boxCornerRadiusTopEnd="14dp"
+        app:boxCornerRadiusBottomStart="14dp"
+        app:boxCornerRadiusBottomEnd="14dp"
+        app:startIconDrawable="@drawable/ic_search"
+        app:endIconMode="clear_text">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/mediaSearchInput"
@@ -51,7 +89,8 @@
             android:inputType="text"
             android:maxLines="1"
             android:paddingTop="10dp"
-            android:paddingBottom="10dp" />
+            android:paddingBottom="10dp"
+            android:textSize="14sp" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <HorizontalScrollView
@@ -78,7 +117,7 @@
                 android:layout_height="wrap_content"
                 android:checkable="true"
                 android:checked="true"
-                android:text="All" />
+                android:text="@string/media_filter_all" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/filterVideo"
@@ -86,7 +125,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checkable="true"
-                android:text="Video" />
+                android:text="@string/media_filter_video" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/filterAudio"
@@ -94,7 +133,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checkable="true"
-                android:text="Audio" />
+                android:text="@string/media_filter_audio" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/filterSubtitle"
@@ -102,7 +141,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checkable="true"
-                android:text="Subtitles" />
+                android:text="@string/media_filter_subtitles" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/filterOther"
@@ -110,7 +149,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checkable="true"
-                android:text="Other" />
+                android:text="@string/media_filter_other" />
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
@@ -134,8 +173,9 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:padding="24dp"
-            android:text="No media matches this filter"
+            android:text="@string/media_filter_empty"
             android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="14sp"
             android:visibility="gone" />
     </FrameLayout>
 
@@ -143,9 +183,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="Tap a media row to download • Use play for in-app playback • Long-press for more options"
+        android:gravity="center_horizontal"
+        android:text="@string/media_tap_hint"
         android:textColor="?attr/colorOnSurfaceVariant"
-        android:textSize="12sp" />
+        android:textSize="11.5sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -156,19 +197,22 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/analyzeSubtitlesButton"
-            style="@style/Widget.Material3.Button.TextButton"
+            style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="46dp"
+            android:layout_marginEnd="6dp"
             android:layout_weight="1"
-            android:text="Analyze subtitles" />
+            android:text="@string/analyze_subtitles" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/clearListButton"
-            style="@style/Widget.Material3.Button.TextButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:text="Clear list"
-            android:textColor="?attr/colorError" />
+            android:text="@string/clear_media_list"
+            android:textColor="?attr/colorError"
+            app:strokeColor="?attr/colorError" />
     </LinearLayout>
 </LinearLayout>

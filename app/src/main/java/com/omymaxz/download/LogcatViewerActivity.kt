@@ -5,11 +5,14 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
 import android.os.Process
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.widget.doAfterTextChanged
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,11 +22,16 @@ import java.io.InputStreamReader
 
 class LogcatViewerActivity : AppCompatActivity() {
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_logcat_viewer)
+
+        val toolbar = findViewById<Toolbar>(R.id.logcatToolbar)
+        if (toolbar != null) {
+            setSupportActionBar(toolbar)
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+            toolbar.setNavigationOnClickListener { finish() }
+        }
 
         val tvLogs = findViewById<TextView>(R.id.tvLogs)
         val etFilter = findViewById<EditText>(R.id.etFilter)
@@ -35,11 +43,15 @@ class LogcatViewerActivity : AppCompatActivity() {
             loadLogs(tvLogs, etFilter.text.toString())
         }
 
+        etFilter.doAfterTextChanged { editable ->
+            loadLogs(tvLogs, editable?.toString().orEmpty())
+        }
+
         btnClear.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
                 Runtime.getRuntime().exec("logcat -c")
                 withContext(Dispatchers.Main) {
-                    tvLogs.text = ""
+                    tvLogs.text = "Logs cleared."
                 }
             }
         }
@@ -54,6 +66,14 @@ class LogcatViewerActivity : AppCompatActivity() {
         loadLogs(tvLogs, "")
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            finish()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun loadLogs(tvLogs: TextView, filter: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val pid = Process.myPid().toString()
@@ -65,7 +85,7 @@ class LogcatViewerActivity : AppCompatActivity() {
             if (exportLogFile.exists()) {
                 logOutput.append("=== EXPORT LOGS ===\n")
                 val exportLines = exportLogFile.readLines()
-                val recentExportLines = exportLines.takeLast(1000) // Bound to 1000 lines
+                val recentExportLines = exportLines.takeLast(1000)
                 if (filter.isEmpty()) {
                     recentExportLines.forEach { logOutput.append(it).append("\n") }
                 } else {
@@ -78,8 +98,6 @@ class LogcatViewerActivity : AppCompatActivity() {
                 logOutput.append("\n=== SYSTEM LOGCAT ===\n")
             }
 
-            // We must bound the size of the logcat output because it can easily exceed the memory limits of a standard TextView.
-            // Using a deque to keep only the last ~2000 lines max.
             val maxLines = 2000
             val lineBuffer = java.util.ArrayDeque<String>()
 
@@ -97,7 +115,8 @@ class LogcatViewerActivity : AppCompatActivity() {
             lineBuffer.forEach { logOutput.append(it).append("\n") }
 
             withContext(Dispatchers.Main) {
-                tvLogs.text = logOutput.toString()
+                val result = logOutput.toString()
+                tvLogs.text = result.ifBlank { "No matching log entries found." }
             }
         }
     }

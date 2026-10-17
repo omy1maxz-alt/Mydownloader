@@ -1,15 +1,15 @@
 package com.omymaxz.download
 
-import android.app.Service
-import android.content.Intent
-import android.os.Environment
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.Service
+import android.content.Intent
 import android.os.Build
-import androidx.core.app.NotificationCompat
-import android.webkit.CookieManager
+import android.os.Environment
 import android.os.IBinder
 import android.util.Log
+import android.webkit.CookieManager
+import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,22 +29,49 @@ class ProgressiveAudioDownloadService : Service() {
         const val EXTRA_COOKIE = "extra_cookie"
         private const val TAG = "ProgressiveAudioDownloadService"
         const val NOTIFICATION_ID = 4001
+        private const val CHANNEL_ID = "progressive_audio_channel"
     }
 
-
-    private fun createNotification(title: String): android.app.Notification {
-        val channelId = "progressive_audio_channel"
+    private fun ensureChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Audio Downloads", NotificationManager.IMPORTANCE_LOW)
+            val channel = NotificationChannel(CHANNEL_ID, "Audio Downloads", NotificationManager.IMPORTANCE_LOW)
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(channel)
         }
-        return NotificationCompat.Builder(this, channelId)
+    }
+
+    private fun createNotification(
+        title: String,
+        statusText: String = title,
+        progress: Int = 0,
+        indeterminate: Boolean = true
+    ): android.app.Notification {
+        ensureChannel()
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Downloading Audio")
-            .setContentText(title)
+            .setContentText(statusText)
+            .setSubText(title)
             .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setProgress(100, progress, indeterminate)
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
             .build()
+    }
+
+    private fun notifyTerminalState(title: String, message: String, isSuccess: Boolean) {
+        ensureChannel()
+        val manager = getSystemService(NotificationManager::class.java)
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(if (isSuccess) "Audio Download Complete" else "Audio Download Failed")
+            .setContentText(message)
+            .setSubText(title)
+            .setSmallIcon(
+                if (isSuccess) android.R.drawable.stat_sys_download_done
+                else android.R.drawable.stat_notify_error
+            )
+            .setAutoCancel(true)
+            .build()
+        manager?.notify(NOTIFICATION_ID + 1, notification)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -61,14 +88,13 @@ class ProgressiveAudioDownloadService : Service() {
         val referer = intent.getStringExtra(EXTRA_REFERER)
         val cookie = intent.getStringExtra(EXTRA_COOKIE)
 
-        startForeground(NOTIFICATION_ID, createNotification(title))
+        startForeground(NOTIFICATION_ID, createNotification(title, "Starting download…", 0, true))
 
         val activeCookie = if (cookie.isNullOrEmpty()) {
             CookieManager.getInstance().getCookie(url) ?: ""
         } else {
             cookie
         }
-
 
         CoroutineScope(Dispatchers.IO).launch {
             downloadAudio(url, title, userAgent, referer, activeCookie)
@@ -80,6 +106,7 @@ class ProgressiveAudioDownloadService : Service() {
 
     private fun downloadAudio(urlStr: String, title: String, userAgent: String?, referer: String?, cookie: String?) {
         var tempFile: File? = null
+        val manager = getSystemService(NotificationManager::class.java)
         try {
             Log.d(TAG, "[AUDIO_DOWNLOAD] url=$urlStr")
             Log.d(TAG, "[AUDIO_DOWNLOAD] userAgentPresent=${userAgent != null} refererPresent=${referer != null} cookiePresent=${cookie != null}")
@@ -104,11 +131,13 @@ class ProgressiveAudioDownloadService : Service() {
 
             if (status != HttpURLConnection.HTTP_OK && status != HttpURLConnection.HTTP_PARTIAL) {
                 Log.e(TAG, "[AUDIO_VALIDATE] Invalid HTTP status: $status. Aborting.")
+                notifyTerminalState(title, "Server returned HTTP $status", false)
                 return
             }
 
             if (contentType.contains("text/html") || contentType.contains("application/json")) {
                 Log.e(TAG, "[AUDIO_VALIDATE] Invalid Content-Type: $contentType. Aborting.")
+                notifyTerminalState(title, "Invalid audio stream response ($contentType)", false)
                 return
             }
 
@@ -120,6 +149,7 @@ class ProgressiveAudioDownloadService : Service() {
             var bytesRead: Int
             var totalRead: Long = 0
             var firstBytes = ByteArray(0)
+            var lastReportedPct = -1
 
             while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                 if (totalRead == 0L && bytesRead >= 12) {
@@ -127,6 +157,13 @@ class ProgressiveAudioDownloadService : Service() {
                 }
                 outputStream.write(buffer, 0, bytesRead)
                 totalRead += bytesRead
+                if (contentLength > 0) {
+                    val pct = ((totalRead * 100L) / contentLength).toInt().coerceIn(0, 100)
+                    if (pct >= lastReportedPct + 5) {
+                        lastReportedPct = pct
+                        manager?.notify(NOTIFICATION_ID, createNotification(title, "Downloading: $pct%", pct, false))
+                    }
+                }
             }
 
             outputStream.flush()
@@ -155,13 +192,13 @@ class ProgressiveAudioDownloadService : Service() {
             if (!isValid) {
                 Log.e(TAG, "[AUDIO_VALIDATE] Invalid container signature for audio file. Aborting.")
                 tempFile.delete()
+                notifyTerminalState(title, "Stream failed audio container validation", false)
                 return
             }
 
             val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             var finalFile = File(downloadsDir, title)
 
-            // Auto-increment filename if it exists
             var counter = 1
             val baseName = title.substringBeforeLast('.')
             val ext = title.substringAfterLast('.')
@@ -174,10 +211,12 @@ class ProgressiveAudioDownloadService : Service() {
             tempFile.delete()
 
             Log.d(TAG, "[AUDIO_VALIDATE] final destination path=${finalFile.absolutePath} final file length=${finalFile.length()}")
+            notifyTerminalState(title, "Saved to Downloads/${finalFile.name}", true)
 
         } catch (e: Exception) {
             Log.e(TAG, "[AUDIO_DOWNLOAD] Exception during audio download: ${e.message}", e)
             tempFile?.delete()
+            notifyTerminalState(title, e.message ?: "Download failed", false)
         }
     }
 }

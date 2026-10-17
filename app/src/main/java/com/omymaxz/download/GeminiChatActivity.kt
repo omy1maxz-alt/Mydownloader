@@ -30,6 +30,7 @@ import io.noties.markwon.Markwon
 class GeminiChatActivity : AppCompatActivity() {
 
     private lateinit var chatRecyclerView: RecyclerView
+    private lateinit var chatEmptyState: View
     private lateinit var chatInputEditText: EditText
     private lateinit var sendButton: Button
     private lateinit var chatToolbar: Toolbar
@@ -45,11 +46,16 @@ class GeminiChatActivity : AppCompatActivity() {
 
         chatToolbar = findViewById(R.id.chatToolbar)
         setSupportActionBar(chatToolbar)
-        supportActionBar?.title = "Gemini AI"
+        supportActionBar?.title = "Gemini AI Assistant"
+        val ctxTitle = WebpageContextHolder.title
+        if (!ctxTitle.isNullOrBlank()) {
+            supportActionBar?.subtitle = ctxTitle
+        }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         chatToolbar.setNavigationOnClickListener { finish() }
 
         chatRecyclerView = findViewById(R.id.chatRecyclerView)
+        chatEmptyState = findViewById(R.id.chatEmptyState)
         chatInputEditText = findViewById(R.id.chatInputEditText)
         sendButton = findViewById(R.id.sendButton)
 
@@ -85,6 +91,7 @@ class GeminiChatActivity : AppCompatActivity() {
                 // Ignore parsing errors
             }
         }
+        updateEmptyState()
 
         if (apiKey.isEmpty()) {
             Toast.makeText(this, "Please configure Gemini API Key in Settings", Toast.LENGTH_LONG).show()
@@ -94,7 +101,6 @@ class GeminiChatActivity : AppCompatActivity() {
             var systemPrompt = "You are a helpful browser assistant. The user is browsing the web inside a custom Android browser app."
 
             val ctxUrl = WebpageContextHolder.url
-            val ctxTitle = WebpageContextHolder.title
             val ctxText = WebpageContextHolder.textContent
 
             if (!ctxUrl.isNullOrEmpty() || !ctxText.isNullOrEmpty()) {
@@ -119,8 +125,15 @@ class GeminiChatActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateEmptyState() {
+        val empty = messages.isEmpty()
+        chatEmptyState.visibility = if (empty) View.VISIBLE else View.GONE
+        chatRecyclerView.visibility = if (empty) View.GONE else View.VISIBLE
+    }
+
     private fun sendMessage(query: String) {
         messages.add(ChatMessage(query, isUser = true))
+        updateEmptyState()
         chatAdapter.notifyItemInserted(messages.size - 1)
         chatRecyclerView.scrollToPosition(messages.size - 1)
         chatInputEditText.text.clear()
@@ -130,7 +143,6 @@ class GeminiChatActivity : AppCompatActivity() {
             var actualQuery = query
             val lowerQuery = query.lowercase()
 
-            // Check if user is asking for logs
             if (lowerQuery.contains("log") || lowerQuery.contains("crash") || lowerQuery.contains("error")) {
                 try {
                     val process = Runtime.getRuntime().exec("logcat -d -t 300")
@@ -148,9 +160,6 @@ class GeminiChatActivity : AppCompatActivity() {
             var responseText = "Error: The model is overloaded or unavailable after multiple attempts."
             var success = false
 
-            // Build the conversational history from all preceding messages.
-            // Gemini strictly requires alternating user/model roles. If edits caused consecutive
-            // messages from the same role, we must merge their text.
             val rawHistory = messages.dropLast(1)
             val mergedHistory = mutableListOf<com.google.ai.client.generativeai.type.Content>()
             var currentRole = ""
@@ -198,26 +207,34 @@ class GeminiChatActivity : AppCompatActivity() {
 
             withContext(Dispatchers.Main) {
                 messages.add(ChatMessage(responseText, isUser = false))
+                updateEmptyState()
                 chatAdapter.notifyItemInserted(messages.size - 1)
                 chatRecyclerView.scrollToPosition(messages.size - 1)
                 saveChatHistory()
             }
         }
-
     }
+
     private fun editMessage(position: Int) {
         val message = messages[position]
+        val density = resources.displayMetrics.density
+        val pad = (16 * density).toInt()
         val input = EditText(this).apply {
             setText(message.text)
             selectAll()
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            setBackgroundResource(R.drawable.edit_text_custom)
+            setPadding(pad, pad, pad, pad)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
         }
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(50, 40, 50, 10)
+            setPadding((20 * density).toInt(), (16 * density).toInt(), (20 * density).toInt(), (8 * density).toInt())
             addView(input)
         }
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        androidx.appcompat.app.AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
             .setTitle("Edit & Restart From Here")
             .setView(layout)
             .setPositiveButton("Send") { _, _ ->
@@ -228,6 +245,7 @@ class GeminiChatActivity : AppCompatActivity() {
                         messages.removeAt(messages.size - 1)
                     }
                     chatAdapter.notifyItemRangeRemoved(position, removeCount)
+                    updateEmptyState()
                     saveChatHistory()
                     sendMessage(newText)
                 }
@@ -242,12 +260,13 @@ class GeminiChatActivity : AppCompatActivity() {
             messages.removeAt(messages.size - 1)
         }
         chatAdapter.notifyItemRangeRemoved(position, removeCount)
+        updateEmptyState()
         saveChatHistory()
         Toast.makeText(this, "Messages deleted.", Toast.LENGTH_SHORT).show()
     }
 
     private fun handleMessageLongClick(position: Int) {
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        androidx.appcompat.app.AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
             .setTitle("Chat Options")
             .setItems(arrayOf("Edit & Restart From Here", "Delete From Here")) { _, which ->
                 when (which) {
@@ -315,19 +334,18 @@ class ChatAdapter(
             holder.messageTextView.setTextColor(ContextCompat.getColor(context, R.color.chat_model_bubble_fg))
         }
 
-        // Show buttons immediately or when clicked
         holder.actionButtonsContainer.visibility = View.VISIBLE
 
         holder.btnEditMessage.setOnClickListener {
-            onMessageEdit(holder.adapterPosition)
+            onMessageEdit(holder.bindingAdapterPosition)
         }
 
         holder.btnDeleteMessage.setOnClickListener {
-            onMessageDelete(holder.adapterPosition)
+            onMessageDelete(holder.bindingAdapterPosition)
         }
 
         holder.messageContainer.setOnLongClickListener {
-            onMessageLongClick(holder.adapterPosition)
+            onMessageLongClick(holder.bindingAdapterPosition)
             true
         }
     }

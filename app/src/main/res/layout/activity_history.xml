@@ -5,20 +5,117 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/md_surface"
     tools:context=".HistoryActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:title="History"
-        app:titleTextColor="@android:color/white"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
+        android:background="@color/md_surface"
+        app:title="Browsing History"
+        app:titleTextColor="@color/md_on_surface" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/historyRecyclerView"
+    <View
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="1dp"
+        android:background="@color/md_outline_variant" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp"
+        android:orientation="vertical">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/history_search_hint"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            app:boxCornerRadiusTopStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusBottomEnd="14dp"
+            app:startIconDrawable="@drawable/ic_search"
+            app:endIconMode="clear_text">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/historySearchInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:textSize="14sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/historyRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="20dp" />
+
+        <LinearLayout
+            android:id="@+id/historyEmptyState"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="32dp"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_icon_container">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_history"
+                    app:tint="@color/md_on_surface_variant" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/historyEmptyTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/history_empty_title"
+                android:textColor="@color/md_on_surface"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/historyEmptySubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:maxWidth="280dp"
+                android:text="@string/history_empty_subtitle"
+                android:textColor="@color/md_on_surface_variant"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </FrameLayout>
 
 </LinearLayout>

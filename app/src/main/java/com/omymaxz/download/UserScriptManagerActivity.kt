@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -20,7 +21,6 @@ class UserScriptManagerActivity : AppCompatActivity() {
 
     private val addEditScriptLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            // No need to get data from the result, just reload the list
             loadScripts()
         }
     }
@@ -65,22 +65,30 @@ class UserScriptManagerActivity : AppCompatActivity() {
         binding.scriptsRecyclerView.adapter = adapter
     }
 
+    private fun updateEmptyState() {
+        val isEmpty = adapter.itemCount == 0
+        binding.scriptsEmptyState.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        binding.scriptsRecyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+    }
+
     private fun loadScripts() {
         lifecycleScope.launch {
             val scripts = db.userScriptDao().getAllScripts()
             adapter.updateScripts(scripts)
+            updateEmptyState()
         }
     }
 
     private fun showDeleteConfirmationDialog(script: UserScript, position: Int) {
-        AlertDialog.Builder(this)
-            .setTitle("Delete Script?")
+        AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
+            .setTitle("Delete Userscript?")
             .setMessage("Are you sure you want to delete '${script.name}'?")
             .setPositiveButton("Delete") { _, _ ->
                 lifecycleScope.launch {
                     db.userScriptDao().deleteById(script.id)
                     runOnUiThread {
                         adapter.removeScript(position)
+                        updateEmptyState()
                     }
                 }
             }

@@ -6,8 +6,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -18,6 +20,7 @@ class HistoryActivity : AppCompatActivity() {
     private lateinit var binding: ActivityHistoryBinding
     private lateinit var historyAdapter: HistoryAdapter
     private var historyList = mutableListOf<HistoryItem>()
+    private var currentQuery = ""
     private val gson = Gson()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,31 +33,68 @@ class HistoryActivity : AppCompatActivity() {
 
         loadHistory()
         setupRecyclerView()
+        setupSearch()
+        applyFilter()
     }
 
     private fun setupRecyclerView() {
         historyAdapter = HistoryAdapter(
-            historyItems = historyList,
+            historyItems = historyList.toMutableList(),
             onItemClick = { item ->
                 val resultIntent = Intent()
                 resultIntent.putExtra("URL_TO_LOAD", item.url)
                 setResult(Activity.RESULT_OK, resultIntent)
                 finish()
             },
-            onDeleteClick = { item, position ->
+            onDeleteClick = { item, _ ->
                 removeHistoryItem(item)
-                historyAdapter.removeItem(position)
+                applyFilter()
             }
         )
         binding.historyRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.historyRecyclerView.adapter = historyAdapter
     }
 
+    private fun setupSearch() {
+        binding.historySearchInput.doAfterTextChanged { editable ->
+            currentQuery = editable?.toString()?.trim().orEmpty()
+            applyFilter()
+        }
+    }
+
+    private fun applyFilter() {
+        val filtered = if (currentQuery.isBlank()) {
+            historyList
+        } else {
+            historyList.filter { item ->
+                item.title.contains(currentQuery, ignoreCase = true) ||
+                    item.url.contains(currentQuery, ignoreCase = true) ||
+                    item.hostname.contains(currentQuery, ignoreCase = true)
+            }
+        }
+        historyAdapter.updateData(filtered)
+
+        if (filtered.isEmpty()) {
+            binding.historyEmptyState.visibility = View.VISIBLE
+            binding.historyRecyclerView.visibility = View.GONE
+            if (historyList.isEmpty()) {
+                binding.historyEmptyTitle.setText(R.string.history_empty_title)
+                binding.historyEmptySubtitle.setText(R.string.history_empty_subtitle)
+            } else {
+                binding.historyEmptyTitle.text = "No matching history"
+                binding.historyEmptySubtitle.text = "Try a different keyword or URL filter."
+            }
+        } else {
+            binding.historyEmptyState.visibility = View.GONE
+            binding.historyRecyclerView.visibility = View.VISIBLE
+        }
+    }
+
     private fun loadHistory() {
         val sharedPrefs = getSharedPreferences("AppData", Context.MODE_PRIVATE)
         val historyJson = sharedPrefs.getString("HISTORY_V2", "[]")
         val type = object : TypeToken<MutableList<HistoryItem>>() {}.type
-        historyList = gson.fromJson(historyJson, type)
+        historyList = gson.fromJson(historyJson, type) ?: mutableListOf()
     }
     
     private fun saveHistory() {
@@ -69,13 +109,13 @@ class HistoryActivity : AppCompatActivity() {
     }
 
     private fun clearHistory() {
-        AlertDialog.Builder(this)
-            .setTitle("Clear History?")
-            .setMessage("Are you sure you want to delete all browsing history?")
-            .setPositiveButton("Clear") { _, _ ->
+        AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
+            .setTitle("Clear Browsing History?")
+            .setMessage("This will permanently remove all saved browsing history entries.")
+            .setPositiveButton("Clear All") { _, _ ->
                 historyList.clear()
                 saveHistory()
-                historyAdapter.updateData(historyList)
+                applyFilter()
             }
             .setNegativeButton("Cancel", null)
             .show()

@@ -1,55 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="12dp"
-    android:gravity="center_vertical"
-    android:background="?attr/selectableItemBackground">
-
-    <ImageView
-        android:id="@+id/favicon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:src="@drawable/ic_public" />
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="@color/md_surface_container_low"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/md_outline_variant"
+    app:strokeWidth="1dp">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp">
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:gravity="center_vertical"
+        android:background="?attr/selectableItemBackground">
 
-        <TextView
-            android:id="@+id/pageTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="Page Title"
-            android:textSize="16sp"
-            android:textColor="?android:attr/textColorPrimary"
-            android:maxLines="1"
-            android:ellipsize="end" />
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_icon_container">
 
-        <TextView
-            android:id="@+id/pageUrl"
-            android:layout_width="wrap_content"
+            <ImageView
+                android:id="@+id/favicon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_public"
+                app:tint="@color/md_on_surface_variant" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            tools:text="example.com"
-            android:textSize="14sp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp">
+
+            <TextView
+                android:id="@+id/pageTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:text="Page Title"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="14.5sp"
+                android:textStyle="bold"
+                android:textColor="@color/md_on_surface"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/pageUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                tools:text="example.com • Just now"
+                android:textSize="12.5sp"
+                android:textColor="@color/md_on_surface_variant"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/deleteButton"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/ic_close"
+            android:padding="9dp"
+            android:scaleType="centerInside"
+            android:contentDescription="Remove from history"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/md_on_surface_variant" />
+
     </LinearLayout>
-
-    <ImageButton
-        android:id="@+id/deleteButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_close"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        app:tint="?android:attr/textColorSecondary" />
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">My Downloader</string>
-    <string name="enter_url">Enter URL or search term</string>
+    <string name="enter_url">Search or enter website address</string>
     <string name="go">GO</string>
-    <string name="history">HISTORY</string>
+    <string name="history">History</string>
     <string name="download">Download</string>
+    <string name="downloads">Downloads</string>
     <string name="cancel">Cancel</string>
     <string name="close">Close</string>
     <string name="media_detected">Media files detected</string>
@@ -13,17 +14,17 @@
     <string name="player_bubble">Floating bubble</string>
     <string name="player_save_offline">Save offline</string>
     <string name="player_track_settings">Track selection settings</string>
-    <string name="detected_media_title">Detected media</string>
-    <string name="detected_media_search">Search detected media</string>
+    <string name="detected_media_title">Detected Media</string>
+    <string name="detected_media_search">Filter by title, format, quality, or language</string>
     <string name="media_filter_all">All</string>
     <string name="media_filter_video">Video</string>
     <string name="media_filter_audio">Audio</string>
     <string name="media_filter_subtitles">Subtitles</string>
     <string name="media_filter_other">Other</string>
     <string name="media_filter_empty">No media matches this filter</string>
-    <string name="media_tap_hint">Tap a media row to download • Use play for in-app playback • Long-press for more options</string>
-    <string name="analyze_subtitles">Analyze subtitles</string>
-    <string name="clear_media_list">Clear list</string>
+    <string name="media_tap_hint">Tap a row to download • Tap Play for in-app player • Long-press to open externally</string>
+    <string name="analyze_subtitles">Analyze Subtitles</string>
+    <string name="clear_media_list">Clear List</string>
     <string name="no_media_found">No media files detected</string>
     <string name="ad_blocked">Advertisement blocked</string>
     <string name="popup_blocked">Popup blocked</string>
@@ -31,25 +32,21 @@
     <string name="proxy_settings">Proxy Settings</string>
     <string name="exo_download_notification_channel_name">Download Notification</string>
 
-    <!-- Start page, navigation, and empty-state copy -->
+    <!-- Start page & empty state strings -->
     <string name="start_page_headline">Browse, detect, and save media</string>
     <string name="start_page_subhead">Enter a URL above or launch a saved site below</string>
     <string name="bookmarks_section_title">Saved Bookmarks</string>
-    <string name="add_link">+ Add Link</string>
+    <string name="bookmarks_add_action">+ Bookmark</string>
     <string name="bookmarks_empty_title">No bookmarks saved yet</string>
-    <string name="bookmarks_empty_subtitle">Open a site and choose Add Bookmark from the menu to save it here</string>
+    <string name="bookmarks_empty_subtitle">Open any site and choose Add Bookmark from the menu for quick access here.</string>
     <string name="history_search_hint">Search browsing history</string>
     <string name="history_empty_title">No browsing history</string>
-    <string name="history_empty_subtitle">Pages you visit will appear here so you can return to them anytime</string>
+    <string name="history_empty_subtitle">Pages you visit will appear here so you can return to them anytime.</string>
     <string name="scripts_empty_title">No userscripts installed</string>
-    <string name="scripts_empty_subtitle">Add custom JavaScript rules for specific websites</string>
-    <string name="downloads">Downloads</string>
+    <string name="scripts_empty_subtitle">Tap the + button below to add custom JavaScript rules for specific websites.</string>
     <string name="downloads_title">Downloads &amp; Exports</string>
     <string name="downloads_empty_title">No recent downloads</string>
-    <string name="downloads_empty_subtitle">Detected videos, audio tracks, and subtitles you download will appear here</string>
-    <string name="quick_action_history">History</string>
-    <string name="quick_action_scripts">Scripts</string>
-    <string name="quick_action_ai">Ask Gemini</string>
+    <string name="downloads_empty_subtitle">Detected videos, audio tracks, and subtitles you download will appear here.</string>
 
     <string-array name="userscript_run_at_options">
         <item>document-start (early)</item>
@@ -58,7 +55,7 @@
     </string-array>
 
     <!-- Gemini chat UI labels required by the Material chat layouts. -->
-    <string name="gemini_chat_hint">Ask Gemini something…</string>
+    <string name="gemini_chat_hint">Ask Gemini about this page or anything else…</string>
     <string name="send">Send</string>
     <string name="edit_message">Edit message</string>
     <string name="delete_message">Delete message</string>

@@ -2,20 +2,21 @@ package com.omymaxz.download
 
 import android.app.Service
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.LinearLayout
 import android.widget.Button
-import android.os.Handler
-import android.os.Looper
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import kotlin.math.abs
 
 class FloatingBubbleService : Service() {
@@ -27,12 +28,10 @@ class FloatingBubbleService : Service() {
     private var currentPosition: Long = 0L
     private var isExpanded = false
 
-    // For WebMedia Detector state updates
     private var isDetectorMode = false
     private val handler = Handler(Looper.getMainLooper())
     private var updateRunnable: Runnable? = null
 
-    // Global reference for MainActivity to talk to this service
     companion object {
         var instance: FloatingBubbleService? = null
         const val ACTION_START_DETECTOR = "com.omymaxz.download.action.START_DETECTOR"
@@ -96,18 +95,18 @@ class FloatingBubbleService : Service() {
         val verifiedPlayable = candidates.find { it.isActivePlayer && it.durationSec >= 60 }
         val bestCand = engine.getBestCandidate()
 
-        txtBadge?.text = "[ ${candidates.size} ]"
+        txtBadge?.text = candidates.size.toString()
 
         if (verifiedPlayable != null || bestCand != null) {
             val mainCand = verifiedPlayable ?: bestCand!!
-            txtStatus?.text = "● PLAYBACK VERIFIED"
-            txtStatus?.setTextColor(android.graphics.Color.GREEN)
+            txtStatus?.text = "● PLAYBACK READY"
+            txtStatus?.setTextColor(Color.parseColor("#66DDA0"))
 
             val typeStr = if (mainCand.isManifest) "HLS/DASH" else "Progressive"
-            val durStr = if (mainCand.durationSec > 0) "${mainCand.durationSec}s" else "Unknown"
+            val durStr = if (mainCand.durationSec > 0) "${mainCand.durationSec}s" else "Auto"
             val scoreStr = mainCand.finalScore
 
-            txtDetails?.text = "$typeStr \nDur: $durStr \nScore: $scoreStr \nConf: ${mainCand.confidence}\nStreams: ${candidates.size}"
+            txtDetails?.text = "$typeStr • $durStr\nConfidence: ${mainCand.confidence} ($scoreStr)\nDetected streams: ${candidates.size}"
 
             btnOpenPlayer?.visibility = View.VISIBLE
             btnOpenPlayer?.setOnClickListener {
@@ -119,9 +118,9 @@ class FloatingBubbleService : Service() {
                 startActivity(launchIntent)
             }
         } else {
-            txtStatus?.text = "● NO VERIFIED MEDIA"
-            txtStatus?.setTextColor(android.graphics.Color.YELLOW)
-            txtDetails?.text = "Streams: ${candidates.size}"
+            txtStatus?.text = "● SCANNING PAGE"
+            txtStatus?.setTextColor(Color.parseColor("#FFB951"))
+            txtDetails?.text = "Streams found: ${candidates.size}"
             btnOpenPlayer?.visibility = View.GONE
         }
     }

@@ -432,7 +432,7 @@ object HlsDownloadHelper {
                 if (videoChoiceCount > 1) {
                     android.os.Handler(android.os.Looper.getMainLooper()).post {
                         val labels = uniqueChoices.map { it.first }.toTypedArray()
-                        androidx.appcompat.app.AlertDialog.Builder(context)
+                        androidx.appcompat.app.AlertDialog.Builder(context, R.style.CustomAlertDialogTheme)
                             .setTitle("Choose video quality")
                             .setMessage("Audio will be selected automatically.")
                             .setItems(labels) { _, which ->

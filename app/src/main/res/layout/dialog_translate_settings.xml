@@ -3,27 +3,41 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="12dp">
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switch_auto_translate"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
+        android:fontFamily="sans-serif-medium"
         android:text="Auto-Translate Pages"
-        android:textSize="16sp"
-        android:paddingBottom="16dp"/>
+        android:textColor="@color/md_on_surface"
+        android:textSize="15sp" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="6dp"
+        android:fontFamily="sans-serif-medium"
         android:text="Target Language"
-        android:textSize="14sp"
-        android:textColor="@android:color/darker_gray"
-        android:paddingBottom="8dp"/>
+        android:textSize="13.5sp"
+        android:textColor="@color/md_on_surface_variant" />
 
-    <Spinner
-        android:id="@+id/language_spinner"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="48dp"
+        android:background="@drawable/edit_text_custom"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <Spinner
+            android:id="@+id/language_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
 
 </LinearLayout>

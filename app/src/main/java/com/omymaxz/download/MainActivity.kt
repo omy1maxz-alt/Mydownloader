@@ -102,9 +102,6 @@ class MainActivity : AppCompatActivity() {
     private val subtitleAnalysisInFlight = Collections.synchronizedSet(mutableSetOf<String>())
     private var lastUsedName: String = "Video"
     var lastUsedUrl: String? = null
-    // Protect the submitted destination from stale WebView callbacks that still report the old page.
-    private var pendingOmniboxNavigationUrl: String? = null
-    private var pendingOmniboxNavigationAtMs: Long = 0L
     var cachedUserAgent: String? = null
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
@@ -887,76 +884,91 @@ class MainActivity : AppCompatActivity() {
 
     private fun isCustomGlossyThemeActive(): Boolean {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-        val enabled = prefs.getBoolean("use_custom_glossy_theme", false)
+        val useCustom = prefs.getBoolean("use_custom_glossy_theme", false)
         val hexColor = prefs.getString("glossy_theme_color", "SYSTEM_M3") ?: "SYSTEM_M3"
-        return enabled && hexColor != "SYSTEM_M3" && hexColor != "#A0000000"
+        return useCustom && hexColor != "SYSTEM_M3" && hexColor != "#A0000000"
     }
 
     private fun resolveSurfaceAndContentColors(forceOpaque: Boolean = true): Pair<Int, Int> {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val hexColor = prefs.getString("glossy_theme_color", "SYSTEM_M3") ?: "SYSTEM_M3"
         if (!isCustomGlossyThemeActive()) {
-            return androidx.core.content.ContextCompat.getColor(this, R.color.md_surface_container_high) to
-                androidx.core.content.ContextCompat.getColor(this, R.color.md_on_surface)
+            val surfaceColor = ContextCompat.getColor(this, R.color.md_surface_container_high)
+            val onSurfaceColor = ContextCompat.getColor(this, R.color.md_on_surface)
+            return surfaceColor to onSurfaceColor
         }
-        val parsedColor = try {
+        val baseColor = try {
             android.graphics.Color.parseColor(hexColor)
         } catch (e: Exception) {
-            androidx.core.content.ContextCompat.getColor(this, R.color.md_surface_container_high)
+            ContextCompat.getColor(this, R.color.md_surface_container_high)
         }
-        val background = if (forceOpaque) {
-            android.graphics.Color.rgb(android.graphics.Color.red(parsedColor), android.graphics.Color.green(parsedColor), android.graphics.Color.blue(parsedColor))
-        } else parsedColor
-        val luminanceColor = android.graphics.Color.rgb(
-            android.graphics.Color.red(background),
-            android.graphics.Color.green(background),
-            android.graphics.Color.blue(background)
-        )
-        val foreground = if (androidx.core.graphics.ColorUtils.calculateLuminance(luminanceColor) > 0.5) {
-            android.graphics.Color.parseColor("#171D1B")
+        val finalBg = if (forceOpaque) {
+            android.graphics.Color.rgb(
+                android.graphics.Color.red(baseColor),
+                android.graphics.Color.green(baseColor),
+                android.graphics.Color.blue(baseColor)
+            )
         } else {
-            android.graphics.Color.parseColor("#DFE4E2")
+            baseColor
         }
-        return background to foreground
+        val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(
+            android.graphics.Color.rgb(
+                android.graphics.Color.red(finalBg),
+                android.graphics.Color.green(finalBg),
+                android.graphics.Color.blue(finalBg)
+            )
+        )
+        val fgColor = if (luminance > 0.5) android.graphics.Color.parseColor("#171D1B") else android.graphics.Color.parseColor("#DFE4E2")
+        return finalBg to fgColor
     }
 
     private fun applyGlossyTheme() {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val hexColor = prefs.getString("glossy_theme_color", "SYSTEM_M3") ?: "SYSTEM_M3"
+
         try {
             val toolbarColor: Int
             val statusColor: Int
             val iconColor: Int
+
             if (!isCustomGlossyThemeActive()) {
-                toolbarColor = androidx.core.content.ContextCompat.getColor(this, R.color.md_surface)
+                toolbarColor = ContextCompat.getColor(this, R.color.md_surface)
                 statusColor = toolbarColor
-                iconColor = androidx.core.content.ContextCompat.getColor(this, R.color.md_on_surface)
+                iconColor = ContextCompat.getColor(this, R.color.md_on_surface)
             } else {
-                val parsedColor = android.graphics.Color.parseColor(hexColor)
-                toolbarColor = parsedColor
-                statusColor = android.graphics.Color.rgb(android.graphics.Color.red(parsedColor), android.graphics.Color.green(parsedColor), android.graphics.Color.blue(parsedColor))
-                iconColor = if (androidx.core.graphics.ColorUtils.calculateLuminance(statusColor) > 0.5) {
-                    android.graphics.Color.parseColor("#171D1B")
-                } else android.graphics.Color.WHITE
+                val parsed = android.graphics.Color.parseColor(hexColor)
+                toolbarColor = parsed
+                statusColor = android.graphics.Color.rgb(
+                    android.graphics.Color.red(parsed),
+                    android.graphics.Color.green(parsed),
+                    android.graphics.Color.blue(parsed)
+                )
+                val lum = androidx.core.graphics.ColorUtils.calculateLuminance(statusColor)
+                iconColor = if (lum > 0.5) android.graphics.Color.parseColor("#171D1B") else android.graphics.Color.WHITE
             }
-            binding.appBarContainer.setBackgroundColor(toolbarColor)
+
             binding.toolbar.setBackgroundColor(toolbarColor)
             binding.homeButton.setColorFilter(iconColor)
-            binding.overflowMenuButton.setColorFilter(iconColor)
             binding.backButton.setColorFilter(iconColor)
             binding.forwardButton.setColorFilter(iconColor)
-            binding.translateButton.setColorFilter(iconColor)
             binding.aiButton.setColorFilter(iconColor)
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            if (isAutoTranslateEnabled) {
+                binding.translateButton.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
+            } else {
+                binding.translateButton.setColorFilter(iconColor)
+            }
+            binding.overflowMenuButton.setColorFilter(iconColor)
+            binding.tabCount.setTextColor(iconColor)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
                 window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
                 window.statusBarColor = statusColor
-                window.navigationBarColor = androidx.core.content.ContextCompat.getColor(this, R.color.md_surface)
-                androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars =
-                    androidx.core.graphics.ColorUtils.calculateLuminance(statusColor) > 0.5
+                val isLightBar = androidx.core.graphics.ColorUtils.calculateLuminance(statusColor) > 0.5
+                androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = isLightBar
             }
         } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Invalid theme color: $hexColor", e)
+            android.util.Log.e("MainActivity", "Invalid hex color: $hexColor")
         }
     }
 
@@ -965,25 +977,12 @@ class MainActivity : AppCompatActivity() {
         binding.backButton.setOnClickListener { navigateBack() }
         binding.forwardButton.setOnClickListener { navigateForward() }
         binding.aiButton.setOnClickListener { openGeminiForCurrentPage() }
-        binding.refreshButton.setOnClickListener {
-            val enteredText = binding.urlEditTextToolbar.text.toString().trim()
-            val currentUrl = webView.url.orEmpty()
-            // When the omnibox is being edited, its trailing action submits a pasted/typed
-            // destination instead of silently reloading the page that was open before.
-            if (enteredText.isNotEmpty() &&
-                !enteredText.equals(currentUrl, ignoreCase = true)
-            ) {
-                loadUrlFromEditTextToolbar()
-            } else {
-                webView.reload()
-            }
-        }
+        binding.refreshButton.setOnClickListener { webView.reload() }
         binding.translateButton.setOnClickListener { toggleAutoTranslate() }
         binding.translateButton.setOnLongClickListener {
             showTranslateSettingsDialog()
             true
         }
-        updateToolbarNavButtonState()
     }
 
     private fun navigateBack() {
@@ -1079,9 +1078,12 @@ class MainActivity : AppCompatActivity() {
         val selectTabButton = dialogView.findViewById<android.widget.Button>(R.id.selectTabButton)
         val cancelSelectionButton = dialogView.findViewById<android.widget.Button>(R.id.cancelSelectionButton)
         val deleteSelectedButton = dialogView.findViewById<android.widget.Button>(R.id.deleteSelectedButton)
+        val tabsSubtitle = dialogView.findViewById<android.widget.TextView>(R.id.tabsDialogSubtitle)
+        val closeDialogBtn = dialogView.findViewById<android.widget.ImageButton>(R.id.closeTabsDialogButton)
 
-        // Force opaque theme directly on the view to guarantee no transparency
-        val prefs = getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
+        tabsSubtitle?.text = "${tabs.size} active ${if (tabs.size == 1) "tab" else "tabs"}"
+        closeDialogBtn?.setOnClickListener { tabsDialog?.dismiss() }
+
         val (opaqueColor, _) = resolveSurfaceAndContentColors(forceOpaque = true)
         val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
             setColor(opaqueColor)
@@ -1344,11 +1346,10 @@ class MainActivity : AppCompatActivity() {
             layoutManager = GridLayoutManager(this@MainActivity, 4)
             adapter = bookmarkAdapter
         }
-        // Phase 2 will replace this temporary destination with a dedicated download manager.
-        binding.quickActionDownloads.setOnClickListener { showExportLogsDialog() }
+        binding.quickActionDownloads.setOnClickListener { showDownloadsManagerDialog() }
         binding.quickActionHistory.setOnClickListener { showHistory() }
         binding.quickActionScripts.setOnClickListener {
-            startActivity(Intent(this@MainActivity, UserScriptManagerActivity::class.java))
+            startActivity(Intent(this, UserScriptManagerActivity::class.java))
         }
         binding.quickActionAi.setOnClickListener { openGeminiForCurrentPage() }
         binding.btnAddManualLinkHome.setOnClickListener { showManualAddLinkDialog() }
@@ -1388,23 +1389,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUrlBarInToolbar() {
-        binding.urlEditTextToolbar.setOnEditorActionListener { _, actionId, event ->
-            val isKnownImeSubmitAction = actionId == EditorInfo.IME_ACTION_GO ||
-                actionId == EditorInfo.IME_ACTION_DONE ||
-                actionId == EditorInfo.IME_ACTION_SEARCH
-            // Some IMEs report actionId=0 with no KeyEvent for their Go action.
-            // A physical Enter key must be handled on ACTION_UP only, not on key-down.
-            val isUnspecifiedImeSubmit = actionId == EditorInfo.IME_ACTION_UNSPECIFIED && event == null
-            val isEnterKeyUp = event?.let {
-                it.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
-                    it.action == android.view.KeyEvent.ACTION_UP
-            } == true
-            if (isKnownImeSubmitAction || isUnspecifiedImeSubmit || isEnterKeyUp) {
-                val submittedText = binding.urlEditTextToolbar.text?.toString().orEmpty()
-                if (submittedText.isNotBlank()) {
-                    android.util.Log.d("MainActivity", "Omnibox submit received (action=$actionId)")
-                    loadUrlFromEditTextToolbar(submittedText)
-                }
+        binding.urlEditTextToolbar.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_GO) {
+                loadUrlFromEditTextToolbar()
                 true
             } else {
                 false
@@ -1416,9 +1403,23 @@ class MainActivity : AppCompatActivity() {
                     binding.urlEditTextToolbar.selectAll()
                 }
 
-                // Keep every browser action on the single toolbar row while editing.
+                // Modern UI: Hide other buttons to stretch the URL bar
+                binding.homeButton.visibility = View.GONE
+                binding.backButton.visibility = View.GONE
+                binding.forwardButton.visibility = View.GONE
+                binding.refreshButton.visibility = View.GONE
+                binding.translateButton.visibility = View.GONE
+                binding.aiButton.visibility = View.GONE
+                binding.tabButton.visibility = View.GONE
             } else {
-                updateToolbarNavButtonState()
+                // Restore all toolbar buttons including Prev, Next, Translate, and AI when focus is lost
+                binding.homeButton.visibility = View.VISIBLE
+                binding.backButton.visibility = View.VISIBLE
+                binding.forwardButton.visibility = View.VISIBLE
+                binding.refreshButton.visibility = View.VISIBLE
+                binding.translateButton.visibility = View.VISIBLE
+                binding.aiButton.visibility = View.VISIBLE
+                binding.tabButton.visibility = View.VISIBLE
             }
         }
 
@@ -1433,17 +1434,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadUrlFromEditTextToolbar(submittedText: String? = null) {
-        var url = (submittedText ?: binding.urlEditTextToolbar.text.toString()).trim()
+    private fun loadUrlFromEditTextToolbar() {
+        var url = binding.urlEditTextToolbar.text.toString().trim()
         if (url.isEmpty()) return
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "https://www.google.com/search?q=$url"
         }
-        // Record the requested destination before loading; callbacks for the old page
-        // must not replace the address field during this navigation handoff.
-        pendingOmniboxNavigationUrl = url
-        pendingOmniboxNavigationAtMs = android.os.SystemClock.uptimeMillis()
-        binding.urlEditTextToolbar.setText(url)
         webView.loadUrl(url)
         showWebView()
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -1659,23 +1655,7 @@ class MainActivity : AppCompatActivity() {
                     isPageLoading = true
 
                     binding.progressBar.visibility = View.VISIBLE
-                    val pendingOmniboxUrl = pendingOmniboxNavigationUrl
-                    val pendingAgeMs = android.os.SystemClock.uptimeMillis() - pendingOmniboxNavigationAtMs
-                    val pendingOmniboxIsFresh = pendingOmniboxUrl != null &&
-                        pendingAgeMs in 0..10_000L
-                    when {
-                        // Never replace text while the user is actively editing the address bar.
-                        binding.urlEditTextToolbar.hasFocus() -> Unit
-                        // A callback for the previous page can arrive after submission but before
-                        // WebView starts the requested destination. Keep the submitted URL intact.
-                        pendingOmniboxIsFresh && url != pendingOmniboxUrl -> {
-                            android.util.Log.d("MainActivity", "Ignoring stale address-bar callback during navigation")
-                        }
-                        else -> {
-                            binding.urlEditTextToolbar.setText(url)
-                            pendingOmniboxNavigationUrl = null
-                        }
-                    }
+                    binding.urlEditTextToolbar.setText(url)
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
@@ -2282,7 +2262,6 @@ class MainActivity : AppCompatActivity() {
                         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ newWebView.destroy() }, 500)
                     }
 
-                    // Resolve popup colors without parsing the SYSTEM_M3 sentinel as a hex value.
                     val (parsedColor, textColor) = resolveSurfaceAndContentColors(forceOpaque = true)
 
                     val shapeDrawable = android.graphics.drawable.GradientDrawable().apply {
@@ -4392,11 +4371,6 @@ inner class YouTubeInterface(private val activity: MainActivity) {
         createThemedDialogBuilder(this)
             .setTitle("Media Info")
             .setMessage(infoText.toString())
-            .setNeutralButton("Copy URL") { _, _ ->
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Media URL", mediaFile.url))
-                Toast.makeText(this, "Media URL copied", Toast.LENGTH_SHORT).show()
-            }
             .setPositiveButton("Close", null)
             .show()
     }
@@ -4544,6 +4518,11 @@ private fun showMediaListDialog() {
             sheetDismissed = true
             if (refreshDetectedMediaSheet === refreshThisSheet) refreshDetectedMediaSheet = null
             if (currentMediaListAdapter === sheetAdapter) currentMediaListAdapter = null
+        }
+
+        dialogBinding.btnOpenDownloadsFromSheet.setOnClickListener {
+            dialog.dismiss()
+            showDownloadsManagerDialog()
         }
 
         dialogBinding.clearListButton.setOnClickListener {
@@ -5025,14 +5004,28 @@ private fun showMediaListDialog() {
     }
 
 private fun showRenameDialog(mediaFile: MediaFile) {
+        val density = resources.displayMetrics.density
+        val pad = (14 * density).toInt()
         val input = EditText(this).apply {
             setText(mediaFile.title.substringBeforeLast('.'))
             selectAll()
+            setBackgroundResource(R.drawable.edit_text_custom)
+            setPadding(pad, pad, pad, pad)
+        }
+        val inputContainer = FrameLayout(this).apply {
+            setPadding((20 * density).toInt(), (10 * density).toInt(), (20 * density).toInt(), (4 * density).toInt())
+            addView(input)
+        }
+        val ext = mediaFile.title.substringAfterLast('.', "")
+        val metaLine = buildString {
+            append("Quality: ${mediaFile.quality}")
+            if (ext.isNotEmpty()) append(" • Format: .${ext.lowercase()}")
+            if (mediaFile.fileSize != "Unknown") append(" • Size: ${mediaFile.fileSize}")
         }
         val builder = createThemedDialogBuilder(this)
-            .setTitle("Download File")
-            .setMessage("Quality: ${mediaFile.quality}")
-            .setView(input)
+            .setTitle("Download Media")
+            .setMessage(metaLine)
+            .setView(inputContainer)
             .setPositiveButton("Download") { _, _ ->
                 val newName = input.text.toString().trim()
                 val finalName = if (newName.isNotEmpty()) "$newName.${mediaFile.title.substringAfterLast('.')}" else mediaFile.title
@@ -5500,10 +5493,23 @@ private fun showRenameDialog(mediaFile: MediaFile) {
     }
 
     private fun showCustomOverflowMenu(anchor: View) {
-        val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val (bgColor, textColor) = resolveSurfaceAndContentColors(forceOpaque = true)
         val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
-        val mutedColor = if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
+        val mutedColor = if (!isCustomGlossyThemeActive()) {
+            ContextCompat.getColor(this, R.color.md_on_surface_variant)
+        } else {
+            if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
+        }
+        val tileBgColor = if (!isCustomGlossyThemeActive()) {
+            ContextCompat.getColor(this, R.color.md_surface_container)
+        } else {
+            if (luminance > 0.5) 0x12000000 else 0x1AFFFFFF
+        }
+        val accentIconColor = if (!isCustomGlossyThemeActive()) {
+            ContextCompat.getColor(this, R.color.colorPrimary)
+        } else {
+            textColor
+        }
         val density = resources.displayMetrics.density
 
         fun dp(value: Int): Int = (value * density).toInt()
@@ -5515,45 +5521,50 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         val noticeOn = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
 
         val categories = listOf(
-            MenuCategory("Browser", android.R.drawable.ic_menu_view, listOf(
-                MenuAction("History", R.drawable.ic_public) { showHistory() },
-                MenuAction("Add Bookmark", R.drawable.ic_add) { addCurrentPageToBookmarks() },
-                MenuAction("Add Link", R.drawable.ic_download) { showManualAddLinkDialog() },
-                MenuAction("Open in External Browser", R.drawable.ic_public) { openCurrentPageInExternalBrowser() }
+            MenuCategory("Browser & Navigation", R.drawable.ic_public, listOf(
+                MenuAction("Back", R.drawable.ic_arrow_back) { navigateBack() },
+                MenuAction("Forward", R.drawable.ic_arrow_forward) { navigateForward() },
+                MenuAction("History", R.drawable.ic_history) { showHistory() },
+                MenuAction("Add Bookmark", R.drawable.ic_bookmark_border) { addCurrentPageToBookmarks() },
+                MenuAction("Add Link", R.drawable.ic_add) { showManualAddLinkDialog() },
+                MenuAction("External Browser", R.drawable.ic_public) { openCurrentPageInExternalBrowser() },
+                MenuAction("Downloads", R.drawable.ic_folder_open) { showDownloadsManagerDialog() }
             )),
-            MenuCategory("Tools", R.drawable.ic_translate, listOf(
-                MenuAction("User Scripts", R.drawable.ic_translate) { startActivity(Intent(this, UserScriptManagerActivity::class.java)) },
-                MenuAction("Urban VPN", R.drawable.ic_public) { showUrbanVpnDialog() },
+            MenuCategory("Smart Tools & Network", R.drawable.ic_translate, listOf(
+                MenuAction(if (isAutoTranslateEnabled) "Auto-Translate: On" else "Auto-Translate: Off", R.drawable.ic_translate) { toggleAutoTranslate() },
+                MenuAction("Ask Gemini AI", R.drawable.ic_ai_sparkle) { openGeminiForCurrentPage() },
+                MenuAction("User Scripts", R.drawable.ic_code) { startActivity(Intent(this, UserScriptManagerActivity::class.java)) },
+                MenuAction("Urban VPN", R.drawable.ic_shield) { showUrbanVpnDialog() },
                 MenuAction(getString(R.string.proxy_settings), R.drawable.ic_public) { showProxySettingsDialog() },
-                MenuAction("Block Ads / Traps on This Page", R.drawable.ic_close) { nukeAdsAndTraps() },
+                MenuAction("Block Ads / Traps", R.drawable.ic_shield) { nukeAdsAndTraps() },
                 MenuAction(
-                    if (getSharedPreferences("Settings", Context.MODE_PRIVATE).getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) "YouTube Quick Refresh: On" else "YouTube Quick Refresh: Off",
-                    android.R.drawable.ic_popup_sync
+                    if (getSharedPreferences("Settings", Context.MODE_PRIVATE).getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)) "YT Quick Refresh: On" else "YT Quick Refresh: Off",
+                    R.drawable.ic_refresh
                 ) { toggleYouTubeQuickRefresh() }
             )),
-            MenuCategory("Media & Appearance", R.drawable.ic_play_arrow, listOf(
-                MenuAction("Media Detection Settings", R.drawable.ic_play_arrow) { showMediaDetectionSettingsDialog() },
-                MenuAction("Floating Detector Settings", R.drawable.ic_play_arrow) { showFloatingDetectorSettingsDialog() },
-                MenuAction("Theme Color", android.R.drawable.ic_menu_gallery) { showThemeColorPickerDialog() },
-                MenuAction(if (noticeOn) "Popup Notices: On" else "Popup Notices: Off", android.R.drawable.ic_dialog_alert) {
+            MenuCategory("Media & Appearance", R.drawable.ic_video_file, listOf(
+                MenuAction("Media Detection", R.drawable.ic_video_file) { showMediaDetectionSettingsDialog() },
+                MenuAction("Floating Detector", R.drawable.ic_floating_bubble) { showFloatingDetectorSettingsDialog() },
+                MenuAction("Theme & Appearance", R.drawable.ic_tune) { showThemeColorPickerDialog() },
+                MenuAction(if (noticeOn) "Popup Notices: On" else "Popup Notices: Off", R.drawable.ic_shield) {
                     val current = settingsPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
                     settingsPrefs.edit().putBoolean("SHOW_POPUP_BLOCKED_NOTICE", !current).apply()
                     Toast.makeText(this, "Popup block notices " + if (!current) "enabled" else "disabled", Toast.LENGTH_SHORT).show()
                 }
             )),
-            MenuCategory("Developer", android.R.drawable.ic_menu_info_details, listOf(
-                MenuAction("API Network Sniffer", R.drawable.ic_public) { launchApiSniffer() },
-                MenuAction("Debug Site", android.R.drawable.ic_menu_info_details) { showSiteDebuggingOptions() },
-                MenuAction("Debug Page", android.R.drawable.ic_menu_search) { showPageSource() }
+            MenuCategory("Developer & Diagnostics", R.drawable.ic_code, listOf(
+                MenuAction("API Sniffer", R.drawable.ic_search) { launchApiSniffer() },
+                MenuAction("Debug Site", R.drawable.ic_info_outline) { showSiteDebuggingOptions() },
+                MenuAction("Page Source", R.drawable.ic_code) { showPageSource() },
+                MenuAction("Logcat Viewer", R.drawable.ic_info_outline) { startActivity(Intent(this, LogcatViewerActivity::class.java)) }
             ))
         )
 
-        // Edge-inspired quick actions: the most-used destinations are visible immediately.
         val quickActions = listOf(
-            MenuAction("History", R.drawable.ic_public) { showHistory() },
-            MenuAction("Add Bookmark", R.drawable.ic_add) { addCurrentPageToBookmarks() },
             MenuAction("Detected Media", R.drawable.ic_download) { showMediaListDialog() },
-            MenuAction("Settings", android.R.drawable.ic_menu_manage) { showMasterSettingsDialog() }
+            MenuAction("Downloads", R.drawable.ic_folder_open) { showDownloadsManagerDialog() },
+            MenuAction("History", R.drawable.ic_history) { showHistory() },
+            MenuAction("Settings", R.drawable.ic_settings) { showMasterSettingsDialog() }
         )
         val quickActionTitles = quickActions.map { it.title }.toSet()
         val menuDialog = com.google.android.material.bottomsheet.BottomSheetDialog(
@@ -5563,24 +5574,17 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(12), dp(16), dp(8))
+            setPadding(dp(16), dp(10), dp(16), dp(12))
             background = android.graphics.drawable.GradientDrawable().apply {
                 setColor(bgColor)
-                cornerRadii = floatArrayOf(18f, 18f, 18f, 18f, 0f, 0f, 0f, 0f)
+                cornerRadii = floatArrayOf(28f, 28f, 28f, 28f, 0f, 0f, 0f, 0f)
                     .map { it * density }.toFloatArray()
             }
         }
 
-        val title = TextView(this).apply {
-            text = "Menu"
-            textSize = 18f
-            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
-            setTextColor(textColor)
-            setPadding(dp(4), dp(4), dp(4), dp(10))
-        }
         val dragHandle = View(this).apply {
             background = android.graphics.drawable.GradientDrawable().apply {
-                setColor(if (luminance > 0.5) 0x55000000 else 0x66FFFFFF)
+                setColor(if (luminance > 0.5) 0x44000000 else 0x55FFFFFF)
                 cornerRadius = dp(2).toFloat()
             }
             contentDescription = "Drag to resize or dismiss"
@@ -5589,6 +5593,14 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             gravity = android.view.Gravity.CENTER_HORIZONTAL
             bottomMargin = dp(10)
         })
+
+        val title = TextView(this).apply {
+            text = "Browser Menu"
+            textSize = 19f
+            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+            setTextColor(textColor)
+            setPadding(dp(4), dp(2), dp(4), dp(8))
+        }
         root.addView(title, LinearLayout.LayoutParams(-1, -2))
 
         val body = LinearLayout(this).apply {
@@ -5599,32 +5611,32 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             return LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = android.view.Gravity.CENTER
-                minimumHeight = dp(92)
-                setPadding(dp(4), dp(8), dp(4), dp(6))
+                minimumHeight = dp(86)
+                setPadding(dp(6), dp(10), dp(6), dp(8))
                 isClickable = true
                 isFocusable = true
-                background = androidx.appcompat.content.res.AppCompatResources.getDrawable(
-                    this@MainActivity,
-                    android.R.drawable.list_selector_background
-                )
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(tileBgColor)
+                    cornerRadius = dp(14).toFloat()
+                }
 
                 val icon = android.widget.ImageView(this@MainActivity).apply {
                     setImageResource(action.iconRes)
-                    setColorFilter(textColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                    setColorFilter(accentIconColor, android.graphics.PorterDuff.Mode.SRC_IN)
                     contentDescription = action.title
                     scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
                 }
-                addView(icon, LinearLayout.LayoutParams(dp(28), dp(28)).apply {
-                    bottomMargin = dp(7)
+                addView(icon, LinearLayout.LayoutParams(dp(24), dp(24)).apply {
+                    bottomMargin = dp(6)
                 })
 
                 val label = TextView(this@MainActivity).apply {
                     text = action.title
-                    textSize = 12.5f
+                    textSize = 11.5f
                     setTextColor(textColor)
                     typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
                     gravity = android.view.Gravity.CENTER
-                    maxLines = 3
+                    maxLines = 2
                     ellipsize = android.text.TextUtils.TruncateAt.END
                 }
                 addView(label, LinearLayout.LayoutParams(-1, -2))
@@ -5642,10 +5654,17 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                     gravity = android.view.Gravity.TOP
                 }
                 group.forEach { action ->
-                    row.addView(makeTile(action), LinearLayout.LayoutParams(0, dp(98), 1f))
+                    row.addView(makeTile(action), LinearLayout.LayoutParams(0, dp(90), 1f).apply {
+                        marginStart = dp(3)
+                        marginEnd = dp(3)
+                        bottomMargin = dp(6)
+                    })
                 }
                 repeat(4 - group.size) {
-                    row.addView(View(this), LinearLayout.LayoutParams(0, dp(98), 1f))
+                    row.addView(View(this), LinearLayout.LayoutParams(0, dp(90), 1f).apply {
+                        marginStart = dp(3)
+                        marginEnd = dp(3)
+                    })
                 }
                 body.addView(row, LinearLayout.LayoutParams(-1, -2))
             }
@@ -6539,24 +6558,30 @@ private fun showRenameDialog(mediaFile: MediaFile) {
     }
 
     private fun showManualAddLinkDialog() {
+        val density = resources.displayMetrics.density
+        val pad = (14 * density).toInt()
         val layout = android.widget.LinearLayout(this).apply {
             orientation = android.widget.LinearLayout.VERTICAL
-            setPadding(50, 40, 50, 10)
+            setPadding((20 * density).toInt(), (12 * density).toInt(), (20 * density).toInt(), (4 * density).toInt())
         }
 
         val urlInput = android.widget.EditText(this).apply {
             hint = "https://example.com/video.mp4"
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+            setBackgroundResource(R.drawable.edit_text_custom)
+            setPadding(pad, pad, pad, pad)
         }
         layout.addView(urlInput)
 
         val titleInput = android.widget.EditText(this).apply {
             hint = "Optional Filename / Title"
             inputType = android.text.InputType.TYPE_CLASS_TEXT
+            setBackgroundResource(R.drawable.edit_text_custom)
+            setPadding(pad, pad, pad, pad)
             layoutParams = android.widget.LinearLayout.LayoutParams(
                 android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = 20 }
+            ).apply { topMargin = (10 * density).toInt() }
         }
         layout.addView(titleInput)
 
@@ -6790,17 +6815,21 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val (bgColor, textColor) = resolveSurfaceAndContentColors(forceOpaque = true)
         val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
-        val mutedColor = if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
+        val mutedColor = if (!isCustomGlossyThemeActive()) {
+            ContextCompat.getColor(this, R.color.md_on_surface_variant)
+        } else {
+            if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
+        }
         val density = resources.displayMetrics.density
         fun dp(value: Int): Int = (value * density).toInt()
 
         val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(12), dp(16), dp(8))
+            setPadding(dp(16), dp(10), dp(16), dp(12))
             background = android.graphics.drawable.GradientDrawable().apply {
                 setColor(bgColor)
-                cornerRadii = floatArrayOf(18f,18f,18f,18f,0f,0f,0f,0f).map { it * density }.toFloatArray()
+                cornerRadii = floatArrayOf(28f, 28f, 28f, 28f, 0f, 0f, 0f, 0f).map { it * density }.toFloatArray()
             }
         }
         val title = TextView(this).apply {
@@ -6896,10 +6925,10 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
         // Keep a small number of descriptive sections, but don't hide actions behind category screens.
 
-            addSettingsHeader("Quick toggles")
+            addSettingsHeader("Quick Toggles")
             addInlineSwitch(
                 "Floating media detector",
-                android.R.drawable.ic_menu_view,
+                R.drawable.ic_floating_bubble,
                 prefs.getBoolean("FLOATING_DETECTOR_ENABLED", true)
             ) { checked ->
                 prefs.edit().putBoolean("FLOATING_DETECTOR_ENABLED", checked).apply()
@@ -6908,7 +6937,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             }
             addInlineSwitch(
                 "YouTube quick refresh",
-                android.R.drawable.ic_popup_sync,
+                R.drawable.ic_refresh,
                 prefs.getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false)
             ) { checked ->
                 if (prefs.getBoolean("YOUTUBE_QUICK_REFRESH_ENABLED", false) != checked) {
@@ -6918,7 +6947,7 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             val blockerPrefs = getSharedPreferences("AdBlocker", Context.MODE_PRIVATE)
             addInlineSwitch(
                 "Popup blocked notices",
-                android.R.drawable.ic_dialog_alert,
+                R.drawable.ic_shield,
                 blockerPrefs.getBoolean("SHOW_POPUP_BLOCKED_NOTICE", true)
             ) { checked ->
                 blockerPrefs.edit().putBoolean("SHOW_POPUP_BLOCKED_NOTICE", checked).apply()
@@ -6926,26 +6955,30 @@ private fun showRenameDialog(mediaFile: MediaFile) {
             }
 
             addSettingsHeader("Privacy & Blocking")
-            addSettingsAction("Content Blocking", android.R.drawable.ic_menu_close_clear_cancel) { showContentBlockingDialog() }
-            addSettingsAction("Manage Blocked Sites", android.R.drawable.ic_delete) { showBlockedSitesDialog() }
-            addSettingsAction("Manage Whitelist", android.R.drawable.ic_menu_agenda) { showWhitelistManagementDialog() }
-            addSettingsAction("Popup & Redirect Blocker", android.R.drawable.ic_dialog_alert) { showPopupBlockerSettingsDialog() }
-            addSettingsAction("Confirm Navigation", android.R.drawable.ic_menu_set_as) { showConfirmNavigationSettingsDialog() }
+            addSettingsAction("Content Blocking", R.drawable.ic_shield) { showContentBlockingDialog() }
+            addSettingsAction("Manage Blocked Sites", R.drawable.ic_delete) { showBlockedSitesDialog() }
+            addSettingsAction("Manage Whitelist", R.drawable.ic_public) { showWhitelistManagementDialog() }
+            addSettingsAction("Popup & Redirect Blocker", R.drawable.ic_shield) { showPopupBlockerSettingsDialog() }
+            addSettingsAction("Confirm Navigation", R.drawable.ic_info_outline) { showConfirmNavigationSettingsDialog() }
 
             addSettingsHeader("Media & Downloads")
-            addSettingsAction("Media Detection", android.R.drawable.ic_media_play) { showMediaDetectionSettingsDialog() }
-            addSettingsAction("Floating Detector", android.R.drawable.ic_menu_view) { showFloatingDetectorSettingsDialog() }
-            addSettingsAction("Background Loading", android.R.drawable.ic_media_ff) { showBackgroundLoadingDialog() }
-            addSettingsAction("Clear Video Cache", android.R.drawable.ic_menu_delete) { HlsDownloadHelper.clearUnifiedCache(this)
-                    Toast.makeText(this, "Video cache cleared", Toast.LENGTH_SHORT).show() }
+            addSettingsAction("Downloads & Exports Manager", R.drawable.ic_folder_open) { showDownloadsManagerDialog() }
+            addSettingsAction("Media Detection", R.drawable.ic_video_file) { showMediaDetectionSettingsDialog() }
+            addSettingsAction("Floating Detector", R.drawable.ic_floating_bubble) { showFloatingDetectorSettingsDialog() }
+            addSettingsAction("Background Loading", R.drawable.ic_headset) { showBackgroundLoadingDialog() }
+            addSettingsAction("Clear Video Cache", R.drawable.ic_delete) {
+                HlsDownloadHelper.clearUnifiedCache(this)
+                Toast.makeText(this, "Video cache cleared", Toast.LENGTH_SHORT).show()
+            }
 
             addSettingsHeader("AI & Personalization")
-            addSettingsAction("Gemini AI Settings", android.R.drawable.ic_menu_edit) { showGeminiSettingsDialog() }
+            addSettingsAction("Theme & Appearance", R.drawable.ic_tune) { showThemeColorPickerDialog() }
+            addSettingsAction("Gemini AI Settings", R.drawable.ic_ai_sparkle) { showGeminiSettingsDialog() }
 
             addSettingsHeader("Data & Diagnostics")
-            addSettingsAction("Backup & Restore", android.R.drawable.ic_menu_save) { showBackupRestoreDialog() }
-            addSettingsAction("View App Logs", android.R.drawable.ic_menu_info_details) { startActivity(Intent(this, LogcatViewerActivity::class.java)) }
-            addSettingsAction("View Export Logs", android.R.drawable.ic_menu_search) { showExportLogsDialog() }
+            addSettingsAction("Backup & Restore", R.drawable.ic_download) { showBackupRestoreDialog() }
+            addSettingsAction("View App Logs", R.drawable.ic_code) { startActivity(Intent(this, LogcatViewerActivity::class.java)) }
+            addSettingsAction("View Export Logs", R.drawable.ic_info_outline) { showExportLogsDialog() }
         val scroll = ScrollView(this).apply {
             isFillViewport = true
             clipToPadding = false
@@ -7117,9 +7150,14 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         val sharedPrefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
         val currentKey = sharedPrefs.getString("gemini_api_key", "") ?: ""
 
-        val input = EditText(this)
-        input.hint = "Enter Gemini API Key"
-        input.setText(currentKey)
+        val density = resources.displayMetrics.density
+        val pad = (14 * density).toInt()
+        val input = EditText(this).apply {
+            hint = "Enter Gemini API Key"
+            setText(currentKey)
+            setBackgroundResource(R.drawable.edit_text_custom)
+            setPadding(pad, pad, pad, pad)
+        }
 
         val savedModel = sharedPrefs.getString("gemini_model", null)
         val currentModel = when (savedModel) {
@@ -7451,9 +7489,12 @@ private fun showRenameDialog(mediaFile: MediaFile) {
         Toast.makeText(this, "'$domain' removed from whitelist.", Toast.LENGTH_SHORT).show()
     }
     private fun showWhitelistDialog() {
+        val pad = (14 * resources.displayMetrics.density).toInt()
         val input = EditText(this).apply {
             hint = "e.g., example.com"
             inputType = InputType.TYPE_TEXT_VARIATION_URI
+            setBackgroundResource(R.drawable.edit_text_custom)
+            setPadding(pad, pad, pad, pad)
         }
         val container = FrameLayout(this)
         val params = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -7486,29 +7527,35 @@ private fun showRenameDialog(mediaFile: MediaFile) {
     }
     private fun showThemeColorPickerDialog() {
         val prefs = getSharedPreferences("Settings", Context.MODE_PRIVATE)
-        val currentHex = prefs.getString("glossy_theme_color", "SYSTEM_M3") ?: "SYSTEM_M3"
+        val currentHex = prefs.getString("glossy_theme_color", "SYSTEM_M3")
         val density = resources.displayMetrics.density
         val pad = (14 * density).toInt()
+
         val input = EditText(this).apply {
             hint = "e.g., #004F48 or #E6121716"
-            setText(if (currentHex == "SYSTEM_M3" || currentHex == "#A0000000") "#006A60" else currentHex)
+            setText(if (currentHex == "SYSTEM_M3") "#006A60" else currentHex)
             setBackgroundResource(R.drawable.edit_text_custom)
             setPadding(pad, pad, pad, pad)
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         }
+
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding((20 * density).toInt(), (12 * density).toInt(), (20 * density).toInt(), (4 * density).toInt())
             addView(input)
         }
+
         createThemedDialogBuilder(this)
             .setTitle("Theme & Appearance")
-            .setMessage("Choose Default Adaptive for Material 3 Day/Night, or enter a custom HEX color (#RRGGBB or #AARRGGBB).")
+            .setMessage("Choose Presets for adaptive Material 3 DayNight or enter a custom HEX color (#RRGGBB or #AARRGGBB).")
             .setView(layout)
             .setPositiveButton("Apply Custom") { _, _ ->
                 val newColor = input.text.toString().trim()
                 if (newColor.matches(Regex("^#[0-9a-fA-F]{8}$")) || newColor.matches(Regex("^#[0-9a-fA-F]{6}$"))) {
-                    prefs.edit().putBoolean("use_custom_glossy_theme", true).putString("glossy_theme_color", newColor).apply()
+                    prefs.edit()
+                        .putBoolean("use_custom_glossy_theme", true)
+                        .putString("glossy_theme_color", newColor)
+                        .apply()
                     applyGlossyTheme()
                     Toast.makeText(this, "Custom theme applied", Toast.LENGTH_SHORT).show()
                 } else {
@@ -7516,29 +7563,336 @@ private fun showRenameDialog(mediaFile: MediaFile) {
                 }
             }
             .setNeutralButton("Presets") { _, _ ->
-                val labels = arrayOf(
+                val presetLabels = arrayOf(
                     "Default Adaptive (Material 3 Day/Night)",
                     "Deep Teal (#004F48)",
                     "Midnight Slate (#182026)",
-                    "Light Glass (#90FFFFFF)",
-                    "Red Glass (#80FF0000)",
-                    "Blue Glass (#800000FF)",
-                    "Green Glass (#8000FF00)"
+                    "Obsidian Dark (#121716)",
+                    "Soft Ivory (#F1F5F3)"
                 )
-                val values = arrayOf("SYSTEM_M3", "#004F48", "#182026", "#90FFFFFF", "#80FF0000", "#800000FF", "#8000FF00")
+                val presetValues = arrayOf("SYSTEM_M3", "#004F48", "#182026", "#121716", "#F1F5F3")
+
                 createThemedDialogBuilder(this)
-                    .setTitle("Choose Appearance")
-                    .setItems(labels) { _, which ->
-                        val chosen = values[which]
-                        val custom = chosen != "SYSTEM_M3" && chosen != "#A0000000"
-                        prefs.edit().putBoolean("use_custom_glossy_theme", custom).putString("glossy_theme_color", chosen).apply()
+                    .setTitle("Choose Theme Preset")
+                    .setItems(presetLabels) { _, which ->
+                        val chosen = presetValues[which]
+                        prefs.edit()
+                            .putBoolean("use_custom_glossy_theme", chosen != "SYSTEM_M3")
+                            .putString("glossy_theme_color", chosen)
+                            .apply()
                         applyGlossyTheme()
-                        Toast.makeText(this, if (custom) "Custom theme applied" else "Adaptive Material 3 theme applied", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Theme updated: ${presetLabels[which]}", Toast.LENGTH_SHORT).show()
                     }
                     .show()
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun showDownloadsManagerDialog() {
+        val (bgColor, textColor) = resolveSurfaceAndContentColors(forceOpaque = true)
+        val luminance = androidx.core.graphics.ColorUtils.calculateLuminance(bgColor)
+        val mutedColor = if (!isCustomGlossyThemeActive()) {
+            ContextCompat.getColor(this, R.color.md_on_surface_variant)
+        } else {
+            if (luminance > 0.5) android.graphics.Color.DKGRAY else android.graphics.Color.LTGRAY
+        }
+        val cardBgColor = if (!isCustomGlossyThemeActive()) {
+            ContextCompat.getColor(this, R.color.md_surface_container)
+        } else {
+            if (luminance > 0.5) 0x12000000 else 0x1AFFFFFF
+        }
+        val density = resources.displayMetrics.density
+        fun dp(value: Int): Int = (value * density).toInt()
+
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(
+            this,
+            R.style.TransparentBottomSheetDialogTheme
+        )
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(10), dp(16), dp(14))
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(bgColor)
+                cornerRadii = floatArrayOf(28f, 28f, 28f, 28f, 0f, 0f, 0f, 0f).map { it * density }.toFloatArray()
+            }
+        }
+
+        val dragHandle = View(this).apply {
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(if (luminance > 0.5) 0x44000000 else 0x55FFFFFF)
+                cornerRadius = dp(2).toFloat()
+            }
+        }
+        root.addView(dragHandle, LinearLayout.LayoutParams(dp(36), dp(4)).apply {
+            gravity = android.view.Gravity.CENTER_HORIZONTAL
+            bottomMargin = dp(10)
+        })
+
+        val headerRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(dp(4), dp(2), dp(4), dp(10))
+        }
+        val titleCol = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        titleCol.addView(TextView(this).apply {
+            text = getString(R.string.downloads_title)
+            textSize = 19f
+            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+            setTextColor(textColor)
+        })
+        titleCol.addView(TextView(this).apply {
+            text = "Active transfers, completed files, and HLS/FFmpeg exports"
+            textSize = 12.5f
+            setTextColor(mutedColor)
+        })
+        headerRow.addView(titleCol, LinearLayout.LayoutParams(0, -2, 1f))
+        root.addView(headerRow, LinearLayout.LayoutParams(-1, -2))
+
+        // Top action bar: Open System Downloads & Export Logs
+        val actionRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 0, 0, dp(10))
+        }
+        val sysDownloadsBtn = com.google.android.material.button.MaterialButton(this).apply {
+            text = "System Downloads"
+            textSize = 12f
+            isAllCaps = false
+            setOnClickListener {
+                try {
+                    startActivity(Intent(DownloadManager.ACTION_VIEW_DOWNLOADS))
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "Could not open system Downloads app", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        val exportLogsBtn = com.google.android.material.button.MaterialButton(
+            this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle
+        ).apply {
+            text = "Export Logs"
+            textSize = 12f
+            isAllCaps = false
+            setOnClickListener {
+                dialog.dismiss()
+                showExportLogsDialog()
+            }
+        }
+        actionRow.addView(sysDownloadsBtn, LinearLayout.LayoutParams(0, dp(42), 1f).apply { marginEnd = dp(6) })
+        actionRow.addView(exportLogsBtn, LinearLayout.LayoutParams(0, dp(42), 1f).apply { marginStart = dp(6) })
+        root.addView(actionRow, LinearLayout.LayoutParams(-1, -2))
+
+        val listContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        fun populateDownloads() {
+            listContainer.removeAllViews()
+            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val query = DownloadManager.Query()
+            var count = 0
+
+            try {
+                dm.query(query)?.use { cursor ->
+                    val idIdx = cursor.getColumnIndex(DownloadManager.COLUMN_ID)
+                    val titleIdx = cursor.getColumnIndex(DownloadManager.COLUMN_TITLE)
+                    val statusIdx = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                    val downBytesIdx = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
+                    val totalBytesIdx = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
+                    val uriIdx = cursor.getColumnIndex(DownloadManager.COLUMN_URI)
+
+                    while (cursor.moveToNext() && count < 30) {
+                        count++
+                        val id = if (idIdx != -1) cursor.getLong(idIdx) else -1L
+                        val itemTitle = (if (titleIdx != -1) cursor.getString(titleIdx) else null)
+                            ?.takeIf { it.isNotBlank() } ?: "Download #$id"
+                        val status = if (statusIdx != -1) cursor.getInt(statusIdx) else DownloadManager.STATUS_PENDING
+                        val downBytes = if (downBytesIdx != -1) cursor.getLong(downBytesIdx) else 0L
+                        val totalBytes = if (totalBytesIdx != -1) cursor.getLong(totalBytesIdx) else -1L
+                        val sourceUri = if (uriIdx != -1) cursor.getString(uriIdx) else null
+
+                        val (statusLabel, badgeColor) = when (status) {
+                            DownloadManager.STATUS_SUCCESSFUL -> "COMPLETED" to ContextCompat.getColor(this, R.color.status_success)
+                            DownloadManager.STATUS_RUNNING -> "DOWNLOADING" to ContextCompat.getColor(this, R.color.colorPrimary)
+                            DownloadManager.STATUS_PAUSED -> "PAUSED" to ContextCompat.getColor(this, R.color.status_warning)
+                            DownloadManager.STATUS_FAILED -> "FAILED" to ContextCompat.getColor(this, R.color.error_color)
+                            else -> "QUEUED" to mutedColor
+                        }
+
+                        val card = LinearLayout(this).apply {
+                            orientation = LinearLayout.VERTICAL
+                            setPadding(dp(14), dp(12), dp(14), dp(12))
+                            background = android.graphics.drawable.GradientDrawable().apply {
+                                setColor(cardBgColor)
+                                cornerRadius = dp(14).toFloat()
+                                setStroke(dp(1), ContextCompat.getColor(this@MainActivity, R.color.md_outline_variant))
+                            }
+                        }
+
+                        val topRow = LinearLayout(this).apply {
+                            orientation = LinearLayout.HORIZONTAL
+                            gravity = android.view.Gravity.CENTER_VERTICAL
+                        }
+                        topRow.addView(TextView(this).apply {
+                            text = itemTitle
+                            textSize = 14f
+                            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+                            setTextColor(textColor)
+                            maxLines = 1
+                            ellipsize = android.text.TextUtils.TruncateAt.END
+                        }, LinearLayout.LayoutParams(0, -2, 1f))
+
+                        topRow.addView(TextView(this).apply {
+                            text = statusLabel
+                            textSize = 10.5f
+                            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+                            setTextColor(badgeColor)
+                            setPadding(dp(8), dp(2), dp(8), dp(2))
+                        })
+                        card.addView(topRow)
+
+                        val downMb = downBytes / (1024.0 * 1024.0)
+                        val sizeSummary = if (totalBytes > 0) {
+                            val totalMb = totalBytes / (1024.0 * 1024.0)
+                            val pct = ((downBytes * 100L) / totalBytes).coerceIn(0L, 100L)
+                            "%.1f MB / %.1f MB (%d%%)".format(java.util.Locale.US, downMb, totalMb, pct)
+                        } else if (downBytes > 0) {
+                            "%.1f MB downloaded".format(java.util.Locale.US, downMb)
+                        } else {
+                            sourceUri?.let { Uri.parse(it).host } ?: "Local storage"
+                        }
+
+                        card.addView(TextView(this).apply {
+                            text = sizeSummary
+                            textSize = 12f
+                            setTextColor(mutedColor)
+                            setPadding(0, dp(3), 0, dp(6))
+                        })
+
+                        if (status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PAUSED) {
+                            val progress = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+                                isIndeterminate = totalBytes <= 0
+                                max = 100
+                                if (totalBytes > 0) {
+                                    this.progress = ((downBytes * 100L) / totalBytes).toInt().coerceIn(0, 100)
+                                }
+                            }
+                            card.addView(progress, LinearLayout.LayoutParams(-1, dp(6)).apply { bottomMargin = dp(6) })
+                        }
+
+                        val btnRow = LinearLayout(this).apply {
+                            orientation = LinearLayout.HORIZONTAL
+                            gravity = android.view.Gravity.END
+                        }
+                        if (status == DownloadManager.STATUS_SUCCESSFUL && id != -1L) {
+                            btnRow.addView(TextView(this).apply {
+                                text = "Open"
+                                textSize = 12.5f
+                                typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+                                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.colorPrimary))
+                                setPadding(dp(10), dp(6), dp(10), dp(6))
+                                setOnClickListener {
+                                    try {
+                                        val uri = dm.getUriForDownloadedFile(id)
+                                        val mime = dm.getMimeTypeForDownloadedFile(id) ?: "*/*"
+                                        if (uri != null) {
+                                            val openIntent = Intent(Intent.ACTION_VIEW).apply {
+                                                setDataAndType(uri, mime)
+                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            }
+                                            startActivity(Intent.createChooser(openIntent, "Open file"))
+                                        } else {
+                                            startActivity(Intent(DownloadManager.ACTION_VIEW_DOWNLOADS))
+                                        }
+                                    } catch (e: Exception) {
+                                        Toast.makeText(this@MainActivity, "Could not open file directly", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            })
+                        }
+                        if (!sourceUri.isNullOrBlank()) {
+                            btnRow.addView(TextView(this).apply {
+                                text = "Copy URL"
+                                textSize = 12.5f
+                                setTextColor(mutedColor)
+                                setPadding(dp(10), dp(6), dp(10), dp(6))
+                                setOnClickListener {
+                                    copyToClipboard(sourceUri)
+                                }
+                            })
+                        }
+                        if (id != -1L) {
+                            btnRow.addView(TextView(this).apply {
+                                text = if (status == DownloadManager.STATUS_RUNNING) "Cancel" else "Remove"
+                                textSize = 12.5f
+                                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.error_color))
+                                setPadding(dp(10), dp(6), dp(10), dp(6))
+                                setOnClickListener {
+                                    dm.remove(id)
+                                    populateDownloads()
+                                }
+                            })
+                        }
+                        card.addView(btnRow)
+
+                        listContainer.addView(card, LinearLayout.LayoutParams(-1, -2).apply {
+                            bottomMargin = dp(8)
+                        })
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("DownloadsManager", "Could not query DownloadManager", e)
+            }
+
+            if (count == 0) {
+                val emptyBox = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(dp(24), dp(36), dp(24), dp(36))
+                }
+                emptyBox.addView(TextView(this).apply {
+                    text = getString(R.string.downloads_empty_title)
+                    textSize = 16f
+                    typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+                    setTextColor(textColor)
+                    gravity = android.view.Gravity.CENTER
+                })
+                emptyBox.addView(TextView(this).apply {
+                    text = getString(R.string.downloads_empty_subtitle)
+                    textSize = 13f
+                    setTextColor(mutedColor)
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(0, dp(6), 0, 0)
+                })
+                listContainer.addView(emptyBox, LinearLayout.LayoutParams(-1, -2))
+            }
+        }
+
+        populateDownloads()
+
+        val scroll = ScrollView(this).apply {
+            isFillViewport = true
+            clipToPadding = false
+            addView(listContainer, ViewGroup.LayoutParams(-1, -2))
+        }
+        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+
+        dialog.setContentView(root)
+        dialog.setOnShowListener {
+            val sheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            sheet?.let { bottomSheet ->
+                bottomSheet.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                bottomSheet.layoutParams = bottomSheet.layoutParams.apply {
+                    height = (resources.displayMetrics.heightPixels * 0.80f).toInt()
+                }
+                bottomSheet.requestLayout()
+                val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheet)
+                behavior.skipCollapsed = true
+                behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+            }
+        }
+        dialog.show()
     }
 
     private fun showSiteDebuggingOptions() {
@@ -7949,9 +8303,7 @@ if (isDesktopMode) {
     }
 
 private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = false): AlertDialog.Builder {
-        val (parsedColor, textColor) = resolveSurfaceAndContentColors(
-            forceOpaque = isOpaque || !isCustomGlossyThemeActive()
-        )
+        val (parsedColor, textColor) = resolveSurfaceAndContentColors(forceOpaque = isOpaque || !isCustomGlossyThemeActive())
 
         return object : AlertDialog.Builder(context, R.style.CustomAlertDialogTheme) {
             override fun create(): AlertDialog {
@@ -8015,11 +8367,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
         val hasFiles = synchronized(detectedMediaFiles) { detectedMediaFiles.isNotEmpty() }
 
         if (hasFiles) {
-            binding.detectedMediaContainer.visibility = android.view.View.VISIBLE
             binding.fabShowMedia.visibility = android.view.View.VISIBLE
-            binding.fabShowMedia.isEnabled = true
-            binding.fabShowMedia.alpha = 1.0f
-            binding.fabShowMedia.contentDescription = "Detected media, ${detectedMediaFiles.size} items"
             binding.mediaCountBadge.text = if (detectedMediaFiles.size > 99) "99+" else detectedMediaFiles.size.toString()
             binding.mediaCountBadge.visibility = android.view.View.VISIBLE
             binding.fabShowMedia.setImageResource(R.drawable.ic_download)
@@ -8037,8 +8385,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                 true
             }
         } else {
-            // Hide the complete toolbar slot until there is media to open.
-            binding.detectedMediaContainer.visibility = android.view.View.GONE
+            binding.fabShowMedia.visibility = android.view.View.GONE
             binding.mediaCountBadge.visibility = android.view.View.GONE
         }
 
@@ -8104,11 +8451,15 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
             if (bestPlayable != null) {
                 floatingDetector?.visibility = android.view.View.VISIBLE
 
-                txtTitle?.text = "Media Detected"
+                txtTitle?.text = "Media Ready (${detectedMediaFiles.size})"
 
-                val typeStr = if (bestPlayable.isManifest) "HLS" else "MP4"
-                val qualityStr = "Auto"
-                txtState?.text = "$typeStr • $qualityStr"
+                val typeStr = if (bestPlayable.isManifest) "HLS/DASH" else "MP4"
+                val durPart = if (bestPlayable.durationSec > 0) {
+                    val mins = bestPlayable.durationSec / 60
+                    val secs = bestPlayable.durationSec % 60
+                    " • ${mins}m${secs}s"
+                } else ""
+                txtState?.text = "$typeStr$durPart • Tap to view"
 
                 val btnDownload = findViewById<android.widget.ImageView>(R.id.btnDetectorDownload)
                 // Removed btnDownload click listener to prevent stealing touch from floatingDetector

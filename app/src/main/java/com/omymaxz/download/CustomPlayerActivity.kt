@@ -187,6 +187,8 @@ class CustomPlayerActivity : AppCompatActivity() {
             findViewById<androidx.media3.ui.PlayerView>(R.id.player_view).resizeMode = currentResizeMode
         }
 
+        findViewById<android.widget.ImageButton>(R.id.btn_player_back)?.setOnClickListener { finish() }
+        findViewById<android.widget.TextView>(R.id.txt_player_title)?.text = videoTitle
         findViewById<android.widget.ImageButton>(R.id.fab_bubble)?.setOnClickListener { startFloatingBubble() }
         findViewById<android.widget.ImageButton>(R.id.fab_pip)?.setOnClickListener { enterPipMode() }
         findViewById<android.widget.ImageButton>(R.id.fab_save)?.setOnClickListener { saveVideoOffline() }
@@ -322,14 +324,18 @@ class CustomPlayerActivity : AppCompatActivity() {
 
     private fun getSafeGlossyThemeColor(context: android.content.Context): Int {
         val prefs = context.getSharedPreferences("Settings", android.content.Context.MODE_PRIVATE)
-        val defaultColor = android.graphics.Color.parseColor("#A0000000")
+        val defaultColor = androidx.core.content.ContextCompat.getColor(context, R.color.md_surface_container_high)
 
         return try {
-            val colorStr = prefs.getString("glossy_theme_color", "#A0000000") ?: "#A0000000"
-            android.graphics.Color.parseColor(colorStr)
+            val useCustom = prefs.getBoolean("use_custom_glossy_theme", false)
+            val colorStr = prefs.getString("glossy_theme_color", "SYSTEM_M3") ?: "SYSTEM_M3"
+            if (!useCustom || colorStr == "SYSTEM_M3" || colorStr == "#A0000000") {
+                defaultColor
+            } else {
+                android.graphics.Color.parseColor(colorStr)
+            }
         } catch (e: java.lang.ClassCastException) {
             try {
-                // If it crashes because it's an Int, fallback to reading as Int
                 prefs.getInt("glossy_theme_color", defaultColor)
             } catch (e2: Exception) {
                 defaultColor
@@ -444,8 +450,7 @@ class CustomPlayerActivity : AppCompatActivity() {
     }
 
     private fun createThemedDialogBuilder(context: android.content.Context): androidx.appcompat.app.AlertDialog.Builder {
-        val builder = androidx.appcompat.app.AlertDialog.Builder(context)
-        return builder
+        return androidx.appcompat.app.AlertDialog.Builder(context, R.style.CustomAlertDialogTheme)
     }
 
 
@@ -623,6 +628,7 @@ class CustomPlayerActivity : AppCompatActivity() {
             android.util.Log.d("PLAYER_STATE_RESET", "[PLAYER_STATE_RESET]\npreviousUrl=$videoUrl\nnewUrl=$newUrl\nplayerReleased=true\nmediaItemsCleared=true\nnewMediaItemPrepared=true")
             videoUrl = newUrl
             videoTitle = newTitle ?: "Offline_Video_${System.currentTimeMillis()}"
+            findViewById<android.widget.TextView>(R.id.txt_player_title)?.text = videoTitle
             player?.release()
             player = null
             activePlayer = null
@@ -1145,9 +1151,11 @@ class CustomPlayerActivity : AppCompatActivity() {
     private fun updateCacheCompleteUi(isComplete: Boolean) {
         val fab = findViewById<android.widget.ImageButton>(R.id.fab_save)
         if (isComplete) {
-            fab?.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
+            fab?.setColorFilter(android.graphics.Color.parseColor("#66DDA0"))
+            fab?.contentDescription = "Video fully cached — Save offline"
         } else {
             fab?.clearColorFilter()
+            fab?.contentDescription = getString(R.string.player_save_offline)
         }
     }
 
@@ -1264,6 +1272,9 @@ class CustomPlayerActivity : AppCompatActivity() {
         val pv = findViewById<PlayerView>(R.id.player_view)
         pv.player = player
 
+        findViewById<android.widget.ImageButton>(R.id.btn_player_back)?.setOnClickListener { finish() }
+        findViewById<android.widget.TextView>(R.id.txt_player_title)?.text = videoTitle
+
         // Ensure buttons stay wired and visible after player attachment
         val exoSettingsBtn = findViewById<android.view.View>(androidx.media3.ui.R.id.exo_settings)
         exoSettingsBtn?.visibility = android.view.View.VISIBLE
@@ -1342,11 +1353,24 @@ class CustomPlayerActivity : AppCompatActivity() {
     }
 
     private fun saveVideoOffline() {
-        val input = android.widget.EditText(this)
-        input.setText(videoTitle)
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Rename Video")
-            .setView(input)
+        val density = resources.displayMetrics.density
+        val pad = (14 * density).toInt()
+        val input = android.widget.EditText(this).apply {
+            setText(videoTitle)
+            selectAll()
+            setBackgroundResource(R.drawable.edit_text_custom)
+            setPadding(pad, pad, pad, pad)
+        }
+        val container = android.widget.FrameLayout(this).apply {
+            val hMargin = (20 * density).toInt()
+            val vMargin = (12 * density).toInt()
+            setPadding(hMargin, vMargin, hMargin, (4 * density).toInt())
+            addView(input)
+        }
+        createThemedDialogBuilder(this)
+            .setTitle("Save Video Offline")
+            .setMessage("Confirm the filename before exporting to your Downloads folder.")
+            .setView(container)
             .setPositiveButton("Save") { _, _ ->
                 val newTitle = input.text.toString().trim()
                 if (newTitle.isNotEmpty()) {

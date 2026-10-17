@@ -1,15 +1,17 @@
 package com.omymaxz.download
 
+import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import java.text.SimpleDateFormat
-import java.util.*
-import android.net.Uri
+import java.util.Locale
+
 class MediaListAdapter(
     var mediaFiles: MutableList<MediaFile>,
     private val onItemClicked: (MediaFile) -> Unit,
@@ -34,27 +36,6 @@ class MediaListAdapter(
             onItemLongClicked(mediaFile)
             true
         }
-
-        // Keep Material surface cards theme-aware. Category information is shown
-        // by the icon/title; the thumbnail gets a soft semantic category accent.
-        val context = holder.itemView.context
-        val tint = when (mediaFile.category) {
-            MediaCategory.VIDEO -> when {
-                mediaFile.hasMultipleQualities -> R.color.media_video_multi_quality_bg
-                mediaFile.isMainContent -> R.color.media_video_main_bg
-                else -> R.color.media_video_clip_bg
-            }
-            MediaCategory.AUDIO -> R.color.md_secondary_container
-            MediaCategory.SUBTITLE -> R.color.media_subtitle_bg
-            MediaCategory.AD -> R.color.media_ad_bg
-            else -> R.color.md_surface_variant
-        }
-        holder.itemView.findViewById<ImageView>(R.id.media_thumbnail).background =
-            android.graphics.drawable.GradientDrawable().apply {
-                shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-                cornerRadius = 12f * holder.itemView.resources.displayMetrics.density
-                setColor(ContextCompat.getColor(context, tint))
-            }
     }
 
     override fun getItemCount(): Int = mediaFiles.size
@@ -63,58 +44,124 @@ class MediaListAdapter(
         private val titleTextView: TextView = itemView.findViewById(R.id.media_title)
         private val typeTextView: TextView = itemView.findViewById(R.id.media_type)
         private val thumbnailView: ImageView = itemView.findViewById(R.id.media_thumbnail)
+        private val badgeView: TextView? = itemView.findViewById(R.id.media_badge)
+        private val secondaryBadgeView: TextView? = itemView.findViewById(R.id.media_secondary_badge)
         private val btnAnalyzeMedia: TextView? = itemView.findViewById(R.id.btn_analyze_media)
 
         fun bind(mediaFile: MediaFile) {
-            val btnInfo = itemView.findViewById<android.widget.ImageButton>(R.id.btn_media_info)
+            val context = itemView.context
+            val density = itemView.resources.displayMetrics.density
+
+            val btnInfo = itemView.findViewById<ImageButton>(R.id.btn_media_info)
             btnInfo.setOnClickListener {
                 (itemView.context as? MainActivity)?.showMediaInfoDialog(mediaFile)
             }
 
-            val btnPlay = itemView.findViewById<android.widget.ImageButton>(R.id.btn_play_media)
+            val btnPlay = itemView.findViewById<ImageButton>(R.id.btn_play_media)
             if (mediaFile.category == MediaCategory.VIDEO || mediaFile.category == MediaCategory.AUDIO) {
-                btnPlay.visibility = android.view.View.VISIBLE
+                btnPlay.visibility = View.VISIBLE
                 btnPlay.setOnClickListener {
-                    (itemView.context as? MainActivity)?.launchCustomPlayer(mediaFile)
+                    if (onPlayClicked != null) {
+                        onPlayClicked.invoke(mediaFile)
+                    } else {
+                        (itemView.context as? MainActivity)?.launchCustomPlayer(mediaFile)
+                    }
                 }
             } else {
-                btnPlay.visibility = android.view.View.GONE
+                btnPlay.visibility = View.GONE
             }
 
-            val categoryIndicator = when (mediaFile.category) {
-                MediaCategory.VIDEO -> if (mediaFile.isMainContent) "🎥 MAIN VIDEO" else "🎬 Video Clip"
-                MediaCategory.AUDIO -> "🔊 Audio"
-                MediaCategory.SUBTITLE -> mediaFile.language?.let { "📝 Subtitle $it" } ?: "📝 Subtitle"
-                MediaCategory.THUMBNAIL -> "🖼️ Thumbnail"
-                MediaCategory.AD -> "🚫 Advertisement"
-                else -> "❓ ${mediaFile.category.displayName}"
+            // Semantic container + foreground pairing for both light and dark modes
+            val (bgColorRes, fgColorRes) = when (mediaFile.category) {
+                MediaCategory.VIDEO -> when {
+                    mediaFile.hasMultipleQualities -> R.color.media_video_multi_quality_bg to R.color.media_video_multi_quality_fg
+                    mediaFile.isMainContent -> R.color.media_video_main_bg to R.color.media_video_main_fg
+                    else -> R.color.media_video_clip_bg to R.color.media_video_clip_fg
+                }
+                MediaCategory.AUDIO -> R.color.media_audio_bg to R.color.media_audio_fg
+                MediaCategory.SUBTITLE -> R.color.media_subtitle_bg to R.color.media_subtitle_fg
+                MediaCategory.AD -> R.color.media_ad_bg to R.color.media_ad_fg
+                else -> R.color.media_other_bg to R.color.media_other_fg
             }
 
-            titleTextView.text = "$categoryIndicator\n${mediaFile.title}"
+            val bgColor = ContextCompat.getColor(context, bgColorRes)
+            val fgColor = ContextCompat.getColor(context, fgColorRes)
+
+            thumbnailView.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 12f * density
+                setColor(bgColor)
+            }
+
+            val iconRes = when (mediaFile.category) {
+                MediaCategory.VIDEO -> R.drawable.ic_video_file
+                MediaCategory.AUDIO -> R.drawable.ic_audio_file
+                MediaCategory.SUBTITLE -> R.drawable.ic_subtitle_file
+                MediaCategory.THUMBNAIL -> R.drawable.ic_public
+                MediaCategory.AD -> R.drawable.ic_close
+                else -> R.drawable.ic_info_outline
+            }
+            thumbnailView.setImageResource(iconRes)
+            thumbnailView.setColorFilter(fgColor)
+
+            // Primary category badge pill
+            val badgeLabel = when (mediaFile.category) {
+                MediaCategory.VIDEO -> if (mediaFile.isMainContent) "MAIN VIDEO" else "VIDEO CLIP"
+                MediaCategory.AUDIO -> "AUDIO"
+                MediaCategory.SUBTITLE -> mediaFile.language?.takeIf { it.isNotBlank() }?.let { "SUBTITLE • ${it.uppercase(Locale.ROOT)}" } ?: "SUBTITLE"
+                MediaCategory.THUMBNAIL -> "THUMBNAIL"
+                MediaCategory.AD -> "AD / TRACKER"
+                else -> mediaFile.category.displayName.uppercase(Locale.ROOT)
+            }
+            badgeView?.apply {
+                text = badgeLabel
+                setTextColor(fgColor)
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = 6f * density
+                    setColor(bgColor)
+                }
+            }
+
+            // Secondary badge pill for Multi-Quality or Recommended streams
+            when {
+                mediaFile.hasMultipleQualities -> {
+                    secondaryBadgeView?.visibility = View.VISIBLE
+                    secondaryBadgeView?.text = "MULTI-QUALITY"
+                    val mqBg = ContextCompat.getColor(context, R.color.media_video_multi_quality_bg)
+                    val mqFg = ContextCompat.getColor(context, R.color.media_video_multi_quality_fg)
+                    secondaryBadgeView?.setTextColor(mqFg)
+                    secondaryBadgeView?.background = GradientDrawable().apply {
+                        shape = GradientDrawable.RECTANGLE
+                        cornerRadius = 6f * density
+                        setColor(mqBg)
+                    }
+                }
+                mediaFile.isMainContent && mediaFile.category == MediaCategory.VIDEO -> {
+                    secondaryBadgeView?.visibility = View.VISIBLE
+                    secondaryBadgeView?.text = "RECOMMENDED"
+                    val recBg = ContextCompat.getColor(context, R.color.md_primary_container)
+                    val recFg = ContextCompat.getColor(context, R.color.md_on_primary_container)
+                    secondaryBadgeView?.setTextColor(recFg)
+                    secondaryBadgeView?.background = GradientDrawable().apply {
+                        shape = GradientDrawable.RECTANGLE
+                        cornerRadius = 6f * density
+                        setColor(recBg)
+                    }
+                }
+                else -> {
+                    secondaryBadgeView?.visibility = View.GONE
+                }
+            }
+
+            // Clean title without emoji clutter, maintaining consistent typography
+            titleTextView.text = mediaFile.title
+            titleTextView.textSize = 14.5f
 
             val sourceInfo = detectSourceAndFormat(mediaFile.url)
             val sizeInfo = if (mediaFile.fileSize != "Unknown") " • ${mediaFile.fileSize}" else ""
-            val mainContentIndicator = if (mediaFile.isMainContent && mediaFile.category == MediaCategory.VIDEO) " • ⭐ RECOMMENDED" else ""
-
-            val multiQualityIndicator = if (mediaFile.hasMultipleQualities) " • MULTI-QUALITY" else ""
-            val typeText = "${sourceInfo.source} • ${mediaFile.quality} • ${sourceInfo.format}${sizeInfo}${mainContentIndicator}${multiQualityIndicator}"
+            val typeText = "${sourceInfo.source} • ${mediaFile.quality} • ${sourceInfo.format}$sizeInfo"
             typeTextView.text = typeText
-
-            val iconRes = when(mediaFile.category) {
-                MediaCategory.VIDEO -> android.R.drawable.ic_media_play
-                MediaCategory.AUDIO -> android.R.drawable.ic_media_ff
-                MediaCategory.SUBTITLE -> android.R.drawable.ic_menu_sort_by_size
-                MediaCategory.THUMBNAIL -> android.R.drawable.ic_menu_gallery
-                MediaCategory.AD -> android.R.drawable.ic_menu_close_clear_cancel
-                else -> android.R.drawable.ic_menu_help
-            }
-            thumbnailView.setImageResource(iconRes)
-
-            titleTextView.textSize = when {
-                mediaFile.isMainContent && mediaFile.category == MediaCategory.VIDEO -> 16f
-                mediaFile.category == MediaCategory.VIDEO -> 14f
-                else -> 12f
-            }
 
             if (mediaFile.category == MediaCategory.VIDEO) {
                 val needsAnalysis = mediaFile.fileSize == "Unknown" || !mediaFile.title.contains("Duration:")
@@ -162,9 +209,14 @@ class MediaListAdapter(
                 lowerUrl.contains(".mov") -> "MOV"
                 lowerUrl.contains(".flv") -> "FLV"
                 lowerUrl.contains(".m3u8") -> "HLS Stream"
+                lowerUrl.contains(".mpd") -> "DASH Stream"
+                lowerUrl.contains(".m4a") -> "M4A Audio"
+                lowerUrl.contains(".mp3") -> "MP3 Audio"
+                lowerUrl.contains(".vtt") -> "WebVTT"
+                lowerUrl.contains(".srt") -> "SRT"
                 lowerUrl.contains(".m4v") -> "M4V"
                 lowerUrl.contains("videoplayback") -> "MP4"
-                else -> "Video"
+                else -> "Stream"
             }
 
             return SourceInfo(source, format)

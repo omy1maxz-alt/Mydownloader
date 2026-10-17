@@ -11,6 +11,7 @@
         <item name="colorOnSecondary">@color/white</item>
         <item name="colorSecondaryContainer">@color/md_secondary_container</item>
         <item name="colorOnSecondaryContainer">@color/md_on_secondary_container</item>
+
         <item name="colorTertiaryContainer">@color/md_tertiary_container</item>
         <item name="colorOnTertiaryContainer">@color/md_on_tertiary_container</item>
 
@@ -24,12 +25,12 @@
         <item name="colorOnError">@color/white</item>
         <item name="colorErrorContainer">@color/md_error_container</item>
         <item name="colorOnErrorContainer">@color/md_on_error_container</item>
-        <item name="colorControlNormal">@color/md_on_surface_variant</item>
 
         <item name="android:windowBackground">@color/md_surface</item>
         <item name="android:statusBarColor">@color/md_surface</item>
         <item name="android:navigationBarColor">@color/md_surface</item>
         <item name="alertDialogTheme">@style/CustomAlertDialogTheme</item>
+        <item name="bottomSheetDialogTheme">@style/DetectedMediaBottomSheetTheme</item>
     </style>
 
     <style name="Theme.MyDownloader.NoActionBar" parent="Theme.MyDownloader">
@@ -44,25 +45,28 @@
         <item name="android:navigationBarColor">@color/black</item>
     </style>
 
-    <style name="GlassyPopupMenu" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+    <style name="GlassyPopupMenu" parent="ThemeOverlay.Material3.Dark">
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="actionMenuTextColor">@android:color/white</item>
         <item name="android:popupElevation">8dp</item>
     </style>
 
     <style name="CustomAlertDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:windowBackground">@drawable/dialog_background</item>
         <item name="colorSurface">@color/md_surface_container_high</item>
         <item name="colorOnSurface">@color/md_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/md_on_surface_variant</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
     </style>
 
-    <style name="TransparentBottomSheetDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
+    <style name="TransparentBottomSheetDialogTheme" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/TransparentBottomSheetStyle</item>
     </style>
 
-    <style name="TransparentBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
+    <style name="TransparentBottomSheetStyle" parent="Widget.Material3.BottomSheet.Modal">
         <item name="android:background">@android:color/transparent</item>
+        <item name="backgroundTint">@android:color/transparent</item>
     </style>
-
 
     <style name="DetectedMediaBottomSheetTheme" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/DetectedMediaBottomSheetStyle</item>
@@ -71,6 +75,7 @@
     <style name="DetectedMediaBottomSheetStyle" parent="Widget.Material3.BottomSheet.Modal">
         <item name="shapeAppearanceOverlay">@style/DetectedMediaBottomSheetShape</item>
         <item name="android:background">@color/md_surface</item>
+        <item name="backgroundTint">@color/md_surface</item>
     </style>
 
     <style name="DetectedMediaBottomSheetShape" parent="ShapeAppearance.Material3.LargeComponent">

@@ -10,23 +10,83 @@
         android:id="@+id/chatToolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:elevation="2dp"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:background="@color/md_surface"
+        app:titleTextColor="@color/md_on_surface"
+        app:subtitleTextColor="@color/md_on_surface_variant"
         app:contentInsetStartWithNavigation="16dp" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/chatRecyclerView"
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/md_outline_variant" />
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="16dp"
-        android:clipToPadding="false"
-        android:background="?attr/colorSurface"
-        android:overScrollMode="ifContentScrolls" />
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/chatRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="16dp"
+            android:clipToPadding="false"
+            android:background="?attr/colorSurface"
+            android:overScrollMode="ifContentScrolls" />
+
+        <LinearLayout
+            android:id="@+id/chatEmptyState"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="32dp"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_icon_container">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_ai_sparkle"
+                    app:tint="@color/colorPrimary" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="Ask Gemini Assistant"
+                android:textColor="@color/md_on_surface"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:maxWidth="280dp"
+                android:text="Summarize the active webpage, translate content, or diagnose app logs."
+                android:textColor="@color/md_on_surface_variant"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/md_outline_variant" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -37,7 +97,7 @@
         android:paddingEnd="12dp"
         android:paddingTop="10dp"
         android:paddingBottom="10dp"
-        android:background="?attr/colorSurfaceVariant">
+        android:background="@color/md_surface_container_low">
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="0dp"
@@ -46,10 +106,10 @@
             android:hint="@string/gemini_chat_hint"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             app:boxBackgroundColor="?attr/colorSurface"
-            app:boxCornerRadiusTopStart="20dp"
-            app:boxCornerRadiusTopEnd="20dp"
-            app:boxCornerRadiusBottomStart="20dp"
-            app:boxCornerRadiusBottomEnd="20dp">
+            app:boxCornerRadiusTopStart="22dp"
+            app:boxCornerRadiusTopEnd="22dp"
+            app:boxCornerRadiusBottomStart="22dp"
+            app:boxCornerRadiusBottomEnd="22dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/chatInputEditText"

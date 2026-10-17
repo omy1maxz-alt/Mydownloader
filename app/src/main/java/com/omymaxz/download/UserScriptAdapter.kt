@@ -20,23 +20,30 @@ class UserScriptAdapter(
             onEdit: (UserScript) -> Unit
         ) {
             binding.scriptName.text = script.name
-            
-            if (script.targetUrl == "*") {
-                binding.scriptUrl.text = "Runs on: All websites"
-            } else {
-                binding.scriptUrl.text = "Runs on: ${script.targetUrl}"
+
+            val patterns = script.matches.ifEmpty { listOf(script.targetUrl) }
+            binding.scriptUrl.text = when {
+                patterns.contains("*") || script.targetUrl == "*" -> "Runs on: All websites (*)"
+                patterns.size == 1 -> "Runs on: ${patterns.first()}"
+                else -> "Runs on: ${patterns.first()} (+${patterns.size - 1} more)"
             }
-            
+
+            binding.scriptRunAtBadge.text = when (script.runAt) {
+                UserScript.RunAt.DOCUMENT_START -> "doc-start"
+                UserScript.RunAt.DOCUMENT_END -> "doc-end"
+                UserScript.RunAt.DOCUMENT_IDLE -> "doc-idle"
+            }
+
             binding.scriptEnabledSwitch.setOnCheckedChangeListener(null)
             binding.scriptEnabledSwitch.isChecked = script.isEnabled
             binding.scriptEnabledSwitch.setOnCheckedChangeListener { _, isChecked ->
                 onToggle(script, isChecked)
             }
-            
+
             binding.deleteScriptButton.setOnClickListener {
-                onDelete(script, adapterPosition)
+                onDelete(script, bindingAdapterPosition)
             }
-            
+
             binding.root.setOnClickListener {
                 onEdit(script)
             }

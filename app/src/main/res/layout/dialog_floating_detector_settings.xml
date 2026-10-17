@@ -3,27 +3,48 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="12dp">
 
     <Switch
         android:id="@+id/switch_floating_detector"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Enable Floating Detector"
-        android:textSize="16sp"
-        android:paddingBottom="16dp" />
+        android:layout_height="48dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="Enable Floating Detector Pill"
+        android:textColor="@color/md_on_surface"
+        android:textSize="15sp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:fontFamily="sans-serif-medium"
         android:text="Minimum Media Duration (seconds)"
+        android:textColor="@color/md_on_surface"
         android:textSize="14sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="8dp"
+        android:text="Ignore short clips and ad previews below this length."
+        android:textColor="@color/md_on_surface_variant"
+        android:textSize="12sp" />
 
     <EditText
         android:id="@+id/edit_min_duration"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
+        android:background="@drawable/edit_text_custom"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
         android:inputType="number"
+        android:textColor="@color/md_on_surface"
+        android:textColorHint="@color/md_on_surface_variant"
         android:hint="e.g. 0, 30, 60" />
 
 </LinearLayout>

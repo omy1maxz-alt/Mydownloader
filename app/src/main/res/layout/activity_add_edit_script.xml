@@ -5,20 +5,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/md_surface"
     tools:context=".AddEditScriptActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="@color/md_surface"
         app:title="Add Script"
-        app:titleTextColor="@android:color/white"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
+        app:titleTextColor="@color/md_on_surface" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/md_outline_variant" />
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -26,168 +32,270 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Script Name Input -->
-            <com.google.android.material.textfield.TextInputLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                app:cardBackgroundColor="@color/md_surface_container_low"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/md_outline_variant"
+                app:strokeWidth="1dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editScriptName"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Script Name"
-                    android:inputType="text" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:orientation="vertical"
+                    android:padding="14dp">
 
-            <!-- Apply to All Checkbox -->
-            <CheckBox
-                android:id="@+id/applyToAllCheckbox"
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Script Identity &amp; Scope"
+                        android:textColor="@color/md_on_surface"
+                        android:textSize="14.5sp"
+                        android:textStyle="bold" />
+
+                    <!-- Script Name Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editScriptName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Script Name"
+                            android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Apply to All Checkbox -->
+                    <CheckBox
+                        android:id="@+id/applyToAllCheckbox"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:text="Run on all websites (*)"
+                        android:textColor="@color/md_on_surface" />
+
+                    <!-- Match patterns -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Match patterns (one per line)"
+                        android:textColor="@color/md_on_surface_variant"
+                        android:textSize="12.5sp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editScriptUrl"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="https://example.com/*"
+                            android:gravity="top|start"
+                            android:inputType="textMultiLine|textUri"
+                            android:minLines="2"
+                            android:maxLines="6" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Exclude patterns (one per line)"
+                        android:textColor="@color/md_on_surface_variant"
+                        android:textSize="12.5sp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editScriptExcludes"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="https://example.com/private/*"
+                            android:gravity="top|start"
+                            android:inputType="textMultiLine|textUri"
+                            android:minLines="2"
+                            android:maxLines="5" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Runtime & Dependencies Card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Apply to all websites" />
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/md_surface_container_low"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/md_outline_variant"
+                app:strokeWidth="1dp">
 
-            <!-- Match patterns: one userscript pattern per line -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Execution Timing &amp; Permissions"
+                        android:textColor="@color/md_on_surface"
+                        android:textSize="14.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="Injection timing (@run-at)"
+                        android:textColor="@color/md_on_surface_variant"
+                        android:textSize="12.5sp" />
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/edit_text_custom"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp">
+
+                        <Spinner
+                            android:id="@+id/editScriptRunAt"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:entries="@array/userscript_run_at_options"
+                            android:contentDescription="When to run this userscript" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Required libraries (@require URLs, one per line)"
+                        android:textColor="@color/md_on_surface_variant"
+                        android:textSize="12.5sp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editScriptRequires"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="https://cdn.example.com/library.js"
+                            android:gravity="top|start"
+                            android:inputType="textMultiLine|textUri"
+                            android:minLines="2"
+                            android:maxLines="5" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Granted APIs (@grant, one per line)"
+                        android:textColor="@color/md_on_surface_variant"
+                        android:textSize="12.5sp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editScriptGrants"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="GM_getValue, GM_setValue, GM_xmlhttpRequest"
+                            android:gravity="top|start"
+                            android:inputType="textMultiLine|textNoSuggestions"
+                            android:minLines="2"
+                            android:maxLines="5" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Script Code Input -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Match patterns (one per line)"
-                android:textAppearance="?attr/textAppearanceBody1" />
+                android:layout_marginBottom="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="JavaScript Source Code"
+                android:textColor="@color/md_on_surface"
+                android:textSize="14.5sp"
+                android:textStyle="bold" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editScriptUrl"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="https://example.com/* (one per line)"
-                    android:gravity="top|start"
-                    android:inputType="textMultiLine|textUri"
-                    android:minLines="2"
-                    android:maxLines="6" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Exclude patterns (one per line)"
-                android:textAppearance="?attr/textAppearanceBody1" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editScriptExcludes"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="https://example.com/private/*"
-                    android:gravity="top|start"
-                    android:inputType="textMultiLine|textUri"
-                    android:minLines="2"
-                    android:maxLines="5" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Run at"
-                android:textAppearance="?attr/textAppearanceBody1" />
-
-            <Spinner
-                android:id="@+id/editScriptRunAt"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:entries="@array/userscript_run_at_options"
-                android:contentDescription="When to run this userscript" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Required libraries (one HTTP(S) URL per line)"
-                android:textAppearance="?attr/textAppearanceBody1" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editScriptRequires"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="https://cdn.example.com/library.js"
-                    android:gravity="top|start"
-                    android:inputType="textMultiLine|textUri"
-                    android:minLines="2"
-                    android:maxLines="5" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Granted APIs (one per line)"
-                android:textAppearance="?attr/textAppearanceBody1" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editScriptGrants"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="GM_getValue, GM_setValue"
-                    android:gravity="top|start"
-                    android:inputType="textMultiLine|textNoSuggestions"
-                    android:minLines="2"
-                    android:maxLines="5" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Script Code Input - Modified for large text -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="JavaScript Code:"
-                android:textAppearance="?attr/textAppearanceBody1" />
-
-            <!-- Using a standard EditText with vertical scrolling inside the main ScrollView -->
             <EditText
                 android:id="@+id/editScriptCode"
                 android:layout_width="match_parent"
-                android:layout_height="300dp" 
-                android:background="@drawable/edit_text_border" 
+                android:layout_height="320dp"
+                android:background="@drawable/edit_text_border"
                 android:fontFamily="monospace"
                 android:gravity="top|start"
-                android:hint="Paste your JavaScript code here..."
+                android:hint="// ==UserScript==
+// @name My Script
+// ==/UserScript=="
                 android:inputType="textMultiLine|textNoSuggestions"
-                android:padding="8dp"
+                android:padding="12dp"
                 android:scrollbars="vertical"
-                android:textSize="12sp" />
+                android:textColor="@color/code_surface_fg"
+                android:textColorHint="#80BFC9C5"
+                android:textSize="12.5sp" />
 
             <!-- Save Button -->
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/saveScriptButton"
+                style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Save Script"
-                android:layout_marginTop="16dp"/>
+                android:layout_height="52dp"
+                android:layout_marginTop="18dp"
+                android:layout_marginBottom="16dp"
+                android:text="Save Userscript"
+                android:textSize="15sp" />
 
         </LinearLayout>
     </ScrollView>

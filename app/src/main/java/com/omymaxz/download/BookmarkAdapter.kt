@@ -34,7 +34,10 @@ class BookmarkAdapter(
             onItemLongClick: (Bookmark) -> Unit
         ) {
             title.text = bookmark.title.ifBlank { bookmark.host ?: "Bookmark" }
-            hostView.text = (bookmark.host ?: runCatching { Uri.parse(bookmark.url).host }.getOrNull() ?: bookmark.url).removePrefix("www.")
+            val cleanHost = (bookmark.host ?: runCatching { Uri.parse(bookmark.url).host }.getOrNull() ?: bookmark.url)
+                .removePrefix("www.")
+            hostView.text = cleanHost
+
             itemView.setOnClickListener { onItemClick(bookmark) }
             itemView.setOnLongClickListener {
                 onItemLongClick(bookmark)

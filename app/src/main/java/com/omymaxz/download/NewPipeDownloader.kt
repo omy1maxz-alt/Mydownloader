@@ -40,7 +40,7 @@ class NewPipeDownloader : Downloader() {
                 connection.setRequestProperty("User-Agent", USER_AGENT)
             }
 
-            // Preserve the known-good WebView session cookies for NewPipe requests.
+            // Inject WebView cookies to bypass YouTube age restrictions / bot detection
             try {
                 val cookieManager = android.webkit.CookieManager.getInstance()
                 val cookies = cookieManager.getCookie(url)

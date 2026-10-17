@@ -1,13 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#7ADACB</color><color name="colorPrimaryDark">#003731</color><color name="colorAccent">#7ADACB</color>
-    <color name="teal_200">#80CBC4</color><color name="teal_700">#7ADACB</color><color name="purple_500">#7ADACB</color><color name="red">#FFB4AB</color><color name="black">#FF000000</color><color name="white">#FFFFFFFF</color>
-    <color name="md_primary_container">#005047</color><color name="md_on_primary_container">#9CF2E3</color><color name="md_secondary_container">#324B46</color><color name="md_on_secondary_container">#D5E8E3</color><color name="md_tertiary_container">#004B70</color><color name="md_on_tertiary_container">#CBE6FF</color>
-    <color name="md_surface">#0F1413</color><color name="md_surface_dim">#0F1413</color><color name="md_on_surface">#DFE4E2</color><color name="md_surface_variant">#3F4946</color><color name="md_on_surface_variant">#BFC9C5</color>
-    <color name="md_surface_container_lowest">#0A0F0E</color><color name="md_surface_container_low">#171D1B</color><color name="md_surface_container">#1B211F</color><color name="md_surface_container_high">#252B29</color><color name="md_surface_container_highest">#303634</color>
-    <color name="md_outline">#89938F</color><color name="md_outline_variant">#3F4946</color><color name="error_color">#FFB4AB</color><color name="md_error_container">#93000A</color><color name="md_on_error_container">#FFDAD6</color>
-    <color name="status_success">#66DDA0</color><color name="status_success_container">#0D4F2B</color><color name="status_warning">#FFB951</color><color name="status_warning_container">#5C3400</color><color name="media_badge_bg">#E53935</color>
-    <color name="media_video_main_bg">#0F3D34</color><color name="media_video_main_fg">#9CF2E3</color><color name="media_video_multi_quality_bg">#4D1A22</color><color name="media_video_multi_quality_fg">#FFB2B9</color><color name="media_video_clip_bg">#1D352F</color><color name="media_video_clip_fg">#C5E7DD</color><color name="media_audio_bg">#163256</color><color name="media_audio_fg">#C8E1FF</color><color name="media_subtitle_bg">#4A320A</color><color name="media_subtitle_fg">#FFDEA8</color><color name="media_ad_bg">#541515</color><color name="media_ad_fg">#FFDAD6</color><color name="media_other_bg">#252B29</color><color name="media_other_fg">#BFC9C5</color>
-    <color name="active_tab_bg">#133831</color><color name="active_tab_stroke">#7ADACB</color><color name="selected_tab_bg">#49181A</color><color name="selected_tab_stroke">#FFB4AB</color>
-    <color name="chat_user_bubble_bg">#1B4A42</color><color name="chat_user_bubble_fg">#E0F4EF</color><color name="chat_model_bubble_bg">#222826</color><color name="chat_model_bubble_fg">#DFE4E2</color><color name="code_surface_bg">#0A0F0E</color><color name="code_surface_fg">#D5E8E3</color>
+    <!-- Legacy aliases retained for dark theme. -->
+    <color name="colorPrimary">#7ADACB</color>
+    <color name="colorPrimaryDark">#003731</color>
+    <color name="colorAccent">#7ADACB</color>
+    <color name="teal_200">#80CBC4</color>
+    <color name="teal_700">#7ADACB</color>
+    <color name="purple_500">#7ADACB</color>
+    <color name="red">#FFB4AB</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Material 3 semantic palette: dark theme. -->
+    <color name="md_primary_container">#005047</color>
+    <color name="md_on_primary_container">#9CF2E3</color>
+    <color name="md_secondary_container">#324B46</color>
+    <color name="md_on_secondary_container">#D5E8E3</color>
+    <color name="md_tertiary_container">#004B70</color>
+    <color name="md_on_tertiary_container">#CBE6FF</color>
+
+    <color name="md_surface">#0F1413</color>
+    <color name="md_surface_dim">#0F1413</color>
+    <color name="md_on_surface">#DFE4E2</color>
+    <color name="md_surface_variant">#3F4946</color>
+    <color name="md_on_surface_variant">#BFC9C5</color>
+
+    <color name="md_surface_container_lowest">#0A0F0E</color>
+    <color name="md_surface_container_low">#171D1B</color>
+    <color name="md_surface_container">#1B211F</color>
+    <color name="md_surface_container_high">#252B29</color>
+    <color name="md_surface_container_highest">#303634</color>
+
+    <color name="md_outline">#89938F</color>
+    <color name="md_outline_variant">#3F4946</color>
+
+    <color name="error_color">#FFB4AB</color>
+    <color name="md_error_container">#93000A</color>
+    <color name="md_on_error_container">#FFDAD6</color>
+
+    <color name="status_success">#66DDA0</color>
+    <color name="status_success_container">#0D4F2B</color>
+    <color name="status_warning">#FFB951</color>
+    <color name="status_warning_container">#5C3400</color>
+    <color name="media_badge_bg">#E53935</color>
+
+    <!-- Media category semantic containers & foregrounds (dark theme parity). -->
+    <color name="media_video_main_bg">#0F3D34</color>
+    <color name="media_video_main_fg">#9CF2E3</color>
+    <color name="media_video_multi_quality_bg">#4D1A22</color>
+    <color name="media_video_multi_quality_fg">#FFB2B9</color>
+    <color name="media_video_clip_bg">#1D352F</color>
+    <color name="media_video_clip_fg">#C5E7DD</color>
+    <color name="media_audio_bg">#163256</color>
+    <color name="media_audio_fg">#C8E1FF</color>
+    <color name="media_subtitle_bg">#4A320A</color>
+    <color name="media_subtitle_fg">#FFDEA8</color>
+    <color name="media_ad_bg">#541515</color>
+    <color name="media_ad_fg">#FFDAD6</color>
+    <color name="media_other_bg">#252B29</color>
+    <color name="media_other_fg">#BFC9C5</color>
+
+    <!-- Tab state semantic colors (dark theme parity). -->
+    <color name="active_tab_bg">#133831</color>
+    <color name="active_tab_stroke">#7ADACB</color>
+    <color name="selected_tab_bg">#49181A</color>
+    <color name="selected_tab_stroke">#FFB4AB</color>
+
+    <!-- Chat and developer console surfaces. -->
+    <color name="chat_user_bubble_bg">#1B4A42</color>
+    <color name="chat_user_bubble_fg">#E0F4EF</color>
+    <color name="chat_model_bubble_bg">#222826</color>
+    <color name="chat_model_bubble_fg">#DFE4E2</color>
+    <color name="code_surface_bg">#0A0F0E</color>
+    <color name="code_surface_fg">#D5E8E3</color>
 </resources>
