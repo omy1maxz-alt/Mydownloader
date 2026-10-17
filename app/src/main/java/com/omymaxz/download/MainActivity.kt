@@ -940,13 +940,10 @@ class MainActivity : AppCompatActivity() {
             binding.toolbar.setBackgroundColor(toolbarColor)
             binding.homeButton.setColorFilter(iconColor)
             binding.overflowMenuButton.setColorFilter(iconColor)
-            binding.refreshButton.setColorFilter(iconColor)
-            binding.omniboxLeadingIcon.setColorFilter(iconColor)
             binding.backButton.setColorFilter(iconColor)
             binding.forwardButton.setColorFilter(iconColor)
             binding.translateButton.setColorFilter(iconColor)
             binding.aiButton.setColorFilter(iconColor)
-            binding.tabCount.setTextColor(iconColor)
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                 window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
                 window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
