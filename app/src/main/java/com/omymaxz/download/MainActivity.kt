@@ -1433,7 +1433,7 @@ class MainActivity : AppCompatActivity() {
 
         // The IME consumes the first system Back press before Activity.onBackPressed().
         // Observe the IME transition so the omnibox loses focus as soon as Back hides it.
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.mainContent) { _, insets ->
             val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
             if (wasImeVisible && !imeVisible && binding.urlEditTextToolbar.hasFocus()) {
                 binding.urlEditTextToolbar.clearFocus()
