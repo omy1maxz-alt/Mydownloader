@@ -102,6 +102,9 @@ class MainActivity : AppCompatActivity() {
     private val subtitleAnalysisInFlight = Collections.synchronizedSet(mutableSetOf<String>())
     private var lastUsedName: String = "Video"
     var lastUsedUrl: String? = null
+    // Protect the submitted destination from stale WebView callbacks that still report the old page.
+    private var pendingOmniboxNavigationUrl: String? = null
+    private var pendingOmniboxNavigationAtMs: Long = 0L
     var cachedUserAgent: String? = null
     var currentVideoUrl: String? = null
     private var fullscreenView: View? = null
@@ -1386,19 +1389,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupUrlBarInToolbar() {
         binding.urlEditTextToolbar.setOnEditorActionListener { _, actionId, event ->
-            // Some keyboards report IME_ACTION_UNSPECIFIED (0) even though the
-            // EditText requests actionGo. Treat any actual editor action as submit.
-            val isSubmitAction = actionId != EditorInfo.IME_ACTION_NONE
-            val isEnterKey = event?.let {
+            val isKnownImeSubmitAction = actionId == EditorInfo.IME_ACTION_GO ||
+                actionId == EditorInfo.IME_ACTION_DONE ||
+                actionId == EditorInfo.IME_ACTION_SEARCH
+            // Some IMEs report actionId=0 with no KeyEvent for their Go action.
+            // A physical Enter key must be handled on ACTION_UP only, not on key-down.
+            val isUnspecifiedImeSubmit = actionId == EditorInfo.IME_ACTION_UNSPECIFIED && event == null
+            val isEnterKeyUp = event?.let {
                 it.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
                     it.action == android.view.KeyEvent.ACTION_UP
             } == true
-            if (isSubmitAction || isEnterKey) {
-                // Snapshot the field before hiding the IME or clearing focus, because
-                // page callbacks update this same EditText with the current WebView URL.
+            if (isKnownImeSubmitAction || isUnspecifiedImeSubmit || isEnterKeyUp) {
                 val submittedText = binding.urlEditTextToolbar.text?.toString().orEmpty()
                 if (submittedText.isNotBlank()) {
-                    android.util.Log.d("MainActivity", "Omnibox submit action=$actionId text=$submittedText")
+                    android.util.Log.d("MainActivity", "Omnibox submit received (action=$actionId)")
                     loadUrlFromEditTextToolbar(submittedText)
                 }
                 true
@@ -1435,6 +1439,11 @@ class MainActivity : AppCompatActivity() {
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "https://www.google.com/search?q=$url"
         }
+        // Record the requested destination before loading; callbacks for the old page
+        // must not replace the address field during this navigation handoff.
+        pendingOmniboxNavigationUrl = url
+        pendingOmniboxNavigationAtMs = android.os.SystemClock.uptimeMillis()
+        binding.urlEditTextToolbar.setText(url)
         webView.loadUrl(url)
         showWebView()
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -1650,7 +1659,23 @@ class MainActivity : AppCompatActivity() {
                     isPageLoading = true
 
                     binding.progressBar.visibility = View.VISIBLE
-                    binding.urlEditTextToolbar.setText(url)
+                    val pendingOmniboxUrl = pendingOmniboxNavigationUrl
+                    val pendingAgeMs = android.os.SystemClock.uptimeMillis() - pendingOmniboxNavigationAtMs
+                    val pendingOmniboxIsFresh = pendingOmniboxUrl != null &&
+                        pendingAgeMs in 0..10_000L
+                    when {
+                        // Never replace text while the user is actively editing the address bar.
+                        binding.urlEditTextToolbar.hasFocus() -> Unit
+                        // A callback for the previous page can arrive after submission but before
+                        // WebView starts the requested destination. Keep the submitted URL intact.
+                        pendingOmniboxIsFresh && url != pendingOmniboxUrl -> {
+                            android.util.Log.d("MainActivity", "Ignoring stale address-bar callback during navigation")
+                        }
+                        else -> {
+                            binding.urlEditTextToolbar.setText(url)
+                            pendingOmniboxNavigationUrl = null
+                        }
+                    }
                     if (url?.contains("perchance.org") == true) {
                         injectPerchanceFixes(view)
                     }
