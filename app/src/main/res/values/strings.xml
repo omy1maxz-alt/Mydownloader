@@ -44,7 +44,7 @@
     <string name="scripts_empty_title">No userscripts installed</string>
     <string name="scripts_empty_subtitle">Add custom JavaScript rules for specific websites</string>
     <string name="downloads">Downloads</string>
-    <string name="downloads_title">Downloads & Exports</string>
+    <string name="downloads_title">Downloads &amp; Exports</string>
     <string name="downloads_empty_title">No recent downloads</string>
     <string name="downloads_empty_subtitle">Detected videos, audio tracks, and subtitles you download will appear here</string>
     <string name="quick_action_history">History</string>
