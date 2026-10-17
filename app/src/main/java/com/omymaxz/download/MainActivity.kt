@@ -1430,11 +1430,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Android may consume Back to dismiss the keyboard before Activity Back handling.
-        // Track the IME transition and leave URL input mode as soon as the keyboard closes.
-        wasImeVisible = ViewCompat.getRootWindowInsets(binding.rootContainer)
+        // Ensure the toolbar can take focus after URL input mode ends.
+        binding.toolbarConstraintLayout.isFocusable = true
+        binding.toolbarConstraintLayout.isFocusableInTouchMode = true
+
+        // Android may consume Back to dismiss the IME before the Activity Back callback runs.
+        // Observe insets at the decor view and clear URL focus when the keyboard actually closes.
+        wasImeVisible = ViewCompat.getRootWindowInsets(window.decorView)
             ?.isVisible(WindowInsetsCompat.Type.ime()) ?: false
-        ViewCompat.setOnApplyWindowInsetsListener(binding.rootContainer) { _, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
             val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
             if (wasImeVisible && !imeVisible && binding.urlEditTextToolbar.hasFocus()) {
                 exitUrlBarInputMode()
@@ -1442,6 +1446,7 @@ class MainActivity : AppCompatActivity() {
             wasImeVisible = imeVisible
             insets
         }
+        ViewCompat.requestApplyInsets(window.decorView)
 
         @JavascriptInterface
         fun copyToClipboard(text: String) {
@@ -1510,14 +1515,25 @@ class MainActivity : AppCompatActivity() {
     private fun exitUrlBarInputMode() {
         val urlBar = binding.urlEditTextToolbar
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
+        // Hide the keyboard, remove the caret, and leave input mode in one operation.
         imm.hideSoftInputFromWindow(urlBar.windowToken, 0)
         urlBar.clearComposingText()
         urlBar.clearFocus()
-        // Clear selection/cursor visuals after focus has been removed.
+
+        // Explicitly restore toolbar actions even if the IME delays the focus callback.
+        binding.homeButton.visibility = View.VISIBLE
+        binding.backButton.visibility = View.VISIBLE
+        binding.forwardButton.visibility = View.VISIBLE
+        binding.refreshButton.visibility = View.VISIBLE
+        binding.translateButton.visibility = View.VISIBLE
+        binding.tabButton.visibility = View.VISIBLE
+        binding.newTabToolbarButton.visibility = View.VISIBLE
+
+        binding.toolbarConstraintLayout.requestFocus()
         urlBar.post {
             if (!urlBar.hasFocus()) {
                 urlBar.setSelection(urlBar.text?.length ?: 0)
-                binding.toolbarConstraintLayout.requestFocus()
             }
         }
     }
@@ -3626,6 +3642,15 @@ private fun injectMediaStateDetector() {
 
         private fun handleIncomingMediaDetection(url: String, type: String, contentType: String? = null) {
             if (url.startsWith("blob:")) return
+            val requestMime = contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
+            val requestPath = runCatching { java.net.URL(url).path.lowercase() }
+                .getOrDefault(url.substringBefore("?").lowercase())
+            val requestExtension = requestPath.substringAfterLast('.', "")
+            if (requestMime.startsWith("image/") ||
+                requestExtension in setOf("gif", "jpg", "jpeg", "png", "svg", "webp", "ico")) {
+                android.util.Log.d("MediaStateInterface", "Ignoring image asset instead of listing as media: $requestPath")
+                return
+            }
             if (type.contains("subtitle") || url.endsWith(".vtt") || url.endsWith(".srt")) {
                 lastSubtitleUrl = url
             }

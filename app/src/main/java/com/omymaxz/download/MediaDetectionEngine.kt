@@ -152,6 +152,23 @@ class MediaDetectionEngine(private val context: Context) {
 
         val mediaKind = classifyMedia(url, contentType)
 
+        // Keep thumbnails, icons, and other static assets out of segment correlation.
+        // Some sites serve images from /upload/video/, making them look like media segments.
+        if (mediaKind == MediaKind.UNKNOWN) {
+            val requestMime = contentType?.substringBefore(";")?.trim()?.lowercase().orEmpty()
+            val requestPath = runCatching { URL(url).path.lowercase() }
+                .getOrDefault(url.substringBefore("?").lowercase())
+            val requestExtension = requestPath.substringAfterLast('.', "")
+            val nonMediaExtensions = setOf(
+                "css", "js", "gif", "jpg", "jpeg", "png", "svg", "webp",
+                "woff", "woff2", "ttf", "ico", "html", "htm"
+            )
+            if (requestMime.startsWith("image/") || requestExtension in nonMediaExtensions) {
+                Log.d(TAG, "Ignoring non-media asset during detection: $requestPath")
+                return null
+            }
+        }
+
         if (mediaKind == MediaKind.UNKNOWN) {
             val lowerUrl = url.lowercase()
 
