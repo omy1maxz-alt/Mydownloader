@@ -7967,6 +7967,9 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
 
         if (hasFiles) {
             binding.fabShowMedia.visibility = android.view.View.VISIBLE
+            binding.fabShowMedia.isEnabled = true
+            binding.fabShowMedia.alpha = 1.0f
+            binding.fabShowMedia.contentDescription = "Detected media, ${detectedMediaFiles.size} items"
             binding.mediaCountBadge.text = if (detectedMediaFiles.size > 99) "99+" else detectedMediaFiles.size.toString()
             binding.mediaCountBadge.visibility = android.view.View.VISIBLE
             binding.fabShowMedia.setImageResource(R.drawable.ic_download)
@@ -7984,7 +7987,11 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                 true
             }
         } else {
-            binding.fabShowMedia.visibility = android.view.View.GONE
+            // Keep the toolbar action discoverable even before media is detected.
+            binding.fabShowMedia.visibility = android.view.View.VISIBLE
+            binding.fabShowMedia.isEnabled = false
+            binding.fabShowMedia.alpha = 0.5f
+            binding.fabShowMedia.contentDescription = "Detected media, no items detected"
             binding.mediaCountBadge.visibility = android.view.View.GONE
         }
 
