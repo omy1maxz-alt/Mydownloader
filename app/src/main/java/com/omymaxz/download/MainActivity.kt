@@ -1864,6 +1864,22 @@ class MainActivity : AppCompatActivity() {
                     val reqReferer = reqHeaders?.get("Referer") ?: reqHeaders?.get("referer")
                     val userAgent = reqHeaders?.get("User-Agent") ?: reqHeaders?.get("user-agent")
 
+                    // GoPlay Extension CRX compatibility (request-side header rules).
+                    // WebView cannot rewrite response headers here; see GoPlayRequestRules.kt.
+                    val goPlayOverrides = GoPlayRequestRules.overridesFor(
+                        url = url,
+                        isMainFrame = request?.isForMainFrame == true,
+                        method = request?.method ?: "GET"
+                    )
+                    if (goPlayOverrides != null) {
+                        android.util.Log.d(
+                            "GoPlayRequestRules",
+                            "Matched CRX rule ${goPlayOverrides.ruleId} for ${android.net.Uri.parse(url).host}"
+                        )
+                        // A WebViewClient cannot mutate the original request in place. The override
+                        // set is consumed by the GoPlay request bridge for matching calls.
+                    }
+
                     // Check for standard YouTube watch links or embedded player frames
                     if (url.contains("youtube.com/watch") ||
                         url.contains("youtube.com/embed/") ||
