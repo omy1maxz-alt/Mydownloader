@@ -968,6 +968,7 @@ class MainActivity : AppCompatActivity() {
             showTranslateSettingsDialog()
             true
         }
+        updateToolbarNavButtonState()
     }
 
     private fun navigateBack() {
@@ -5466,16 +5467,12 @@ private fun showRenameDialog(mediaFile: MediaFile) {
 
         val categories = listOf(
             MenuCategory("Browser", android.R.drawable.ic_menu_view, listOf(
-                MenuAction("Back", R.drawable.ic_arrow_back) { navigateBack() },
-                MenuAction("Forward", R.drawable.ic_arrow_forward) { navigateForward() },
                 MenuAction("History", R.drawable.ic_public) { showHistory() },
                 MenuAction("Add Bookmark", R.drawable.ic_add) { addCurrentPageToBookmarks() },
                 MenuAction("Add Link", R.drawable.ic_download) { showManualAddLinkDialog() },
                 MenuAction("Open in External Browser", R.drawable.ic_public) { openCurrentPageInExternalBrowser() }
             )),
             MenuCategory("Tools", R.drawable.ic_translate, listOf(
-                MenuAction(if (isAutoTranslateEnabled) "Auto-Translate: On" else "Auto-Translate: Off", R.drawable.ic_translate) { toggleAutoTranslate() },
-                MenuAction("Ask Gemini About This Page", R.drawable.ic_ai_sparkle) { openGeminiForCurrentPage() },
                 MenuAction("User Scripts", R.drawable.ic_translate) { startActivity(Intent(this, UserScriptManagerActivity::class.java)) },
                 MenuAction("Urban VPN", R.drawable.ic_public) { showUrbanVpnDialog() },
                 MenuAction(getString(R.string.proxy_settings), R.drawable.ic_public) { showProxySettingsDialog() },
