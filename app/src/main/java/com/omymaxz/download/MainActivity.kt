@@ -1874,10 +1874,11 @@ class MainActivity : AppCompatActivity() {
                     if (goPlayOverrides != null) {
                         android.util.Log.d(
                             "GoPlayRequestRules",
-                            "Matched CRX rule ${goPlayOverrides.ruleId} for ${android.net.Uri.parse(url).host}"
+                            "Matched CRX rule ${goPlayOverrides.ruleId} for ${android.net.Uri.parse(url).host}; headers=${goPlayOverrides.headers.keys}"
                         )
-                        // A WebViewClient cannot mutate the original request in place. The override
-                        // set is consumed by the GoPlay request bridge for matching calls.
+                        // shouldInterceptRequest is observational: returning null allows WebView to
+                        // continue normally, but cannot change that request's headers. Applying
+                        // modified headers requires a controlled fetch/response bridge.
                     }
 
                     // Check for standard YouTube watch links or embedded player frames
