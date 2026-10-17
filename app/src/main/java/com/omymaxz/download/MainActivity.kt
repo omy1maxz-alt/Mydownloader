@@ -1416,6 +1416,7 @@ class MainActivity : AppCompatActivity() {
                 binding.forwardButton.visibility = View.GONE
                 binding.refreshButton.visibility = View.GONE
                 binding.translateButton.visibility = View.GONE
+                binding.mediaActionContainer.visibility = View.GONE
                 binding.tabButton.visibility = View.GONE
                 binding.newTabToolbarButton.visibility = View.GONE
             } else {
@@ -1427,6 +1428,7 @@ class MainActivity : AppCompatActivity() {
                 binding.translateButton.visibility = View.VISIBLE
                 binding.tabButton.visibility = View.VISIBLE
                 binding.newTabToolbarButton.visibility = View.VISIBLE
+                updateFabVisibility()
             }
         }
 
@@ -1529,6 +1531,7 @@ class MainActivity : AppCompatActivity() {
         binding.translateButton.visibility = View.VISIBLE
         binding.tabButton.visibility = View.VISIBLE
         binding.newTabToolbarButton.visibility = View.VISIBLE
+        updateFabVisibility()
 
         binding.toolbarConstraintLayout.requestFocus()
         urlBar.post {
