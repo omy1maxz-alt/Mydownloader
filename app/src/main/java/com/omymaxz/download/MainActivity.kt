@@ -1427,12 +1427,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // The IME consumes the first system Back press before Activity.onBackPressed().
-        // Observe the IME transition so the omnibox loses focus as soon as Back hides it.
-        ViewCompat.setOnApplyWindowInsetsListener(binding.mainContent) { _, insets ->
+        // When Android handles Back internally to dismiss the keyboard, no Activity
+        // Back callback may run. Exit URL input mode when IME visibility changes to hidden.
+        ViewCompat.setOnApplyWindowInsetsListener(binding.rootContainer) { _, insets ->
             val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
             if (wasImeVisible && !imeVisible && binding.urlEditTextToolbar.hasFocus()) {
                 binding.urlEditTextToolbar.clearFocus()
+                binding.toolbarConstraintLayout.requestFocus()
             }
             wasImeVisible = imeVisible
             insets
@@ -1465,11 +1466,18 @@ class MainActivity : AppCompatActivity() {
     override fun onBackPressed() {
         if (fullscreenView != null) {
             webView.webChromeClient?.onHideCustomView()
-        } else if (binding.urlEditTextToolbar.hasFocus()) {
-            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.hideSoftInputFromWindow(binding.urlEditTextToolbar.windowToken, 0)
-            binding.urlEditTextToolbar.clearFocus()
-        } else if (currentTabIndex in tabs.indices && tabs[currentTabIndex].historyStack.size > 1) {
+            return
+        }
+
+        // Handle omnibox input mode before browser navigation. Android may hide the
+        // IME itself without calling this method, so the IME-insets listener below
+        // also clears focus after the keyboard disappears.
+        if (binding.urlEditTextToolbar.hasFocus()) {
+            exitUrlBarInputMode()
+            return
+        }
+
+        if (currentTabIndex in tabs.indices && tabs[currentTabIndex].historyStack.size > 1) {
             tabs[currentTabIndex].historyStack.removeAt(tabs[currentTabIndex].historyStack.size - 1)
             val prevUrl = tabs[currentTabIndex].historyStack.last()
             webView.loadUrl(prevUrl)
@@ -1481,6 +1489,16 @@ class MainActivity : AppCompatActivity() {
         } else {
             super.onBackPressed()
         }
+    }
+
+    private fun exitUrlBarInputMode() {
+        val urlBar = binding.urlEditTextToolbar
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(urlBar.windowToken, 0)
+        urlBar.clearFocus()
+        // Prevent the old insertion cursor/selection from remaining visible.
+        urlBar.setSelection(urlBar.text?.length ?: 0)
+        binding.toolbarConstraintLayout.requestFocus()
     }
 
     @SuppressLint("SetJavaScriptEnabled")
