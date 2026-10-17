@@ -954,7 +954,6 @@ class MainActivity : AppCompatActivity() {
             binding.homeButton.setColorFilter(iconColor)
             binding.backButton.setColorFilter(iconColor)
             binding.forwardButton.setColorFilter(iconColor)
-            binding.aiButton.setColorFilter(iconColor)
             if (isAutoTranslateEnabled) {
                 binding.translateButton.setColorFilter(android.graphics.Color.parseColor("#4CAF50"))
             } else {
@@ -979,7 +978,6 @@ class MainActivity : AppCompatActivity() {
         binding.overflowMenuButton.setOnClickListener { showCustomOverflowMenu(it) }
         binding.backButton.setOnClickListener { navigateBack() }
         binding.forwardButton.setOnClickListener { navigateForward() }
-        binding.aiButton.setOnClickListener { openGeminiForCurrentPage() }
         binding.refreshButton.setOnClickListener { webView.reload() }
         binding.translateButton.setOnClickListener { toggleAutoTranslate() }
         binding.translateButton.setOnLongClickListener {
@@ -1415,7 +1413,6 @@ class MainActivity : AppCompatActivity() {
                 binding.forwardButton.visibility = View.GONE
                 binding.refreshButton.visibility = View.GONE
                 binding.translateButton.visibility = View.GONE
-                binding.aiButton.visibility = View.GONE
                 binding.tabButton.visibility = View.GONE
                 binding.newTabToolbarButton.visibility = View.GONE
             } else {
@@ -1425,7 +1422,6 @@ class MainActivity : AppCompatActivity() {
                 binding.forwardButton.visibility = View.VISIBLE
                 binding.refreshButton.visibility = View.VISIBLE
                 binding.translateButton.visibility = View.VISIBLE
-                binding.aiButton.visibility = View.VISIBLE
                 binding.tabButton.visibility = View.VISIBLE
                 binding.newTabToolbarButton.visibility = View.VISIBLE
             }
