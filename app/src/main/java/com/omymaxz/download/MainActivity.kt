@@ -1387,14 +1387,8 @@ class MainActivity : AppCompatActivity() {
                     binding.urlEditTextToolbar.selectAll()
                 }
 
-                // Keep the dedicated browser-action row available while editing the URL.
-                binding.homeButton.visibility = View.GONE
-                binding.refreshButton.visibility = View.GONE
-                binding.tabButton.visibility = View.GONE
+                // Keep every browser action on the single toolbar row while editing.
             } else {
-                binding.homeButton.visibility = View.VISIBLE
-                binding.refreshButton.visibility = View.VISIBLE
-                binding.tabButton.visibility = View.VISIBLE
                 updateToolbarNavButtonState()
             }
         }
@@ -7966,6 +7960,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
         val hasFiles = synchronized(detectedMediaFiles) { detectedMediaFiles.isNotEmpty() }
 
         if (hasFiles) {
+            binding.detectedMediaContainer.visibility = android.view.View.VISIBLE
             binding.fabShowMedia.visibility = android.view.View.VISIBLE
             binding.fabShowMedia.isEnabled = true
             binding.fabShowMedia.alpha = 1.0f
@@ -7987,11 +7982,8 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                 true
             }
         } else {
-            // Keep the toolbar action discoverable even before media is detected.
-            binding.fabShowMedia.visibility = android.view.View.VISIBLE
-            binding.fabShowMedia.isEnabled = false
-            binding.fabShowMedia.alpha = 0.5f
-            binding.fabShowMedia.contentDescription = "Detected media, no items detected"
+            // Hide the complete toolbar slot until there is media to open.
+            binding.detectedMediaContainer.visibility = android.view.View.GONE
             binding.mediaCountBadge.visibility = android.view.View.GONE
         }
 
