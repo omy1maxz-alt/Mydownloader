@@ -1,6 +1,8 @@
 package com.omymaxz.download
 
 import androidx.core.widget.doAfterTextChanged
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -176,6 +178,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bookmarkAdapter: BookmarkAdapter
     private var tabs = mutableListOf<Tab>()
     private var currentTabIndex = -1
+    private var wasImeVisible = false
     private var tabsDialog: AlertDialog? = null
     private var isAppInBackground = false
     private var hasStartedForegroundService = false
@@ -1064,6 +1067,9 @@ class MainActivity : AppCompatActivity() {
         binding.tabButton.setOnClickListener {
             showTabsDialog()
         }
+        binding.newTabToolbarButton.setOnClickListener {
+            createNewTab()
+        }
         updateTabCount()
     }
 
@@ -1411,6 +1417,7 @@ class MainActivity : AppCompatActivity() {
                 binding.translateButton.visibility = View.GONE
                 binding.aiButton.visibility = View.GONE
                 binding.tabButton.visibility = View.GONE
+                binding.newTabToolbarButton.visibility = View.GONE
             } else {
                 // Restore all toolbar buttons including Prev, Next, Translate, and AI when focus is lost
                 binding.homeButton.visibility = View.VISIBLE
@@ -1420,7 +1427,19 @@ class MainActivity : AppCompatActivity() {
                 binding.translateButton.visibility = View.VISIBLE
                 binding.aiButton.visibility = View.VISIBLE
                 binding.tabButton.visibility = View.VISIBLE
+                binding.newTabToolbarButton.visibility = View.VISIBLE
             }
+        }
+
+        // The IME consumes the first system Back press before Activity.onBackPressed().
+        // Observe the IME transition so the omnibox loses focus as soon as Back hides it.
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            if (wasImeVisible && !imeVisible && binding.urlEditTextToolbar.hasFocus()) {
+                binding.urlEditTextToolbar.clearFocus()
+            }
+            wasImeVisible = imeVisible
+            insets
         }
 
         @JavascriptInterface
@@ -1450,6 +1469,10 @@ class MainActivity : AppCompatActivity() {
     override fun onBackPressed() {
         if (fullscreenView != null) {
             webView.webChromeClient?.onHideCustomView()
+        } else if (binding.urlEditTextToolbar.hasFocus()) {
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(binding.urlEditTextToolbar.windowToken, 0)
+            binding.urlEditTextToolbar.clearFocus()
         } else if (currentTabIndex in tabs.indices && tabs[currentTabIndex].historyStack.size > 1) {
             tabs[currentTabIndex].historyStack.removeAt(tabs[currentTabIndex].historyStack.size - 1)
             val prevUrl = tabs[currentTabIndex].historyStack.last()
@@ -8367,6 +8390,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
         val hasFiles = synchronized(detectedMediaFiles) { detectedMediaFiles.isNotEmpty() }
 
         if (hasFiles) {
+            binding.mediaActionContainer.visibility = android.view.View.VISIBLE
             binding.fabShowMedia.visibility = android.view.View.VISIBLE
             binding.mediaCountBadge.text = if (detectedMediaFiles.size > 99) "99+" else detectedMediaFiles.size.toString()
             binding.mediaCountBadge.visibility = android.view.View.VISIBLE
@@ -8385,6 +8409,7 @@ private fun createThemedDialogBuilder(context: Context, isOpaque: Boolean = fals
                 true
             }
         } else {
+            binding.mediaActionContainer.visibility = android.view.View.GONE
             binding.fabShowMedia.visibility = android.view.View.GONE
             binding.mediaCountBadge.visibility = android.view.View.GONE
         }
