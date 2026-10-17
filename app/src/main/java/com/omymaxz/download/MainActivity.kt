@@ -910,7 +910,7 @@ class MainActivity : AppCompatActivity() {
             android.graphics.Color.blue(background)
         )
         val foreground = if (androidx.core.graphics.ColorUtils.calculateLuminance(luminanceColor) > 0.5) {
-            androidx.core.content.ContextCompat.getColor(this, R.color.md_on_surface)
+            android.graphics.Color.parseColor("#171D1B")
         } else {
             android.graphics.Color.parseColor("#DFE4E2")
         }
@@ -933,7 +933,7 @@ class MainActivity : AppCompatActivity() {
                 toolbarColor = parsedColor
                 statusColor = android.graphics.Color.rgb(android.graphics.Color.red(parsedColor), android.graphics.Color.green(parsedColor), android.graphics.Color.blue(parsedColor))
                 iconColor = if (androidx.core.graphics.ColorUtils.calculateLuminance(statusColor) > 0.5) {
-                    androidx.core.content.ContextCompat.getColor(this, R.color.md_on_surface)
+                    android.graphics.Color.parseColor("#171D1B")
                 } else android.graphics.Color.WHITE
             }
             binding.appBarContainer.setBackgroundColor(toolbarColor)
