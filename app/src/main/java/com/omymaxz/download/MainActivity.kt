@@ -179,6 +179,7 @@ class MainActivity : AppCompatActivity() {
     private var tabs = mutableListOf<Tab>()
     private var currentTabIndex = -1
     private var wasImeVisible = false
+    private var urlBarBackCallback: androidx.activity.OnBackPressedCallback? = null
     private var tabsDialog: AlertDialog? = null
     private var isAppInBackground = false
     private var hasStartedForegroundService = false
@@ -1403,6 +1404,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         binding.urlEditTextToolbar.setOnFocusChangeListener { _, hasFocus ->
+            urlBarBackCallback?.isEnabled = hasFocus
             if (hasFocus) {
                 binding.urlEditTextToolbar.post {
                     binding.urlEditTextToolbar.selectAll()
@@ -1494,22 +1496,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUrlBarBackHandling() {
-        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+        val callback = object : androidx.activity.OnBackPressedCallback(
+            binding.urlEditTextToolbar.hasFocus()
+        ) {
             override fun handleOnBackPressed() {
-                if (binding.urlEditTextToolbar.hasFocus()) {
-                    exitUrlBarInputMode()
-                    return
-                }
-
-                // Delegate normal browser/activity Back handling without recursing into this callback.
-                isEnabled = false
-                try {
-                    onBackPressedDispatcher.onBackPressed()
-                } finally {
-                    isEnabled = true
-                }
+                exitUrlBarInputMode()
             }
-        })
+        }
+        urlBarBackCallback = callback
+        onBackPressedDispatcher.addCallback(this, callback)
     }
 
     private fun exitUrlBarInputMode() {
